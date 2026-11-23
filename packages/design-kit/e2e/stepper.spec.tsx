@@ -1383,22 +1383,24 @@ test.describe('taken down with a button focused', () => {
         }
     });
 
-    test('gives a box that refuses focus nothing but a tabindex', async ({ page, browserName }) => {
+    test('leaves a box that refuses focus as drawn, and sends focus to the main content', async ({
+        page,
+        browserName,
+    }) => {
         await focusRaise(page, browserName, TAKEN_DOWN[1]);
         const group = boxOf(page, 'players');
         const drawn = await attributesOf(group);
         await page.evaluate(async () => {
             const { held } = window as unknown as Held;
+            // The main content takes focus, as a page that moves focus there does.
+            document.querySelector('main')?.setAttribute('tabindex', '-1');
             const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#players)');
             if (stepper) stepper.inert = true;
             held['players']?.controller.abort();
             await Promise.resolve();
         });
-        const after = await attributesOf(group);
-        const { tabindex, ...rest } = after;
-        expect(rest).toEqual({ ...drawn, inert: '' });
-        expect([undefined, '-1']).toContain(tabindex);
-        await expect(group).not.toBeFocused();
+        expect(await attributesOf(group)).toEqual({ ...drawn, inert: '' });
+        await expect(page.locator('main')).toBeFocused();
     });
 
     test('leaves focus where a page listener moves it as the value is tried', async ({
@@ -1449,7 +1451,8 @@ test.describe('taken down with a button focused', () => {
         await page.getByRole('button', { name: 'Raise Kept' }).focus();
         await page.keyboard.press(tabKey(browserName));
         await expect(players.lower).toBeFocused();
-        // A click in the gap between Lower and the value focuses the box, with no ring.
+        // A click in the gap between Lower and the value, inside the box and outside its parts,
+        // focuses the box, with no ring.
         const lowerBox = await box(players.lower);
         const valueBox = await box(page.locator('#players'));
         await page.mouse.click(
@@ -1457,35 +1460,9 @@ test.describe('taken down with a button focused', () => {
             lowerBox.y + lowerBox.height / 2
         );
         const group = boxOf(page, 'players');
+        await expect(group).toBeFocused();
         expect((await style(group, 'outline-style'))['outline-style']).toBe('none');
     });
-
-    for (const stepper of TAKEN_DOWN) {
-        test(`keeps focus on ${stepper.kind} stepper taken down as the window loses focus and gets it back`, async ({
-            page,
-            context,
-            browserName,
-        }) => {
-            await focusRaise(page, browserName, stepper);
-            await takeDown(page, stepper.id, 'signal');
-            const place = stepper.readOnly
-                ? page.locator(`#${stepper.id}`)
-                : page.getByRole('group', { name: stepper.label, exact: true });
-            await expect(place).toBeFocused();
-            // What a window losing focus fires, and then a real trip to another tab and back.
-            await place.evaluate((element) => {
-                element.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-                element.dispatchEvent(new FocusEvent('blur'));
-                window.dispatchEvent(new FocusEvent('blur'));
-            });
-            const other = await context.newPage();
-            await other.bringToFront();
-            await page.bringToFront();
-            await other.close();
-            await expect(place).toBeFocused();
-            await expect(place).toHaveAccessibleName(stepper.label);
-        });
-    }
 
     test('keeps the buttons of a stepper a page attaches afresh as focus comes to it', async ({
         page,

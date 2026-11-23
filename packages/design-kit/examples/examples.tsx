@@ -139,7 +139,7 @@ export const buttons: ReactElement = (
 /** A field whose control has a button beside it, a search and the button that runs it. */
 export const fieldAction: ReactElement = (
     <form className="dk-field" role="search">
-        <label className="dk-field-label" htmlFor="search">
+        <label className="dk-field-label" htmlFor="search" id="search-label">
             Search the products
         </label>
         <div className="dk-field-action">

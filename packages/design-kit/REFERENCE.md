@@ -727,7 +727,7 @@ save is busy, not read only.
 
 ```html
 <form class="dk-field" role="search">
-    <label class="dk-field-label" for="search">Search the products</label>
+    <label class="dk-field-label" for="search" id="search-label">Search the products</label>
     <div class="dk-field-action">
         <input class="dk-input" type="search" id="search" name="q" />
         <button type="submit" class="dk-button">Search</button>
@@ -1454,13 +1454,13 @@ dialog or a panel hands it back only where focus is in it, inside a shadow tree 
 as on a page's own button component in a toast or a dialog's form, or where focus is on the body or
 nowhere and the piece had it as it left, and a dialog also where focus is still on what the browser
 handed it to as the dialog closed. A stepper hands it back only where focus is on one of the buttons
-it hides. So focus a page sets in the abort's own task stays, and a `moveFocus` asked in that task
-still lands. A control slotted into a piece drawn inside a shadow root counts as in the piece. Each
-place a piece hands focus back to can be any HTML or SVG element that takes focus, such as a link in
-an inline chart, and one that is hidden, inert or disabled is passed over for the next. A control
-marked off with `aria-disabled` still takes focus, so it is passed over only where a piece checks
-for it, as a panel does for its buttons. The toast and the dialog hand focus to it, though a toast
-does not follow a frame on to a control marked off inside it.
+it hides. Either way, focus a page sets in the abort's own task stays, and a `moveFocus` asked in
+that task still lands. A control slotted into a piece drawn inside a shadow root counts as in the
+piece. Each place a piece hands focus back to can be any HTML or SVG element that takes focus, such
+as a link in an inline chart, and one that is hidden, inert or disabled is passed over for the next.
+A control marked off with `aria-disabled` still takes focus, so it is passed over only where a piece
+checks for it, as a panel does for its buttons. The toast and the dialog hand focus to it, though a
+toast does not follow a frame on to a control marked off inside it.
 
 As the kit hands focus back, it tries each place in turn and counts one as taken where focus moves
 onto it or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
@@ -2853,12 +2853,15 @@ limit, as "8, the most", or on the last value a step reaches short of the greate
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
 or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
 `signal`. Its box is a group named by the label, with `role="group"` and `aria-labelledby` naming
-the label's id, so a stepper taken down while one of its buttons has focus can hold focus, and the
-kit gives the box a tabindex of -1 then, which stays. That takedown hands focus to the value where
-the value is read only and enabled, and otherwise, or where the value refuses focus, to the box, so
-a keyboard user keeps their place and an editable value does not open a phone's keyboard. The
-tabindex lets a script focus the box but leaves it out of the tab order, a tabindex the page gave
-the box is kept, and the box draws the kit's focus ring where the browser shows focus.
+the label's id, so the place focus may land has a name. A stepper taken down while one of its
+buttons has focus hands focus to the value where the value is read only and enabled, and otherwise,
+or where the value refuses focus, to the box, so a keyboard user keeps their place and an editable
+value does not open a phone's keyboard. Where the box has no tabindex, the kit gives it one of -1 as
+focus goes to it, and leaves it there, so a script can focus the box while the tab order passes it
+by. A tabindex the page gave the box is kept, and the box draws the kit's focus ring where the
+browser shows focus. Where the box refuses focus too, the tabindex it was given goes again at once,
+and focus goes on to the app frame's body or the page's main content, as it does from a toast, a
+dialog or a panel.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on

@@ -63,13 +63,13 @@ const holds = (place: Element, node: Node | null): boolean => {
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
  * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
- * refuses it focus, as a stepper's disabled value is passed over for the stepper itself. A control
- * marked off is left out only where a caller checks for it, as a panel does for its buttons and a
- * focus request for its target, so the toast and the dialog hand focus to one. Focus that moves
- * onto a place or inside it, in a shadow tree it holds or on a control slotted into it too, as a
- * host that delegates focus or a widget that forwards it, counts as taken, as does a place that has
- * focus already, while a place that refuses focus is passed over though focus is inside it. Where a
- * page's own listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
+ * refuses it focus. A control marked off is left out only where a caller checks for it, as a panel
+ * does for its buttons and a focus request for its target, so the toast and the dialog hand focus
+ * to one. Focus that moves onto a place or inside it, in a shadow tree it holds or on a control
+ * slotted into it too, as a host that delegates focus or a widget that forwards it, counts as
+ * taken, as does a place that has focus already, while a place that refuses focus is passed over
+ * though focus is inside it. Where a page's own listener moves focus elsewhere as one is tried, the
+ * walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
@@ -1248,6 +1248,20 @@ export type StepperOptions = AttachOptions & {
 const attachedSteppers = new WeakMap<HTMLElement, Kept<() => void, StepperOptions>>();
 
 /**
+ * Hands focus to a stepper as its takedown hides the button that had it, giving a stepper with no
+ * tabindex one of -1 that stays. Where the stepper refuses focus, the tabindex it was given goes at
+ * once, and where focus is still on the button, focus goes on to the app frame's body or the page's
+ * main content.
+ */
+const handToStepper = (stepper: HTMLElement, from: Element) => {
+    const given = !stepper.hasAttribute('tabindex');
+    if (given) stepper.tabIndex = -1;
+    if (handBack(stepper)) return;
+    if (given) stepper.removeAttribute('tabindex');
+    if (activeOf() === from) handBack(homeOf(stepper));
+};
+
+/**
  * A field's description with a stepper's own parts in their place: the error while it shows, which
  * names the range itself, or else the range in words when there are some, after the page's own.
  */
@@ -1345,9 +1359,10 @@ const stepperParts = (
  * or where the value refuses focus, to the stepper itself, since an editable value would open a
  * phone's keyboard. The stepper, which the markup draws as a group named by its field's label, then
  * holds focus and draws the focus ring where the browser shows focus. A stepper with no tabindex is
- * given one then, which stays. Focus the page has moved elsewhere stays. It takes the stepper's
- * field or the stepper, attaches each stepper once whichever it is given, runs on the options of
- * its newest holder, and returns what takes it down again.
+ * given one of -1 then, which stays. Where the stepper refuses focus too, focus goes on to the app
+ * frame's body or the page's main content. Focus the page has moved elsewhere stays. It takes the
+ * stepper's field or the stepper, attaches each stepper once whichever it is given, runs on the
+ * options of its newest holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1567,14 +1582,16 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         report(false);
         // A button with focus is about to hide, so focus goes first to a read-only value, which
         // opens no keyboard, or else to the stepper, which the markup draws as a group named by the
-        // field's label. A stepper with no tabindex is given one that stays, since it is out of the
-        // tab order and a pointer's focus shows no ring. Focus the page has moved elsewhere, as the
-        // value is tried, stays.
+        // field's label. A stepper with no tabindex is given -1, so a script can focus it while the
+        // tab order passes it by, and keeps it, since taking it away again would need a listener
+        // that outlives the takedown. A stepper that refuses focus has that tabindex taken away at
+        // once, and focus goes on to the app frame's body or the page's main content, as it does
+        // from the toast, the dialog and the panels. Focus the page moves elsewhere as the value or
+        // the stepper is tried stays.
         const at = activeOf();
         if (at === down || at === up) {
             if (!handBack(input.readOnly && !input.disabled ? input : null) && activeOf() === at) {
-                if (!stepper.hasAttribute('tabindex')) stepper.tabIndex = -1;
-                handBack(stepper);
+                handToStepper(stepper, at);
             }
         }
         // Left as they are where a page attached the stepper afresh as focus came to it.
