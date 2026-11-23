@@ -127,6 +127,7 @@ follow by area.
 | A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `packages/design-kit/e2e/links.spec.ts`           |
 | Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `packages/design-kit/src/tokens.test.ts`          |
 | Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | `packages/design-kit/src/tokens.resolver.test.ts` |
+| A rule on the root reads its lengths in em, since Safari draws a root's own rem from 16px at any size     | `packages/design-kit/src/scope.test.ts`           |
 
 </details>
 

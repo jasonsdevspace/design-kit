@@ -508,6 +508,123 @@ describe('what the sheets style', () => {
         expect(reference.match(/--_dk-[\w-]+/g) ?? []).toEqual([]);
     });
 
+    /** The compound a selector styles, the last one, past every combinator outside parentheses. */
+    const subjectOf = (selector: string): string => {
+        let depth = 0;
+        let start = 0;
+        [...selector].forEach((sign, at) => {
+            if (sign === '(') depth += 1;
+            if (sign === ')') depth -= 1;
+            if (depth === 0 && ' >+~'.includes(sign)) start = at + 1;
+        });
+        return selector.slice(start);
+    };
+
+    /** A rule's selectors with the `:where()` each is wrapped in taken off. */
+    const membersOf = (selector: string): string[] =>
+        split(selector).flatMap((member) =>
+            member.startsWith(':where(')
+                ? split(member.slice(':where('.length, closing(member, ':where'.length)))
+                : [member]
+        );
+
+    /** Each declaration of a rule's own, a custom property's left out, as its name and value. */
+    const ownOf = (body: string): [string, string][] =>
+        body
+            .split(';')
+            .map((declaration): [string, string] => {
+                const colon = declaration.indexOf(':');
+                return [declaration.slice(0, colon).trim(), declaration.slice(colon + 1).trim()];
+            })
+            .filter(([name]) => name !== '' && !name.startsWith('--'));
+
+    /** Each custom property the tokens' root rules declare, with every value it is given. */
+    const rootTokens = (() => {
+        const tokens = readFileSync(new URL('tokens.css', folder), 'utf8');
+        const found = new Map<string, string[]>();
+        for (const { selector, body } of rulesOf(tokens)) {
+            if (!membersOf(selector).every((member) => subjectOf(member).startsWith(':root')))
+                continue;
+            for (const [, name = '', value = ''] of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+)/g))
+                found.set(name, [...(found.get(name) ?? []), value.replace(/\s+/g, ' ').trim()]);
+        }
+        return found;
+    })();
+
+    /** Whether a value holds a length in rem, itself or through a token it reads. */
+    const inRem = (value: string, seen: readonly string[] = []): boolean =>
+        /\d\s*rem\b/.test(value) ||
+        [...value.matchAll(/var\(\s*(--[\w-]+)/g)].some(
+            ([, name = '']) =>
+                !seen.includes(name) &&
+                (rootTokens.get(name) ?? []).some((held) => inRem(held, [...seen, name]))
+        );
+
+    /** Each declaration on the root itself that reads a rem, in the sheet text given. */
+    const remOnRoot = (css: string): string[] =>
+        rulesOf(css)
+            .filter(({ selector }) =>
+                membersOf(selector).some((member) => /^(?::root|html)\b/.test(subjectOf(member)))
+            )
+            .flatMap(({ selector, body }) =>
+                ownOf(body)
+                    .filter(([, value]) => inRem(value))
+                    .map(([name]) => `${selector} sets ${name} in rem`)
+            );
+
+    it('tells a rule on the root that reads a rem from one that reads an em or sits elsewhere', () => {
+        expect(rootTokens.get('--dk-target')).toEqual(['2.75rem']);
+        expect(
+            remOnRoot(`
+                :where(:root:has(.a)) { scroll-padding-bottom: calc(2 * var(--dk-target) + 1px); }
+                :where(.b, html) { padding: 1rem; --dk-own: 2rem; }
+                :where(:root:has(.c)) { scroll-padding-bottom: var(--_dk-root-target); }
+                :where(:root:has(.d) > body) { padding-bottom: var(--dk-target); }
+                :where(.e :root) { margin: 0 1em; }
+            `)
+        ).toEqual([
+            ':where(:root:has(.a)) sets scroll-padding-bottom in rem',
+            ':where(.b, html) sets padding in rem',
+        ]);
+    });
+
+    it("reads no rem in a property of the root's own, which Safari draws from 16px at any root size", () => {
+        const astray = sheets.flatMap((name) =>
+            remOnRoot(readFileSync(new URL(name, folder), 'utf8')).map(
+                (found) => `${name}: ${found}`
+            )
+        );
+        expect(astray).toEqual([]);
+    });
+
+    it("gives each of the root's twins in em the number its token holds in rem", () => {
+        const twins = [...rootTokens].filter(([name]) => name.startsWith('--_dk-root-'));
+        expect(twins.length).toBeGreaterThan(0);
+        const astray = twins.filter(([name, values]) => {
+            const token = rootTokens.get(name.replace('--_dk-root-', '--dk-')) ?? [];
+            return (
+                token.length !== 1 ||
+                values.length !== 1 ||
+                !/^[\d.]+rem$/.test(token[0] ?? '') ||
+                values[0] !== (token[0] ?? '').replace(/rem$/, 'em')
+            );
+        });
+        expect(astray).toEqual([]);
+        // A twin is read by a rule on the root alone, since an em elsewhere is that element's size.
+        const elsewhere = sheets.flatMap((name) =>
+            rulesOf(readFileSync(new URL(name, folder), 'utf8'))
+                .filter(
+                    ({ selector, body }) =>
+                        ownOf(body).some(([, value]) => value.includes('--_dk-root-')) &&
+                        !membersOf(selector).every((member) =>
+                            subjectOf(member).startsWith(':root')
+                        )
+                )
+                .map(({ selector }) => `${name}: ${selector}`)
+        );
+        expect(elsewhere).toEqual([]);
+    });
+
     it('declares custom properties only in the tokens', () => {
         const elsewhere = sheets
             .filter((name) => name !== 'tokens.css')

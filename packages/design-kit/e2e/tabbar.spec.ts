@@ -321,6 +321,34 @@ test('scrolls what takes focus clear of a bar whose labels take two lines', asyn
     expect(kept).toBeGreaterThanOrEqual(drawn.height);
 });
 
+// The root size a page doubles in its own sheet, which reaches every engine, and is where Safari
+// draws a rem on the root itself from 16px. A bar of short labels still has its row at this size.
+for (const width of [390, 320]) {
+    test(`scrolls what the keyboard reaches clear of the bar on a page ${String(width)}px wide that doubles its root size`, async ({
+        page,
+        browserName,
+    }) => {
+        await open(page, { width, css: 'html { font-size: 200%; }', places: ['Play', 'Games'] });
+        await expect(bar(page)).toHaveCSS('position', 'sticky');
+        const link = page.getByRole('link', { name: 'A game in the middle' });
+        await link.evaluate((element) => {
+            window.scrollBy(0, element.getBoundingClientRect().bottom - window.innerHeight);
+        });
+        const drawn = await box(bar(page), 'the bar');
+        expect(bottom(await box(link, 'the link'))).toBeGreaterThan(drawn.y);
+        await page.getByRole('link', { name: 'The first game' }).evaluate((element) => {
+            element.focus({ preventScroll: true });
+        });
+        await page.keyboard.press(tabKey(browserName));
+        await expect(link).toBeFocused();
+        expect(bottom(await box(link, 'the link'))).toBeLessThanOrEqual(drawn.y);
+        const kept = await page.evaluate(() =>
+            parseFloat(getComputedStyle(document.documentElement).scrollPaddingBottom)
+        );
+        expect(kept).toBeGreaterThanOrEqual(drawn.height);
+    });
+}
+
 test('scrolls with the page on a phone at twice the text size, where its labels wrap further', async ({
     page,
     browserName,
