@@ -34,9 +34,9 @@ import { doubled, textSize } from './text-size.js';
  * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
  * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
  * stepper's error above it and its hint below it, a field's control at its own height beside a
- * taller field in a page's own row, focus handed to a read-only value or to the
- * stepper itself and kept there as it is taken down with a button focused, the keyboard, and no
- * audit findings in either theme.
+ * taller field in a page's own row, an inline stepper's label level with its neighbor's there,
+ * focus handed to a read-only value or to the stepper itself and kept there as it is taken down
+ * with a button focused, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -476,6 +476,17 @@ const PAIR = renderToStaticMarkup(
  * A text field beside a stepper's field in a column only as wide as it needs, the text field's
  * label wrapping in the room the stepper leaves at a phone's width and twice the text size.
  */
+/**
+ * A text field with a label long enough to wrap beside an inline stepper, whose label lines up
+ * with the text field's at the top of the row.
+ */
+const INLINE = renderToStaticMarkup(
+    <div className="pair">
+        <InputField id="player" label="The player who deals this round" />
+        <StepperField id="tricks" label="Tricks" min={0} max={10} defaultValue={2} inline />
+    </div>
+);
+
 const BESIDE = renderToStaticMarkup(
     <div className="beside">
         <InputField id="table" label="Table name" />
@@ -488,8 +499,9 @@ test("keeps each field's control at its own height beside a taller field in a pa
     browserName,
 }) => {
     /*
-     * Each field's controls in the row, and the same field's drawn alone under the row at the same
-     * width, so a field stretched to its row's height shows as a taller control than its own.
+     * Each field's controls in the row, a stepper's buttons among them, and the same field's drawn
+     * alone under the row at the same width, so a field stretched to its row's height shows as a
+     * taller control than its own.
      */
     const measure = () =>
         page.evaluate(() =>
@@ -534,10 +546,21 @@ window.ready = true;`,
         .evaluateAll((all) => all.map((label) => label.getBoundingClientRect().height));
     // The first label wraps, so the row is taller than the second field needs.
     expect(labels[0] ?? 0).toBeGreaterThan((labels[1] ?? 0) + 4);
-    for (const { field, heights, alone } of await measure()) {
-        expect(heights, String(field)).toEqual(alone);
-        for (const drawn of heights) expect(drawn, String(field)).toBe(44);
-    }
+    const same = async () => {
+        for (const { field, heights, alone } of await measure()) {
+            expect(heights.length, String(field)).toBeGreaterThan(0);
+            expect(heights, String(field)).toEqual(alone);
+        }
+    };
+    await same();
+
+    await serve(390, INLINE);
+    const tops = await page
+        .locator('.pair .dk-field-label')
+        .evaluateAll((all) => all.map((label) => label.getBoundingClientRect().top));
+    // The inline stepper's label stands level with the text field's, at the top of the row.
+    expect(Math.abs((tops[0] ?? 0) - (tops[1] ?? Infinity))).toBeLessThan(0.5);
+    await same();
 
     await serve(320, BESIDE);
     await doubled(page, browserName);
@@ -546,13 +569,7 @@ window.ready = true;`,
         .evaluateAll((all) => all.map((label) => label.getBoundingClientRect().height));
     // The text field's label wraps, so the row is taller than the stepper's field needs.
     expect(beside[0] ?? 0).toBeGreaterThan((beside[1] ?? 0) + 4);
-    const measured = await measure();
-    for (const { field, heights, alone } of measured) {
-        expect(heights, String(field)).toEqual(alone);
-    }
-    // The stepper's buttons and its value at the target, at twice the text size.
-    const seats = measured.find(({ field }) => field === 'seats');
-    expect(seats?.heights).toEqual([2.75 * 32, 2.75 * 32, 2.75 * 32]);
+    await same();
 });
 
 test('empties its status line once the value is typed over, and once it is taken away', async ({

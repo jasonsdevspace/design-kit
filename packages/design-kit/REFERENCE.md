@@ -602,18 +602,23 @@ column, so a word with no place to break, such as an email address in an error, 
 rather than pushing the field past the column's edge. In a page, a band or a stack, in a form there
 too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
 runs the width of a wide panel, and a callout in its form ends where the fields end. A page sets
-`--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a
-ZIP code, or `none` for the column's width. A row of the page's own that sets fields side by side
-sets `none` on the row, so each field fills its cell, and a field shorter than the tallest beside it
+`--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a ZIP
+code, or `none` for the column's width. A row of the page's own that sets fields side by side sets
+`none` on the row, so each field fills its cell, and a field shorter than the tallest beside it
 keeps its control at its own height, with the spare room below it. In a dialog or a popover the
-property has no effect, since the dialog's own width sizes its fields. In a form with no class
-attribute, a field, a row of actions or a callout that is not empty stands `--dk-space-4` below what
-sits above it, once another of those has come before it, so a form's buttons go in a `dk-actions`, a
-lone submit too. Nothing else in a plain form is given room. A form with a class attribute lays out its own parts. An
-error's words allow a break after each "@", by a `<wbr>`, so an address too long for its line breaks
-there rather than at whichever letter or stop the line runs out on, and the kit's own words keep
-punctuation away from the address they show. A page that puts an address in its own label or hint
-can add `<wbr>` after the "@" for the same break.
+property has no effect, since the dialog's own width sizes its fields. An inline stepper in a page's
+row keeps its label and stepper at the top of its cell, its label level with the labels beside it. A
+field given more height than its parts, by a height or a flex grow of the page's own, leaves the
+room below them too, so a control meant to fill its field, such as a textarea that fills a panel,
+takes the room by the page's own `grid-template-rows` on the field, which gives the control's row
+`1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a form with no
+class attribute, a field, a row of actions or a callout that is not empty stands `--dk-space-4`
+below what sits above it, once another of those has come before it, so a form's buttons go in a
+`dk-actions`, a lone submit too. Nothing else in a plain form is given room. A form with a class
+attribute lays out its own parts. An error's words allow a break after each "@", by a `<wbr>`, so an
+address too long for its line breaks there rather than at whichever letter or stop the line runs out
+on, and the kit's own words keep punctuation away from the address they show. A page that puts an
+address in its own label or hint can add `<wbr>` after the "@" for the same break.
 
 <details>
 <summary>How a field is drawn</summary>
