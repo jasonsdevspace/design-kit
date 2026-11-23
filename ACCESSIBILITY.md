@@ -103,7 +103,8 @@ is its CSS transformer, as the package README shows.
 - In Chromium, which draws a picker's icon at the end of a dated field, a field for a date with a
   time is wider than a 320 pixel screen at twice the text size on its own, so its words are cut
   short at the icon there, and a field for a date, a month or a week in a panel on that screen is
-  too.
+  too. A date's words clear the icon there by a few pixels in the widest typeface the tests draw
+  them in, so a page that sets a wider one, such as Verdana, has them cut short by as little.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,
   can still get narrower than its stepper. In a `dk-fields` row there, a stepper wider than the
   row's 10rem runs past its field on a screen 368 pixels wide and up, up to 7 pixels into the gap
