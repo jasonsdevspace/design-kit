@@ -394,42 +394,95 @@ describe('what the sheets style', () => {
         .replace(/\( /g, '(')
         .replace(/ \)/g, ')');
 
-    it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
+    /** One line of a sheet, as the tests below read them all: runs of space as one. */
+    const flatOf = (css: string): string =>
+        withoutComments(css)
+            .replace(/\s+/g, ' ')
+            .replace(/ ?, ?/g, ', ')
+            .replace(/\( /g, '(')
+            .replace(/ \)/g, ')');
+
+    /**
+     * Each list of an app's places that is written in no form the sheets keep, in the sheet text
+     * given, and the forms themselves. A list is read whole, so the frames named inside one are
+     * not read as a list of their own.
+     */
+    const placesIn = (css: string): { astray: string[]; lists: string[]; forms: string[] } => {
+        const text = flatOf(css);
         // A live frame or page that ends in a tab bar, a dialog beside one, as a sibling before or
         // after it, which no rule asks the root for, and a dialog whose class says it is an app's.
-        const live = ':is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)';
+        const picture = ':not(.dk-picture, .dk-picture *)';
+        const bare = '.dk-app, .dk-tabbar-page';
+        const live = `:is(${bare})${picture}`;
         const beside = `${live} ~ .dk-dialog, .dk-dialog:has(~ ${live}), .dk-dialog-app`;
         // The base list, and the same with a picture of a frame left out, which the dialog's
         // actions are told by.
-        const forms = [`.dk-app, .dk-tabbar-page, ${beside}`, `${live}, ${beside}`];
+        const forms = [`${bare}, ${beside}`, `${live}, ${beside}`];
         // The pieces that keep a phone's size there too.
         const added = new Set(['.dk-toast']);
-        // Every list a piece names the places in, however many of them it kept, read whole, so the
-        // frames named inside one are not read as a list of their own.
+        /** Whether the place given is inside a `:has()`, whose frames tell a page rather than size a piece. */
+        const inHas = (at: number): boolean => {
+            let depth = 0;
+            for (let from = at - 1; from >= 0; from -= 1) {
+                if (text[from] === ')') depth += 1;
+                if (text[from] === '(' && depth > 0) depth -= 1;
+                else if (text[from] === '(' && text.slice(0, from).endsWith(':has')) return true;
+                if (text[from] === '{' || text[from] === '}') return false;
+            }
+            return false;
+        };
         const lists: string[] = [];
-        for (let at = flat.indexOf(':is('); at >= 0;) {
-            const end = closing(flat, at + ':is'.length);
-            const list = flat.slice(at + ':is('.length, end);
+        const astray: string[] = [];
+        for (let at = text.indexOf(':is('); at >= 0;) {
+            const end = closing(text, at + ':is'.length);
+            const list = text.slice(at + ':is('.length, end);
             const named = list.includes('.dk-tabbar-page');
-            if (named) lists.push(list);
-            at = flat.indexOf(':is(', named ? end : at + 1);
+            if (named) {
+                lists.push(list);
+                const form = forms.find((held) => list.startsWith(held));
+                const rest = form === undefined ? '' : list.slice(form.length);
+                // The two frames alone tell a page apart inside a :has(), or name the live ones
+                // with a picture left out, and never size a piece by themselves.
+                const told =
+                    list === bare && (inHas(at) || text.slice(end + 1).startsWith(picture));
+                const kept =
+                    form !== undefined &&
+                    (rest === '' ||
+                        (rest.startsWith(',') &&
+                            rest
+                                .slice(1)
+                                .split(',')
+                                .every((piece) => added.has(piece.trim()))));
+                if (!told && !kept) astray.push(list);
+            }
+            at = text.indexOf(':is(', named ? end : at + 1);
         }
+        return { astray, lists, forms };
+    };
+
+    it("tells a list of an app's places in a form the sheets keep from one that drifts", () => {
+        const live = ':is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)';
+        const whole = `.dk-app, .dk-tabbar-page, ${live} ~ .dk-dialog, .dk-dialog:has(~ ${live}), .dk-dialog-app`;
+        expect(
+            placesIn(`
+                :where(:is(${whole}) .dk-a) { color: red; }
+                :where(:is(${whole}, .dk-toast) .dk-b) { color: red; }
+                :where(:root:has(:is(.dk-app, .dk-tabbar-page) > .dk-c)) { color: red; }
+                :where(${live} > .dk-d) { color: red; }
+                :where(:is(.dk-app, .dk-tabbar-page) .dk-new-piece) { color: red; }
+                :where(:is(.dk-app, .dk-tabbar-page, .dk-dialog) .dk-e) { color: red; }
+                :where(:is(${whole}, .dk-panel) .dk-f) { color: red; }
+            `).astray
+        ).toEqual([
+            '.dk-app, .dk-tabbar-page',
+            '.dk-app, .dk-tabbar-page, .dk-dialog',
+            `${whole}, .dk-panel`,
+        ]);
+    });
+
+    it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
+        const { astray, lists, forms } = placesIn(texts.join('\n'));
         expect(lists.length).toBeGreaterThan(0);
-        const astray = lists.filter((list) => {
-            // The frames a rule on the root or the body is told by, and those a page's foot is.
-            if (list === '.dk-app, .dk-tabbar-page') return false;
-            const form = forms.find((held) => list.startsWith(held));
-            if (form === undefined) return true;
-            const rest = list.slice(form.length);
-            if (rest === '') return false;
-            return (
-                !rest.startsWith(',') ||
-                !rest
-                    .slice(1)
-                    .split(',')
-                    .every((piece) => added.has(piece.trim()))
-            );
-        });
         expect(astray).toEqual([]);
         // Each form is written somewhere, so a list that drifts from both fails above.
         expect(forms.filter((form) => !lists.some((list) => list.startsWith(form)))).toEqual([]);
@@ -546,18 +599,18 @@ describe('what the sheets style', () => {
 
     it("leaves a picture out wherever the sheets draw a page as an app's", () => {
         // Each condition on the root or the body, and each the toast's room sets aside, read whole.
-        const conditions = [...flat.matchAll(/:root:has\(|(?<![\w-])body:has\(|:not\(:has\(/g)].map(
-            ({ index }) => {
-                const open = flat.indexOf('(', flat.indexOf('has(', index));
-                let depth = 0;
-                let end = open;
-                for (; end < flat.length; end++) {
-                    if (flat[end] === '(') depth++;
-                    if (flat[end] === ')' && --depth === 0) break;
-                }
-                return flat.slice(open + 1, end);
+        const conditions = [
+            ...flat.matchAll(/:root:has\(|(?<![\w-])body(?::not\([^()]*\))?:has\(|:not\(:has\(/g),
+        ].map(({ index }) => {
+            const open = flat.indexOf('(', flat.indexOf('has(', index));
+            let depth = 0;
+            let end = open;
+            for (; end < flat.length; end++) {
+                if (flat[end] === '(') depth++;
+                if (flat[end] === ')' && --depth === 0) break;
             }
-        );
+            return flat.slice(open + 1, end);
+        });
         const app = conditions.filter((held) =>
             /\.dk-app\b(?!-)|\.dk-tabbar-page|\.dk-toast\[data-shown/.test(held)
         );

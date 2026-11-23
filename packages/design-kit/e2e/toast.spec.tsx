@@ -1211,6 +1211,69 @@ test("gives a toast its row above the dock in a frame whose body is not the fram
     await expect(page.locator('.dk-app')).not.toHaveAttribute('data-toast-rows');
 });
 
+test("takes a page's own mark off the frame as a toast the page drew shown is closed", async ({
+    page,
+}) => {
+    // The toast written shown in the markup, with the frame marked by the page, then attached.
+    const drawn = FRAME.replace('<div class="dk-app">', '<div class="dk-app" data-toast-rows="2">')
+        .replace('class="dk-toast"', 'class="dk-toast" data-shown="" data-rows="2"')
+        .replace(/ hidden=""/g, '');
+    expect(drawn).toContain('data-shown');
+    expect(drawn).not.toContain('hidden=""');
+    await open(page, { body: drawn });
+    const frame = page.locator('.dk-app');
+    await expect(frame).toHaveAttribute('data-toast-rows', '2');
+    expect(Number.parseFloat((await roomKept(page))[0])).toBeGreaterThan(0);
+    await closeButton(page).click();
+    await expect(toast(page)).not.toHaveAttribute('data-shown');
+    await expect(frame).not.toHaveAttribute('data-toast-rows');
+    expect(await roomKept(page)).toEqual(['0px', 'auto']);
+});
+
+/** A picture of a frame with a body and a dock, as a screen that shows another screen holds one. */
+const PICTURED_FRAME =
+    '<div class="dk-picture" inert><div class="dk-app"><main class="dk-app-body"><p>A round.</p></main>' +
+    '<section class="dk-app-dock" aria-label="Pictured actions"><button type="button" class="dk-button">Save</button></section></div></div>';
+
+test('floats a toast in a frame with no body of its own, whatever a picture of a frame inside it holds', async ({
+    page,
+}) => {
+    // The frame's lines in a plain element, with a picture of a frame among them.
+    const bare = FRAME.replace(
+        '<main class="dk-app-body" tabindex="0">',
+        `<main tabindex="0">${PICTURED_FRAME}`
+    );
+    expect(bare).toContain(PICTURED_FRAME);
+    await open(page, { body: bare });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    await expect(toast(page)).not.toHaveAttribute('data-row');
+});
+
+test("keeps the frame's own dock in place where its body holds a picture of a frame with a dock", async ({
+    page,
+    browserName,
+}) => {
+    test.skip(browserName !== 'chromium', 'the text size is set through Chromium');
+    // At twice the text size the body cannot hold the toast, which takes its row above the dock,
+    // and the page scrolls by as much as the frame's own dock moved, not the pictured one.
+    await open(page, {
+        body: FULL.replace(
+            '<main class="dk-app-body" tabindex="0">',
+            `<main class="dk-app-body" tabindex="0">${PICTURED_FRAME}`
+        ),
+        height: 844,
+    });
+    await textSize(page, 2);
+    const save = page.locator('#save');
+    const before = await box(save, "the dock's button");
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    await expect(toast(page)).toHaveAttribute('data-row', '');
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    expect(await box(save, "the dock's button")).toEqual(before);
+});
+
 test("never moves the frame's dock under the thumb as it shows and leaves, at the usual and at twice the text size", async ({
     page,
     browserName,

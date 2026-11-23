@@ -113,12 +113,15 @@ room is told by the shown toast it holds.
 `attachToast` writes `data-toast-rows` on the frame its toast sits in while the toast floats over
 the frame's body: the rows it measured the toast at, from one to five, or an empty value for a toast
 it could not measure, which keeps the two rows a toast with no count does. It writes each attribute
-only where the value changes, so measuring a floating toast that has not changed restyles nothing.
-The mark comes off where the toast takes its row above the dock, as it is dismissed, before focus is
-handed back, and from a frame the toast has left for another. It comes off the element that carries
-it, which the attach keeps, rather than one found again. The sheet floats the toast and keeps the
-room only for a body that is the frame's own child, so a frame whose body sits deeper, inside a form
-for one, takes no mark and its toast takes its row above the dock.
+only where the value changes, so measuring a floating toast that has not changed restyles nothing. A
+toast in its row above the dock is measured by taking it out of its row and marking the frame, to
+read the room it would have, so each measure there writes both and takes them off again. The mark
+comes off where the toast takes its row above the dock, as it is dismissed, before focus is handed
+back, and from a frame the toast has left for another. A dismiss takes it off the frame the attach
+marked, which it keeps, and off the frame the toast sits in, which a page that drew the toast shown
+marked itself. The sheet floats the toast and keeps the room only for a body that is the frame's own
+child, so a frame whose body sits deeper, inside a form for one, takes no mark and its toast takes
+its row above the dock.
 
 The body's rule under a page's toast leaves out a body that is itself the frame, `<body
 class="dk-app">`, as a page that holds a frame is left out, since the frame keeps the room inside
@@ -143,9 +146,11 @@ it. A body that ends in a tab bar keeps the padding, as it did before.
   dialog of forty fields, since the dialog's own `:has()` reads its siblings.
 - A picture of a frame with a shown toast, drawn inside a live frame, leaves the live frame's body
   as it is, where before it gave that body the room of a toast of its own.
-- The room in a frame holds in a browser with no `:has()`, Firefox 120 among them, as does a dialog
-  inside a frame or after one.
-- The sheets came to 13,061 bytes, within their budget, and the controls to 21,073, as the budget
+- The room in a frame holds for a floating toast in a browser with no `:has()`, Firefox 120 among
+  them, where none was kept before. A toast that takes its row above the dock still floats there,
+  with no room under it, since the rule that gives it the row is a `:has()` on its own place. So
+  does a dialog inside a frame or after one.
+- The sheets came to 13,061 bytes, within their budget, and the controls to 21,112, as the budget
   tests measure them, which left less room under the controls' budget than one more function of the
   usual size, so record 13's rule set it again, as its table gives.
 - A `hidden` attribute toggled on a stepper's button in a plain form still restyles a few hundred
@@ -173,8 +178,11 @@ The paths are in `packages/design-kit`.
   and marked with no count for a toast it cannot measure. It finds the room kept through a body
   replaced by a new element, a body that is itself the frame keeping the room inside it with no
   padding of its own, and a toast in a frame whose body sits inside a form in its row above the dock
-  with the frame unmarked. `e2e/teardown.spec.tsx` finds the mark kept through an abort and an
-  attach in one task and gone once the toast is taken down.
+  with the frame unmarked. It finds a mark the page wrote for a toast it drew shown gone once that
+  toast is attached and closed, a toast floating in a frame with no body of its own that holds a
+  picture of a frame, and, in Chromium, the frame's own dock kept in place where the body holds a
+  picture of a frame with a dock. `e2e/teardown.spec.tsx` finds the mark kept through an abort and
+  an attach in one task and gone once the toast is taken down.
 - `e2e/app.spec.ts`, in Chromium and WebKit, holds the room a frame keeps by a mark its fixtures
   write by hand, and finds a dialog at an app's sizes on a wide screen after, before and inside a
   frame and a page that ends in a tab bar, and at a content page's in a wrapper beside a frame,

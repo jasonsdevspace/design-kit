@@ -924,17 +924,23 @@ const markWith = (element: HTMLElement, name: string, value?: string) => {
 };
 
 /**
+ * A frame's own part, its body or its dock: the frame's child of that name first, then one deeper
+ * in the frame, inside a form for one, but never a part of a picture of a frame the frame holds.
+ */
+const partOf = (frame: HTMLElement | undefined, name: string) =>
+    frame?.querySelector(`:scope > .dk-app-${name}`) ??
+    frame?.querySelector(`.dk-app-${name}:not(.dk-picture, .dk-picture *)`);
+
+/**
  * Marks the frame a toast sits in with the rows the sheet keeps room for in its body, and says
  * whether the toast floats over that body. The sheet floats the toast and keeps the room only for a
- * body that is the frame's own child, looked for first so a picture of a frame inside the bar or
- * the body is never taken for it. A body anywhere else in the frame, inside a form for one, takes
- * no mark, and its toast takes its row above the dock, as does one whose body would keep less than
- * a row and a half above the room. A frame with no body, or a toast not yet measured, is left
+ * body that is the frame's own child. A body anywhere else in the frame, inside a form for one,
+ * takes no mark, and its toast takes its row above the dock, as does one whose body would keep less
+ * than a row and a half above the room. A frame with no body, or a toast not yet measured, is left
  * floating.
  */
 const floatsIn = (frame: HTMLElement, rows: string | undefined, target: number): boolean => {
-    const body =
-        frame.querySelector(':scope > .dk-app-body') ?? frame.querySelector('.dk-app-body');
+    const body = partOf(frame, 'body');
     const own = body?.parentElement === frame;
     // An unmeasured toast keeps the two rows the sheet gives a mark with no count.
     markWith(frame, 'toastRows', own ? (rows ?? '') : undefined);
@@ -967,7 +973,7 @@ const measureToast = (
     marked?: HTMLElement
 ): HTMLElement | undefined => {
     const frame = element.closest<HTMLElement>('.dk-app') ?? undefined;
-    const dock = frame?.querySelector('.dk-app-dock');
+    const dock = partOf(frame, 'dock');
     // A frame the toast marked and has since left keeps no room for it.
     if (marked !== frame) delete marked?.dataset['toastRows'];
     const target = parseFloat(getComputedStyle(close).minWidth);
@@ -1166,7 +1172,10 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         delete element.dataset['shown'];
         delete element.dataset['rows'];
         delete element.dataset['row'];
+        // Off the frame the toast marked, and off the one it sits in, which a page that drew the
+        // toast shown marked itself.
         delete marked?.dataset['toastRows'];
+        delete element.closest<HTMLElement>('.dk-app')?.dataset['toastRows'];
         marked = undefined;
         if (hadFocus) {
             const handed = handBack(cameFrom, arrivedAt, homeOf(element));

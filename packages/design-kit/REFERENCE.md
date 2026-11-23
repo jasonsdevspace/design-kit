@@ -2775,22 +2775,22 @@ scrolls as it does under the bar, and the body leaves room for the toast after i
 many rows as its attach function measured it at, up to five, so its last line scrolls clear of the
 toast and what the keyboard reaches in it stops short of the toast. The attach function marks the
 frame with those rows, as `data-toast-rows`, while the toast floats over the body, and the sheet
-keeps the room by that mark, in every browser the kit supports and through a body the page draws
-afresh. A page that writes a toast already shown into a live frame writes the mark too, as
-[Toast](#toast) shows. The toast floats, and the room is kept, where the body is the frame's own
-child, and where it sits deeper, inside a form for one, the toast takes its row above the dock.
-Where the body would keep less than a row and a half above that room, as on a phone on its side or
-at a large text size, the toast takes its row above the dock instead, so nothing in the body is
-covered by it or the bar, and the attach function scrolls the page by as much as the dock moved, so
-the dock stays under the thumb. The toast is measured again while it stays, as the screen turns or
-the text size changes. The room is that element's margin, so the body ends in a block, such as a
-paragraph or a list, as its content does. On a screen too short for the frame the toast takes its
-row above the dock, and the page keeps the dock in place as the toast comes and goes, in a browser
-that keeps a scroll position by what is on screen, as Chrome and Firefox do. Each row but the body's
-is never shorter than what it holds, and the body keeps `--dk-app-body`, 8rem, a few lines, so where
-the rows come to more than the screen the page scrolls and no row covers its neighbor or squeezes
-the body to nothing. What the body holds out of sight, such as a row's words for a screen reader,
-scrolls with it and never lengthens the page.
+keeps the room by that mark, with or without `:has()` and through a body the page draws afresh. A
+page that writes a toast already shown into a live frame writes the mark too, as [Toast](#toast)
+shows. The toast floats, and the room is kept, where the body is the frame's own child, and where it
+sits deeper, inside a form for one, the toast takes its row above the dock. Where the body would
+keep less than a row and a half above that room, as on a phone on its side or at a large text size,
+the toast takes its row above the dock instead, so nothing in the body is covered by it or the bar,
+and the attach function scrolls the page by as much as the dock moved, so the dock stays under the
+thumb. The toast is measured again while it stays, as the screen turns or the text size changes. The
+room is that element's margin, so the body ends in a block, such as a paragraph or a list, as its
+content does. On a screen too short for the frame the toast takes its row above the dock, and the
+page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll position
+by what is on screen, as Chrome and Firefox do. Each row but the body's is never shorter than what
+it holds, and the body keeps `--dk-app-body`, 8rem, a few lines, so where the rows come to more than
+the screen the page scrolls and no row covers its neighbor or squeezes the body to nothing. What the
+body holds out of sight, such as a row's words for a screen reader, scrolls with it and never
+lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A pictured frame is as tall as what it holds instead, as the app
@@ -3253,8 +3253,8 @@ attach, writes the mark on the frame too, since the body keeps no room without i
 </div>
 ```
 
-The value is the toast's `data-rows`, or empty for the two rows a toast with no count keeps. A
-picture of a frame needs no mark.
+The value is the toast's `data-rows`, or empty for the two rows a toast with no count keeps. A toast
+attached after that takes the mark off as it is dismissed. A picture of a frame needs no mark.
 
 **`Toast` props**
 

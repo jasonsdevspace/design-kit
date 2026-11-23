@@ -47,8 +47,9 @@ A shown toast carries `data-shown`, and `data-rows`, the rows it was measured at
 which the sheet keeps room for on a page with no frame. In an app's frame the attach also writes
 that count on the frame, as `data-toast-rows`, empty for a toast it could not measure, while the
 toast floats over the frame's body, and the sheet keeps the body's room by it, as record 27 has it.
-The mark is not written while the toast takes its row above the dock, and it comes off as the toast
-leaves.
+The mark does not stay while the toast takes its row above the dock, where each measure writes it to
+read the room and takes it off again, and it comes off as the toast leaves, off a frame the page
+marked for a toast it drew shown too.
 
 A toast with an action stays until its close button, its action, Escape with focus in it or the next
 message dismisses it, since a timer would take the way back from anyone slower than it. One with no
