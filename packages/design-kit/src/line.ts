@@ -125,7 +125,9 @@ const leave = (status: HTMLElement) => {
 /**
  * Says a message on a status line. A message given as a function is read as it is put in, after the
  * moment's wait, so words a page draws from its own state follow the change that prompted them, and
- * one that gives nothing by then is not said. Polite words go, wait or give way as `admit` has it.
+ * one that gives nothing by then is not said. One that throws is not said either: the line is left
+ * free, so words waiting for it are said, and the error is reported as an uncaught one is, as a
+ * teardown reports an undo's. Polite words go, wait or give way as `admit` has it.
  * Firm words drop words still settling, and words that go take the place of the one the line is
  * saying. Polite words not yet put in that firm words take the place of wait for those to leave,
  * unless both were said in the same moment, and a notice waits whatever takes its place. Firm words
@@ -164,7 +166,16 @@ export const say = (status: HTMLElement, message: Spoken, keep = false, polite =
     });
     line.moments.add(moment);
     line.timer = window.setTimeout(() => {
-        const words = typeof message === 'string' ? message : message();
+        let words: string | null;
+        try {
+            words = typeof message === 'string' ? message : message();
+        } catch (error) {
+            // A page's function that throws leaves the line free for the words that wait, and the
+            // error is still reported as an uncaught one would be.
+            leave(status);
+            reportError(error);
+            return;
+        }
         // A message that is no longer wanted by the time it would be said is left unsaid.
         if (words === null) {
             leave(status);

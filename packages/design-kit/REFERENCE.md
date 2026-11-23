@@ -1898,6 +1898,10 @@ come wait for those in turn. Polite words given as a function, such as the busy 
 any words on the line, polite ones too, and are read as they are put in, so they never put out the
 end of a progress and say nothing once the work is done.
 
+Words given as a function that throws as it is read, such as a stepper's `words`, are not said. The
+line is left free, so polite words waiting for it are said in their turn, and the error is reported
+through `reportError`, as an uncaught one is, so the page's own error handling still hears it.
+
 Attached again, a line returns the function it returned first, with its words, unless it was let go
 of, as a toast lets its own line go when the toast is taken down, when it returns one afresh. A
 stepper speaks on a line of its own inside its field, and the toast on one of its own, so a page
