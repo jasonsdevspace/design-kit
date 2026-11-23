@@ -458,7 +458,7 @@ a press shows the errors rather than doing nothing.
 A button whose press has started something still running, such as a save, is busy: marked
 `data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes them
 with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
-`--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
+`--dk-wait` before it is drawn off, so a fast save does not flash it gray, and the pointer shows the
 wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
 forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
 off state at once, as it must for the press to be stopped.

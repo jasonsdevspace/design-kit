@@ -37,13 +37,17 @@ pieces](https://jasonsdevspace.com/design-kit/app-pieces/) the frame, dock, tab 
 tables of a phone app, [Layouts](https://jasonsdevspace.com/design-kit/layouts/) the content page,
 bands with a hero, groups of sections, stacks and split rows a page is laid out with, and [Page
 chrome](https://jasonsdevspace.com/design-kit/page-chrome/) the skip link, strip and footer around a
-demo. [Explainer
-pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the layout of the page that
-says how a demo works, and [How it works](https://jasonsdevspace.com/design-kit/how-it-works/) is
-that page written for the kit itself. [The pieces
-together](https://jasonsdevspace.com/design-kit/together/) stacks the newer pieces as an app's home
-page stacks them, each set apart from the one it sits on. The theme switch in the strip saves the same choice the
-portfolio does, so it holds across jasonsdevspace.com.
+demo. [Explainer pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/) holds the layout
+of the page that says how a demo works, and [How it
+works](https://jasonsdevspace.com/design-kit/how-it-works/) is that page written for the kit itself.
+[The pieces together](https://jasonsdevspace.com/design-kit/together/) stacks the newer pieces as an
+app's home page stacks them, each set apart from the one it sits on.
+[Behavior](https://jasonsdevspace.com/design-kit/behavior/) shows a refused form, a busy button, the
+arrow keys through a grid, focus moved after a change and a part of the page that loads, each
+working with what it says on its status line, and [A page's own
+palette](https://jasonsdevspace.com/design-kit/own-palette/) shows a page drawn in its own colors
+and column, with its rules in a layer after the kit's. The theme switch in the strip saves the same
+choice the portfolio does, so it holds across jasonsdevspace.com.
 
 ## Using it
 
