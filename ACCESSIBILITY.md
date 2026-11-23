@@ -32,9 +32,9 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
   is a link, such as a button, a pill, a tab, a row, a tab bar's link or a site's brand, draws none.
 - **Targets.** The kit's buttons and fields are 36 pixels tall on a wide screen, and 44 on a phone
   and at every width in an app, and tab bar links 56, as are an app's buttons, grid cells, rows and
-  steppers where a page asks for the tall size. A quiet Close is as wide as it is tall, 36 pixels
-  on a wide screen and 44 on a phone, and a site header's brand and each of its pages are 44 tall
-  at every width.
+  steppers where a page asks for the tall size. A stepper's buttons are 44 wide at either height. A
+  quiet Close is as wide as it is tall, 36 pixels on a wide screen and 44 on a phone, and a site
+  header's brand and each of its pages are 44 tall at every width.
 - **Reflow and spacing.** No page of the site scrolls sideways at 320, 390, 768 or 1280 pixels wide,
   at the browser's text size or at twice it, and no text is cut off under the wider spacing WCAG
   asks a page to allow. The kit's site header, a content page and its lead, rows with a picture and

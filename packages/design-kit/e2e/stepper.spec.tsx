@@ -739,15 +739,22 @@ test('stands its value level with its buttons, tall or not, and takes a tap at o
     }
 });
 
-test('draws its buttons at the target, and at the larger target when tall', async ({ page }) => {
-    await open(page, { width: 1280 });
-    for (const [name, least] of [
-        ["Raise Ana's bid", 44],
-        ['Raise the number of players', 56],
+test("draws its buttons the target wide, at the field's height on a wide page and the target's on a phone, and at the larger target when tall", async ({
+    page,
+}) => {
+    for (const [width, height] of [
+        [1280, 36],
+        [390, 44],
     ] as const) {
-        const drawn = await box(page.getByRole('button', { name }), name);
-        expect(drawn.width, name).toBeGreaterThanOrEqual(least);
-        expect(drawn.height, name).toBeGreaterThanOrEqual(least);
+        await open(page, { width });
+        for (const [name, wide, tall] of [
+            ["Raise Ana's bid", 44, height],
+            ['Raise the number of players', 56, 56],
+        ] as const) {
+            const drawn = await box(page.getByRole('button', { name }), name);
+            expect(drawn.width, `${name} at ${String(width)}`).toBeCloseTo(wide, 0);
+            expect(drawn.height, `${name} at ${String(width)}`).toBeCloseTo(tall, 0);
+        }
     }
 });
 
@@ -964,8 +971,8 @@ test('keeps the value and a focused button where they stood as the field turns r
     browserName,
 }) => {
     const sizes = [
-        // A laptop's width, in every engine, where a read-only value shown alone is a field's
-        // height but one beside a button keeps the target's.
+        // A laptop's width, in every engine, where a read-only value shown alone takes a field's
+        // padding but one beside a button keeps an editable value's.
         { width: 1280, scale: 1 },
         // Twice the text size, set through Chromium, where a read-only value shown alone takes a
         // field's wider padding.
@@ -994,7 +1001,7 @@ test('keeps the value and a focused button where they stood as the field turns r
     }
 });
 
-test('keeps hidden pieces hidden and a value beside a focused button at the target, without :has()', async ({
+test('keeps hidden pieces hidden and a value beside a focused button level with it, without :has()', async ({
     page,
 }) => {
     await openReadOnly(page, { width: 1280 });
