@@ -631,6 +631,19 @@ describe('the workflows', () => {
         expect(gateProblems(workflows.get('.github/workflows/ci.yml') ?? '')).toEqual([]);
     });
 
+    // A Mac draws slower than Ubuntu, so the engines that run on one take a shard more than
+    // Chromium to end well inside a job's time limit. Each job reads how many from the strategy's
+    // total, so the matrix's list is the one place the number is set.
+    it('run WebKit and Firefox in three shards each, counted from the matrix alone', () => {
+        const jobs = jobsOf(workflows.get('.github/workflows/ci.yml') ?? '');
+        for (const engine of ['webkit', 'firefox']) {
+            const body = jobs.find(({ id }) => id === engine)?.body ?? '';
+            expect(/^ {16}shard: \[([^\]]*)\]\s*$/m.exec(body)?.[1], engine).toBe('1, 2, 3');
+            expect(body, engine).toContain('SHARDS: ${{ strategy.job-total }}');
+            expect(body, engine).toContain(`--project ${engine} --shard "$SHARD/$SHARDS"`);
+        }
+    });
+
     it('find a gate that stops checking a job it needs', () => {
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
         expect(

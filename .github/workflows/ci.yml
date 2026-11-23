@@ -222,8 +222,8 @@ jobs:
     # browser's own bars, a number field's inner room and what a table's frame scrolls to, drawn in
     # its engine too. On a Mac, where WebKit runs on what the image already has: on Ubuntu it needs
     # system packages from a mirror that has been slow enough to run a job out of time. In shards,
-    # each on a runner of its own, as many as the matrix lists, since the whole run came close to the
-    # time limit.
+    # each on a runner of its own, as many as the matrix lists, one more than Chromium takes, since
+    # a Mac draws slower and two came close to the time limit.
     webkit:
         name: Browser tests in WebKit, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
@@ -231,7 +231,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                shard: [1, 2]
+                shard: [1, 2, 3]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -281,7 +281,8 @@ jobs:
     # buttons unless `appearance: textfield` takes them away and it rounds lengths its own way, in
     # the current Firefox Playwright brings rather than the kit's floor. On a Mac, as WebKit is,
     # where Firefox runs on what the image already has. In shards, each on a runner of its own, as
-    # many as the matrix lists, since the whole run came close to the time limit.
+    # many as the matrix lists, one more than Chromium takes, since a Mac draws slower and two came
+    # close to the time limit.
     firefox:
         name: Browser tests in Firefox, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
@@ -289,7 +290,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                shard: [1, 2]
+                shard: [1, 2, 3]
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
