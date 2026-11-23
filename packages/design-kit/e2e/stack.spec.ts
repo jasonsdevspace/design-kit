@@ -15,7 +15,9 @@ import { doubled } from './text-size.js';
  * stack doing nothing, no step for a piece hidden or visually hidden, a stack on a list with no
  * marker, indent or room of its own, the example's role kept and a list nested in an item keeping
  * its markers, and the example with a long name whole on a 320px phone at twice the text size and
- * under wider spacing, with no audit findings in either theme or in forced colors.
+ * under wider spacing, with no audit findings in either theme or in forced colors. A field in a
+ * wide stack, a page or a band holds to the measure, a form's too, its button beside its control,
+ * while one a page widens and one in a dialog a page widens take the width they are given.
  */
 
 const EXAMPLE = renderToStaticMarkup(stacks);
@@ -183,3 +185,52 @@ for (const colors of ['light', 'dark', 'forced'] as const) {
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });
 }
+
+/** A field with a label and a control, given an id and the attributes the case asks for. */
+const field = (id: string, attributes = ''): string =>
+    `<div class="dk-field" id="${id}"${attributes}><label class="dk-field-label" for="${id}-input">Name</label>` +
+    `<input class="dk-input" id="${id}-input" /></div>`;
+
+test('holds a field in a wide stack, a page or a band to the measure, and one a page or a dialog widens to its column', async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Fields',
+        body:
+            '<main><section class="dk-band" id="band">' +
+            field('band-field') +
+            '</section><div class="dk-page" id="page">' +
+            field('page-field') +
+            '<div class="dk-stack" id="stack"><form>' +
+            field('stack-field') +
+            '<div class="dk-field" id="action-field"><label class="dk-field-label" for="q">Search</label>' +
+            '<div class="dk-field-action"><input class="dk-input" id="q" type="search" />' +
+            '<button type="button" class="dk-button">Search</button></div></div>' +
+            field('wide-field', ' style="--dk-field-measure: none"') +
+            '</form><dialog class="dk-dialog" id="dialog" open style="--dk-dialog-width: 48rem"><form>' +
+            field('dialog-field') +
+            '</form></dialog></div></div></main>',
+    });
+    const measure = await lengthOf(page, 'var(--dk-measure)');
+    const stack = await box(page.locator('#stack'));
+    expect(stack.width).toBeGreaterThan(measure);
+    for (const id of ['#band-field', '#page-field', '#stack-field', '#action-field']) {
+        const drawn = await box(page.locator(id));
+        expect(Math.round(drawn.width), id).toBe(measure);
+        expect(Math.round(drawn.x), id).toBe(Math.round(stack.x));
+    }
+    // The button beside the search stays on its line, at the end of the field.
+    const action = await box(page.locator('#action-field'));
+    const button = await box(page.locator('#action-field .dk-button'));
+    expect(Math.round(button.x + button.width)).toBe(Math.round(action.x + action.width));
+    expect(Math.round(button.y)).toBe(Math.round((await box(page.locator('#q'))).y));
+    const wide = await box(page.locator('#wide-field'));
+    expect(Math.round(wide.width)).toBe(Math.round(stack.width));
+    // A dialog a page widens past the measure lays its field across its own width.
+    const inside = await page.locator('#dialog').evaluate((dialog) => {
+        const { paddingLeft, paddingRight } = getComputedStyle(dialog);
+        return dialog.clientWidth - parseFloat(paddingLeft) - parseFloat(paddingRight);
+    });
+    expect(inside).toBeGreaterThan(measure);
+    expect(Math.round((await box(page.locator('#dialog-field'))).width)).toBe(Math.round(inside));
+});

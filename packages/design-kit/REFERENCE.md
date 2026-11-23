@@ -120,6 +120,7 @@ may change in any release.
 | `--dk-button-grid-least`   | the target, and the larger target in a tall grid                   | The least width of a grid's cell. A tall grid sets its own, so a page sets this on the grid itself to change it there                          |
 | `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                         |
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                   |
+| `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field in a page, a band or a stack grows, `none` for its column's width                                                           |
 | `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                   |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                             |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                      |
@@ -598,14 +599,18 @@ hint by more than its color. `aria-describedby` lists only what is drawn, the hi
 error, followed by any description of the page's own, and is left off when there is none.
 `aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
 column, so a word with no place to break, such as an email address in an error, breaks inside it
-rather than pushing the field past the column's edge. In a form with no class attribute, a field, a
-row of actions or a callout that is not empty stands `--dk-space-4` below what sits above it, once
-another of those has come before it, so a form's buttons go in a `dk-actions`, a lone submit too.
-Nothing else in a plain form is given room. A form with a class attribute lays out its own parts. An
-error's words allow a break after each "@", by a `<wbr>`, so an address too long for its line breaks
-there rather than at whichever letter or stop the line runs out on, and the kit's own words keep
-punctuation away from the address they show. A page that puts an address in its own label or hint
-can add `<wbr>` after the "@" for the same break.
+rather than pushing the field past the column's edge. In a page, a band or a stack, in a form there
+too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
+runs the width of a wide card. A page that wants one wider sets `--dk-field-measure` on the field or
+on its form, a length or `none` for the column's width. A field in a dialog takes the dialog's
+width. In a form with no class attribute, a field, a row of actions or a callout that is not empty
+stands `--dk-space-4` below what sits above it, once another of those has come before it, so a
+form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room.
+A form with a class attribute lays out its own parts. An error's words allow a break after each "@",
+by a `<wbr>`, so an address too long for its line breaks there rather than at whichever letter or
+stop the line runs out on, and the kit's own words keep punctuation away from the address they show.
+A page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same
+break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -2081,12 +2086,12 @@ sight, and stands its sections `--dk-space-7` apart, with no rule between them. 
 display size, with the lead `--dk-space-2` under it, as an explainer's is, and a section's `h2` at
 the title size, `--dk-space-3` over its text. It starts its text at the strip's inset, by the same
 band insets, so the page reads as one column from the strip to the footer and keeps clear of a
-phone's sides. Only its prose holds to the measure, its paragraphs, its plain lists and a quote, so
-a table, a grid of tiles or a figure takes the column. The spacing is set on the page, between what
-it holds, never on a paragraph's own margin, so a reader's own sheet that adds room under a
-paragraph adds the room it asks for and breaks nothing, and nothing is reordered, so focus and
-reading follow the markup. `dk-lead` is the lead, in the page's text color at the lead size and held
-to the measure, the explainer's lead under a name of its own. [Decision
+phone's sides. Only its prose holds to the measure, its paragraphs, its plain lists and a quote, and
+its [fields](#fields), so a table, a grid of tiles or a figure takes the column. The spacing is set
+on the page, between what it holds, never on a paragraph's own margin, so a reader's own sheet that
+adds room under a paragraph adds the room it asks for and breaks nothing, and nothing is reordered,
+so focus and reading follow the markup. `dk-lead` is the lead, in the page's text color at the lead
+size and held to the measure, the explainer's lead under a name of its own. [Decision
 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
 says why a content page is a container of its own.
 
