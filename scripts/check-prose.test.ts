@@ -18,6 +18,20 @@ describe('the prose check', () => {
         ]);
     });
 
+    it('refuses grey and its forms in any case, but leaves a name such as Earl Grey Tea alone', () => {
+        expect(rules('a.md', 'A fast save never flashes it grey.\n')).toEqual([
+            'a.md:1  British spelling',
+        ]);
+        expect(rules('a.md', 'The button is greyed out.\n')).toEqual(['a.md:1  British spelling']);
+        expect(rules('a.md', 'Grey is used for a button that is off.\n')).toEqual([
+            'a.md:1  British spelling',
+        ]);
+        expect(
+            rules('a.md', 'A cup of Earl Grey Tea beside a Greyhound and a greyhound.\n')
+        ).toEqual([]);
+        expect(rules('a.md', 'A fast save never flashes it gray.\n')).toEqual([]);
+    });
+
     it('stops a comment where it closes, so the code after it is left alone', () => {
         expect(rules('a.mjs', '/** @type {string} */ const a = b;\n/* one; two */ x();\n')).toEqual(
             ['a.mjs:2  semicolon in prose']

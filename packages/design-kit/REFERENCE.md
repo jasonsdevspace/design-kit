@@ -458,7 +458,7 @@ a press shows the errors rather than doing nothing.
 A button whose press has started something still running, such as a save, is busy: marked
 `data-busy`, with the words to say as its value, and `aria-disabled="true"`, as `Button` writes them
 with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
-`--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
+`--dk-wait` before it is drawn off, so a fast save does not flash it gray, and the pointer shows the
 wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
 forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
 off state at once, as it must for the press to be stopped.
@@ -694,15 +694,23 @@ colors its edge takes the ground's color. A select has no read-only state, so a 
 `SelectField` draws a read-only field with the chosen option's words, and a hidden field carries
 its value, so the form still sends it, and it is read only for the page rather than for a moment,
 since turning it on or off draws a new control. A read-only stepper shows its value alone, its
-buttons hidden while the field is read only.
+buttons hidden while the field is read only, and with both hidden its figures start where a
+read-only field's words start, at a field's height, so it keeps the edge of a column of read-only
+values, in a browser with `:has()`. Without it the figures stay centered. A tall one keeps the
+larger target. An inline stepper's value sits at its row's end, after its label, with no column to
+line up with, so it keeps its centered figures and the target's height. A stepper is read only for
+the page, as a setting fixed for the game is, since hiding its buttons changes its row, and on a
+wide screen outside an app its height too.
 
 A button that can do nothing for now is off, `aria-disabled`, kept in the tab order with the reason
 beside it. `aria-disabled` does not stop typing in a field, so a field held for a moment is read
 only, or the button that saves it is busy. A button whose press is still being carried out is busy.
 A field is `disabled` only where the form must not send it, since Tab passes over a disabled field
 and a screen reader reads it only while browsing, as unavailable, and its hint says why. A stepper
-whose field turns read only while a button has focus keeps that button, marked off, until focus
-leaves it, so focus is never dropped, and a stepper in the middle of a save is busy, not read only.
+whose field turns read only while a button has focus keeps that button, marked off, and its value
+where it stood, the other button keeping its room out of sight in a browser with `:has()`, until
+focus leaves it, so focus is never dropped and nothing moves under it. A stepper in the middle of a
+save is busy, not read only.
 
 #### A field with a button
 

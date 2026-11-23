@@ -62,6 +62,29 @@ const BRITISH_SPELLINGS = new RegExp(
     'i'
 );
 
+/**
+ * The British spelling of gray as a word of its own, and its forms with an ending, in any case. A
+ * longer word that starts with it, such as the name of a breed of dog, is a word of its own and
+ * never matches.
+ */
+const GREY = /\bgrey(s|ed|ing|er|est|ish|ness)?\b/gi;
+
+/**
+ * Whether text spells gray the British way, leaving out a name: the word with a capital followed by
+ * another word with a capital, as in a person's name or a tea's.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+const spellsGrey = (text) =>
+    [...text.matchAll(GREY)].some(
+        (match) =>
+            !(
+                /^[A-Z]/.test(match[0]) &&
+                /^ [A-Z]/.test(text.slice((match.index ?? 0) + match[0].length))
+            )
+    );
+
 /** @typedef {{ index: number, text: string }} Segment */
 
 /**
@@ -158,7 +181,7 @@ export const problemsIn = (text, { issues }) =>
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
         /[A-Za-z];/.test(text) && 'semicolon in prose',
-        BRITISH_SPELLINGS.test(text) && 'British spelling',
+        (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
     ].filter((rule) => typeof rule === 'string');
 
 /** @param {string} path */

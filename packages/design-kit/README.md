@@ -47,10 +47,13 @@ More on [what it is built for](https://jasonsdevspace.com/design-kit/#built-for)
 - **Lists and layout.** Rows, tiles and panels, under [Rows](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#rows) and
   [Panels](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#panels) in the reference, and for a content page a hero, stacks, split rows and
   numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#content-pages).
-- **Waits and behavior.** A [busy button](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#a-busy-button), a loading line, progress, focus moved
-  after a change and the arrow keys through grids and tabs, under [Status, focus, waits and
-  progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress) in the reference, and forms that say what is wrong
-  when a submit is refused, under [A refused form](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#a-refused-form).
+- **Waits and behavior.** A refused form, a busy button, the arrow keys through a grid, focus moved
+  after a change, and a loading line and a failure with Try again, each working with what it says on
+  the status line, on [the behavior page](https://jasonsdevspace.com/design-kit/behavior/). Progress
+  is on [the controls page](https://jasonsdevspace.com/design-kit/controls/#loading-and-progress),
+  and the rules behind them under [Status, focus, waits and
+  progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress)
+  in the reference.
 
 The portfolio strip and the demo footer link to the author's portfolio and are meant for its demos.
 Everything else works on any page, and your own styles win over the kit's without extra
@@ -172,9 +175,10 @@ export const Checkout = ({ error, saved }: Props) => {
 
 Without React, write the same markup by hand and `components.css` styles it. A piece with behavior,
 such as the copy button or the dialog, works through an attach function from the `controls` entry,
-or through a hook in React. Wrap a screen in `StatusProvider` and the hooks share one status line.
-Every control, in each state, with its markup and its React, is on
-[the controls page](https://jasonsdevspace.com/design-kit/controls/).
+or through a hook in React. Wrap a screen in `StatusProvider` and the hooks share one status line,
+as [the behavior page](https://jasonsdevspace.com/design-kit/behavior/) shows. Every control, in
+each state, with its markup and its React, is on [the controls
+page](https://jasonsdevspace.com/design-kit/controls/).
 
 ## What it exports
 
@@ -230,11 +234,18 @@ one taken from the page's address or a visitor's input, since that could send a 
 
 ## Going further
 
-- [Layers and palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#layers-and-palettes) and [Properties a page
-  sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#properties-a-page-sets), to give the kit your own palette, column or layers.
+- [A page's own palette](https://jasonsdevspace.com/design-kit/own-palette/) shows a page with its
+  own palette, column and layers. [Layers and
+  palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#layers-and-palettes)
+  and [Properties a page
+  sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#properties-a-page-sets)
+  give the rules and what each property must hold.
 - [The theme contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#the-theme-contract), for what the theme script sets for each saved value.
 - [React components](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#react-components), for each component's props.
-- [A refused form](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#a-refused-form), for the form check and what it says.
+- [A refused form](https://jasonsdevspace.com/design-kit/behavior/#a-refused-form) works on the
+  site, and [its
+  reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#a-refused-form)
+  gives the words for each failure.
 - [App frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#app-frame), [Page chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#page-chrome) and [Explainer
   pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.3/packages/design-kit/REFERENCE.md#explainer-pages), for each piece's markup and rules.
 
