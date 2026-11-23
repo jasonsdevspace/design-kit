@@ -289,8 +289,9 @@ follow by area.
   processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
   shows its main content in under a second with nothing jumping as it loads, and downloads 24.4 to
   39.5 KB in four requests. CI fails any page under a hundred for accessibility or ninety for
-  performance, that takes longer than two and a half seconds to show its main content, or whose
-  layout shifts by more than a tenth. [The record](docs/benchmarks/site-pages.md) gives each page.
+  performance, that takes longer than two and a half seconds to show its main content, whose layout
+  shifts by more than a tenth, or whose script or sheets, gzipped, pass the budgets in
+  `packages/site/src/budgets.ts`. [The record](docs/benchmarks/site-pages.md) gives each page.
 
 ## Decisions
 

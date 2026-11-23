@@ -77,6 +77,17 @@ copy to an element that holds it, the page's root in Chromium, so the script tel
 preview by where it starts and ends. Each copy's label names its theme with no script at all, since
 the page's theme picks the label as it picks the colors.
 
+The behavior page's examples are a script of their own, `src/behavior-script.ts`, which that page
+alone loads beside the site's script, so no other page downloads the examples' own code. The kit's
+form, busy button and focus request, which only the examples use, stay in the script every page
+loads. The kit ships its controls as one module, and a bundler keeps a module whole in one file,
+the one every page shares. A second copy of the controls for the behavior page alone would move
+them, and was rejected, since it would double the state the module keeps, its record of what is
+attached and its listeners for focus requests, so a request made through one copy would not be
+seen by the other. Those functions leave the other pages' script once the kit ships its controls in
+parts a bundler can split. The build writes the examples' file under the assets folder, so the
+policy allows it as it allows the site's script.
+
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
 path only with its origin, so the build writes it for that origin unless `SITE_ORIGIN` names
@@ -104,6 +115,9 @@ another, which the browser tests and the Lighthouse audit set to the local previ
   when it comes.
 - The kit's switch saves the portfolio's values, System and the kit's two themes, so `system` is
   saved as the portfolio saves it, and the theme script reads it as nothing saved.
+- Each page's script and its sheets have a budget in bytes, in `src/budgets.ts` with the rule that
+  sets it, so a page that grows past one fails the audit until the bytes are given back or the
+  budget is raised by that rule.
 - The switch and the copy buttons are the kit's since record 13, which the site bundles into its own
   script from the version it pins, so they reach the site a release after they change in the kit.
   The code's tabs, the live copies and the preview note stay the site's own.
@@ -143,3 +157,12 @@ The paths are in `packages/site`.
   that ends on a preview taken for no tap, and nothing added to the keyboard's path until a tap
   brings the note.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
+- `e2e/site.spec.ts` also finds the words the behavior page's examples say in the scripts the
+  behavior page downloads and in no other page's.
+- `bench/lighthouse.ts` also holds each page's script and its sheets, gzipped, to the budgets in
+  `src/budgets.ts`, measured over the files the build wrote. `src/budgets.test.ts` finds the scripts
+  a page loads or preloads and the sheets it links counted, however their tags are written, a file
+  from outside the build's assets folder refused, and with it a built file the page names and does
+  not count. It finds each page given its budget, a page past one, or with nothing found to
+  measure, failed, and a page whose files cannot be read taken for a miss, with the audit carrying
+  on.
