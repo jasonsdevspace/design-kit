@@ -743,7 +743,10 @@ export const tabBar: ReactElement = (
     </nav>
 );
 
-/** A stepper for the number of players, its label beside it, before a page attaches it. */
+/**
+ * A stepper for the number of players, its label beside it, before a page attaches it, required
+ * since a game with no number of players means nothing.
+ */
 export const stepper: ReactElement = (
     <StepperField
         id="players"
@@ -752,6 +755,7 @@ export const stepper: ReactElement = (
         min={2}
         max={8}
         defaultValue={4}
+        required
         inline
         tall
     />

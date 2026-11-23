@@ -723,6 +723,415 @@ window.ready = true;`,
     await expect(bid).not.toHaveAttribute('aria-invalid', 'true');
 });
 
+/**
+ * Keeps every write to a line a screen reader hears, the stepper's own, the page's or a second line
+ * of the page's, as the page makes it, so a test reads which lines spoke and what each said.
+ */
+const listen = (page: Page) =>
+    page.evaluate(() => {
+        const said: string[] = [];
+        (window as unknown as { said: string[] }).said = said;
+        new MutationObserver((records) => {
+            for (const { target } of records) {
+                const line = (target instanceof Element ? target : target.parentElement)?.closest(
+                    '[role="status"]'
+                );
+                const words = line?.textContent ?? '';
+                if (!line || words === '') continue;
+                const which = line.matches('.dk-stepper-status')
+                    ? 'stepper'
+                    : line.matches('.second-status')
+                      ? 'second'
+                      : 'page';
+                said.push(`${which}: ${words}`);
+            }
+        }).observe(document.body, { childList: true, characterData: true, subtree: true });
+    });
+
+/** What the lines said so far, every write, a repeat among them. */
+const saidSoFar = (page: Page) =>
+    page.evaluate(() => (window as unknown as { said: string[] }).said);
+
+/** Forgets what the lines said, so a later step's words are read alone. */
+const forget = (page: Page) =>
+    page.evaluate(() => {
+        (window as unknown as { said: string[] }).said.length = 0;
+    });
+
+/**
+ * What the lines said once a refusal has been said on the page's line: the page's clock, which
+ * stands still, is stepped until the refusal is put in, then past the wait any other message would
+ * be put in after, so a second write is caught.
+ */
+const saidOf = async (page: Page) => {
+    await expect
+        .poll(async () => {
+            await page.clock.runFor(100);
+            return (await saidSoFar(page)).some((one) => one.startsWith('page: '));
+        })
+        .toBe(true);
+    await page.clock.runFor(500);
+    return saidSoFar(page);
+};
+
+/** What the lines said with the clock stepped past the wait a message is put in after. */
+const saidAfterWait = async (page: Page) => {
+    await page.clock.runFor(500);
+    return saidSoFar(page);
+};
+
+/** The errors shown in the bid's field, and the errors among what describes the bid. */
+const bidErrors = (page: Page) =>
+    page.locator('#bid').evaluate((bid) => ({
+        drawn: [...(bid.closest('.dk-field')?.querySelectorAll('.dk-field-error') ?? [])]
+            .filter((error) => error.checkVisibility())
+            .map((error) => error.textContent.trim()),
+        described: (bid.getAttribute('aria-describedby') ?? '')
+            .split(/\s+/)
+            .map((id) => document.getElementById(id))
+            .filter((part) => part?.matches('.dk-field-error') && part.checkVisibility())
+            .map((part) => part?.textContent.trim()),
+    }));
+
+const RANGE = 'Error: Enter a whole number from 0 to 10.';
+
+/**
+ * How a test draws the bid: required or not, with a value or blank, speaking through a `say` on a
+ * second line, in a form given words of the page's for a failure, in a form the kit does not check,
+ * which the page marks `novalidate` and handles itself, and marked off by a set around it.
+ */
+type Bid = {
+    readonly unchecked?: boolean;
+    readonly off?: boolean;
+    readonly required?: boolean;
+    readonly blank?: boolean;
+    readonly second?: boolean;
+    /** Speaking on a second status line of the page's, given as its `status`. */
+    readonly line?: boolean;
+    readonly summary?: boolean;
+    readonly errorWords?: Record<string, string>;
+};
+
+/** The bid in a form attached with `attachForm`, on a clock that stands still. */
+const openBid = async (page: Page, drawn: Bid = {}) => {
+    const { required = false, blank = false, unchecked = false, off = false } = drawn;
+    await stillClock(page.clock);
+    await servePage(page, {
+        title: 'Bid',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Bid</h1>
+                <form noValidate={unchecked}>
+                    <InputField id="name" name="name" label="Name" required />
+                    {/* Above the bid, so an error drawn as focus leaves the bid never moves it. */}
+                    <button type="submit">Send</button>
+                    <div aria-disabled={off ? 'true' : undefined}>
+                        <StepperField
+                            id="bid"
+                            name="bid"
+                            label="Bid"
+                            min={0}
+                            max={10}
+                            defaultValue={blank ? undefined : 5}
+                            required={required}
+                        />
+                    </div>
+                    <p id="count">0</p>
+                </form>
+                <StatusLine className="screen-status" />
+                <StatusLine className="second-status" />
+            </main>
+        ),
+        script: `import { attachForm, attachStatus, attachStepper } from './controls.js';
+const drawn = ${JSON.stringify(drawn)};
+const form = document.querySelector('form');
+attachStepper(
+    document.querySelector('.dk-stepper'),
+    drawn.second
+        ? { say: attachStatus(document.querySelector('.second-status')) }
+        : drawn.line
+          ? { status: document.querySelector('.second-status') }
+          : undefined
+);
+if (!drawn.unchecked)
+    attachForm(form, {
+        status: document.querySelector('.screen-status'),
+        errorWords: drawn.errorWords,
+    });
+form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const count = document.querySelector('#count');
+    count.textContent = String(Number(count.textContent) + 1);
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await listen(page);
+};
+
+/**
+ * Chooses the React page's size by the keyboard, which lands whatever is drawn over the page, since
+ * a click on the radio in Firefox was once found to change nothing.
+ */
+const chooseSmall = async (page: Page) => {
+    const small = page.getByLabel('Small');
+    await small.focus();
+    await small.press('Space');
+    await expect(small).toBeChecked();
+};
+
+test('leaves a stepper that speaks through a say of its own unsaid on a refused submit', async ({
+    page,
+}) => {
+    await openBid(page, { second: true });
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+});
+
+test("takes a stepper's words back from a line of the page's it was given, on a refused submit", async ({
+    page,
+}) => {
+    await openBid(page, { line: true });
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    await bid.press('Enter');
+    expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+    await expect(page.locator('.second-status')).toHaveText('');
+});
+
+for (const [drawn, where] of [
+    [{ unchecked: true }, 'a form the page handles itself, with no check of the kit'],
+    [{ off: true }, 'a checked form that passes over it, marked off'],
+] as const)
+    test(`leaves a stepper's own error said once in ${where}`, async ({ page }) => {
+        await openBid(page, drawn);
+        await page.getByLabel('Name').fill('Ana');
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        // Forced, since a field under a set marked off is not one Playwright takes for enabled.
+        await bid.fill('99', { force: true });
+        await bid.focus();
+        await page.keyboard.press('Enter');
+        // No refusal follows to say it, so the stepper's own words are the ones heard.
+        await expect(page.locator('#count')).toHaveText('1');
+        expect(await saidAfterWait(page)).toEqual([`stepper: ${RANGE}`]);
+        expect((await bidErrors(page)).drawn).toEqual([RANGE]);
+    });
+
+/*
+ * A stepper is wrong exactly where the browser's constraints say its field is, and where its own
+ * error shows at a submit that error is the one error, said once by the refusal, in a form the kit
+ * draws its errors in and in one React draws.
+ */
+for (const way of ['attachForm', 'useFormRefusal'] as const) {
+    test.describe(`a stepper in a form refused through ${way}`, () => {
+        let app = '';
+        test.beforeAll(async () => {
+            if (way !== 'useFormRefusal') return;
+            test.setTimeout(120_000);
+            app = await bundle('checked-page.tsx');
+        });
+
+        /** Draws the form, with every field but the bid filled in unless the name is left blank. */
+        const openWay = async (page: Page, drawn: Bid = {}, name = 'Ana') => {
+            if (way === 'attachForm') await openBid(page, drawn);
+            else {
+                const how = [
+                    drawn.required && 'required',
+                    drawn.blank && 'blank',
+                    drawn.summary && 'summary',
+                ].filter(Boolean);
+                await stillClock(page.clock);
+                await servePage(page, {
+                    title: 'Join',
+                    body: `<div id="root" data-bid="${how.join(' ')}"></div>`,
+                    script: app,
+                });
+                await listen(page);
+                await chooseSmall(page);
+            }
+            if (name) await page.getByLabel('Name').fill(name);
+        };
+
+        const bidOf = (page: Page) => page.getByRole('spinbutton', { name: 'Bid' });
+        const send = (page: Page) => page.getByRole('button', { name: /Send|Join/ });
+        const handed = (page: Page) =>
+            page.evaluate(() => (window as unknown as { handed: string[] }).handed);
+
+        /** The bid refused with its own error alone, drawn, described and said once. */
+        const refused = async (page: Page) => {
+            expect(await saidOf(page)).toEqual([`page: Bid: ${RANGE}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
+            await expect(bidOf(page)).toHaveAccessibleDescription(RANGE);
+            await expect(bidOf(page)).toBeFocused();
+            await expect(page.locator('#count')).toHaveText('0');
+            // The stepper shows its own error, so the page is handed none to draw for it.
+            if (way === 'useFormRefusal') expect(await handed(page)).toEqual([]);
+        };
+
+        test('shows one error for a stepper typed past its range and submitted by Enter, and says it once', async ({
+            page,
+        }) => {
+            await openWay(page);
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Enter');
+            await refused(page);
+        });
+
+        test('says one message for a stepper typed past its range and submitted by a press on the button', async ({
+            page,
+        }) => {
+            await openWay(page);
+            await bidOf(page).fill('99');
+            await send(page).click();
+            await refused(page);
+        });
+
+        test("says the refusal alone where a stepper's error shows and another field is named", async ({
+            page,
+        }) => {
+            await openWay(page, {}, '');
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Enter');
+            const [name, count] =
+                way === 'attachForm' ? ['Enter a value.', '2'] : ['Enter your name.', '2'];
+            expect(await saidOf(page)).toEqual([
+                `page: Name: Error: ${name} ${count} fields need attention.`,
+            ]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            if (way === 'useFormRefusal')
+                expect(await handed(page)).toEqual(['name: Enter your name.']);
+        });
+
+        test('says the refusal after the error a stepper left by Tab said of its own', async ({
+            page,
+        }) => {
+            await openWay(page);
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            // Focus has left the value, so the stepper says its error then, and it is heard.
+            const own = way === 'attachForm' ? `stepper: ${RANGE}` : `page: ${RANGE}`;
+            expect(await saidAfterWait(page)).toEqual([own]);
+            await forget(page);
+            await send(page).focus();
+            await send(page).press('Enter');
+            await refused(page);
+        });
+
+        test('saves a stepper left blank that is not required, with no error', async ({ page }) => {
+            await openWay(page);
+            await bidOf(page).fill('');
+            await bidOf(page).press('Enter');
+            await expect(page.locator('#count')).toHaveText('1');
+            expect(await saidAfterWait(page)).toEqual([]);
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bidOf(page)).not.toHaveAttribute('aria-invalid', 'true');
+            await expect(bidOf(page)).toHaveAccessibleDescription('From 0 to 10.');
+        });
+
+        test('shows no error on a stepper left blank that is not required as focus leaves it', async ({
+            page,
+        }) => {
+            await openWay(page);
+            await bidOf(page).fill('');
+            await bidOf(page).blur();
+            expect(await saidAfterWait(page)).toEqual([]);
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bidOf(page)).not.toHaveAttribute('aria-invalid', 'true');
+        });
+
+        test('refuses a required stepper filled then emptied, with its own error', async ({
+            page,
+        }) => {
+            await openWay(page, { required: true });
+            await bidOf(page).fill('');
+            await bidOf(page).press('Enter');
+            await refused(page);
+        });
+
+        test('refuses a stepper holding 2.5, with its own error', async ({ page }) => {
+            await openWay(page);
+            await bidOf(page).fill('2.5');
+            await bidOf(page).press('Enter');
+            await refused(page);
+        });
+
+        test('refuses a stepper holding a letter, with one error said once', async ({ page }) => {
+            await openWay(page);
+            await bidOf(page).fill('');
+            await bidOf(page).pressSequentially('e');
+            await bidOf(page).press('Enter');
+            const said = await saidOf(page);
+            expect(said).toHaveLength(1);
+            expect(said[0]).toMatch(/^page: Bid: Error: /);
+            const errors = await bidErrors(page);
+            expect(errors.drawn).toHaveLength(1);
+            expect(errors.described).toEqual(errors.drawn);
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
+            await expect(page.locator('#count')).toHaveText('0');
+        });
+
+        test("refuses a required stepper drawn blank and never touched with the form's error", async ({
+            page,
+        }) => {
+            await openWay(page, {
+                required: true,
+                blank: true,
+                errorWords: { valueMissing: 'Fill this in.' },
+            });
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bidOf(page)).not.toHaveAttribute('aria-invalid', 'true');
+            await send(page).click();
+            // The page's words for the failure apply, the form's map in plain markup.
+            const words = way === 'attachForm' ? 'Error: Fill this in.' : 'Error: Enter a value.';
+            expect(await saidOf(page)).toEqual([`page: Bid: ${words}`]);
+            expect(await bidErrors(page)).toEqual({ drawn: [words], described: [words] });
+            await expect(page.locator('#bid-range')).toBeHidden();
+            await expect(page.locator('#count')).toHaveText('0');
+            if (way === 'useFormRefusal')
+                expect(await handed(page)).toEqual(['bid: Enter a value.']);
+        });
+
+        test("shows a stepper's error beside the form's once a value past its range is typed, until the next submit", async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true });
+            await send(page).click();
+            const missing = 'Error: Enter a value.';
+            expect(await saidOf(page)).toEqual([`page: Bid: ${missing}`]);
+            expect((await bidErrors(page)).drawn).toEqual([missing]);
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            // Both show until the form is submitted again.
+            expect([...(await bidErrors(page)).drawn].sort()).toEqual([missing, RANGE].sort());
+            await page.clock.runFor(500);
+            await forget(page);
+            await send(page).focus();
+            await send(page).press('Enter');
+            await refused(page);
+        });
+
+        if (way === 'useFormRefusal')
+            test('keeps a stepper typed past its range from speaking over a summary the refusal moves focus to', async ({
+                page,
+            }) => {
+                await openWay(page, { summary: true });
+                await bidOf(page).fill('99');
+                await bidOf(page).press('Enter');
+                await expect(async () => {
+                    await page.clock.runFor(100);
+                    await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
+                }).toPass();
+                expect(await saidAfterWait(page)).toEqual([]);
+                expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            });
+    });
+}
+
 test("counts a page's own set of boxes of different names once", async ({ page }) => {
     await openWith(
         page,
