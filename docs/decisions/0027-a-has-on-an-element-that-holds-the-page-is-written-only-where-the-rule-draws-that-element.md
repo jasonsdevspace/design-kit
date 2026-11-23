@@ -153,5 +153,9 @@ The paths are in `packages/design-kit`.
   each way of dismissing it, while the toast takes its row above the dock, and on a body the toast
   has left, and marked with no count for a toast it cannot measure. `e2e/teardown.spec.tsx` finds
   the mark kept through an abort and an attach in one task and gone once the toast is taken down.
-- `e2e/app.spec.ts` and `e2e/dialog.spec.ts` hold the room and the dialog's sizes on an app's
-  page, and `e2e/controls.spec.tsx` the room under a list by the mark a page writes by hand.
+- `e2e/app.spec.ts`, in Chromium and WebKit, holds the room a frame keeps by a mark its fixtures
+  write by hand, and finds a dialog at an app's sizes on a wide screen after, before and inside a
+  frame and a page that ends in a tab bar, and at a content page's in a wrapper beside a frame,
+  beside a wrapper that holds one and beside a picture of one. `e2e/controls.spec.tsx` finds the
+  room under a list kept by the mark with every selector that asks for a `:has()` taken out of its
+  rule's list, as a browser without it drops it.
