@@ -97,7 +97,11 @@ const tryFocus = (place: Element | null | undefined): boolean | undefined => {
  */
 const focusFirst = (...places: readonly Place[]): boolean => {
     for (const given of places)
-        for (const place of typeof given === 'function' ? given() : [given]) {
+        // An element is never called, though an object or an embed is a function to some
+        // browsers.
+        for (const place of typeof given === 'function' && !(given instanceof Element)
+            ? given()
+            : [given]) {
             const took = tryFocus(place);
             if (took !== undefined) return took;
         }

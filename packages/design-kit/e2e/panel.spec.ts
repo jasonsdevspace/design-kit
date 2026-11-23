@@ -865,6 +865,41 @@ test.describe('a link in the panel', () => {
         await expect(page.locator('#outside')).toHaveAttribute('tabindex', '-1');
     });
 
+    test('tries an object element a link goes to as a place, and never calls it', async ({
+        page,
+    }) => {
+        const errors: string[] = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        await open(page);
+        await button(page).click();
+        await page.evaluate(() => {
+            // An object element is a function to some browsers, as an embed is.
+            document
+                .querySelector('main')
+                ?.insertAdjacentHTML(
+                    'afterend',
+                    '<object id="chart" type="text/html" data="about:blank" width="120" height="40"></object>'
+                );
+            document
+                .querySelector('#round-tips')
+                ?.insertAdjacentHTML(
+                    'beforeend',
+                    '<p><a href="#chart" id="to-chart">The chart</a></p>'
+                );
+            document.querySelector('#to-chart')?.addEventListener('click', () => {
+                (window as unknown as Kit).setTips(false);
+            });
+        });
+        await page.locator('#to-chart').click();
+        await expect(panel(page)).toBeHidden();
+        await twoFrames(page);
+        expect(errors).toEqual([]);
+        // The object takes focus where the engine lets it, and the button does where it refuses.
+        expect(await page.evaluate(() => document.activeElement?.id)).toMatch(
+            /^(chart|tips-button)$/
+        );
+    });
+
     test('sends focus to a place whose id is written encoded in the link', async ({ page }) => {
         await open(page);
         await button(page).click();
