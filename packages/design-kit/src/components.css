@@ -489,6 +489,33 @@
         transition-delay: var(--dk-wait);
         transition-behavior: allow-discrete;
         cursor: progress;
+        position: relative;
+    }
+
+    /*
+     * Once the wait has passed, a busy button draws a short row of dots centered at its foot, so a
+     * visitor who sees it can tell it is at work and not only off. The dots are an edge drawn
+     * dotted, so they take the button's color, the system's in forced colors, and they take no
+     * place in the row, so the button keeps its size, an icon alone or a text button with no
+     * padding included. They hold no words, so the button's name stays as it was. They wait as a
+     * loading line does and then pulse, which reduced motion stops, leaving them still. The row is a
+     * little over five dots wide, which each engine draws as three.
+     */
+    :where(.dk-button[data-busy])::after {
+        content: '';
+        position: absolute;
+        inset-block-end: 0.125rem;
+        width: 1.0625rem;
+        border-block-end: 0.2rem dotted;
+        animation:
+            dk-wait 0s var(--dk-wait) backwards,
+            dk-busy 0.6s var(--dk-wait) infinite alternate;
+    }
+
+    @keyframes dk-busy {
+        to {
+            opacity: 0.3;
+        }
     }
 
     /*

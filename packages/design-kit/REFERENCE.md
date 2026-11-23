@@ -460,8 +460,12 @@ A button whose press has started something still running, such as a save, is bus
 with `busy`. It is off at once, so a second press does nothing, but it keeps its look for
 `--dk-wait` before it is drawn off, so a fast save does not flash it grey, and the pointer shows the
 wait at once. The wait is a delay rather than a motion, so it stands under reduced motion and in
-forced colors, where the button then takes `GrayText` as an off one does. A screen reader hears the
-off state at once, as it must for the press to be stopped.
+forced colors, where the button then takes `GrayText` as an off one does. Drawn off, it also shows a
+short row of dots centered at its foot, so a visitor who sees it can tell a button at work from one
+that cannot be pressed. The dots pulse, and stand still under reduced motion. They take the button's
+color, the system's in forced colors, and no place in the row, so the button keeps its size, an icon
+alone or a text button included, and they hold no words, so its name stays as it was. A screen
+reader hears the off state at once, as it must for the press to be stopped.
 
 `attachBusy(button, { status, signal })` from `./controls`, or `useBusy()` in React, which speaks on
 the screen's `StatusProvider`, marks a busy button `aria-disabled` where the page has not, and takes
@@ -474,9 +478,9 @@ already there and the end of a progress beside them takes their place. `busy` se
 words. Words not yet said when the work is done are dropped, so a result a toast says is never
 followed by a late "Saving." Taken down, by the function it returns or by its `signal`, as [Taking a
 control down](#taking-a-control-down) has it, it no longer stops a press, takes away the mark it set
-and drops words not yet said. There is no spinner, since words say what is happening. A page that
-sets a transition of its own on a busy button replaces the wait, and the button is drawn off at
-once.
+and drops words not yet said. A page that sets a transition of its own on a busy button replaces
+the wait, and the button is drawn off at once, though its dots still wait. The dots are a busy
+button's `::after`, so a page draws nothing of its own there.
 
 Pressed, off and busy say different things. Pressed is a toggle that is on. Off is a button that
 can do nothing now, with the reason beside it. Busy is a button whose press is still being carried

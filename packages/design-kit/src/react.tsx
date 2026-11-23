@@ -243,9 +243,9 @@ export type ButtonProps = NativeButton & {
     /** Off, but still in the tab order, so a keyboard keeps its place and finds out why. */
     readonly off?: boolean | undefined;
     /**
-     * Busy while what its press started runs, such as a save: off at once, drawn off only once the
-     * wait outlasts --dk-wait, and said by `attachBusy` or `useBusy` in the words given, or
-     * "Saving." where it is just true.
+     * Busy while what its press started runs, such as a save: off at once, drawn off with a row of
+     * dots that says it is at work only once the wait outlasts --dk-wait, and said by `attachBusy`
+     * or `useBusy` in the words given, or "Saving." where it is just true.
      */
     readonly busy?: boolean | string | undefined;
 } & (

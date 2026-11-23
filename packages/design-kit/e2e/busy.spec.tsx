@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, InputField, StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { forceColors, servePage, stillClock, style } from './page.js';
+import { box, forceColors, servePage, stillClock, style } from './page.js';
 
 /*
  * A busy button, as `Button` draws it with `busy` and `attachBusy` makes it work: marked off at
@@ -11,7 +11,8 @@ import { forceColors, servePage, stillClock, style } from './page.js';
  * its off look held back for --dk-wait so a fast save shows and says nothing, the pointer's wait
  * shown at once, its words said once the wait outlasts the token, dropped where the work ends first
  * and said again for a busy that starts again, the look's wait kept under reduced motion and in
- * forced colors, and through React's `useBusy`, a double press saving once and a save that ends
+ * forced colors, a row of dots past the wait that an off button lacks, its name and its box kept and
+ * its pulse stopped under reduced motion, and through React's `useBusy`, a double press saving once and a save that ends
  * just after the wait saying nothing late.
  */
 
@@ -23,6 +24,9 @@ const BODY = renderToStaticMarkup(
                 Save rule
             </Button>
         </form>
+        <Button id="off" accent off>
+            Delete rule
+        </Button>
         <StatusLine className="screen-status" />
     </main>
 );
@@ -60,6 +64,30 @@ const save = (page: Page) => page.getByRole('button', { name: 'Save rule' });
 const saves = (page: Page) => page.evaluate(() => (window as unknown as Busy).saves);
 const heard = (page: Page) => page.evaluate(() => (window as unknown as Busy).heard);
 const look = async (page: Page, name: string) => (await style(save(page), name))[name];
+
+/** What a button draws after its words, where a busy one draws its dots. */
+const dots = (page: Page, selector: string) =>
+    page.locator(selector).evaluate((element) => {
+        const drawn = getComputedStyle(element, '::after');
+        return {
+            content: drawn.content,
+            visibility: drawn.visibility,
+            edge: drawn.borderBottomStyle,
+            opacity: drawn.opacity,
+        };
+    });
+
+/** Whether anything drawn on the button after its words is still moving. */
+const moving = (page: Page) =>
+    page.evaluate(() =>
+        document
+            .getAnimations()
+            .some(
+                (animation) =>
+                    animation.playState === 'running' &&
+                    (animation.effect as KeyframeEffect | null)?.pseudoElement === '::after'
+            )
+    );
 
 test('marks a busy button off and ignores a press by pointer, Enter, Space or a form', async ({
     page,
@@ -127,6 +155,40 @@ for (const motion of ['no-preference', 'reduce'] as const) {
         expect(await heard(page)).toEqual(['Saving the rule.']);
     });
 }
+
+test('draws a row of dots once the wait has passed, which an off button lacks, its name and box kept', async ({
+    page,
+}) => {
+    await open(page, '150ms');
+    await save(page).click();
+    await expect.poll(async () => (await dots(page, '#save')).visibility).toBe('visible');
+    expect(await dots(page, '#save')).toMatchObject({ content: '""', edge: 'dotted' });
+    expect((await dots(page, '#off')).content).toBe('none');
+    expect(await moving(page)).toBe(true);
+    await expect(save(page)).toHaveAccessibleName('Save rule');
+    // The dots taken away, neither the busy button nor the off one beside it moves or resizes.
+    const busy = page.locator('#save');
+    const off = page.locator('#off');
+    const drawn = [await box(busy, 'the busy button'), await box(off, 'the off button')];
+    await page.addStyleTag({ content: '.dk-button::after { display: none; }' });
+    expect([await box(busy, 'the busy button'), await box(off, 'the off button')]).toEqual(drawn);
+});
+
+test('holds its dots out of sight for the wait', async ({ page }) => {
+    await stillClock(page.clock);
+    await open(page, '10s');
+    await save(page).click();
+    expect((await dots(page, '#save')).visibility).toBe('hidden');
+});
+
+test('draws its dots still under reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await open(page, '150ms');
+    await save(page).click();
+    await expect.poll(async () => (await dots(page, '#save')).visibility).toBe('visible');
+    await expect.poll(() => moving(page)).toBe(false);
+    expect(await dots(page, '#save')).toMatchObject({ edge: 'dotted', opacity: '1' });
+});
 
 test('says its words again for a busy that ends and starts again at once', async ({ page }) => {
     await open(page, '150ms');

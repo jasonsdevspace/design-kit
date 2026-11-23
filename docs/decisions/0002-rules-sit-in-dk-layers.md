@@ -5,7 +5,7 @@
 dialog's `::backdrop`, and in 0.8.7 to let a value the kit works out for itself start with `--_dk-`,
 as record 16 has it, and in 0.9.0 to let a component reach a progress bar's track and fill,
 `::-webkit-progress-bar`, `::-webkit-progress-value` and `::-moz-progress-bar`, which each engine
-names apart
+names apart, and in 0.9.4 to let a busy button draw its dots of work in its `::after`
 
 ## Context
 
@@ -44,8 +44,11 @@ instead, such as `:where(*)::before` beside `:where(*)`, since a pseudo-element 
 matches nothing. A component may follow its `:where()` with `::-webkit-inner-spin-button` or
 `::-webkit-outer-spin-button`, a number field's own spin buttons, which the stepper takes away, with
 `::backdrop`, the scrim behind a dialog, or with a progress bar's track and fill, which each engine
-names apart. Each is a part of a browser's own element that only a pseudo-element reaches, and no
-other pseudo-element follows a component's `:where()`. So only the kit's classes, the focus rules
+names apart. Each is a part of a browser's own element that only a pseudo-element reaches. A busy
+button follows its `:where()` with `::after`, where it draws its dots of work once the wait has
+passed, since dots drawn there take no place in the row and hold no words for the button's name, as
+an element of their own would, and a page writing a busy button by hand writes none. No other
+pseudo-element follows a component's `:where()`. So only the kit's classes, the focus rules
 and those pseudo-elements carry any weight, and that weight counts for nothing against a page's own
 rule outside a layer.
 
@@ -75,6 +78,8 @@ rule outside a layer.
   layer.
 - The visually hidden class carries a class's weight, since a page names it on purpose. It still
   loses to a page's rule outside a layer.
+- A busy button's `::after` is the kit's, so a page draws nothing of its own there, and a rule of
+  the page's for a button's `::after` outside a layer wins over the dots.
 - The border box reaches a page's `::before` and `::after` too, so one that sets a width or height
   beside padding or a border draws that size including them, as every element does.
 - A page with a reset in a layer of its own, as a framework's base is, has it win over the kit's
@@ -90,8 +95,8 @@ The paths are in `packages/design-kit`.
   tokens and nowhere else, every block to the layer its sheet is named for, every selector to the
   kit's own class or one `:where()` followed at most by a focus pseudo-class, or in the base by a
   pseudo-element, or in the components by a number field's spin buttons or a dialog's `::backdrop`
-  or a progress bar's track and fill, with no pseudo-element inside a `:where()`, and custom
-  properties to the tokens.
+  or a progress bar's track and fill, or a busy button's `::after`, with no pseudo-element inside a
+  `:where()`, and custom properties to the tokens.
 - `src/tokens.test.ts` holds every custom property to the `--dk-` prefix, or `--_dk-` for the kit's
   own working values.
 - `e2e/sheets.spec.ts` loads the kit in Chromium beside a page's own rules, before and after its

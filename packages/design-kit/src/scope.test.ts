@@ -13,9 +13,9 @@ import { CONTAINER_GROUNDS, withoutComments } from '../examples/palette.js';
  * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
  * it too. The components may follow theirs with a number field's own spin buttons, a dialog's
  * backdrop or a progress bar's track and fill, the parts of a browser's own element a component has
- * to draw or take away and only a pseudo-element reaches. So only those classes, the focus rules
- * and those pseudo-elements carry any weight, and none of it counts against a page's own rule
- * outside a layer.
+ * to draw or take away and only a pseudo-element reaches, and a busy button with its ::after, where
+ * it draws its dots of work. So only those classes, the focus rules and those pseudo-elements carry
+ * any weight, and none of it counts against a page's own rule outside a layer.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -95,6 +95,9 @@ const CONTROL_PARTS = [
     '::-webkit-progress-value',
     '::-moz-progress-bar',
 ];
+
+/** The pseudo-elements a component draws of its own, each with the one selector it is drawn on. */
+const DRAWN = [':where(.dk-button[data-busy])::after'];
 
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
@@ -182,7 +185,7 @@ describe('what the sheets style', () => {
                             !scoped(selector, {
                                 pseudo: layerOf(name) === 'dk.base',
                                 parts: layerOf(name) === 'dk.components' ? CONTROL_PARTS : [],
-                            })
+                            }) && !(layerOf(name) === 'dk.components' && DRAWN.includes(selector))
                     )
             ).toEqual([]);
         });
