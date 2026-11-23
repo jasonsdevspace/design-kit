@@ -16,7 +16,13 @@ describe('the parts of the package', () => {
         expect(pieceOf(':where(.dk-button-grid > .dk-button[aria-pressed="true"])')).toBe(
             'button grid'
         );
-        expect(pieceOf(':where(:root:has(.dk-app, .dk-tabbar-page) .dk-dialog)')).toBe('dialog');
+        // A dialog's actions in or beside an app's frame, as the sheets write them, count to the frame.
+        expect(
+            pieceOf(
+                ':where(:is(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *), .dk-dialog:has(~ .dk-app), .dk-dialog-app) .dk-dialog-actions > :not(.dk-button-text))'
+            )
+        ).toBe('app frame');
+        expect(pieceOf(':where(.dk-dialog-app > .dk-dialog-actions)')).toBe('dialog');
         expect(
             pieceOf(':where(.dk-dialog > :not(.dk-visually-hidden, [hidden]) ~ .dk-button)')
         ).toBe('dialog');

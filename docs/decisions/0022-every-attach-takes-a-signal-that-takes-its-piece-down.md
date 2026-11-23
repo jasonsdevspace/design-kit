@@ -2,7 +2,8 @@
 
 **Status:** accepted, amended by record 23 in 0.9.3, under which every signal that attaches an
 element holds its control, taken down a microtask after the last of them aborts unless the element
-is attached again by then, and the control runs on its newest holder's options
+is attached again by then, and the control runs on its newest holder's options, and by record 27 in
+0.9.4, for the mark a toast's takedown takes off its app's frame
 
 ## Context
 
@@ -82,11 +83,13 @@ Option E.
   control to hand back and is refused.
 - **Aborting is the same as detach,** once no other signal holds the piece, as record 23 has it, and
   a microtask later. Everything the attach set up comes off: its listeners, observers, timers and
-  frames, a listener on the document it added, and what it drew or showed, as its detach would. An
-  attach that returns what acts rather than a detach is taken down by its signal alone. The module's
-  own listeners are the exception, as record 13 accepts the one that notes the visitor's last press:
-  the theme's listeners on the window, added once by the first switch or `chooseTheme`, stay for the
-  page's life, so `chooseTheme` follows a choice made in another tab on a page with no switch.
+  frames, a listener on the document it added, and what it drew or showed, as its detach would, a
+  mark it wrote on another element among them, as a toast's `data-toast-rows` on its frame is, which
+  record 27 has it write. An attach that returns what acts rather than a detach is taken down by its
+  signal alone. The module's own listeners are the exception, as record 13 accepts the one that
+  notes the visitor's last press: the theme's listeners on the window, added once by the first
+  switch or `chooseTheme`, stay for the page's life, so `chooseTheme` follows a choice made in
+  another tab on a page with no switch.
 - **Detach is complete and safe to call twice.** The teardown runs once, whichever comes first, the
   takedown the last holder's abort brings or the detach, which takes the piece down at once whoever
   holds it, and a detach called again, even after the same element was attached anew, leaves that
