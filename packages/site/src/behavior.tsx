@@ -37,13 +37,16 @@ export const CARDS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const CHOSEN: ReadonlySet<number> = new Set([7, 9]);
 const OFF = 10;
 
+/** What the list of players says once its last row has gone. */
+export const NO_PLAYERS = 'No players. Put the players back brings them back.';
+
 /** The product the part of the page that loads shows once it has loaded. */
 export const PRODUCT = 'Trail shoes, size 9, $84.';
 
 export const BEHAVIORS = [
     {
         name: 'A refused form',
-        draw: () => (
+        draw: (live) => (
             <>
                 <form id="rule-form" className="dk-stack">
                     <kit.InputField id="rule-name" name="name" label="Rule name" required />
@@ -55,7 +58,7 @@ export const BEHAVIORS = [
                         hint="Where the alert is sent"
                         required
                     />
-                    <kit.Button type="submit" accent>
+                    <kit.Button type="submit" accent id="rule-save" hidden={live}>
                         Save rule
                     </kit.Button>
                 </form>
@@ -104,7 +107,7 @@ const Rule = () => {
                 required
                 error={errors['rule-email']}
             />
-            <Button type="submit" accent>
+            <Button type="submit" accent id="rule-save">
                 Save rule
             </Button>
         </form>
@@ -256,6 +259,16 @@ export const HandScreen = () => (
                             </li>
                         ))}
                     </ul>
+                    {live ? (
+                        <p id="players-none" hidden>
+                            {NO_PLAYERS}
+                        </p>
+                    ) : null}
+                    <p>
+                        <kit.Button id="players-back" hidden={live}>
+                            Put the players back
+                        </kit.Button>
+                    </p>
                 </div>
                 <Line />
             </>
@@ -263,15 +276,18 @@ export const HandScreen = () => (
         react: `import { useState } from 'react';
 
 import {
+    Button,
     StatusProvider,
     useFocusAfterDraw,
     useStatus,
 } from '${REACT}';
 
+const PLAYERS = ['Ann', 'Ben', 'Cy', 'Dee'];
+
 const Players = () => {
     const say = useStatus();
     const focusNext = useFocusAfterDraw();
-    const [players, setPlayers] = useState(['Ann', 'Ben', 'Cy', 'Dee']);
+    const [players, setPlayers] = useState(PLAYERS);
     const remove = (index: number) => {
         const next = players[index + 1] ?? players[index - 1];
         setPlayers(players.filter((_, at) => at !== index));
@@ -287,28 +303,42 @@ const Players = () => {
             <h3 id="players-heading" tabIndex={-1}>
                 Players
             </h3>
-            <ul className="dk-rows" role="list">
-                {players.map((player, index) => (
-                    <li key={player}>
-                        <div className="dk-row">
-                            <span className="dk-row-text">
-                                <span className="dk-row-title">{player}</span>
-                            </span>
-                            <button
-                                type="button"
-                                className="dk-button dk-button-text"
-                                id={\`remove-\${player.toLowerCase()}\`}
-                                onClick={() => {
-                                    remove(index);
-                                }}
-                            >
-                                Remove
-                                <span className="dk-visually-hidden"> {player}</span>
-                            </button>
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            {players.length === 0 ? (
+                <p>No players. Put the players back brings them back.</p>
+            ) : (
+                <ul className="dk-rows" role="list">
+                    {players.map((player, index) => (
+                        <li key={player}>
+                            <div className="dk-row">
+                                <span className="dk-row-text">
+                                    <span className="dk-row-title">{player}</span>
+                                </span>
+                                <button
+                                    type="button"
+                                    className="dk-button dk-button-text"
+                                    id={\`remove-\${player.toLowerCase()}\`}
+                                    onClick={() => {
+                                        remove(index);
+                                    }}
+                                >
+                                    Remove
+                                    <span className="dk-visually-hidden"> {player}</span>
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            <p>
+                <Button
+                    onClick={() => {
+                        setPlayers(PLAYERS);
+                        say('The players are back.');
+                    }}
+                >
+                    Put the players back
+                </Button>
+            </p>
         </div>
     );
 };
@@ -321,7 +351,7 @@ export const PlayersScreen = () => (
 `,
     },
     {
-        name: 'A part of the page that loads, and a failure',
+        name: 'Loading, and a failure',
         draw: (live) => (
             <>
                 <article className="dk-stack dk-stack-heading" aria-labelledby="product-heading">
@@ -369,23 +399,30 @@ const Product = ({ load }: { readonly load: () => Promise<string> }) => {
     const focusNext = useFocusAfterDraw();
     const [state, setState] = useState<Loading>('loaded');
     const [product, setProduct] = useState('Trail shoes, size 9, $84.');
+    // Each load counts, so a load overtaken by another draws and says nothing.
+    const loads = useRef(0);
     const loading = useRef(false);
     const start = () => {
+        loads.current += 1;
+        const mine = loads.current;
+        const newest = () => mine === loads.current;
         loading.current = true;
         setState('loading');
         // Said once the wait outlasts --dk-wait, 400ms, and dropped where the load ends first.
-        say(() => (loading.current ? 'Loading the product.' : null), { settle: 400 });
+        say(() => (loading.current && newest() ? 'Loading the product.' : null), { settle: 400 });
         load().then(
             (loaded) => {
+                if (!newest()) return;
                 loading.current = false;
                 setProduct(loaded);
                 setState('loaded');
                 say('Product loaded.');
             },
             () => {
+                if (!newest()) return;
                 loading.current = false;
                 window.setTimeout(() => {
-                    setState('failed');
+                    if (newest()) setState('failed');
                 }, SETTLE);
             }
         );
@@ -404,11 +441,14 @@ const Product = ({ load }: { readonly load: () => Promise<string> }) => {
             <Callout
                 tone="danger"
                 live="alert"
-                title={failed ? 'The product could not be loaded' : undefined}
-                headingLevel={4}
                 actions={failed ? <Button onClick={tryAgain}>Try again</Button> : undefined}
             >
-                {failed ? <p>Check your connection.</p> : null}
+                {failed ? (
+                    <p>
+                        The product could not be loaded. Check your connection, then choose Try
+                        again.
+                    </p>
+                ) : null}
             </Callout>
             <div aria-busy={state === 'loading'}>
                 {state === 'loading' ? <p className="dk-loading">Loading the product.</p> : null}

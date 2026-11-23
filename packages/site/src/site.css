@@ -470,6 +470,7 @@ body > .dk-strip {
     display: flex;
     align-items: center;
     min-height: var(--dk-strip);
+    padding-block: var(--dk-space-2);
     padding-inline: var(--dk-space-3);
     border-radius: var(--dk-radius);
     color: var(--dk-muted);

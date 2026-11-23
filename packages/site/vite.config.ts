@@ -67,11 +67,12 @@ const withoutImageHints = (markup: string) =>
     markup.replaceAll(/<link rel="preload" as="image"[^>]*\/>/g, '');
 
 /**
- * Each state's markup as the site draws it, by the pinned version's components where one draws it,
- * laid out as the repository lays out HTML: each element on a line of its own where its control is
- * laid out, and otherwise broken only where a space already is. Two states with one key would show
- * one state's markup under the other, so the build refuses them, and one that cannot be laid out
- * fails the build by name.
+ * Each state's markup by `codeKey`, and each behavior's by `behaviorKey`, laid out. A state is
+ * drawn by the pinned version's components where one draws it, and laid out as the repository lays
+ * out HTML: each element on a line of its own where its control is laid out, and otherwise broken
+ * only where a space already is. A behavior is laid out an element to a line. Two with one key
+ * would show one's markup under the other, so the build refuses them, and one that cannot be laid
+ * out fails the build by name.
  */
 const markupOf = async (): Promise<Build['markup']> => {
     /** One piece of markup laid out, or a build that fails by its key. */
@@ -110,8 +111,8 @@ const released = (name: string): string =>
 
 /**
  * The version of the kit the site installed from npm, its tokens sheet and its three sheets
- * together, the sheet the own palette page sets its palette and column in, the commit the site is built at, and each state's markup, read once, when the first
- * page is built.
+ * together, the sheet the own palette page sets its palette and column in, the commit the site is
+ * built at, and each state's and each behavior's markup, read once, when the first page is built.
  */
 let built: Promise<Build> | undefined;
 const build = (): Promise<Build> =>

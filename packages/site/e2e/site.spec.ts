@@ -1087,8 +1087,12 @@ test.describe('the behavior page', () => {
         await expect(page.locator('#players-heading')).toBeFocused();
         await expect(said).toHaveText('“Ben was removed.”');
         await expect(page.locator('#players')).toBeHidden();
+        await expect(page.locator('#players-none')).toHaveText(
+            'No players. Put the players back brings them back.'
+        );
         await page.getByRole('button', { name: 'Put the players back' }).click();
         await expect(page.locator('#players > li')).toHaveCount(4);
+        await expect(page.locator('#players-none')).toBeHidden();
         await expect(said).toHaveText('“The players are back.”');
     });
 
@@ -1096,7 +1100,7 @@ test.describe('the behavior page', () => {
         page,
     }) => {
         await page.goto(BEHAVIOR);
-        const said = saidUnder(page, 'A part of the page that loads, and a failure');
+        const said = saidUnder(page, 'Loading, and a failure');
         const product = page.locator('#product');
         await page.getByRole('button', { name: 'Load again' }).click();
         await expect(product).toHaveAttribute('aria-busy', 'true');
@@ -1107,13 +1111,56 @@ test.describe('the behavior page', () => {
         const fail = page.getByRole('button', { name: 'Show the failure' });
         await fail.click();
         const alert = page.locator('#product-failure [role="alert"]');
-        await expect(alert).toContainText('The product could not be loaded', { timeout: 5000 });
+        // The callout's hidden word comes first, then the failure.
+        await expect(alert).toHaveText(
+            'Error: The product could not be loaded. Check your connection, then choose Try again.',
+            { timeout: 5000 }
+        );
         await expect(fail).toBeFocused();
         await expect(product).not.toHaveAttribute('aria-busy');
         await page.getByRole('button', { name: 'Try again' }).click();
         await expect(page.locator('#product-heading')).toBeFocused();
         await expect(alert).toHaveText('');
         await expect(said).toHaveText('“Product loaded.”', { timeout: 5000 });
+    });
+});
+
+test.describe('the behavior page, with two loads at once', () => {
+    test('shows only the newest load when Load again is pressed twice', async ({ page }) => {
+        await page.goto(BEHAVIOR);
+        const product = page.locator('#product');
+        const load = page.getByRole('button', { name: 'Load again' });
+        await load.click();
+        await page.waitForTimeout(1000);
+        await load.click();
+        // Past when the first load would end, the second is still loading.
+        await page.waitForTimeout(1400);
+        await expect(product).toHaveAttribute('aria-busy', 'true');
+        await expect(product.locator('.dk-loading')).toHaveCount(1);
+        await expect(saidUnder(page, 'Loading, and a failure')).not.toHaveText('“Product loaded.”');
+        await expect(product).not.toHaveAttribute('aria-busy', { timeout: 3000 });
+        await expect(product.locator('p')).toHaveCount(1);
+    });
+});
+
+test.describe('the behavior page with no script', () => {
+    test.use({ javaScriptEnabled: false });
+
+    test('says the examples need scripts, and offers no Save rule that would send the form', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        // Playwright's text search passes over a noscript's words, so the paragraph is found by place.
+        const noscript = page.locator('main > noscript > p');
+        await expect(noscript).toBeVisible();
+        await expect(noscript).toHaveText(
+            'With scripts on, each example here works as you press or type.'
+        );
+        await expect(page.locator('#rule-save')).toBeHidden();
+        await expect(page.locator('#save-round, #product-load, #players-back')).toHaveCount(3);
+        for (const id of ['#save-round', '#product-load', '#players-back']) {
+            await expect(page.locator(id), id).toBeHidden();
+        }
     });
 });
 
@@ -1137,8 +1184,8 @@ test.describe('the own palette page', () => {
             }));
         };
         const own = await drawn(OWN_PALETTE);
-        expect(own.accent).toBe('rgb(11, 110, 95)');
-        expect(own.column).toBe('48rem');
+        expect(own.accent).toBe('rgb(106, 63, 181)');
+        expect(own.column).toBe('64rem');
         const kits = await drawn(`${BASE}controls/`);
         expect(kits.accent).not.toBe(own.accent);
         expect(kits.column).toBe('72rem');
@@ -1149,7 +1196,7 @@ test.describe('the own palette page', () => {
         await page.goto(OWN_PALETTE);
         const sheet = (await page.locator('.site-sheet pre').textContent()) ?? '';
         expect(sheet).toContain('@layer dk, page;');
-        expect(sheet).toContain('--dk-column: 48rem;');
+        expect(sheet).toContain('--dk-column: 64rem;');
         const listed = await page
             .getByRole('table', { name: 'Every property a page sets' })
             .locator('tbody th')

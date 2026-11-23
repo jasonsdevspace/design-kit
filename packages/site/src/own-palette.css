@@ -8,12 +8,12 @@
 
 @layer page {
     :root {
-        --dk-accent: light-dark(#0b6e5f, #5ad1bb);
+        --dk-accent: light-dark(#6a3fb5, #c3a8ff);
         --dk-on-accent: light-dark(#ffffff, #121212);
-        --dk-highlight: light-dark(#ddf2ed, #12332d);
-        --dk-focus: light-dark(#b8430f, #ff9a5c);
+        --dk-highlight: light-dark(#efe9fb, #2d2448);
+        --dk-focus: light-dark(#0f62c9, #6fb0ff);
         --dk-button-shadow: 0 2px 0 var(--dk-control);
         --dk-button-press: 0 2px;
-        --dk-column: 48rem;
+        --dk-column: 64rem;
     }
 }

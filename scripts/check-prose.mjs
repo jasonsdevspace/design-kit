@@ -62,6 +62,13 @@ const BRITISH_SPELLINGS = new RegExp(
     'i'
 );
 
+/**
+ * The British spelling of gray as a word of its own, and its forms with an ending, matched in lower
+ * case alone, so a name that starts with a capital, such as a family name or a breed of dog, is
+ * left alone.
+ */
+const GREY = /\bgrey(s|ed|ing|er|est|ish|ness)?\b/;
+
 /** @typedef {{ index: number, text: string }} Segment */
 
 /**
@@ -158,7 +165,7 @@ export const problemsIn = (text, { issues }) =>
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
         /[A-Za-z];/.test(text) && 'semicolon in prose',
-        BRITISH_SPELLINGS.test(text) && 'British spelling',
+        (BRITISH_SPELLINGS.test(text) || GREY.test(text)) && 'British spelling',
     ].filter((rule) => typeof rule === 'string');
 
 /** @param {string} path */

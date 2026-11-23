@@ -16,12 +16,13 @@ import {
 /*
  * The site's own script, which puts the kit's theme switch in the strip and a copy button beside
  * each block of code, attaches the kit's steppers, dialogs, panels, toast and arrow keys where a
- * page shows them, makes the behavior page's examples work, and adds what the kit does not ship: tabs drawn where a state's code has two
- * blocks, the live copies of the states a reader can change, and the note a tap on a preview
- * brings, said on the kit's status line. The theme script the kit puts inline has already drawn the
- * theme before this runs, so the switch shows the choice, and saves and draws a new one. It saves
- * under the portfolio's key and with the portfolio's values, so a choice made here holds on every
- * page of jasonsdevspace.com, and the other way around.
+ * page shows them, makes the behavior page's examples work, and adds what the kit does not ship:
+ * tabs drawn where a state's code has two blocks, the live copies of the states a reader can
+ * change, and the note a tap on a preview brings, said on the kit's status line. The theme script
+ * the kit puts inline has already drawn the theme before this runs, so the switch shows the choice,
+ * and saves and draws a new one. It saves under the portfolio's key and with the portfolio's
+ * values, so a choice made here holds on every page of jasonsdevspace.com, and the other way
+ * around.
  */
 
 /**
@@ -343,14 +344,18 @@ for (const line of document.querySelectorAll<HTMLElement>('main .site-behavior .
 }
 
 /**
- * The refused form, attached as it is drawn: the kit checks it on a submit and refuses it where a
- * field fails, and a submit that passes reaches the page, which saves and says so.
+ * The refused form, attached as it is drawn, its Save rule shown once it is: the kit checks it on
+ * a submit and refuses it where a field fails, and a submit that passes reaches the page, which
+ * saves and says so.
  */
 const ruleForm = document.querySelector<HTMLFormElement>('main #rule-form');
+const ruleSave = document.querySelector<HTMLButtonElement>('main #rule-save');
 const ruleLine = ruleForm && lineOf(ruleForm);
-if (ruleForm && ruleLine) {
+if (ruleForm && ruleSave && ruleLine) {
     const sayRule = attachStatus(ruleLine);
     attachForm(ruleForm, { status: ruleLine });
+    // Shown only once the kit checks the form, so no submit ever goes to the address bar.
+    ruleSave.hidden = false;
     ruleForm.addEventListener('submit', (event) => {
         event.preventDefault();
         sayRule('The rule was saved.');
@@ -406,12 +411,14 @@ if (hand && handLine) {
 /**
  * The list of players. A press of Remove takes its row away, and with it the button that had
  * focus, so focus moves to the next row's Remove, the one before, or the list's heading. A list
- * with no rows is not drawn. Put the players back draws them all again.
+ * with no rows is not drawn, and a line under the heading says so in its place. Put the players
+ * back draws them all again.
  */
 const players = document.querySelector<HTMLElement>('main #players');
 const playersBack = document.querySelector<HTMLButtonElement>('main #players-back');
+const playersNone = document.querySelector<HTMLElement>('main #players-none');
 const playersLine = players && lineOf(players);
-if (players && playersBack && playersLine) {
+if (players && playersBack && playersNone && playersLine) {
     const sayPlayers = attachStatus(playersLine);
     const rows = [...players.children];
     const removeOf = (row: Element | undefined) =>
@@ -427,6 +434,7 @@ if (players && playersBack && playersLine) {
             const next = removeOf(left[at + 1] ?? left[at - 1]);
             row.remove();
             players.hidden = players.children.length === 0;
+            playersNone.hidden = !players.hidden;
             moveFocus(next ?? 'players-heading', { fallbacks: ['players-heading'] });
             sayPlayers(`${name} was removed.`);
         });
@@ -435,6 +443,7 @@ if (players && playersBack && playersLine) {
     playersBack.addEventListener('click', () => {
         players.replaceChildren(...rows);
         players.hidden = false;
+        playersNone.hidden = true;
         sayPlayers('The players are back.');
     });
 }

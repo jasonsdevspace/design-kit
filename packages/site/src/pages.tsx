@@ -26,7 +26,7 @@ export interface Build {
     /** The sheet the own palette page sets its palette and column in, as the page loads it. */
     readonly ownPalette: string;
     readonly commit: string;
-    /** Each state's markup as the site draws it, laid out, by `codeKey`. */
+    /** Each state's markup by `codeKey`, and each behavior's by `behaviorKey`, laid out. */
     readonly markup: Readonly<Record<string, string>>;
 }
 
@@ -725,7 +725,7 @@ const TOAST = 'Toast';
  * A note under the heading of each control on the controls page with a state pictured because it
  * would act as the page loads, leading to where it is shown working.
  */
-const PICTURED_NOTES: Readonly<Record<string, ReactNode>> = {
+const PICTURED_NOTE_WORDS: Readonly<Record<string, ReactNode>> = {
     Buttons: (
         <p>
             The busy button is a picture here.{' '}
@@ -736,17 +736,32 @@ const PICTURED_NOTES: Readonly<Record<string, ReactNode>> = {
     Callouts: (
         <p>
             The failure with Try again is a picture here.{' '}
-            <a href={`${BEHAVIOR_PAGE}#a-part-of-the-page-that-loads-and-a-failure`}>Behavior</a>{' '}
-            shows one working when you press it.
+            <a href={`${BEHAVIOR_PAGE}#loading-and-a-failure`}>Behavior</a> shows one working when
+            you press it.
         </p>
     ),
     'Loading and progress': (
         <p>
             The part of the page that is loading is a picture here.{' '}
-            <a href={`${BEHAVIOR_PAGE}#a-part-of-the-page-that-loads-and-a-failure`}>Behavior</a>{' '}
-            shows one working when you press it.
+            <a href={`${BEHAVIOR_PAGE}#loading-and-a-failure`}>Behavior</a> shows one working when
+            you press it.
         </p>
     ),
+};
+
+/**
+ * The notes, or a build that fails where a control with a pictured state has none, or a note names
+ * no such control, rather than a picture with no way to its working copy.
+ */
+const picturedNotes = () => {
+    const pictured = CONTROLS.filter(
+        (control) => control.pictured === true || control.states.some((state) => state.pictured)
+    ).map(({ name }) => name);
+    const missing = pictured.filter((name) => !Object.hasOwn(PICTURED_NOTE_WORDS, name));
+    if (missing.length > 0) throw new Error(`no note leads from ${missing.join(', ')}`);
+    const stray = Object.keys(PICTURED_NOTE_WORDS).filter((name) => !pictured.includes(name));
+    if (stray.length > 0) throw new Error(`a note names no pictured control: ${stray.join(', ')}`);
+    return PICTURED_NOTE_WORDS;
 };
 
 const APP_PIECES = ROUTES.find(({ file }) => file === 'app-pieces/index.html')?.path ?? BASE;
@@ -777,7 +792,7 @@ export const Controls = ({ build }: { readonly build: Build }) => (
         }
         sections={listed([...CONTROLS.map(({ name }) => name), TOAST])}
     >
-        <Shown controls={CONTROLS} build={build} notes={PICTURED_NOTES} />
+        <Shown controls={CONTROLS} build={build} notes={picturedNotes()} />
         <section className="site-toast">
             <h2 id={idOf(TOAST)}>{TOAST}</h2>
             <p>
@@ -1227,8 +1242,8 @@ const behaviorMarkup = (markup: Build['markup'], behavior: Behavior) => {
 type BehaviorName = (typeof BEHAVIORS)[number]['name'];
 
 /**
- * What each behavior's section says before it, and the buttons only the site adds beside it, such
- * as the one that makes a load fail, which wait hidden until the site's script attaches them.
+ * What each behavior's section says before it, and what only the site adds beside it, the words
+ * a failed load puts in its alert.
  */
 const BEHAVIOR_WORDS: Readonly<
     Record<BehaviorName, { readonly about: ReactNode; readonly beside?: ReactNode }>
@@ -1249,7 +1264,7 @@ const BEHAVIOR_WORDS: Readonly<
             <p>
                 Press Save the round. The button is off at once, so a second press does nothing, and
                 keeps its look for <code>--dk-wait</code>, 400 milliseconds, so a fast save never
-                flashes it grey. Once that wait has passed it is drawn off and its words are said on
+                flashes it gray. Once that wait has passed it is drawn off and its words are said on
                 the status line. The save here takes three seconds, then says it is done.
             </p>
         ),
@@ -1269,20 +1284,13 @@ const BEHAVIOR_WORDS: Readonly<
         about: (
             <p>
                 Press Remove beside a player. The row goes, and the button that had focus with it,
-                so focus moves to the next player&rsquo;s Remove, or the one before after the last
-                row, and to the list&rsquo;s heading once no player is left. Put the players back
-                brings the list back as it was.
-            </p>
-        ),
-        beside: (
-            <p>
-                <button type="button" className="dk-button" id="players-back" hidden>
-                    Put the players back
-                </button>
+                so focus moves to the next player&rsquo;s Remove, or to the one before when the last
+                row goes, and to the list&rsquo;s heading once no player is left. A press of Put the
+                players back brings the list back as it was.
             </p>
         ),
     },
-    'A part of the page that loads, and a failure': {
+    'Loading, and a failure': {
         about: (
             <>
                 <p>
@@ -1300,13 +1308,11 @@ const BEHAVIOR_WORDS: Readonly<
         ),
         beside: (
             <template id="product-failure-words">
-                <kit.Callout
-                    tone="danger"
-                    title="The product could not be loaded"
-                    headingLevel={4}
-                    actions={<kit.Button>Try again</kit.Button>}
-                >
-                    <p>Check your connection.</p>
+                <kit.Callout tone="danger" actions={<kit.Button>Try again</kit.Button>}>
+                    <p>
+                        The product could not be loaded. Check your connection, then choose Try
+                        again.
+                    </p>
                 </kit.Callout>
             </template>
         ),
@@ -1376,12 +1382,18 @@ export const BehaviorPage = ({ build }: { readonly build: Build }) => (
             </>
         }
         intro={
-            <p>
-                Nothing here acts until you press or type. Each example speaks on a status line of
-                its own, the line out of sight that a screen reader reads without moving focus, and
-                what it said last is shown under it. Under that is its code. To see the other theme
-                live, choose Light or Dark next to Theme, at the top of the page.
-            </p>
+            <>
+                <p>
+                    Nothing here acts until you press or type. Each example speaks on a status line
+                    of its own, the line out of sight that a screen reader reads without moving
+                    focus, and what it said last is shown under it. Under that is its code. To see
+                    the other theme live, choose Light or Dark next to Theme, at the top of the
+                    page.
+                </p>
+                <noscript>
+                    <p>With scripts on, each example here works as you press or type.</p>
+                </noscript>
+            </>
         }
         sections={listed(BEHAVIORS.map(({ name }) => name))}
     >
@@ -1396,10 +1408,10 @@ export const BehaviorPage = ({ build }: { readonly build: Build }) => (
  * sheets add, rather than a row with nothing to say.
  */
 const PROPERTY_WORDS: Readonly<Record<string, string>> = {
-    '--dk-focus': 'The focus ring and the edge a pointer brings to a button, the accent unless set',
+    '--dk-focus': 'The focus ring and a control’s edge under a pointer, the accent unless set',
     '--dk-button-shadow': 'A shadow under a button at rest, none unless set',
     '--dk-button-press':
-        'How a held button moves, as a whole translate such as 0 2px, and where a toggle that is on rests',
+        'How a held button moves, as a whole translate such as 0 2px, and where a toggle that is on or a button whose panel is open rests',
     '--dk-panel-shadow': 'The shadow under a raised panel, the resting shadow unless set',
     '--dk-tile-ground': 'The ground under a tile, the card’s on a page and the page’s in a panel',
     '--dk-tile-shadow': 'A shadow under a tile, none unless set',
@@ -1448,7 +1460,7 @@ export const OwnPalette = ({ build }: { readonly build: Build }) => {
         <Page
             build={build}
             current="own-palette/index.html"
-            title="A page’s own palette and layers"
+            title="A page’s own palette"
             lead={
                 <>
                     This page brings its own colors and a narrower column, and puts its rules in a
@@ -1457,10 +1469,11 @@ export const OwnPalette = ({ build }: { readonly build: Build }) => {
             }
             intro={
                 <p>
-                    Everything on it, the strip and the footer too, is drawn by the kit from what
-                    the page sets, with no rule written over a kit class. The colors and the column
-                    of this site&rsquo;s other pages are the kit&rsquo;s own. To see the other theme
-                    live, choose Light or Dark next to Theme, at the top of the page.
+                    The sheet this page adds, shown below, writes no rule over a kit class.
+                    Everything it changes, the strip and the footer too, it changes through the
+                    properties the kit reads. The colors and the column of this site&rsquo;s other
+                    pages are the kit&rsquo;s own. To see the other theme live, choose Light or Dark
+                    next to Theme, at the top of the page.
                 </p>
             }
             sections={OWN_SECTIONS}
@@ -1468,8 +1481,8 @@ export const OwnPalette = ({ build }: { readonly build: Build }) => {
             <section>
                 <OwnHeading id="what-this-page-sets" />
                 <p>
-                    This is the whole of what the page adds to the kit, the sheet it loads after the
-                    kit&rsquo;s.
+                    This is all the page adds to the kit beside the site&rsquo;s own sheet, which
+                    every page of this site loads, and it loads after both of them.
                 </p>
                 <div className="site-code site-sheet">
                     <CodeBlock id="own-palette-sheet" title="CSS" code={build.ownPalette.trim()} />
