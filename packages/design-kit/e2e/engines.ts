@@ -38,12 +38,14 @@ export const WEBKIT: Engine = {
     focus: "Where focus falls as a control leaves, which is each engine's own.",
     leaks: 'What a piece leaves running once taken down, counted in every engine.',
     strict: "The hooks under StrictMode, whose second run meets each engine's focus and events.",
+    busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: 'Where focus is after a refusal and a reset, which Safari sets its own way.',
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
 export const FIREFOX: Engine = {
+    busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
     'stepper-say': 'A stepper attached again from a focusout handler, an event each engine fires.',
     controls: 'Lengths Firefox rounds to a sixty-fourth of a pixel.',

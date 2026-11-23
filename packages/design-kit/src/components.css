@@ -4,7 +4,8 @@
  * which the React components draw and a page without React writes by hand. A selector beyond a
  * single class sits inside one :where(), followed at most by a focus pseudo-class, or by a number
  * field's spin buttons or a dialog's ::backdrop, the parts of a browser's own element only a
- * pseudo-element reaches. So only the classes, the focus rules and those parts carry weight.
+ * pseudo-element reaches, or by the ::after a busy button draws its dots of work in. So only the
+ * classes, the focus rules and those pseudo-elements carry weight.
  *
  * The page chrome comes first, then the buttons and a row of them, the fields, a field with a
  * button beside it, the sets of choices, the callouts and a loading line, then the explainer page
@@ -309,7 +310,11 @@
     /*
      * A button stands as tall as a field, so the two sit level in a row, and is never narrower
      * than it is tall. It has no ground of its own, so it takes the ground of whatever it sits on,
-     * a callout or a panel included. A link that wears the class looks the same.
+     * a callout or a panel included. A link that wears the class looks the same. Above and below
+     * its words it keeps a band as deep as a busy button's dots sit high, so the dots never meet
+     * words that wrap or grow. The band is the dots' 0.125rem inset, plus their 0.1875rem height,
+     * plus 0.0625rem of air. A button of one line is shorter than its least height with the band,
+     * so it keeps its size, and only words that wrap stand the band taller.
      */
     :where(.dk-button) {
         display: inline-flex;
@@ -320,7 +325,7 @@
         gap: var(--dk-space-2);
         min-height: var(--dk-field-height);
         min-width: var(--dk-field-height);
-        padding: 0 var(--dk-space-3);
+        padding: 0.375rem var(--dk-space-3);
         border: 1px solid var(--dk-control);
         border-radius: var(--dk-radius);
         background: transparent;
@@ -402,6 +407,12 @@
     :where(.dk-button-text) {
         min-width: 0;
         padding-inline: 0;
+        /*
+         * A text button takes the leading around it, which already holds half of it above and
+         * below its words, so its band is only what that leaves short, and a line of it in
+         * ordinary text keeps the button's height.
+         */
+        padding-block: max(0px, 0.375rem - (1lh - 1.2em) / 2);
         border: 0;
         /* A link has no edge to lift, so it takes no shadow and does not move when pressed. */
         box-shadow: none;
@@ -478,7 +489,7 @@
     /*
      * Busy, a button whose press has started something still running, such as a save. It is off at
      * once, so a second press does nothing, but its look holds for --dk-wait before it changes, so
-     * a fast save does not flash the button grey, and the pointer shows the wait at once. The wait
+     * a fast save does not flash the button gray, and the pointer shows the wait at once. The wait
      * is a delay, which reduced motion keeps, and it holds in forced colors too.
      */
     :where(.dk-button[data-busy]) {
@@ -489,6 +500,42 @@
         transition-delay: var(--dk-wait);
         transition-behavior: allow-discrete;
         cursor: progress;
+        position: relative;
+    }
+
+    /*
+     * Once the wait has passed, a busy button that is off draws three dots centered at its foot,
+     * so a visitor who sees it can tell it is at work and not only off. A busy button not yet
+     * marked off, as markup has it before an attach runs, draws none, so dots never sit dark on the
+     * accent's fill. The dots are a gradient repeated three times across a box exactly three dots
+     * wide, so every engine draws three at every text size. They are in the text color, which
+     * keeps 3:1 on every ground at the faintest of their pulse, and in forced colors, where a
+     * gradient is dropped, they keep it in the system's gray and stand still. They are centered
+     * whatever the button's own alignment, sit in the band a button keeps below its words and take
+     * no place in the row, so the button keeps its size, an icon alone or a text button with no
+     * inline padding included. They hold no words, so the button's name stays as it was. They wait
+     * as a loading line does and then pulse. Reduced motion stops the pulse and they stand still.
+     */
+    :where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after {
+        content: '';
+        position: absolute;
+        inset-block-end: 0.125rem;
+        inset-inline: 0;
+        margin-inline: auto;
+        width: 1.125rem;
+        height: 0.1875rem;
+        color: var(--dk-fg);
+        background: radial-gradient(circle closest-side, currentColor 80%, transparent) 0 / 0.375rem
+            100% repeat-x;
+        animation:
+            dk-wait 0s var(--dk-wait) backwards,
+            dk-busy 0.6s var(--dk-wait) infinite alternate;
+    }
+
+    @keyframes dk-busy {
+        to {
+            opacity: 0.55;
+        }
     }
 
     /*
@@ -643,6 +690,16 @@
             border-color: GrayText;
             background: Canvas;
             color: GrayText;
+        }
+
+        /*
+         * A gradient is dropped here, so the dots keep theirs, drawn in the system's gray, and
+         * stand still after their wait, since a pulse over the canvas could fall under 3:1.
+         */
+        :where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after {
+            forced-color-adjust: none;
+            color: GrayText;
+            animation: dk-wait 0s var(--dk-wait) backwards;
         }
 
         :where(
@@ -1447,9 +1504,9 @@
     /*
      * Steps a demo takes one after another, each in a box of its own with an arrow above it from
      * the step before. The arrow is a span hidden from a screen reader, since a selector in this
-     * sheet takes no pseudo-element after its :where() but a number field's spin buttons and a
-     * dialog's backdrop, and a pseudo-element cannot sit inside one. The list keeps role="list" in
-     * its markup, since a browser can drop a list's meaning when its markers are gone.
+     * sheet takes no pseudo-element after its :where() but the parts of a browser's own element and
+     * a busy button's dots, and a pseudo-element cannot sit inside one. The list keeps role="list"
+     * in its markup, since a browser can drop a list's meaning when its markers are gone.
      */
     :where(.dk-steps) {
         display: grid;

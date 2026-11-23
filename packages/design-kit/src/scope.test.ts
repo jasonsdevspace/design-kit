@@ -13,9 +13,11 @@ import { CONTAINER_GROUNDS, withoutComments } from '../examples/palette.js';
  * pseudo-element inside a :where() matches nothing, and a rule meant for every element has to reach
  * it too. The components may follow theirs with a number field's own spin buttons, a dialog's
  * backdrop or a progress bar's track and fill, the parts of a browser's own element a component has
- * to draw or take away and only a pseudo-element reaches. So only those classes, the focus rules
- * and those pseudo-elements carry any weight, and none of it counts against a page's own rule
- * outside a layer.
+ * to draw or take away and only a pseudo-element reaches, and a busy button may follow its own with
+ * ::after, where it draws the dots that show it at work. That mark holds no words and is placed
+ * absolutely, which the tests below hold it to. So only those classes, the focus rules and those
+ * pseudo-elements carry any weight, and none of it counts against a page's own rule outside a
+ * layer.
  */
 
 /** The kit's layers, in the order the tokens declare them. Each sheet fills the one it names. */
@@ -95,6 +97,45 @@ const CONTROL_PARTS = [
     '::-webkit-progress-value',
     '::-moz-progress-bar',
 ];
+
+/**
+ * The pseudo-elements a component draws a mark of its state in, each with the one selector it is
+ * drawn on, a busy button's dots of work alone.
+ */
+const DRAWN = [":where(.dk-button[data-busy]:is(:disabled, [aria-disabled='true']))::after"];
+
+/** The rule for forced colors, the one place a drawn mark may set its colors alone. */
+const FORCED = '@media (forced-colors: active)';
+
+/**
+ * Each rule in a sheet, with its selector list, its declarations and the at-rules it sits inside,
+ * outermost first. A quoted string is read as empty, so `content: ''` reads as written.
+ */
+const rulesOf = (css: string) => {
+    const found: { selector: string; body: string; within: string[] }[] = [];
+    const open: string[] = [];
+    let text = '';
+    for (const character of withoutComments(css).replace(/"[^"]*"|'[^']*'/g, "''")) {
+        if (character === '{') {
+            open.push((text.split(';').pop() ?? '').replace(/\s+/g, ' ').trim());
+            text = '';
+        } else if (character === '}') {
+            const head = open.pop() ?? '';
+            const within = open.filter((at) => at.startsWith('@'));
+            if (!head.startsWith('@') && !within.some((at) => at.startsWith('@keyframes')))
+                found.push({ selector: head, body: text, within });
+            text = '';
+        } else text += character;
+    }
+    return found;
+};
+
+/** The properties a rule's declarations set, in order. */
+const propertiesOf = (body: string): string[] =>
+    body
+        .split(';')
+        .map((declaration) => declaration.split(':')[0]?.trim() ?? '')
+        .filter(Boolean);
 
 /**
  * What a selector may be: the kit's own class alone, or one :where() around anything but a
@@ -182,11 +223,50 @@ describe('what the sheets style', () => {
                             !scoped(selector, {
                                 pseudo: layerOf(name) === 'dk.base',
                                 parts: layerOf(name) === 'dk.components' ? CONTROL_PARTS : [],
-                            })
+                            }) && !(layerOf(name) === 'dk.components' && DRAWN.includes(selector))
                     )
             ).toEqual([]);
         });
     }
+
+    it('draws each mark it names in DRAWN, and nothing else there', () => {
+        const rules = rulesOf(readFileSync(new URL('components.css', folder), 'utf8'));
+        // The rules read a quoted string as empty, so the name is read the same way.
+        const on = (drawn: string) =>
+            rules.filter(({ selector }) =>
+                split(selector).includes(drawn.replace(/"[^"]*"|'[^']*'/g, "''"))
+            );
+        expect(DRAWN.filter((drawn) => on(drawn).length === 0)).toEqual([]);
+        for (const drawn of DRAWN) {
+            for (const { body, within } of on(drawn)) {
+                if (within.includes(FORCED)) {
+                    // In forced colors the mark only keeps its colors, as the system's, and its wait.
+                    expect(propertiesOf(body).sort()).toEqual([
+                        'animation',
+                        'color',
+                        'forced-color-adjust',
+                    ]);
+                } else {
+                    // A mark holds no words, so no name changes, and takes no place in the row.
+                    const flat = body.replace(/\s+/g, ' ');
+                    expect(flat).toContain("content: ''");
+                    expect(flat).toContain('position: absolute');
+                }
+            }
+        }
+    });
+
+    it('reads a rule inside forced colors apart from the same rule outside it', () => {
+        expect(
+            rulesOf(
+                `.dk-a { content: ''; } ${FORCED} { .dk-a { color: GrayText; } } ` +
+                    '@keyframes b { to { opacity: 0; } }'
+            )
+        ).toEqual([
+            { selector: '.dk-a', body: " content: ''; ", within: [] },
+            { selector: '.dk-a', body: ' color: GrayText; ', within: [FORCED] },
+        ]);
+    });
 
     it('tells a selector that adds weight from one that does not', () => {
         expect(
@@ -223,7 +303,7 @@ describe('what the sheets style', () => {
         ]);
         // A component styles no pseudo-element, so its arrows and marks are elements of their own,
         // but a number field's spin buttons, a dialog's backdrop and a progress bar's track and
-        // fill, which only a pseudo-element reaches.
+        // fill, which only a pseudo-element reaches, and a busy button's ::after, named in DRAWN.
         expect(candidates.filter((selector) => scoped(selector))).toEqual([]);
         expect(
             [
