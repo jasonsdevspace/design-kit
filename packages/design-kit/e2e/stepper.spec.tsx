@@ -558,14 +558,25 @@ test("widens a stepper's field for its stepper alone, not for words in its hint 
         const gap = parseFloat(getComputedStyle(stepper).columnGap);
         const edge =
             row.getBoundingClientRect().right - parseFloat(getComputedStyle(row).paddingRight);
+        const box = field.getBoundingClientRect();
+        const within = (part: Element) => {
+            const drawn = part.getBoundingClientRect();
+            return drawn.left >= box.left - 0.5 && drawn.right <= box.right + 0.5;
+        };
         return {
-            field: field.getBoundingClientRect().width,
+            field: box.width,
+            inside: within(stepper),
+            past: [...stepper.querySelectorAll(':scope > .dk-button')].filter(
+                (button) => !within(button)
+            ).length,
             // The stepper's least width: its buttons at 44 wide, its value and the space between.
             least: 2 * 44 + value.getBoundingClientRect().width + 2 * gap,
             otherInside: other.getBoundingClientRect().right <= edge + 0.5,
         };
     });
     // The squeezed row leaves the field its stepper's least width and the text field its room.
+    expect(measured.inside, 'the stepper inside its field').toBe(true);
+    expect(measured.past, 'buttons past the field').toBe(0);
     expect(measured.field).toBeLessThanOrEqual(measured.least + 1);
     expect(measured.otherInside, 'the text field inside the row').toBe(true);
 });
