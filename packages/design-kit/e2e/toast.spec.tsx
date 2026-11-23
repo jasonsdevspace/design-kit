@@ -1035,6 +1035,103 @@ test("sits in an app's frame above the dock, its action one step back from the d
     await expect(undo(page)).toBeFocused();
 });
 
+test("marks the frame's body with the rows it keeps room for while the toast floats over it, and not after it leaves", async ({
+    page,
+}) => {
+    const frameBody = page.locator('.dk-app-body');
+    await open(page, { body: FRAME });
+    await expect(frameBody).not.toHaveAttribute('data-toast-rows');
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    // The body carries the count the toast does, which the sheet keeps the room by.
+    const rows = (await toast(page).getAttribute('data-rows')) ?? '';
+    expect(Number(rows)).toBeGreaterThanOrEqual(1);
+    await expect(frameBody).toHaveAttribute('data-toast-rows', rows);
+    await expect(toast(page)).not.toHaveAttribute('data-row');
+    expect(
+        Number.parseFloat(
+            (await style(frameBody, 'scroll-padding-bottom'))['scroll-padding-bottom'] ?? '0'
+        )
+    ).toBeGreaterThan(0);
+    // A message that replaces the first keeps the mark, and a dismiss takes it off.
+    await show(page, 'Round 4 saved.');
+    await expect(frameBody).toHaveAttribute('data-toast-rows', /^[1-5]$/);
+    await closeButton(page).click();
+    await expect(frameBody).not.toHaveAttribute('data-toast-rows');
+    expect((await style(frameBody, 'scroll-padding-bottom'))['scroll-padding-bottom']).toBe('auto');
+    // Dismissed by what showing it returned, and by its action.
+    await show(page, 'Round 5 saved.', 'Undo');
+    await expect(frameBody).toHaveAttribute('data-toast-rows');
+    await page.evaluate(() => {
+        (window as unknown as { kit: Kit }).kit.last?.();
+    });
+    await expect(frameBody).not.toHaveAttribute('data-toast-rows');
+    await show(page, 'Round 6 saved.', 'Undo');
+    await expect(frameBody).toHaveAttribute('data-toast-rows');
+    await undo(page).click();
+    await expect(frameBody).not.toHaveAttribute('data-toast-rows');
+});
+
+test("leaves the frame's body unmarked while the toast takes its row above the dock", async ({
+    page,
+}) => {
+    // A phone on its side, where the body is near its least height and cannot hold the toast.
+    await open(page, { body: FULL, width: 844, height: 400 });
+    await show(page, 'Round 3 saved.', 'Undo');
+    await settled(page);
+    await expect(toast(page)).toHaveAttribute('data-row', '');
+    await expect(page.locator('.dk-app-body')).not.toHaveAttribute('data-toast-rows');
+    // Measured again as the screen changes, it is left so.
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    await expect(toast(page)).toHaveAttribute('data-row', '');
+    await expect(page.locator('.dk-app-body')).not.toHaveAttribute('data-toast-rows');
+    // Upright again, the body holds the toast and carries its rows.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.dk-app-body')).toHaveAttribute('data-toast-rows', /^[1-5]$/);
+    await expect(toast(page)).not.toHaveAttribute('data-row');
+    await closeButton(page).click();
+    await expect(page.locator('.dk-app-body')).not.toHaveAttribute('data-toast-rows');
+});
+
+test("marks the frame's body with no count for a toast it cannot measure, and takes the mark off a body the toast has left", async ({
+    page,
+}) => {
+    // A toast's place out of sight has no size, so the body keeps the two rows of a mark with no
+    // count.
+    await open(page, { body: FRAME, css: '.dk-app-toast[data-away] { display: none; }' });
+    await page.locator('.dk-app-toast').evaluate((place) => {
+        place.setAttribute('data-away', '');
+    });
+    await show(page, 'Round 3 saved.', 'Undo');
+    const first = page.locator('.dk-app-body').first();
+    await expect(first).toHaveAttribute('data-toast-rows', '');
+    await expect(toast(page)).not.toHaveAttribute('data-rows');
+    // In sight again, it is measured, and the body carries its count.
+    await page.locator('.dk-app-toast').evaluate((place) => {
+        place.removeAttribute('data-away');
+    });
+    await expect(first).toHaveAttribute('data-toast-rows', /^[1-5]$/);
+    // Moved with its place into another frame and measured again, it marks that frame's body and
+    // the one it left keeps no room.
+    await page.evaluate(() => {
+        const frame = document.createElement('div');
+        frame.className = 'dk-app';
+        const body = document.createElement('main');
+        body.className = 'dk-app-body';
+        body.id = 'second';
+        body.innerHTML = '<p>Round 4 so far.</p>';
+        const place = document.querySelector('.dk-app-toast');
+        if (place) frame.append(body, place);
+        document.body.append(frame);
+        window.dispatchEvent(new Event('resize'));
+    });
+    await expect(first).not.toHaveAttribute('data-toast-rows');
+    await expect(page.locator('#second')).toHaveAttribute('data-toast-rows', /^[1-5]$/);
+    await closeButton(page).click();
+    await expect(page.locator('#second')).not.toHaveAttribute('data-toast-rows');
+    await expect(first).not.toHaveAttribute('data-toast-rows');
+});
+
 test("never moves the frame's dock under the thumb as it shows and leaves, at the usual and at twice the text size", async ({
     page,
     browserName,

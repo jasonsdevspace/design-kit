@@ -61,7 +61,7 @@ const screen = ({
 <h1 class="dk-app-title">${title}</h1>
 <button type="button" class="dk-button dk-button-text">Scores</button>
 </header>
-<main class="dk-app-body" id="main-content" tabindex="0">
+<main class="dk-app-body" id="main-content" tabindex="0"${toast ? ' data-toast-rows' : ''}>
 <p><a href="#rules">How a round is scored</a></p>
 ${LINES}
 <p id="last">The last line.</p>

@@ -88,8 +88,8 @@ page.
 | `--dk-band-left`, `--dk-band-right`                                                               | where content starts on each side of a band the width of the page: the column's inset, or what a phone keeps at that side where that is more, then `--dk-space-4`, or `--dk-app-side` on an app's page                                                                                                                                                                                             |
 | `--dk-flow-step`                                                                                  | the step between the pieces a column holds, `--dk-space-4` in an explainer, a content page, a band, their sections, a section in a group and an app's body, and `--dk-space-3` in a panel and a dialog, set on what each holds, and in a stack the step of what holds it, or `--dk-space-2` in a pair's stack and `--dk-space-3` in a heading's, and how tall a title beside a corner Close stands |
 | `--dk-ground`, `--dk-ground-step`                                                                 | the ground of what holds a piece, and the one a code block or a tile steps to on it: the page's and the card's, a panel's and the page's, a dialog's or a raised panel's and the card's                                                                                                                                                                                                            |
-| `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, and `--dk-space-4-held` at 48rem or less and in an app's frame, a tab bar's page and a dialog on either                                                                                                                                                                                                                             |
-| `--dk-dialog-inset`                                                                               | how far a dialog's content stands in, which its corner Close is placed from, `--dk-space-5-held`, and `--dk-space-4-held` at 48rem or less and on a page with an app's frame or a tab bar's page                                                                                                                                                                                                   |
+| `--dk-card-inset`                                                                                 | how far a panel's and a tile's words stand in, `--dk-space-5`, and `--dk-space-4-held` at 48rem or less and in an app's frame, a tab bar's page and a dialog in or beside either                                                                                                                                                                                                                   |
+| `--dk-dialog-inset`                                                                               | how far a dialog's content stands in, which its corner Close is placed from, `--dk-space-5-held`, and `--dk-space-4-held` at 48rem or less, in an app's frame or a tab bar's page and beside either                                                                                                                                                                                                |
 
 </details>
 
@@ -518,15 +518,15 @@ export const SaveRound = ({ saving, save }: { saving: boolean; save: () => void 
 
 A button is 2.25rem tall, `--dk-field-height`, as tall as a field, and 2.75rem, `--dk-target`, at
 48rem wide or less, and at every width in an app's frame, on a page that ends in a tab bar, in a
-dialog on either and in a toast, and it is never narrower than it is tall. It keeps a band of
-0.375rem above and below its words, which a button of one line fits inside its height, so only
-words that wrap stand it taller. A text button keeps only what the leading around it leaves short of
-that band, so a line of it in ordinary text keeps the button's height. It takes a tap at once, with
-no wait for a second tap that would zoom the page. It has no ground of its own, so it takes the
-ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every width,
-with wider inline padding and the body text size. A tall button is 3.5rem tall at every width and
-never narrower than that, and changes nothing else. A text button has no edge, no inline padding and
-no minimum width, in the accent and underlined at the size of the text around it, and keeps the
+dialog inside or beside either and in a toast, and it is never narrower than it is tall. It keeps a
+band of 0.375rem above and below its words, which a button of one line fits inside its height, so
+only words that wrap stand it taller. A text button keeps only what the leading around it leaves
+short of that band, so a line of it in ordinary text keeps the button's height. It takes a tap at
+once, with no wait for a second tap that would zoom the page. It has no ground of its own, so it
+takes the ground of whatever it sits on, a callout included. A large button is 2.75rem tall at every
+width, with wider inline padding and the body text size. A tall button is 3.5rem tall at every width
+and never narrower than that, and changes nothing else. A text button has no edge, no inline padding
+and no minimum width, in the accent and underlined at the size of the text around it, and keeps the
 button's height, so its target holds, which is why it sits beside a block rather than in running
 text, whose line it would push taller. Pointed at, its underline thickens, since it has no edge to
 color. Open, it keeps that thicker underline and nothing else. Off, it keeps its underline, in the
@@ -2462,10 +2462,10 @@ A panel sits on `--dk-surface` with an edge in the line color and large corners.
 draws it, since the card ground is close to the page's, and it stays in forced colors. A panel is
 padded by `--dk-card-inset`, which a tile's sides share: 1.5rem, and at 48rem wide or less 1rem held
 at no more than 16px at any text size, so a panel and the tiles in it leave their words room on a
-phone at twice the text size. In an app's frame, on a page that ends in a tab bar and in a dialog on
-either, where the column is a phone's, it is padded the same held 1rem at every width. What it holds
-is spaced 0.75rem from the one before it, a step closer than an explainer's parts. Inside an
-explainer its title steps down to the body size, as a tile's title there does.
+phone at twice the text size. In an app's frame, on a page that ends in a tab bar and in a dialog
+inside or beside either, where the column is a phone's, it is padded the same held 1rem at every
+width. What it holds is spaced 0.75rem from the one before it, a step closer than an explainer's
+parts. Inside an explainer its title steps down to the body size, as a tile's title there does.
 
 </details>
 
@@ -2733,35 +2733,41 @@ safe area tokens their values:
 The frame is a grid of rows: the bar, the body, the toast's place, the dock and the tab bar's place.
 Its column is a phone's whatever the screen, so every button, field, select and choice in it is the
 target tall at every width, as on a phone, and one screen has one height of control. A page that
-ends in a tab bar does the same, as does a dialog on either, and so do a theme switch, pills and
-tabs there, and a button in a toast. A demo's strip and footer stay as they are on every page. A
-page that shows a picture of a screen, such as a page of a kit's pieces, gives `dk-picture` to the
-picture's wrapper or to the frame itself and makes it `inert`, so the keyboard and a screen reader
-pass it by. A frame, a page that ends in a tab bar or a shown toast is a picture when it carries
-`dk-picture` or sits inside an element with the class, and the page around a picture keeps its
-column, its dialogs and its foot as a content page does. A pictured toast sits in its place rather
-than over the foot of the page. A pictured frame or page that ends in a tab bar is as tall as what
-it holds, its bars in their places in it rather than held to the screen, and the page draws the
-edge, the corners and the room around it. Only a toast's attach function reads a height, the toast's
-and the body's, as it shows and while it stays. A dock grows with what it holds and a tab bar grows
-at a large text size, so the body ends where the rows below it begin. A toast floats over the foot
-of the body, just above the dock, so showing or hiding one never moves the dock under a thumb about
-to press it again. While one is shown its place opens on a rule, under which the body scrolls as it
-does under the bar, and the body leaves room for the toast after its last element, as many rows as
-its attach function measured it at, up to five, so its last line scrolls clear of the toast and what
-the keyboard reaches in it stops short of the toast, in a browser with `:has()`. Where the body
-would keep less than a row and a half above that room, as on a phone on its side or at a large text
-size, the toast takes its row above the dock instead, so nothing in the body is covered by it or the
-bar, and the attach function scrolls the page by as much as the dock moved, so the dock stays under
-the thumb. The toast is measured again while it stays, as the screen turns or the text size changes.
-The room is that element's margin, so the body ends in a block, such as a paragraph or a list, as
-its content does. On a screen too short for the frame the toast takes its row above the dock, and
-the page keeps the dock in place as the toast comes and goes, in a browser that keeps a scroll
-position by what is on screen, as Chrome and Firefox do. Each row but the body's is never shorter
-than what it holds, and the body keeps `--dk-app-body`, 8rem, a few lines, so where the rows come to
-more than the screen the page scrolls and no row covers its neighbor or squeezes the body to
-nothing. What the body holds out of sight, such as a row's words for a screen reader, scrolls with
-it and never lengthens the page.
+ends in a tab bar does the same, as does a dialog written inside either or straight before or after
+it, as its sibling, and so do a theme switch, pills and tabs there, and a button in a toast. A
+dialog set apart from the frame, such as one inside a wrapper of its own, is drawn as a content
+page's is. A demo's strip and footer stay as they are on every page. A page that shows a picture of
+a screen, such as a page of a kit's pieces, gives `dk-picture` to the picture's wrapper or to the
+frame itself and makes it `inert`, so the keyboard and a screen reader pass it by. A frame, a page
+that ends in a tab bar or a shown toast is a picture when it carries `dk-picture` or sits inside an
+element with the class, and the page around a picture keeps its column, its dialogs and its foot as
+a content page does. A pictured toast sits in its place rather than over the foot of the page. A
+pictured frame or page that ends in a tab bar is as tall as what it holds, its bars in their places
+in it rather than held to the screen, and the page draws the edge, the corners and the room around
+it. Only a toast's attach function reads a height, the toast's and the body's, as it shows and while
+it stays. A dock grows with what it holds and a tab bar grows at a large text size, so the body ends
+where the rows below it begin. A toast floats over the foot of the body, just above the dock, so
+showing or hiding one never moves the dock under a thumb about to press it again. While one is shown
+its place opens on a rule, under which the body scrolls as it does under the bar, and the body
+leaves room for the toast after its last element, as many rows as its attach function measured it
+at, up to five, so its last line scrolls clear of the toast and what the keyboard reaches in it
+stops short of the toast. The attach function marks the frame's body with those rows, as
+`data-toast-rows`, while the toast floats over it, and the sheet keeps the room by that mark, in
+every browser the kit supports. A page that writes a shown toast into a live frame by hand, with
+`data-shown` and no attach, writes `data-toast-rows` on the frame's body too, with the toast's
+`data-rows` or with no value for two rows, since the body keeps no room without it. A picture of a
+frame needs no mark. Where the body would keep less than a row and a half above that room, as on a
+phone on its side or at a large text size, the toast takes its row above the dock instead, so
+nothing in the body is covered by it or the bar, and the attach function scrolls the page by as much
+as the dock moved, so the dock stays under the thumb. The toast is measured again while it stays, as
+the screen turns or the text size changes. The room is that element's margin, so the body ends in a
+block, such as a paragraph or a list, as its content does. On a screen too short for the frame the
+toast takes its row above the dock, and the page keeps the dock in place as the toast comes and
+goes, in a browser that keeps a scroll position by what is on screen, as Chrome and Firefox do. Each
+row but the body's is never shorter than what it holds, and the body keeps `--dk-app-body`, 8rem, a
+few lines, so where the rows come to more than the screen the page scrolls and no row covers its
+neighbor or squeezes the body to nothing. What the body holds out of sight, such as a row's words
+for a screen reader, scrolls with it and never lengthens the page.
 
 The frame's height is `100dvh`, the dynamic height, so a phone browser's own bars coming and going
 do not push the dock out of view. A pictured frame is as tall as what it holds instead, as the app
@@ -3194,15 +3200,16 @@ a part is refused even with a signal already aborted.
 
 One toast serves a page. In an app's frame it sits in the frame's place for it, `dk-app-toast`,
 floating over the foot of the body just above the dock, so it never moves the dock, and the body
-pads so its last line scrolls clear of it. On a page with no frame of its own it sits at the bottom
-of the screen, over the page and clear of the safe areas, in the app's column. While it is shown
-there, what the keyboard reaches stops short of it and the page's end scrolls clear of it, by the
-rows the toast takes, two at least and five at most, which its attach function marks in its
-`data-rows` attribute as it shows and while it stays. A message longer than five rows can cover what
-the keyboard reaches, so a toast's message is a short sentence. A page that ends in a tab bar and
-shows toasts is drawn in the frame, where the toast clears the bar. A toast shown while a dialog is
-open sits under the dialog's scrim, out of sight and out of a screen reader's reach, so a page shows
-its message once the dialog has closed.
+pads so its last line scrolls clear of it, by the rows `attachToast` marks on the frame's body in
+`data-toast-rows` while the toast floats there and takes off as it leaves. On a page with no frame
+of its own it sits at the bottom of the screen, over the page and clear of the safe areas, in the
+app's column. While it is shown there, what the keyboard reaches stops short of it and the page's
+end scrolls clear of it, by the rows the toast takes, two at least and five at most, which its
+attach function marks in its `data-rows` attribute as it shows and while it stays. A message longer
+than five rows can cover what the keyboard reaches, so a toast's message is a short sentence. A page
+that ends in a tab bar and shows toasts is drawn in the frame, where the toast clears the bar. A
+toast shown while a dialog is open sits under the dialog's scrim, out of sight and out of a screen
+reader's reach, so a page shows its message once the dialog has closed.
 
 **`Toast` props**
 
@@ -3796,6 +3803,10 @@ down](#taking-a-control-down) has it, an open dialog closes, with focus handed b
 it where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
 still where the browser handed it as the dialog closed, and the function that opens it does nothing.
 
+On a page with an app's frame, or one that ends in a tab bar, a dialog is written inside the frame
+or straight before or after it, as its sibling, so it takes the frame's sizes at every width, a
+phone's target for each control among them.
+
 The kit's app takes an action at once and offers Undo in a toast rather than asking first, so it
 asks in a dialog only where nothing could undo the answer.
 
@@ -3807,14 +3818,17 @@ with the raised shadow and an edge forced colors keep, over a scrim in `--dk-scr
 inside itself when it holds more than the screen does, and while one is open as a modal the page
 behind it does not scroll, in a browser with `:has()`. It stands what it holds `--dk-space-3` apart,
 and its actions further. Its title is at the title size, and its actions sit at its end, wrapping
-under one another where the room runs out. On a phone, and on a page that holds an app or ends in a
-tab bar of its own, the actions grow to fill their row, so stacked ones are the dialog's width
-rather than two widths at its end, and a text button keeps its link's width. It pads by
-`--dk-space-5`, and by `--dk-space-4` at 48rem wide or less and on a page that holds an app or ends
-in a tab bar of its own, as a panel does, with a sheet still clear of the home indicator. Its
-margins from the screen's edges and its padding stop growing with the text past their usual size, so
-on a phone at a large text size what it holds, such as a stepper, keeps its room. They stop there
-too where a page sets the space tokens larger.
+under one another where the room runs out. On a phone, and in a dialog on an app's page at every
+width, the actions grow to fill their row, so stacked ones are the dialog's width rather than two
+widths at its end, and a text button keeps its link's width. It pads by `--dk-space-5`, and by
+`--dk-space-4` at 48rem wide or less and on an app's page, as a panel does, with a sheet still clear
+of the home indicator. A dialog is on an app's page where it is written inside an app's frame or a
+page that ends in a tab bar, or straight before or after one, as its sibling, a picture of either
+aside. One set apart, such as inside a wrapper of its own beside the frame, is drawn as on a content
+page, which shows from 48rem wide: its controls at the field's height, the wider inset and its
+actions at its end. Its margins from the screen's edges and its padding stop growing with the text
+past their usual size, so on a phone at a large text size what it holds, such as a stepper, keeps
+its room. They stop there too where a page sets the space tokens larger.
 
 A `dk-dialog-sheet` sits at the bottom edge, the app's column wide, with its top corners rounded and
 its last line clear of the home indicator. It rises into place over `--dk-duration-medium` as it

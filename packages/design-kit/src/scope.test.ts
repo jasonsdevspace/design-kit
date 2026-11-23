@@ -395,19 +395,32 @@ describe('what the sheets style', () => {
         .replace(/ \)/g, ')');
 
     it("names the app's places in one form wherever a piece keeps a phone's size there", () => {
-        // The base list, and the pieces that keep a phone's size there too.
-        const places =
-            '.dk-app, .dk-tabbar-page, :root:has(:is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)) .dk-dialog';
+        // A live frame or page that ends in a tab bar, and a dialog beside one, as a sibling before
+        // or after it, which no rule asks the root for.
+        const live = ':is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)';
+        const beside = `${live} ~ .dk-dialog, .dk-dialog:has(~ ${live})`;
+        // The base list, and the same with a picture of a frame left out, which the dialog's
+        // actions are told by.
+        const forms = [`.dk-app, .dk-tabbar-page, ${beside}`, `${live}, ${beside}`];
+        // The pieces that keep a phone's size there too.
         const added = new Set(['.dk-toast']);
-        // Every list a piece names the places in, however many of them it kept, leaving out the
-        // frames a page's own place is told by inside its :has().
-        const lists = [...flat.matchAll(/(?<!has\():is\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g)]
-            .map(([, list = '']) => list.trim())
-            .filter((list) => list.includes('.dk-tabbar-page'));
+        // Every list a piece names the places in, however many of them it kept, read whole, so the
+        // frames named inside one are not read as a list of their own.
+        const lists: string[] = [];
+        for (let at = flat.indexOf(':is('); at >= 0;) {
+            const end = closing(flat, at + ':is'.length);
+            const list = flat.slice(at + ':is('.length, end);
+            const named = list.includes('.dk-tabbar-page');
+            if (named) lists.push(list);
+            at = flat.indexOf(':is(', named ? end : at + 1);
+        }
         expect(lists.length).toBeGreaterThan(0);
         const astray = lists.filter((list) => {
-            if (!list.startsWith(places)) return true;
-            const rest = list.slice(places.length);
+            // The frames a rule on the root or the body is told by, and those a page's foot is.
+            if (list === '.dk-app, .dk-tabbar-page') return false;
+            const form = forms.find((held) => list.startsWith(held));
+            if (form === undefined) return true;
+            const rest = list.slice(form.length);
             if (rest === '') return false;
             return (
                 !rest.startsWith(',') ||
@@ -418,20 +431,130 @@ describe('what the sheets style', () => {
             );
         });
         expect(astray).toEqual([]);
+        // Each form is written somewhere, so a list that drifts from both fails above.
+        expect(forms.filter((form) => !lists.some((list) => list.startsWith(form)))).toEqual([]);
+    });
+
+    /**
+     * Each selector that writes a `:has()` on an element that holds the page, the root, the body,
+     * an app's frame or a page that ends in a tab bar, where that element is not what the rule
+     * draws. Chromium restyles everything inside such an element for every element or word the
+     * page adds, as record 27 sets out. A picture of a frame, which is inert and holds a few
+     * elements, may be told by what it holds.
+     */
+    const hasOnHolder = (css: string): string[] => {
+        /** A selector's compounds, split at the combinators outside any parentheses. */
+        const compoundsOf = (selector: string): string[] => {
+            const parts = [''];
+            let depth = 0;
+            for (const sign of selector) {
+                if (sign === '(') depth += 1;
+                if (sign === ')') depth -= 1;
+                if (depth === 0 && ' >+~'.includes(sign)) parts.push('');
+                else parts[parts.length - 1] += sign;
+            }
+            return parts.filter(Boolean);
+        };
+        /** A compound's `:is()` and `:where()` lists, and the compound with them and what a `:has()` or `:not()` holds taken out. */
+        const opened = (compound: string): { own: string; lists: string[]; names: string } => {
+            const lists: string[] = [];
+            let own = '';
+            let names = '';
+            for (let at = 0; at < compound.length;) {
+                const group = /^:(is|where|has|not)\(/.exec(compound.slice(at));
+                if (!group) {
+                    own += compound[at];
+                    names += compound[at];
+                    at += 1;
+                    continue;
+                }
+                const open = at + group[0].length - 1;
+                const end = closing(compound, open);
+                const held = compound.slice(open + 1, end);
+                if (group[1] === 'is' || group[1] === 'where') {
+                    lists.push(held);
+                    names += ` ${held} `;
+                } else {
+                    own += `:${group[1] ?? ''}()`;
+                    // A :not() that holds a :has() writes one on the compound as well.
+                    if (group[1] === 'not' && held.includes(':has(')) own += ':has()';
+                }
+                at = end + 1;
+            }
+            return { own, lists, names };
+        };
+        const HOLDER =
+            /(?:^|[\s,(])(?::root|html|body)(?![\w-])|\.dk-app(?![\w-])|\.dk-tabbar-page(?![\w-])/;
+        const PICTURED = ':is(.dk-picture, .dk-picture *)';
+        const astray = (selector: string, drawn: boolean): boolean => {
+            const compounds = compoundsOf(selector);
+            return compounds.some((compound, at) => {
+                const subject = drawn && at === compounds.length - 1;
+                const { own, lists, names } = opened(compound);
+                if (
+                    !subject &&
+                    own.includes(':has()') &&
+                    HOLDER.test(names) &&
+                    !compound.includes(PICTURED)
+                )
+                    return true;
+                return lists.some((list) => split(list).some((member) => astray(member, subject)));
+            });
+        };
+        return rulesOf(css)
+            .flatMap(({ selector }) => split(selector))
+            .filter((selector) => astray(selector, true));
+    };
+
+    it('tells a :has() on an element that holds the page from one on the element a rule draws', () => {
+        expect(
+            hasOnHolder(`
+                :where(:root:has(.a)) { color: red; }
+                :where(:root:has(.a) > body) { color: red; }
+                :where(body:has(.a):not(:has(.dk-app))) { color: red; }
+                :where(body:not(:has(.a)) .b) { color: red; }
+                :where(.dk-app:has(.a) > .dk-app-body) { color: red; }
+                :where(.dk-app > .dk-app-toast:has(> .a)) { color: red; }
+                :where(.dk-app-body:has(.a) > .b) { color: red; }
+                :where(:is(.dk-app, :root:has(.a) .dk-dialog) .b) { color: red; }
+                :where(:is(.dk-app, .dk-tabbar-page):has(.a) .b) { color: red; }
+                :where(:is(.c, .dk-tabbar-page:has(.a))) { color: red; }
+                :where(.dk-app:is(.dk-picture, .dk-picture *):has(.a) > .b) { color: red; }
+                :where(.dk-dialog:has(~ .dk-app) .b, .dk-tabbar-page:has(.a) .b) { color: red; }
+            `)
+        ).toEqual([
+            ':where(:root:has(.a) > body)',
+            ':where(body:not(:has(.a)) .b)',
+            ':where(.dk-app:has(.a) > .dk-app-body)',
+            ':where(:is(.dk-app, :root:has(.a) .dk-dialog) .b)',
+            ':where(:is(.dk-app, .dk-tabbar-page):has(.a) .b)',
+            ':where(.dk-dialog:has(~ .dk-app) .b, .dk-tabbar-page:has(.a) .b)',
+        ]);
+    });
+
+    it('writes a :has() on the root, the body, a frame or a page that ends in a tab bar only where the rule draws that element', () => {
+        const astray = sheets.flatMap((name) =>
+            hasOnHolder(readFileSync(new URL(name, folder), 'utf8')).map(
+                (selector) => `${name}: ${selector}`
+            )
+        );
+        expect(astray).toEqual([]);
     });
 
     it("leaves a picture out wherever the sheets draw a page as an app's", () => {
-        // Each condition on the root, and each the toast's room sets aside, read whole.
-        const conditions = [...flat.matchAll(/:root:has\(|:not\(:has\(/g)].map(({ index }) => {
-            const open = flat.indexOf('(', flat.indexOf('has(', index));
-            let depth = 0;
-            let end = open;
-            for (; end < flat.length; end++) {
-                if (flat[end] === '(') depth++;
-                if (flat[end] === ')' && --depth === 0) break;
+        // Each condition on the root or the body, and each the toast's room sets aside, read whole.
+        const conditions = [...flat.matchAll(/:root:has\(|(?<![\w-])body:has\(|:not\(:has\(/g)].map(
+            ({ index }) => {
+                const open = flat.indexOf('(', flat.indexOf('has(', index));
+                let depth = 0;
+                let end = open;
+                for (; end < flat.length; end++) {
+                    if (flat[end] === '(') depth++;
+                    if (flat[end] === ')' && --depth === 0) break;
+                }
+                return flat.slice(open + 1, end);
             }
-            return flat.slice(open + 1, end);
-        });
+        );
         const app = conditions.filter((held) =>
             /\.dk-app\b(?!-)|\.dk-tabbar-page|\.dk-toast\[data-shown/.test(held)
         );
