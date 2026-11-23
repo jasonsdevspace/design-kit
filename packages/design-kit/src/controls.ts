@@ -63,13 +63,13 @@ const holds = (place: Element, node: Node | null): boolean => {
  * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
  * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
  * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
- * refuses it focus. A control marked off is left out only where a caller checks for it, as a panel
- * does for its buttons and a focus request for its target, so the toast and the dialog hand focus
- * to one. Focus that moves onto a place or inside it, in a shadow tree it holds or on a control
- * slotted into it too, as a host that delegates focus or a widget that forwards it, counts as
- * taken, as does a place that has focus already, while a place that refuses focus is passed over
- * though focus is inside it. Where a page's own listener moves focus elsewhere as one is tried, the
- * walk stops and that focus stays.
+ * refuses it focus, as a stepper's disabled value is for the stepper itself. A control marked off
+ * is left out only where a caller checks for it, as a panel does for its buttons and a focus
+ * request for its target, so the toast and the dialog hand focus to one. Focus that moves onto a
+ * place or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
+ * delegates focus or a widget that forwards it, counts as taken, as does a place that has focus
+ * already, while a place that refuses focus is passed over though focus is inside it. Where a
+ * page's own listener moves focus elsewhere as one is tried, the walk stops and that focus stays.
  */
 const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean => {
     for (const place of places) {
@@ -92,7 +92,8 @@ const focusFirst = (...places: readonly (Element | null | undefined)[]): boolean
  * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
  * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
  * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. The
- * toast, the dialog and the panels hand focus back by this one rule.
+ * toast, the dialog and the panels hand focus back by this one rule, and the stepper by a narrower
+ * one, only where focus is on one of the buttons it hides.
  */
 const mayHandBack = (piece: Element, had: boolean): boolean => {
     const active = focusedNow();
@@ -229,9 +230,10 @@ const land = (
  * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
  * page. Focus a visitor has moved since the request is left where they put it: focus is free only
  * while it is where it was when asked, on the page's body, or where the kit has handed it back
- * since, as a toast, a dialog or a panel does as it closes, or on what the browser hands it to as
- * a dialog closes, until the dialog's close is handled. A request still waiting a second later, as
- * in a tab out of sight, is dropped, so focus does not jump when the visitor comes back.
+ * since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down, or on
+ * what the browser hands it to as a dialog closes, until the dialog's close is handled. A request
+ * still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump when
+ * the visitor comes back.
  * Each request is new, so a control asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
@@ -1338,9 +1340,13 @@ const stepperParts = (
  * invalid mark. The field is described by its range in words, after the page's own description, and
  * while the error is shown by the error alone, which names the range itself. A press that lands on
  * a limit says so with the value, and a page's words, given as an option, are said after it in the
- * same message, on the page's status line when one is given. It takes the stepper's field or the
- * stepper, attaches each stepper once whichever it is given, runs on the options of its newest
- * holder, and returns what takes it down again.
+ * same message, on the page's status line when one is given. Taken down while one of its buttons
+ * has focus, it hands focus to its value where the value is read only, which opens no keyboard, and
+ * otherwise to the stepper itself, which keeps a tabindex of -1 and shows the focus ring, so focus
+ * never falls to the page and an editable value opens no phone's keyboard, while focus the page has
+ * moved elsewhere stays. It takes the stepper's field or the stepper, attaches each stepper once
+ * whichever it is given, runs on the options of its newest holder, and returns what takes it down
+ * again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1558,6 +1564,13 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(resetting);
         quiet();
         report(false);
+        // A button with focus goes, so focus goes first to the value where it is read only, which
+        // opens no keyboard, or to the stepper, and focus the page has moved elsewhere stays.
+        const at = activeOf();
+        if (at === down || at === up) {
+            if (!input.readOnly || input.disabled) stepper.tabIndex = -1;
+            handBack(input.readOnly ? input : null, stepper);
+        }
         down.hidden = true;
         up.hidden = true;
     });

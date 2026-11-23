@@ -3,7 +3,17 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StepperField } from '../src/react.js';
-import { box, KIT, servePage, sideways, stillClock, style, tabKey } from './page.js';
+import {
+    box,
+    KIT,
+    pixels,
+    ringByKeyboard,
+    servePage,
+    sideways,
+    stillClock,
+    style,
+    tabKey,
+} from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { textSize } from './text-size.js';
 
@@ -23,8 +33,9 @@ import { textSize } from './text-size.js';
  * value starting where a read-only field's words start and standing at the field's height, or at
  * the larger target when tall, centered at an inline stepper's row's end, and kept in place with a
  * button holding focus, hidden pieces kept hidden by sheets read without :has(), an inline
- * stepper's error above it and its hint below it, the keyboard, and no audit findings in either
- * theme.
+ * stepper's error above it and its hint below it, focus handed to a read-only value or to the
+ * stepper itself and kept there as it is taken down with a button focused, the keyboard, and no
+ * audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -1121,4 +1132,202 @@ test("clears only its own words from a page's line, and says nothing once typed 
     // words it would have said are never put in.
     await page.clock.runFor(300);
     await expect(own).toHaveText('');
+});
+
+const TAKEN = renderToStaticMarkup(
+    <main>
+        <h1>Round 3</h1>
+        <button type="button" id="next" className="dk-button">
+            Next round
+        </button>
+        <StepperField id="kept" label="Kept" min={0} max={10} defaultValue={5} />
+        <StepperField id="count" label="Count" min={0} max={10} defaultValue={5} />
+        <StepperField id="shut" label="Shut" min={0} max={10} defaultValue={5} disabled />
+    </main>
+);
+
+// Each stepper attached with a signal of its own, kept with its detach by the value's id.
+const ATTACH_HELD = `import { attachStepper, moveFocus } from './controls.js';
+window.kit = { attachStepper, moveFocus };
+window.held = {};
+for (const stepper of document.querySelectorAll('.dk-stepper')) {
+    const controller = new AbortController();
+    const detach = attachStepper(stepper, { signal: controller.signal });
+    window.held[stepper.querySelector('input').id] = { controller, detach };
+}
+window.ready = true;`;
+
+type Held = {
+    kit: {
+        attachStepper: typeof import('../src/controls.js').attachStepper;
+        moveFocus: typeof import('../src/controls.js').moveFocus;
+    };
+    held: Record<string, { controller: AbortController; detach: () => void }>;
+};
+
+/** Where focus is, read in the task the takedown lands in. */
+type Landed = { body: boolean; editable: boolean };
+
+/**
+ * Takes a stepper down by its signal or its detach and waits the microtask its takedown waits for,
+ * then reads where focus is before anything else can move it.
+ */
+const takeDown = (page: Page, id: string, way: 'signal' | 'detach'): Promise<Landed> =>
+    page.evaluate(
+        async ([given, by]) => {
+            const { held } = window as unknown as Held;
+            const control = held[given];
+            if (!control) throw new Error(`expected a stepper for ${given}`);
+            if (by === 'signal') control.controller.abort();
+            else control.detach();
+            await Promise.resolve();
+            const active = document.activeElement;
+            return {
+                body: !active || active === document.body,
+                editable:
+                    active instanceof HTMLInputElement && !active.readOnly && !active.disabled,
+            };
+        },
+        [id, way] as const
+    );
+
+/** The steppers taken down, and where focus goes from a focused button as each is. */
+const TAKEN_DOWN = [
+    { kind: 'a read-only', id: 'kept', label: 'Kept', readOnly: true, at: '#kept' },
+    {
+        kind: 'an editable',
+        id: 'count',
+        label: 'Count',
+        readOnly: false,
+        at: '.dk-stepper:has(#count)',
+    },
+    {
+        kind: 'a disabled',
+        id: 'shut',
+        label: 'Shut',
+        readOnly: false,
+        at: '.dk-stepper:has(#shut)',
+    },
+] as const;
+
+/**
+ * The page of steppers each attached with a signal, with the given one's Raise focused by the
+ * keyboard, and its field turned read only after where asked, as the button keeps focus then.
+ */
+const focusRaise = async (
+    page: Page,
+    browserName: string,
+    { label, id, readOnly }: (typeof TAKEN_DOWN)[number]
+): Promise<{ lower: Locator; raise: Locator }> => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, { title: 'Round 3', body: TAKEN, script: ATTACH_HELD });
+    await page.waitForFunction(() => 'ready' in window);
+    const buttons = {
+        lower: page.getByRole('button', { name: `Lower ${label}` }),
+        raise: page.getByRole('button', { name: `Raise ${label}` }),
+    };
+    await ringByKeyboard(buttons.raise, browserName);
+    if (readOnly) {
+        await page.locator(`#${id}`).evaluate((input: HTMLInputElement) => {
+            input.readOnly = true;
+        });
+        await expect(buttons.raise).toHaveAttribute('aria-disabled', 'true');
+        await expect(buttons.raise).toBeFocused();
+    }
+    return buttons;
+};
+
+test.describe('taken down with a button focused', () => {
+    for (const way of ['signal', 'detach'] as const) {
+        for (const stepper of TAKEN_DOWN) {
+            test(`hands focus from ${stepper.kind} stepper's button to ${stepper.readOnly ? 'its value' : 'itself'}, by its ${way}`, async ({
+                page,
+                browserName,
+            }) => {
+                const buttons = await focusRaise(page, browserName, stepper);
+                const landed = await takeDown(page, stepper.id, way);
+                expect(landed.body, 'focus on the body').toBe(false);
+                // An editable value would open a phone's keyboard.
+                expect(landed.editable, 'focus on an editable value').toBe(false);
+                await expect(page.locator(stepper.at)).toBeFocused();
+                await expect(buttons.lower).toBeHidden();
+                await expect(buttons.raise).toBeHidden();
+                const ring = await style(
+                    page.locator(stepper.at),
+                    'outline-style',
+                    'outline-width'
+                );
+                expect(ring['outline-style'], 'the ring').not.toBe('none');
+                expect(pixels(ring['outline-width']), 'the ring').toBeGreaterThan(0);
+            });
+        }
+    }
+
+    for (const stepper of TAKEN_DOWN) {
+        test(`keeps focus on ${stepper.kind} stepper taken down as the window loses focus and gets it back`, async ({
+            page,
+            context,
+            browserName,
+        }) => {
+            await focusRaise(page, browserName, stepper);
+            await takeDown(page, stepper.id, 'signal');
+            const place = page.locator(stepper.at);
+            await expect(place).toBeFocused();
+            // What a window losing focus fires, and then a real trip to another tab and back.
+            await place.evaluate((element) => {
+                element.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+                element.dispatchEvent(new FocusEvent('blur'));
+                window.dispatchEvent(new FocusEvent('blur'));
+            });
+            const other = await context.newPage();
+            await other.bringToFront();
+            await page.bringToFront();
+            await other.close();
+            await expect(place).toBeFocused();
+        });
+    }
+
+    test('keeps focus on the button where the page attaches it again in the task its signal aborts', async ({
+        page,
+        browserName,
+    }) => {
+        const { raise: raiseCount } = await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.evaluate(async () => {
+            const { kit, held } = window as unknown as Held;
+            const stepper = document.querySelector<HTMLElement>('.dk-stepper:has(#count)');
+            if (!stepper || !held['count']) throw new Error('expected the stepper for count');
+            held['count'].controller.abort();
+            kit.attachStepper(stepper, { signal: new AbortController().signal });
+            await Promise.resolve();
+        });
+        await expect(raiseCount).toBeFocused();
+        await expect(raiseCount).toBeVisible();
+    });
+
+    test('leaves focus where the page moves it in the task its signal aborts', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.evaluate(async () => {
+            const { held } = window as unknown as Held;
+            held['count']?.controller.abort();
+            document.querySelector<HTMLElement>('#next')?.focus();
+            await Promise.resolve();
+        });
+        await expect(page.locator('#next')).toBeFocused();
+    });
+
+    test('lands a focus request asked in the task its signal aborts', async ({
+        page,
+        browserName,
+    }) => {
+        await focusRaise(page, browserName, TAKEN_DOWN[1]);
+        await page.evaluate(() => {
+            const { kit, held } = window as unknown as Held;
+            held['count']?.controller.abort();
+            kit.moveFocus('next');
+        });
+        await expect(page.locator('#next')).toBeFocused();
+    });
 });

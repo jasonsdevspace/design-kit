@@ -1415,34 +1415,35 @@ the markup drew it, a control already attached keeps the options it had, and wha
 does nothing.
 
 Each signal an attach of an element is given holds that element's control, and a control attached
-again returns what its first attach returned, as [decision
-0022](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
-and [decision
-0023](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0023-a-control-outlives-a-takedown-and-an-attach-in-one-task.md)
-set out. Once every signal holding a control has aborted, the control is taken down a microtask
-later, unless the same element is attached again by then, which keeps the control as it was, with
-its state, such as a busy wait, a form's check and its errors, an open dialog or a shown toast. So a
-page that aborts and attaches the same element in one task keeps its control, and one that attaches
-after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
-abort's own task, such as a panel's `set`, still acts, and a dialog left open keeps the page behind
-it inert. The function an attach returns takes the control down at once, whoever holds it, so a page
-that means to start afresh within the task calls it. A call with no signal holds the control for the
-page's life where nothing else holds it, an attach in the abort's own task among them, is filed
-under that hold where the page already holds the control without a signal, and elsewhere speaks for
-the newest holder without holding. An attach made from inside a control's own takedown, as a
-dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
-signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
-needs. The kit hands focus back as a toast, a dialog or a panel is taken down only where focus is in
-it, inside a shadow tree within it too, such as on a page's own button component in a toast or a
-dialog's form, or where focus is on the body or nowhere and the piece had it as it left, and a
-dialog also where focus is still on what the browser handed it to as the dialog closed, so focus a
-page sets in the abort's own task stays, and a `moveFocus` asked in that task still lands. A control
-slotted into a piece drawn inside a shadow root counts as in the piece. Each place a piece hands
-focus back to can be any HTML or SVG element that takes focus, such as a link in an inline chart,
-and one that is hidden, inert or disabled is passed over for the next. A control marked off with
-`aria-disabled` still takes focus, so it is passed over only where a piece checks for it, as a panel
-does for its buttons. The toast and the dialog hand focus to it, though a toast does not follow a
-frame on to a control marked off inside it.
+again returns what its first attach returned, as [decision 0022](https://github.com/jasonsdevspace/d
+esign-kit/blob/main/docs/decisions/0022-every-attach-takes-a-signal-that-takes-its-piece-down.md)
+and [decision 0023](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0023-a-con
+trol-outlives-a-takedown-and-an-attach-in-one-task.md) set out. Once every signal holding a control
+has aborted, the control is taken down a microtask later, unless the same element is attached again
+by then, which keeps the control as it was, with its state, such as a busy wait, a form's check and
+its errors, an open dialog or a shown toast. So a page that aborts and attaches the same element in
+one task keeps its control, and one that attaches after a microtask starts afresh. Until the
+takedown lands, the control is whole, so a call in the abort's own task, such as a panel's `set`,
+still acts, and a dialog left open keeps the page behind it inert. The function an attach returns
+takes the control down at once, whoever holds it, so a page that means to start afresh within the
+task calls it. A call with no signal holds the control for the page's life where nothing else holds
+it, an attach in the abort's own task among them, is filed under that hold where the page already
+holds the control without a signal, and elsewhere speaks for the newest holder without holding. An
+attach made from inside a control's own takedown, as a dialog's close handler that attaches it
+again, gets a control of its own. A page that passes a fresh signal it never aborts on every call
+keeps each one as a holder, so it aborts what it no longer needs. The kit hands focus back as a
+toast, a dialog, a panel or a stepper is taken down. A toast, a dialog or a panel hands it back only
+where focus is in it, inside a shadow tree within it too, such as on a page's own button component
+in a toast or a dialog's form, or where focus is on the body or nowhere and the piece had it as it
+left, a dialog also where focus is still on what the browser handed it to as the dialog closed, and
+a stepper only where focus is on one of the buttons it hides, so focus a page sets in the abort's
+own task stays, and a `moveFocus` asked in that task still lands. A control slotted into a piece
+drawn inside a shadow root counts as in the piece. Each place a piece hands focus back to can be any
+HTML or SVG element that takes focus, such as a link in an inline chart, and one that is hidden,
+inert or disabled is passed over for the next. A control marked off with `aria-disabled` still takes
+focus, so it is passed over only where a piece checks for it, as a panel does for its buttons. The
+toast and the dialog hand focus to it, though a toast does not follow a frame on to a control marked
+off inside it.
 
 As the kit hands focus back, it tries each place in turn and counts one as taken where focus moves
 onto it or inside it, in a shadow tree it holds or on a control slotted into it too, as a host that
@@ -2833,7 +2834,11 @@ since focus stays on the button, and that it is the least or the most where a pr
 limit, as "8, the most", or on the last value a step reaches short of the greatest, so a press that
 does nothing next is expected. The line is emptied once the value is typed over, its form is reset
 or the stepper is taken down, by the function `attachStepper(element, { signal })` returns or by its
-`signal`.
+`signal`. A stepper taken down while one of its buttons has focus hands focus to its value where the
+value is read only, and otherwise to the stepper itself, so a keyboard user keeps their place and an
+editable value does not open a phone's keyboard. The stepper keeps the `tabindex="-1"` it is given
+then, which takes focus from a script but leaves it out of the tab order, and shows the kit's focus
+ring while it has focus.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on

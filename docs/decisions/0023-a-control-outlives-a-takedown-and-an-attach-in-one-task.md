@@ -3,8 +3,8 @@
 **Status:** accepted, amending record 22's rules that a later attach starts afresh and that the
 first attach owns a piece, record 13's rule for an attach called again, record 15's line let go by
 the signal its first attach took, record 19's rule for handing focus back, which the toast and a
-dialog taken down now share, and record 20's hooks, which now take their part down at once rather
-than a microtask after a null call
+dialog taken down now share, with a stepper taken down handing focus back too, and record 20's
+hooks, which now take their part down at once rather than a microtask after a null call
 
 ## Context
 
@@ -164,6 +164,21 @@ Option C.
   before closing asks again just before it closes. Each place a piece hands focus back to can be any
   HTML or SVG element that takes focus, such as a link in an inline chart, and one that is hidden,
   inert or disabled is passed over for the next.
+- **A stepper hands focus back from its buttons.** A stepper taken down while one of its buttons has
+  focus hides both, so it hands focus back first, by the same walk the other pieces use, only where
+  focus is on one of those buttons. Focus goes to its value where the value is read only, which
+  opens no keyboard, and otherwise to the stepper itself. An editable value is skipped, since
+  focusing it opens a phone's keyboard the visitor did not ask for, and a disabled one refuses
+  focus, so a disabled stepper, read only or not, reaches the stepper too. The stepper is given a
+  tabindex of -1 for this and keeps it, so a script can focus it while the tab order passes it by,
+  and the components sheet draws the focus ring on it, which the base sheet leaves off an element
+  with that tabindex. Keeping the focused button shown until it lost focus was rejected, since a
+  window losing focus blurs the button as the visitor switches apps, and handing focus to an
+  editable value was rejected for the keyboard it opens. The walk runs before the buttons hide,
+  while a button still has focus, and is the one the toast, the dialog and the panels hand focus
+  back by, so focus the page moved elsewhere in the abort's task stays, a page listener that moves
+  focus during the walk stops it, and the handback is kept, so a `moveFocus` asked in the abort's
+  task still lands. Nothing is left listening once the stepper is down.
 - **The hooks take their part down at once.** A ref's cleanup aborts its element's signal and drops
   the element from the hook's own map in the same call, and a ref called with null does so for every
   element it holds. `StatusProvider` keeps no controller of its own, and waits a microtask only to
@@ -225,7 +240,10 @@ every signal it has ever held.
   where the key was pressed and finds a panel only among the page's own elements, brings them to
   19,288. A toast that keeps the control inside a frame of the page's own origin clear of itself as
   a message shows, and measures the toast at rest and across as well as down, brings them to 19,609,
-  with less room under 19.5 KB than a function of the usual size, so the rule sets them at 20 KB.
+  with less room under 19.5 KB than a function of the usual size, so the rule sets them at 20 KB. A
+  stepper that hands focus back as it is taken down with a button focused brings them to 19,661.
+- A stepper taken down while a button had focus is left with a tabindex of -1, which a page that
+  attaches it again finds still there. It keeps the stepper out of the tab order, as it was.
 - Records 13, 15, 19, 20 and 22 say what this record changes, and the reference's section on taking
   a control down says when a takedown lands and when the kit hands focus back.
 
@@ -319,6 +337,13 @@ The paths are in `packages/design-kit`.
   hooks share through a merged ref observed once, a form passed from one hook's ref to another's in
   one commit keeping its errors and refusing through the hook it went to, and either of two form
   hooks on one form dropped leaving the other's check and refusal.
+- `e2e/stepper.spec.tsx` focuses a button of a read-only, an editable and a disabled stepper by the
+  keyboard, takes each down by its signal and by its detach, and finds focus off the body and off an
+  editable value, on the read-only value and on the editable and the disabled stepper themselves,
+  both buttons hidden and the focus ring drawn. It finds focus kept there after the focused element
+  and the window are told they lost focus and after a trip to another tab and back. It finds focus
+  kept on the button where the page attaches the stepper again in the task its signal aborts, focus
+  the page moves in that task staying, and a focus request asked in that task landing.
 - `e2e/leaks.spec.tsx` joins every piece but a focus request twice with a new signal and finds
   nothing growing as it is joined and nothing left once it is taken down, listeners on signals
   included.

@@ -3390,6 +3390,12 @@
         max-width: 100%;
     }
 
+    /* A stepper taken down while a button had focus holds focus itself, so it shows the ring. */
+    :where(.dk-stepper):focus-visible {
+        outline: var(--dk-ring-width) solid var(--dk-focus, var(--dk-accent));
+        outline-offset: var(--dk-ring-offset);
+    }
+
     :where(.dk-stepper > .dk-button) {
         width: var(--dk-target);
         min-width: min(var(--dk-target), 44px);
