@@ -3,7 +3,8 @@ import type { CSSProperties, ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ChoiceField, InputField, StepperField } from '../src/react.js';
-import { frames, KIT, servePage, sideways } from './page.js';
+import { frames, KIT, pixels, servePage, sideways, style } from './page.js';
+import { cutOff, SPACED, tooShort } from './spacing.js';
 import { doubled } from './text-size.js';
 
 /*
@@ -18,7 +19,11 @@ import { doubled } from './text-size.js';
  * leaving the controls level, and a row in a plain form a step from the fields around it, ending
  * where they end, with a field in it narrowed by --dk-field-measure, and a wrapped row's lines as far
  * apart as the fields around it, in a panel, a dialog, a stack and a plain form alike, and in a
- * stack nothing holds, where neither has a step.
+ * stack nothing holds, where neither has a step. A tall stepper in a row left at the length a
+ * field starts from keeps its buttons at the target or more inside its field, a stepper wider than
+ * that length runs past its field without :has() no further than the accessibility notes say, and
+ * the row keeps its labels, its values and its fields whole under the wider text spacing a reader
+ * may set.
  */
 
 /** Attaches each stepper, which shows its buttons. */
@@ -27,7 +32,12 @@ for (const stepper of document.querySelectorAll('.dk-stepper')) attachStepper(st
 window.ready = true;`;
 
 /** A page with the body given in its content column, at the width given, its steppers attached. */
-const open = async (page: Page, width: number, body: string, bare = false): Promise<void> => {
+const open = async (
+    page: Page,
+    width: number,
+    body: string,
+    { css = '', bare = false }: { readonly css?: string; readonly bare?: boolean } = {}
+): Promise<void> => {
     await page.setViewportSize({ width, height: 900 });
     await servePage(page, {
         title: 'Round 3',
@@ -36,6 +46,7 @@ const open = async (page: Page, width: number, body: string, bare = false): Prom
             ? `<main>${body}</main>`
             : `<main class="dk-page"><h1>Round 3</h1>${body}</main>`,
         script: ATTACH,
+        css,
     });
     await page.waitForFunction(() => 'ready' in window);
 };
@@ -193,10 +204,49 @@ for (const width of [320, 390]) {
     });
 }
 
+/**
+ * A stepper wider than the length a field starts from, a tall one or one of three figures, beside
+ * a text field in a row, which sets --dk-fields-least where a length is given and is left at the
+ * row's own where none is.
+ */
+const score = (tall: boolean, digits: 2 | 3, least?: string): string =>
+    renderToStaticMarkup(
+        <div
+            className="dk-fields"
+            style={
+                {
+                    ...(least ? { '--dk-fields-least': least } : {}),
+                    '--dk-stepper-digits': String(digits),
+                } as CSSProperties
+            }
+        >
+            <StepperField
+                id="score"
+                label="Score"
+                min={0}
+                max={digits === 3 ? 200 : 20}
+                defaultValue={digits === 3 ? 120 : 12}
+                tall={tall}
+            />
+            <InputField id="player" label="Player" />
+        </div>
+    );
+
+/** How wide and how tall each of the stepper's two buttons is drawn, or a failure. */
+const buttonsOf = async (page: Page): Promise<{ width: number; height: number }[]> => {
+    const drawn = await page.locator('.dk-stepper > .dk-button').evaluateAll((all) =>
+        all.map((button) => {
+            const { width, height } = button.getBoundingClientRect();
+            return { width, height };
+        })
+    );
+    expect(drawn, "the stepper's two buttons").toHaveLength(2);
+    return drawn;
+};
+
 /*
- * A stepper wider than the length a field starts from, a tall one or one of three figures, in a
- * row that sets --dk-fields-least as the reference says, at the narrowest width that sets the pair
- * side by side and at 1280.
+ * A stepper wider than the length a field starts from, in a row that sets --dk-fields-least as the
+ * reference says, at the narrowest width that sets the pair side by side and at 1280.
  */
 for (const [what, tall, digits, least, buttons, width] of [
     ['a tall stepper', true, 2, '12rem', 3.5, 440],
@@ -208,45 +258,15 @@ for (const [what, tall, digits, least, buttons, width] of [
             test(`keeps ${what} whole beside a text field in a row asking ${least} a field, at ${String(at)} wide${has ? '' : ' without :has()'}`, async ({
                 page,
             }) => {
-                await open(
-                    page,
-                    at,
-                    renderToStaticMarkup(
-                        <div
-                            className="dk-fields"
-                            style={
-                                {
-                                    '--dk-fields-least': least,
-                                    '--dk-stepper-digits': String(digits),
-                                } as CSSProperties
-                            }
-                        >
-                            <StepperField
-                                id="score"
-                                label="Score"
-                                min={0}
-                                max={digits === 3 ? 200 : 20}
-                                defaultValue={digits === 3 ? 120 : 12}
-                                tall={tall}
-                            />
-                            <InputField id="player" label="Player" />
-                        </div>
-                    )
-                );
+                await open(page, at, score(tall, digits, least));
                 if (!has) await withoutHas(page);
                 const [stepper, text] = await pairOf(page);
                 expect(stepper.inside, "the stepper's parts inside its field").toBe(true);
                 expect(text.left - stepper.right).toBeCloseTo(16, 0);
                 expect(Math.abs(text.foot - stepper.foot)).toBeLessThan(0.5);
-                const widths = await page
-                    .locator('.dk-stepper > .dk-button')
-                    .evaluateAll((all) =>
-                        all.map((button) => button.getBoundingClientRect().width)
-                    );
-                expect(widths).toHaveLength(2);
                 // Each button at its full target, not narrowed to fit.
-                for (const button of widths)
-                    expect(button).toBeGreaterThanOrEqual(buttons * 16 - 0.5);
+                for (const button of await buttonsOf(page))
+                    expect(button.width).toBeGreaterThanOrEqual(buttons * 16 - 0.5);
                 expect(await sideways(page)).toBe(0);
             });
         }
@@ -472,6 +492,119 @@ test('stands a row in a plain form a step from the fields around it, ending wher
     expect(city + region + zip + 2 * 16).toBeCloseTo(measured.fieldsWidth, 0);
 });
 
+/*
+ * A tall stepper in a row left at the length a field starts from, 10rem, as record 25 has it: its
+ * field keeps the stepper's least width, the buttons narrowed toward the target and never under
+ * it, at the widths that first set the pair side by side in Chromium, 375 for two figures and 392
+ * for three, and at 1280, where there is room for each at its full width. An engine whose figures
+ * are wider stacks the pair at those widths, so side by side is asked only at 1280. The buttons
+ * are as tall, and at 1280 as wide, as the same stepper's drawn alone at that width, so the row
+ * is held to the stepper's own size and not to a figure copied from it.
+ */
+for (const digits of [2, 3] as const) {
+    for (const width of [375, 392, 1280]) {
+        test(`keeps a tall stepper of ${String(digits)} figures inside its field, its buttons the target wide or more, in a row left at 10rem at ${String(width)} wide`, async ({
+            page,
+        }) => {
+            await open(
+                page,
+                width,
+                renderToStaticMarkup(
+                    <div style={{ '--dk-stepper-digits': String(digits) } as CSSProperties}>
+                        <StepperField id="alone" label="Score" min={0} max={200} tall />
+                    </div>
+                )
+            );
+            const alone = await buttonsOf(page);
+            await open(page, width, score(true, digits));
+            const [stepper, text] = await pairOf(page);
+            expect(stepper.inside, "the stepper's parts inside its field").toBe(true);
+            for (const [at, button] of (await buttonsOf(page)).entries()) {
+                expect(button.width).toBeGreaterThanOrEqual(44);
+                expect(Math.abs(button.height - (alone[at]?.height ?? 0))).toBeLessThan(0.5);
+                if (width === 1280)
+                    expect(Math.abs(button.width - (alone[at]?.width ?? 0))).toBeLessThan(0.5);
+            }
+            if (width === 1280) {
+                expect(text.left - stepper.right).toBeCloseTo(16, 0);
+                expect(Math.abs(text.foot - stepper.foot)).toBeLessThan(0.5);
+            }
+            expect(await sideways(page)).toBe(0);
+        });
+    }
+}
+
+/*
+ * How far a stepper wider than 10rem runs past its field in a row left at that length, with the
+ * sheet's :has() rules taken out, at the widths the accessibility notes name and a pixel past each
+ * end they give: up to 7 pixels, into the gap, from 368 until 381 for a stepper of three figures
+ * or a tall one of two, and none from 382, and for a tall one of three up to 25 pixels from 368,
+ * over the field beside it until 385, inside the gap until 417, and none from 418. Each is
+ * measured to the pixel, as the notes give it, the last width of each stretch held to the pixel
+ * or so measured there, and each found running past at 368, so the figures are not held by a
+ * stepper that never left its field.
+ */
+const GAP = 16;
+for (const [what, tall, digits, most] of [
+    ['a stepper of three figures', false, 3, { 368: 7, 381: 1, 382: 0, 385: 0, 417: 0, 418: 0 }],
+    ['a tall stepper', true, 2, { 368: 7, 381: 1, 382: 0, 385: 0, 417: 0, 418: 0 }],
+    ['a tall stepper of three figures', true, 3, { 368: 25, 381: 25, 385: 17, 417: 1, 418: 0 }],
+] as const) {
+    for (const [width, pixels] of Object.entries(most)) {
+        test(`runs ${what} no more than ${String(pixels)}px past its field without :has() in a row left at 10rem, at ${width} wide`, async ({
+            page,
+        }) => {
+            await open(page, Number(width), score(tall, digits));
+            await withoutHas(page);
+            const [stepper, text] = await pairOf(page);
+            // Side by side, where there is a field beside it to run toward.
+            expect(text.left - stepper.right).toBeCloseTo(GAP, 0);
+            const past = await page
+                .locator('.dk-stepper-up')
+                .evaluate((up) => up.getBoundingClientRect().right);
+            expect(past - stepper.right).toBeLessThan(pixels + 0.5);
+            if (width === '368') expect(past - stepper.right).toBeGreaterThan(0.5);
+            expect(await sideways(page)).toBe(0);
+        });
+    }
+}
+
+for (const [width, beside] of [
+    [320, false],
+    [390, true],
+] as const) {
+    test(`keeps the row's labels, values and fields whole under wider text spacing at ${String(width)} wide`, async ({
+        page,
+    }) => {
+        await open(page, width, bid(), { css: SPACED });
+        // The spacing reached the page, so the row is not measured at the kit's own.
+        const label = await style(
+            page.locator('.dk-field-label').first(),
+            'font-size',
+            'letter-spacing'
+        );
+        expect(pixels(label['letter-spacing'])).toBeCloseTo(0.12 * pixels(label['font-size']), 1);
+        const [stepper, text] = await pairOf(page);
+        if (beside) {
+            expect(Math.abs(text.width - stepper.width)).toBeLessThan(0.5);
+            expect(text.left - stepper.right).toBeCloseTo(GAP, 0);
+            expect(Math.abs(text.foot - stepper.foot)).toBeLessThan(0.5);
+        } else {
+            expect(text.top - stepper.bottom).toBeCloseTo(GAP, 0);
+        }
+        for (const [name, field] of Object.entries({ stepper, text })) {
+            expect(field.lines, `${name}'s label on one line`).toBe(1);
+            expect(field.inside, `${name}'s parts inside its field`).toBe(true);
+        }
+        const parts = '.dk-fields :is(.dk-field-label, .dk-stepper-value, .dk-input)';
+        await expect(page.locator(parts)).toHaveCount(4);
+        expect(await cutOff(page, parts)).toEqual([]);
+        // Each control as tall as its line, which the wider spacing makes taller.
+        expect(await tooShort(page, '.dk-fields :is(.dk-stepper-value, .dk-input)')).toEqual([]);
+        expect(await sideways(page)).toBe(0);
+    });
+}
+
 /** A field, a row of two fields and a field, which a narrow column wraps into four lines. */
 const COLUMN = renderToStaticMarkup(
     <>
@@ -499,7 +632,9 @@ for (const [where, before, after, step] of [
     test(`stands a wrapped row's lines as far apart as the fields around it in ${where}`, async ({
         page,
     }) => {
-        await open(page, 320, `${before}${COLUMN}${after}`, where === 'a stack nothing holds');
+        await open(page, 320, `${before}${COLUMN}${after}`, {
+            bare: where === 'a stack nothing holds',
+        });
         const fields = await page.locator('.dk-field').evaluateAll((all) =>
             all.map((field) => {
                 const drawn = field.getBoundingClientRect();
