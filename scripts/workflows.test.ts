@@ -602,8 +602,9 @@ describe('the workflows', () => {
         expect(naming).toEqual([]);
     });
 
-    // Ubuntu, but for CI's jobs that draw in WebKit and Firefox, on a Mac, where neither needs
-    // system packages.
+    // Ubuntu, but for CI's jobs that draw in WebKit, on a Mac, where it needs no system packages.
+    // Firefox starts on what the Ubuntu image has, which leaves the Mac runners an account may use
+    // at once to WebKit's shards.
     it('run every job on a named image, with a name and a time limit of its own', () => {
         const unready = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
@@ -615,8 +616,7 @@ describe('the workflows', () => {
                         !/^ {8}name: \S/m.test(body) ||
                         !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
                         !(
-                            path === '.github/workflows/ci.yml' &&
-                            (id === 'webkit' || id === 'firefox')
+                            path === '.github/workflows/ci.yml' && id === 'webkit'
                                 ? /^ {8}runs-on: macos-26\s*$/m
                                 : /^ {8}runs-on: ubuntu-26\.04\s*$/m
                         ).test(body)
@@ -631,8 +631,8 @@ describe('the workflows', () => {
         expect(gateProblems(workflows.get('.github/workflows/ci.yml') ?? '')).toEqual([]);
     });
 
-    // A Mac draws slower than Ubuntu, so the engines that run on one take more shards than Chromium
-    // to end well inside a job's time limit. Each job reads how many from the strategy's total, for
+    // WebKit and Firefox run the specs slower than Chromium, so each takes more shards to end well
+    // inside a job's time limit. Each job reads how many from the strategy's total, for
     // its name as for what it runs, so the matrix's list is the one place the number is set.
     it('run WebKit and Firefox in more shards than Chromium, each counted from its matrix alone', () => {
         const jobs = jobsOf(workflows.get('.github/workflows/ci.yml') ?? '');
