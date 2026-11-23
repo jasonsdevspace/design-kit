@@ -735,7 +735,9 @@
     /*
      * A field anywhere in a page, a band or a stack, a form's included, holds to the measure as the
      * prose beside it does, so a field for a short name never runs the width of a wide column, and
-     * a callout in a form ends where its fields end. A row of fields holds to it too, so it ends
+     * a callout in a form ends where its fields end, as does one written after a field or a row of
+     * fields in what holds them, for a page that draws its fields with no form. A callout with no
+     * field before it there runs the column. A row of fields holds to the measure too, so it ends
      * where the fields around it end. A page sets --dk-field-measure on a field or on its form, a
      * shorter length for a short answer or `none` for the column, and a field in a row of fields
      * narrows by it as well. A dialog and a popover set their own width, which a page may widen, so
@@ -743,7 +745,12 @@
      */
     :where(
         :is(.dk-page, .dk-band, .dk-stack)
-            :is(.dk-field, .dk-fields, form .dk-callout):not(.dk-dialog *, dialog *, [popover] *)
+            :is(
+                .dk-field,
+                .dk-fields,
+                form .dk-callout,
+                :is(.dk-field, .dk-fields) ~ .dk-callout
+            ):not(.dk-dialog *, dialog *, [popover] *)
     ) {
         max-width: var(--dk-field-measure, var(--dk-measure));
     }
