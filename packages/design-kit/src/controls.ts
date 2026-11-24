@@ -606,8 +606,7 @@ const listen = () => {
 };
 
 /**
- * Each control attached, by its element, one map for each kind so neither answers for the
- * other.
+ * Each control attached, by its element, one map for each kind so none answers for another.
  */
 const attachedSwitches = new WeakMap<HTMLElement, Kept<() => void>>();
 /**
