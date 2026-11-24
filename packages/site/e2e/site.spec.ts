@@ -2697,8 +2697,11 @@ test.describe('the code of each state', () => {
         await page.evaluate(hear, { line: STATUS, empties: true });
         await page.getByRole('tab', { name: 'React' }).first().click();
         await page.getByRole('button', { name: 'Copy React, An action' }).click();
+        // The first two writes, since the line is emptied again on its own timer after them.
         await expect
-            .poll(() => page.evaluate(() => (window as unknown as { heard: string[] }).heard))
+            .poll(() =>
+                page.evaluate(() => (window as unknown as { heard: string[] }).heard.slice(0, 2))
+            )
             .toEqual(['', 'Copied.']);
     });
 

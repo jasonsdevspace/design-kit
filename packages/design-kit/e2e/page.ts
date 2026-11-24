@@ -452,27 +452,27 @@ export const KIT_WITHOUT_HAS = KIT.replaceAll(':has(', ':-dk-unknown(');
  * which drops a rule naming it outside a forgiving list. The kit is found linked as /kit.css, as
  * `servePage` serves it, or opening a style element, as `writePage` writes it, and only the kit's
  * part is swapped, so the page's own rules after it stay. It fails where the page holds the kit
- * some other way, or where the swap leaves a rule naming :has() in the kit's part, so a test
- * without :has() never runs on the sheets it meant to take away.
+ * some other way, where the kit names no :has(), and unless the kit's part of the sheet the page
+ * then reads, counted from that sheet's own rules, keeps none naming :has(), so a test without
+ * :has() never runs on the sheets it meant to take away.
  */
 export const withoutHas = async (page: Page): Promise<void> => {
     await page.evaluate(
         async ([kit, unknown]) => {
-            /** The style rules naming :has() in a sheet, at any depth of nesting. */
-            const naming = (rules: CSSRuleList): number =>
+            /** The style rules in a list that pass the test, at any depth of nesting. */
+            const counted = (rules: CSSRuleList, passes: (selector: string) => boolean): number =>
                 [...rules].reduce(
                     (sum, rule) =>
                         sum +
-                        (rule instanceof CSSStyleRule && rule.selectorText.includes(':has(')
-                            ? 1
-                            : 0) +
-                        ('cssRules' in rule ? naming(rule.cssRules as CSSRuleList) : 0),
+                        (rule instanceof CSSStyleRule && passes(rule.selectorText) ? 1 : 0) +
+                        ('cssRules' in rule ? counted(rule.cssRules as CSSRuleList, passes) : 0),
                     0
                 );
-            const parsed = (text: string): CSSStyleSheet => {
+            const naming = (selector: string) => selector.includes(':has(');
+            const rulesOf = (text: string): CSSRuleList => {
                 const sheet = new CSSStyleSheet();
                 sheet.replaceSync(text);
-                return sheet;
+                return sheet.cssRules;
             };
             const link = document.querySelector('link[href="/kit.css"]');
             const written = [...document.querySelectorAll('style')].find((style) =>
@@ -482,15 +482,19 @@ export const withoutHas = async (page: Page): Promise<void> => {
             if (!holder) throw new Error('expected the kit linked as /kit.css or in a style');
             const held = link ? await (await fetch('/kit.css')).text() : holder.textContent;
             if (!held.startsWith(kit)) throw new Error('expected the sheet to open with the kit');
-            const own = held.slice(kit.length);
-            if (naming(parsed(kit).cssRules) === 0)
+            if (counted(rulesOf(kit), naming) === 0)
                 throw new Error('expected the kit to name :has(), so the swap takes a rule away');
+            const own = rulesOf(held.slice(kit.length));
             const swapped = document.createElement('style');
-            swapped.textContent = unknown + own;
+            swapped.textContent = unknown + held.slice(kit.length);
             holder.replaceWith(swapped);
-            if (!swapped.sheet) throw new Error('expected the swapped sheet read');
-            const left = naming(swapped.sheet.cssRules) - naming(parsed(own).cssRules);
-            if (left !== 0 || holder.isConnected)
+            if (!swapped.sheet || holder.isConnected)
+                throw new Error('expected the swapped sheet read in place of the kit');
+            // The kit's part of the sheet the page reads, its rules less the page's own. A rule in
+            // a forgiving list stays with its unknown selector dropped, so the count of rules can
+            // hold, but none may still name :has().
+            const left = counted(swapped.sheet.cssRules, naming) - counted(own, naming);
+            if (left !== 0)
                 throw new Error(
                     `expected no rule of the kit's naming :has(), found ${String(left)}`
                 );

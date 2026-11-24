@@ -19,23 +19,34 @@ export type Hearing = {
  * Keeps every set of words put in a status line from here on, in order, as an array on the window
  * under the name given. Each write the line takes is kept, so the same words said again are kept
  * again, and the line emptied is kept only where asked. It watches the root rather than the line,
- * so a line drawn later, as React draws one, is heard from its first words. It runs in the browser,
+ * matching each change to the line's selector, so a line drawn later, as React draws one, is heard
+ * from its first words, and one put in already holding words is heard as it arrives. It runs in the browser,
  * by `page.evaluate` or `addInitScript`, or written into a page's own script by `hearing`.
  */
 export const hear = ({ line, into = 'heard', empties = false, root = document }: Hearing): void => {
     const heard: string[] = [];
     Object.assign(window, { [into]: heard });
+    /** The line a change lands in, by the selector. */
+    const landedIn = (target: Node): Element | null | undefined =>
+        (target instanceof Element ? target : target.parentElement)?.closest(line);
+    /** The lines a node put in the page is or holds. */
+    const linesIn = (node: Node): Element[] =>
+        node instanceof Element
+            ? [...(node.matches(line) ? [node] : []), ...node.querySelectorAll(line)]
+            : [];
     new MutationObserver((records) => {
-        const lines = new Set<Element>();
-        for (const { target } of records) {
-            const found = (target instanceof Element ? target : target.parentElement)?.closest(
-                line
-            );
-            if (found) lines.add(found);
+        const changed = new Set<Element>();
+        // A line put in already holding words, alone or inside what holds it, says them as it
+        // arrives. One put in empty has said nothing.
+        const arrived = new Set<Element>();
+        for (const { target, addedNodes } of records) {
+            const found = landedIn(target);
+            if (found) changed.add(found);
+            for (const added of [...addedNodes].flatMap(linesIn)) arrived.add(added);
         }
-        for (const found of lines) {
+        for (const found of new Set([...changed, ...arrived])) {
             const words = found.textContent;
-            if (empties || words !== '') heard.push(words);
+            if (words !== '' || (empties && changed.has(found))) heard.push(words);
         }
     }).observe(root, { childList: true, characterData: true, subtree: true });
 };

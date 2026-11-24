@@ -468,8 +468,8 @@ test.describe('in React', () => {
         // its words in, so words on their way have landed before the line is read as silent.
         await stillClock(page.clock);
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
-        // Every set of words the screen's status line is given, by a watch on the line itself, so
-        // the same words said again are kept again.
+        // Every set of words the screen's status line is given, by a watch on the document matched
+        // by the line's selector, so the same words said again are kept again.
         await expect(page.locator('#root p[role="status"]')).toHaveCount(1);
         await page.evaluate(hear, { line: '#root p[role="status"]' });
         const heard = () => page.evaluate(() => (window as unknown as { heard: string[] }).heard);

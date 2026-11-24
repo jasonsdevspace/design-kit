@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { InputField, StepperField, ValueField } from '../src/react.js';
 import {
     box,
+    channels,
     hear,
     press,
     servePage,
@@ -130,13 +131,16 @@ const heard = (page: Page): Promise<string[]> =>
     page.evaluate(() => (window as unknown as { heard: string[] }).heard);
 
 /**
- * Keeps every set of words a stepper's own line is given from here on, by a watch on the line
- * itself, so words said twice are kept twice. A test of silence stops the clock first and runs it
- * past the moment a line waits before its words are put in, since an empty line read any sooner is
- * empty whatever the stepper said.
+ * Keeps every set of words a stepper's own line is given from here on, by a watch on the document
+ * matched by the line's selector, so words said twice are kept twice. The line must be there, so a
+ * test of silence never passes on a line missing. A test of silence stops the clock first and runs
+ * it past the moment a line waits before its words are put in, since an empty line read any sooner
+ * is empty whatever the stepper said.
  */
-const record = (page: Page, id: string): Promise<void> =>
-    page.evaluate(hear, { line: lineOf(id), into: 'said' });
+const record = async (page: Page, id: string): Promise<void> => {
+    await expect(line(page, id)).toHaveCount(1);
+    await page.evaluate(hear, { line: lineOf(id), into: 'said' });
+};
 const said = (page: Page): Promise<string[]> =>
     page.evaluate(() => (window as unknown as { said: string[] }).said);
 /** Longer than a line waits before its words are put in, so words on their way have landed. */
@@ -1031,15 +1035,26 @@ test('draws a read-only stepper with no buttons, its value read as a field drawn
 
 /**
  * How far into a field its words start, in CSS pixels from its own left edge: its border, padding
- * and indent, and the room its alignment leaves before the words, their width read from a copy of
- * the value set in the field's own font. It reads the box and the field's styles, never a picture
- * of the words, so a face with more or less room before its first letter moves nothing.
+ * and indent, the indent on the right where the field runs right to left, and the room its
+ * alignment leaves before the words, their width read from a copy of the value set in the field's
+ * own font. It reads the box and the field's styles, never a picture of the words, so a face with
+ * more or less room before its first letter moves nothing, and it fails where the words are not
+ * painted: no value, a color that shows nothing, or a box with no width to draw them in.
  */
-const wordsStart = (locator: Locator): Promise<number> =>
-    locator.evaluate((input: HTMLInputElement) => {
+const wordsStart = async (locator: Locator): Promise<number> => {
+    const painted = await locator.evaluate((input: HTMLInputElement) => ({
+        value: input.value,
+        color: getComputedStyle(input).color,
+        width: input.getBoundingClientRect().width,
+    }));
+    expect(painted.value, 'a value to paint').not.toBe('');
+    expect(channels(painted.color)[3], 'the words painted in a color that shows').toBeGreaterThan(
+        0
+    );
+    expect(painted.width, 'a box with width to paint the words in').toBeGreaterThan(0);
+    return locator.evaluate((input: HTMLInputElement) => {
         const drawn = getComputedStyle(input);
         const length = (name: string) => Number.parseFloat(drawn.getPropertyValue(name)) || 0;
-        const left = length('border-left-width') + length('padding-left') + length('text-indent');
         const room = input.clientWidth - length('padding-left') - length('padding-right');
         const copy = document.createElement('span');
         for (const name of [
@@ -1054,6 +1069,7 @@ const wordsStart = (locator: Locator): Promise<number> =>
             'font-kerning',
             'letter-spacing',
             'word-spacing',
+            'text-transform',
         ])
             copy.style.setProperty(name, drawn.getPropertyValue(name));
         copy.style.whiteSpace = 'pre';
@@ -1062,16 +1078,22 @@ const wordsStart = (locator: Locator): Promise<number> =>
         document.body.append(copy);
         const words = copy.getBoundingClientRect().width;
         copy.remove();
-        const align = drawn.textAlign;
+        // The indent, a share of the room where given as one, at the start of the line.
+        const indent = drawn.textIndent.endsWith('%')
+            ? (Number.parseFloat(drawn.textIndent) / 100) * room
+            : length('text-indent');
         const rtl = drawn.direction === 'rtl';
+        const align = drawn.textAlign;
+        const line = room - indent;
         const before =
             align === 'center'
-                ? (room - words) / 2
+                ? (line - words) / 2
                 : align === 'right' || (align === 'end' && !rtl) || (align === 'start' && rtl)
-                  ? room - words
+                  ? line - words
                   : 0;
-        return left + before;
+        return length('border-left-width') + length('padding-left') + (rtl ? 0 : indent) + before;
     });
+};
 
 const READ_ONLY = renderToStaticMarkup(
     <main>
