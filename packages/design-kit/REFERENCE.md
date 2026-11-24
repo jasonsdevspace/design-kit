@@ -2213,7 +2213,6 @@ still lands.
 
 Each request is new, so the same control asked for twice is focused twice, and the function
 `moveFocus` returns calls a request off before it lands, as aborting the `signal` it is given does.
-A request asked as its component unmounts is given no signal that unmount aborts, so it still lands.
 
 #### An id inside a shadow root
 
@@ -2226,11 +2225,11 @@ it, as a request reads where focus was, for a page that asks later and passes `f
 
 #### Moving focus in React
 
-In React, `useFocusAfterDraw()` returns a function like `moveFocus`, the same across renders, and
-makes each request once the render it was asked in commits, so it lands in the frame that paints the
-change. A page that sets its state after an await, as a save to the browser's storage does, and then
-asks finds the control drawn and on, though React draws that state in a task of its own and a frame
-can come before it, and so does a page whose change is drawn by another component.
+In React, `useFocusAfterDraw()` returns the same function as `moveFocus`, the same across renders,
+and makes each request once the render it was asked in commits, so it lands in the frame that paints
+the change. A page that sets its state after an await, as a save to the browser's storage does, and
+then asks finds the control drawn and on, though React draws that state in a task of its own and a
+frame can come before it, and so does a page whose change is drawn by another component.
 
 Where focus was is read as the request is asked, inside a shadow root too. Ask in a handler, after
 an await in it too, or in an effect with dependencies, never as the component renders nor in an
@@ -2244,6 +2243,7 @@ waits for its render as any other does.
 
 #### A request as its component unmounts
 
+A request asked as its component unmounts is given no signal that unmount aborts, so it still lands.
 A request still waiting when the component unmounts, or when an `Activity` hides it, is made then,
 with where focus was read as it was asked, so a row that asks for focus on the next as its press
 removes it moves focus there, at once, after an await, from a timer or in a transition. Nothing at
