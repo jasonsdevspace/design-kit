@@ -2,7 +2,8 @@
 
 **Status:** accepted, amended in 0.9.0 for `moveFocus`, which falls back by the same walk, in 0.9.3
 for a button let go while its panel is open, and by record 23 in 0.9.3, under which the toast and a
-dialog taken down by its signal hand focus back by this rule
+dialog taken down by its signal hand focus back by this rule, and by record 29 in 0.9.4, under
+which F8 moves focus to a shown toast's action and back
 
 ## Context
 
@@ -67,7 +68,8 @@ last press was a link in the panel to a place on the same page outside it, one t
 and downloads nothing, focus goes to that place instead, since following the link moved the
 keyboard's starting point there. The toast and a dialog taken down by its signal hand focus back by
 the same rule, focus in the piece, or on the body or nowhere where the piece had it as it left,
-which the kit states once, as record 23 has it.
+which the kit states once, as record 23 has it. F8 pressed in a shown toast sends focus back by the
+toast's walk with the toast still shown, as record 29 has it.
 
 `moveFocus`, which moves focus once a change is drawn, falls back by the same walk: where its target
 is gone, hidden, inert, disabled or off, focus goes to the first of its fallbacks that takes it and

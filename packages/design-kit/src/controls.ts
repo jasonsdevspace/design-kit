@@ -1108,6 +1108,12 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * function it returned, and what that returned, do nothing after. A signal already aborted returns
  * a function that shows nothing.
  *
+ * F8 with no modifier, and not held, moves focus to a shown action from anywhere on the page, as
+ * record 29 has it, and pressed with focus in the toast sends it back by the same list, the toast
+ * still shown. A press the page has handled, or one with no action shown, is left alone, and the
+ * key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while it is
+ * shown, and the document hears the key only while a message with an action is shown.
+ *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
  * focus back, so the room the sheet keeps under a shown toast does not scroll the control focus
@@ -1186,6 +1192,28 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             timer = window.setTimeout(dismiss, TOAST_FOR);
         }
     };
+    // F8 with no modifier, and not held, moves focus to a shown action from anywhere on the page,
+    // and from in the toast back where it came from, by the walk a dismiss hands it back by, with
+    // the toast still shown. The document hears it only while a message with an action is shown,
+    // so a toast hears no key while it has nothing to offer and keeps nothing alive once it hides.
+    // A press a page has handled, and one where focus stays put, keeps its default.
+    const onKey = (event: KeyboardEvent) => {
+        if (
+            event.key !== 'F8' ||
+            event.repeat ||
+            event.shiftKey ||
+            event.ctrlKey ||
+            event.altKey ||
+            event.metaKey ||
+            event.defaultPrevented ||
+            !element.isConnected
+        )
+            return;
+        const before = focusedNow();
+        if (holds(element, before)) handBack(cameFrom, arrivedAt, homeOf(element));
+        else actionButton.focus();
+        if (focusedNow() !== before) event.preventDefault();
+    };
     const dismiss = () => {
         window.clearTimeout(timer);
         // Focus goes back by the rule every piece hands it back by, the toast having had it as it
@@ -1223,6 +1251,8 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         message.textContent = '';
         actionButton.textContent = '';
         actionButton.hidden = true;
+        actionButton.removeAttribute('aria-keyshortcuts');
+        document.removeEventListener('keydown', onKey);
         close.hidden = true;
         watch.disconnect();
         window.removeEventListener('resize', remeasure);
@@ -1243,6 +1273,15 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         onAction = action?.onAction;
         actionButton.textContent = action?.label ?? '';
         actionButton.hidden = !action;
+        // Added once however many messages with an action are shown, as the DOM ignores the same
+        // listener again, and taken off by a message with none.
+        if (action) {
+            actionButton.setAttribute('aria-keyshortcuts', 'F8');
+            document.addEventListener('keydown', onKey, { signal });
+        } else {
+            actionButton.removeAttribute('aria-keyshortcuts');
+            document.removeEventListener('keydown', onKey);
+        }
         close.hidden = false;
         element.classList.add('dk-toast-shown');
         element.dataset['shown'] = '';
