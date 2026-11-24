@@ -113,10 +113,13 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   and the hook refuses after the render that draws them.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
-  words, and the summary's words where focus was already on it, each heading, paragraph and item
-  apart, so a heading is not run into the list under it. A device check with VoiceOver on an iPhone
-  heard no error where the kit left it to the field's description, which iOS reads only as a hint,
-  and focus moved by script may not land.
+  words, and the first field's name and error where focus was already on the summary, which a screen
+  reader does not read again. Reading the summary's own words was turned down, since its markup is
+  the page's and each shape of it, nested lists, hidden items and text outside a list, needed a rule
+  of its own. Moving focus off the summary and back was turned down too, since VoiceOver on iOS does
+  not reliably follow focus moved by script. A device check with VoiceOver on an iPhone heard no
+  error where the kit left it to the field's description, which iOS reads only as a hint, and focus
+  moved by script may not land.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
 - **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
@@ -175,14 +178,14 @@ The paths are in `packages/design-kit`.
   submit, and in React hands the failures, a set's among them, to the page, which draws them, and
   refuses once they are drawn. It hands every failure with the words its field shows as a second
   list, a stepper's own error's words among them, in plain markup and in React, where a summary
-  built from it lists the stepper with its own words and takes focus, and is said a heading and an
-  item at a time once it already has focus. It runs in Chromium, WebKit and Firefox.
+  built from it lists the stepper with its own words and takes focus, and has the first field's name
+  and error said once it already has focus. It runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
-  marked off and a summary the page keeps hidden, names a set none of whose controls can take focus,
-  says the name and error of a field focus moves to or was already on, a set's where its choice does
-  not read the error, and a field's name with the count where it is marked in error with none drawn,
-  and says "Form cleared." after a reset that takes away the kit's errors and nothing after one with
-  none to take away.
+  marked off and a summary hidden by an ancestor or a style, or made inert, names a set none of
+  whose controls can take focus, says the name and error of a field focus moves to or was already
+  on, a set's where its choice does not read the error, and a field's name with the count where it
+  is marked in error with none drawn, and says "Form cleared." after a reset that takes away the
+  kit's errors and nothing after one with none to take away.
 - `e2e/teardown.spec.tsx` takes a form's check down by its signal with a refusal and a reset still
   due and finds nothing said after, its errors, marks and `noValidate` as the markup drew them, and
   the check kept until the last attach in the form is taken down. It finds nothing drawn through

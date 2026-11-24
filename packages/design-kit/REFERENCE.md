@@ -869,13 +869,13 @@ invalid })` returns in React, which speaks on the screen's `StatusProvider`, and
 same itself for the browser's constraints, as below. Once the errors are drawn, a frame after the
 call in a page without React, and in React a frame after the render that draws them commits, even
 where the page set them after an await, as a page that saves to the browser's storage first does,
-focus moves to an error summary where the page names one and does not hide it, else the first field
-in error that can take focus, passing over one that is disabled, inert, marked off, itself or by its
-set, or out of sight, or in a set its checked radio or its first control that can take focus, since
-the set's fieldset takes none. A set counts once, however many of its choices are marked. One
-message is said. Where focus moves to a summary, which reads its own words, nothing is said, and
-where the summary already had focus, its words are said, each heading, paragraph and list item apart
-and ending in a stop. Where focus moves to a field or was already on it, that field's name and error
+focus moves to an error summary where the page names one that can take focus, passed over where it
+is hidden, inert or out of sight as a field is, else the first field in error that can take focus,
+passing over one that is disabled, inert, marked off, itself or by its set, or out of sight, or in a
+set its checked radio or its first control that can take focus, since the set's fieldset takes none.
+A set counts once, however many of its choices are marked. One message is said. Where focus moves to
+a summary, which reads its own words, nothing is said. Where focus moves to a field, or was already
+on it or on the summary, which a screen reader does not read again, the first field's name and error
 are said, with how many fields need attention where more are wrong, or its name and the count where
 it shows no error. VoiceOver on iOS reads a field's error only as a hint, after a pause, which other
 speech cuts off and which a visitor who turns hints off never hears, and focus moved by script may
@@ -1012,6 +1012,10 @@ const submit = (event: FormEvent<HTMLFormElement>) => {
 //         </ul>
 //     </div>
 ```
+
+The kit's fields always give their control an id, made with `useId` where the page gives none, so a
+summary keys and links its items by `control.id`. In plain markup each control is given an id to
+link to.
 
 The kit checks only on a submit, never while someone is typing or as they leave a field, and checks
 beyond the browser's constraints are the page's.

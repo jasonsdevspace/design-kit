@@ -1182,7 +1182,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                 });
 
         if (way === 'useFormRefusal')
-            test('says a list summary that already has focus with its heading and each item apart', async ({
+            test("says the first field's name and error when a summary already has focus", async ({
                 page,
             }) => {
                 await openWay(page, { summary: true }, '');
@@ -1193,13 +1193,13 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                     await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
                 }).toPass();
                 expect(await saidAfterWait(page)).toEqual([]);
-                // Submitted again with focus kept on the summary, which reads nothing, so its
-                // words are said.
+                // Submitted again with focus kept on the summary, which reads nothing, so the first
+                // field's name and error are said, as for a field that already has focus.
                 await page.locator('form').evaluate((form) => {
                     (form as HTMLFormElement).requestSubmit();
                 });
                 expect(await saidOf(page)).toEqual([
-                    `page: There is a problem. Enter your name. ${OWN}`,
+                    'page: Name: Error: Enter your name. 2 fields need attention.',
                 ]);
                 await expect(page.locator('#summary')).toBeFocused();
             });
