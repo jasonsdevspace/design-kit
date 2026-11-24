@@ -10,7 +10,7 @@ import { servePage, stillClock } from './page.js';
  * a radio set's checked radio, or a summary the page names, and one message on the status line,
  * nothing where focus moves to a summary, and otherwise, the summary already focused among them,
  * the first field's name and error with how many need attention where more are wrong, with a
- * second refusal heard again, "Form cleared." where a reset takes away the kit's errors, and a
+ * second refusal heard again, "Form cleared." where a reset follows a refusal, and a
  * field's error the page draws again with new words while a refusal through the hook stands.
  */
 
@@ -66,11 +66,13 @@ window.markWrong = (id, words) => {
     holder.setAttribute('aria-invalid', 'true');
 };
 window.summarised = false;
-window.refuse = () => {
+window.attach = () =>
     attachForm(form, {
         status: line,
         summary: () => (window.summarised ? document.querySelector('#summary') : null),
-    })();
+    });
+window.refuse = () => {
+    window.attach()();
 };
 window.ready = true;`;
 
@@ -78,6 +80,7 @@ type Form = {
     heard: string[];
     markWrong: (id: string, words: string) => void;
     refuse: () => void;
+    attach: () => void;
     summarised: boolean;
 };
 
@@ -266,7 +269,7 @@ const withReset = (page: Page) =>
         reset.type = 'reset';
         reset.textContent = 'Start over';
         form?.append(reset);
-        (window as unknown as Form).refuse();
+        (window as unknown as Form).attach();
     });
 
 test("says the form is cleared where a reset takes away the kit's errors", async ({ page }) => {
@@ -288,14 +291,18 @@ test("says the form is cleared where a reset takes away the kit's errors", async
     await expect(page.getByRole('button', { name: 'Start over' })).toBeFocused();
 });
 
-test("says nothing on a reset with none of the kit's errors to take away", async ({ page }) => {
+test('says nothing on a reset with no refusal standing, and the form is cleared on one after the page refused', async ({
+    page,
+}) => {
     await open(page, { clock: true });
     await withReset(page);
     // A reset with nothing wrong, as after a save, says nothing.
     await page.getByRole('button', { name: 'Start over' }).click();
     // Past the task the reset waits, which would call off a refusal asked before it comes.
     await page.clock.runFor(100);
-    // An error the page drew is the page's to clear, so the kit does not say the form is cleared.
+    expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([]);
+    // A refusal stands whoever drew its errors, the page's own among them, so a reset after it says
+    // the form is cleared.
     await refuse(page, [['name', 'Give the rule a name.']]);
     await page.clock.runFor(300);
     expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
@@ -306,6 +313,7 @@ test("says nothing on a reset with none of the kit's errors to take away", async
     await page.clock.runFor(500);
     expect(await page.evaluate(() => (window as unknown as Form).heard)).toEqual([
         'Rule name: Error: Give the rule a name.',
+        'Form cleared.',
     ]);
 });
 

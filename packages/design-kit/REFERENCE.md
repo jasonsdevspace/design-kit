@@ -981,11 +981,10 @@ ever, for the checks the constraints cannot express, such as two fields that mus
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
 the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
-page calls the reset off, which leaves a stepper's own error too, and a reset that goes through and
-takes away an error the kit drew, or leaves fewer fields marked invalid than it found, says "Form
-cleared." on the status line, whoever marked them, the kit, a stepper or a page that clears its own
-errors on a reset, since focus stays on the button and the errors go out of hearing. Errors a page
-drew are its own to clear on a reset, and a reset that takes none away says nothing. A form's own
+page calls the reset off, which leaves a stepper's own error too. A reset that goes through after a
+refusal, with no passing submit or reset since, says "Form cleared." on the status line, whoever
+drew the errors, since focus stays on the button and the errors go out of hearing, and a reset with
+no refusal standing says nothing. Errors a page drew are its own to clear on a reset. A form's own
 attach checks it where a part of it was attached first, so its options are the ones the check takes,
 and a refusal the page calls looks only in the part it attached. Fields not in error are marked
 `aria-invalid="false"` as the form is attached, so a browser does not read an empty required field

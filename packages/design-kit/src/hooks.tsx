@@ -460,8 +460,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * an error summary. `invalid` is called only for a submit that fails, so the page's own submit
  * handler clears the errors it set. `errorWords` gives the words for each failure in place of the
  * kit's, read as each is put in words, never a stepper's own error's, which `rangeError` sets. A
- * reset that leaves fewer fields marked invalid, as a stepper's own error clearing, says the form
- * is cleared.
+ * reset after a refusal, with no passing submit or reset since, says the form is cleared.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
     options: Pick<FormOptions, 'say' | 'summary' | 'errorWords'> & {
