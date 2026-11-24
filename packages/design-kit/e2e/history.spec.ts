@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { type Browser, expect, type Page, test } from '@playwright/test';
 
 import { servePage } from './page.js';
 
@@ -25,23 +25,50 @@ const openForm = (page: Page) =>
 });`,
     });
 
-test('offers a field none of the words a test before sent from it', async ({ browser }) => {
+/**
+ * What the name field holds where one context of the browser sent "Ana" from it, and the next
+ * typed "An" and pressed the keys that choose the first words the browser lists.
+ */
+const offered = async (browser: Browser): Promise<string> => {
     const before = await browser.newContext();
-    const sent = await before.newPage();
-    await openForm(sent);
-    await sent.getByLabel('Name').fill('Ana');
-    await sent.getByRole('button', { name: 'Send' }).click();
-    await before.close();
     const after = await browser.newContext();
-    const page = await after.newPage();
-    await openForm(page);
-    const name = page.getByLabel('Name');
-    await name.pressSequentially('An');
-    // The list is the browser's own, which the page cannot see, so its search is waited for in
-    // real time, before the keys that would choose its first entry.
-    await page.waitForTimeout(LISTED);
-    await name.press('ArrowDown');
-    await name.press('Enter');
-    await expect(name).toHaveValue('An');
-    await after.close();
+    try {
+        const sent = await before.newPage();
+        await openForm(sent);
+        await sent.getByLabel('Name').fill('Ana');
+        await sent.getByRole('button', { name: 'Send' }).click();
+        await before.close();
+        const page = await after.newPage();
+        await openForm(page);
+        const name = page.getByLabel('Name');
+        await name.pressSequentially('An');
+        // The list is the browser's own, which the page cannot see, so its search is waited for in
+        // real time, a wait the browser that keeps its history shows to be long enough.
+        await page.waitForTimeout(LISTED);
+        await name.press('ArrowDown');
+        await name.press('Enter');
+        return await name.inputValue();
+    } finally {
+        await before.close();
+        await after.close();
+    }
+};
+
+test('offers a field none of the words a test before sent from it', async ({
+    browser,
+    browserName,
+    playwright,
+}) => {
+    test.skip(browserName !== 'firefox', 'Firefox form history');
+    // The same steps in a Firefox that keeps its form history choose the words it lists, so a list
+    // too slow to open fails here rather than passing below.
+    const keeping = await playwright.firefox.launch({
+        firefoxUserPrefs: { 'browser.formfill.enable': true },
+    });
+    try {
+        expect(await offered(keeping), 'the field in a Firefox that keeps its history').toBe('Ana');
+    } finally {
+        await keeping.close();
+    }
+    expect(await offered(browser)).toBe('An');
 });
