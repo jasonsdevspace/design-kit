@@ -981,14 +981,15 @@ ever, for the checks the constraints cannot express, such as two fields that mus
 already taken, and it draws those errors and refuses itself, clearing its own errors as it checks
 again. A button marked `formnovalidate` submits unchecked and clears the errors the kit drew. Errors
 the kit drew go once their fields pass on a later checked submit, or the form is reset, unless the
-page calls the reset off, and a reset that goes through and leaves fewer fields marked invalid than
-it found says "Form cleared." on the status line, whoever marked them, the kit, a stepper or a page
-that clears its own errors on a reset, since focus stays on the button and the errors go out of
-hearing. Errors a page drew are its own to clear on a reset, and a reset that takes none away says
-nothing. A form's own attach checks it where a part of it was attached first, so its options are the
-ones the check takes, and a refusal the page calls looks only in the part it attached. Fields not in
-error are marked `aria-invalid="false"` as the form is attached, so a browser does not read an empty
-required field as invalid before anything is submitted.
+page calls the reset off, which leaves a stepper's own error too, and a reset that goes through and
+takes away an error the kit drew, or leaves fewer fields marked invalid than it found, says "Form
+cleared." on the status line, whoever marked them, the kit, a stepper or a page that clears its own
+errors on a reset, since focus stays on the button and the errors go out of hearing. Errors a page
+drew are its own to clear on a reset, and a reset that takes none away says nothing. A form's own
+attach checks it where a part of it was attached first, so its options are the ones the check takes,
+and a refusal the page calls looks only in the part it attached. Fields not in error are marked
+`aria-invalid="false"` as the form is attached, so a browser does not read an empty required field
+as invalid before anything is submitted.
 
 `attachForm` draws into the markup it finds, so a page lets it draw errors only in markup nothing
 will draw again, such as a page written by hand or the React components rendered to static HTML and
@@ -3165,41 +3166,43 @@ passes, shows no error, and its form saves, so a stepper whose blank has no mean
 mark in the label, which only says the field is required, so a stepper marked required takes
 `required` too where a blank must be refused. The error's words are the markup's, which `rangeError`
 sets on `StepperField`, never `data-error-*` or a form's `errorWords`, which do not reach an
-attached stepper. An attached stepper owns its error for every failure it holds, at a submit and a
-reset as at a change, so a required one drawn blank and submitted untouched shows its own error, and
-its form draws no error on it, never marks it, and in React hands `invalid` nothing for it. Letters
-typed into a blank field leave its value blank and may fire no `change`, so the stepper shows
-nothing for them until a submit, where it shows its own error. A value typed past the range in a
-field that already shows an error of the page's shows both, the page's until the page clears it. As
-its error clears, a stepper in a form the kit checks is marked `aria-invalid="false"`, as every
-field not in error is there, and one outside such a form loses the mark. An error that shows follows
-`required` and `step` as a script changes them, as it does its limits. A refusal the page sets of
-its own with `setCustomValidity` is left to the page. A value drawn outside the limits or between
-steps shows the error as the stepper is attached, and again when a form's reset brings it back, with
-nothing said, so a page that draws that state writes no code of its own for it. A field drawn blank
-shows none, and a required one none until it is changed, so a stepper attached again, as on a
-remount, shows the error for a value past its limits but not for a field left blank. A field that is
-disabled or read only shows none, since no one can put it right, and where the page draws its own
-error in the field, the page's error is the one shown as the page loads. The error is cleared as
-soon as the value is right again, and the attach function adds and takes away only its own error, so
-an error or a hint the page draws keeps its place. A page that draws the field again, as React does
-when the page's own error comes or goes, rewrites the field's description and its invalid mark, and
-the attach function puts its shown error back in both at once. It takes the stepper or its field,
-attaches each stepper once whichever it is given, and returns what takes it down again.
+attached stepper. They are shown for a blank required field and for letters as well as a value past
+the limits or between steps, so they are written as an instruction. An attached stepper owns its
+error for every failure it holds, at a submit and a reset as at a change, so a required one drawn
+blank and submitted untouched shows its own error, and its form draws no error on it, never marks
+it, and in React hands `invalid` nothing for it. Letters typed into a blank field leave its value
+blank and may fire no `change`, so the stepper shows nothing for them until a submit, where it shows
+its own error. A value typed past the range in a field that already shows an error of the page's
+shows both, the page's until the page clears it. As its error clears, a stepper in a form the kit
+checks is marked `aria-invalid="false"`, as every field not in error is there, and one outside such
+a form loses the mark. An error that shows follows `required` and `step` as a script changes them,
+as it does its limits. A refusal the page sets of its own with `setCustomValidity` is left to the
+page. A value drawn outside the limits or between steps shows the error as the stepper is attached,
+and again when a form's reset brings it back, with nothing said, so a page that draws that state
+writes no code of its own for it. A field drawn blank shows none, and a required one none until it
+is changed, so a stepper attached again, as on a remount, shows the error for a value past its
+limits but not for a field left blank. A field that is disabled or read only shows none, since no
+one can put it right, and where the page draws its own error in the field, the page's error is the
+one shown as the page loads. The error is cleared as soon as the value is right again, and the
+attach function adds and takes away only its own error, so an error or a hint the page draws keeps
+its place. A page that draws the field again, as React does when the page's own error comes or goes,
+rewrites the field's description and its invalid mark, and the attach function puts its shown error
+back in both at once. It takes the stepper or its field, attaches each stepper once whichever it is
+given, and returns what takes it down again.
 
 **`StepperField` props**
 
-| `StepperField`        | Default                                         | What it does                                                                                     |
-| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `label`               | required                                        | Names the field                                                                                  |
-| `min`, `max`          | required                                        | The least and the greatest value                                                                 |
-| `step`                | `1`                                             | What a press adds or takes away                                                                  |
-| `subject`             | the label, where it is words                    | The words after Lower and Raise in the buttons' names, needed where the label is more than words |
-| `rangeError`          | a sentence giving the limits and any step but 1 | What a value the field refuses is told, such as `'Enter a whole number from 2 to 8.'`            |
-| `inline`              | `false`                                         | Puts the label to the left, on one line with the stepper                                         |
-| `tall`                | `false`                                         | Draws the buttons and the value at `--dk-target-large`                                           |
-| `hint`, `error`, `id` | none                                            | As for every field                                                                               |
-| `mark`, `markWords`   | as a field's                                    | As for every field                                                                               |
+| `StepperField`        | Default                                         | What it does                                                                                                                                                                                                                    |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`               | required                                        | Names the field                                                                                                                                                                                                                 |
+| `min`, `max`          | required                                        | The least and the greatest value                                                                                                                                                                                                |
+| `step`                | `1`                                             | What a press adds or takes away                                                                                                                                                                                                 |
+| `subject`             | the label, where it is words                    | The words after Lower and Raise in the buttons' names, needed where the label is more than words                                                                                                                                |
+| `rangeError`          | a sentence giving the limits and any step but 1 | What a value the field refuses is told, shown for a blank required field and for letters as well as a value past the limits or between steps, so it is written as an instruction, such as `'Enter a whole number from 2 to 8.'` |
+| `inline`              | `false`                                         | Puts the label to the left, on one line with the stepper                                                                                                                                                                        |
+| `tall`                | `false`                                         | Draws the buttons and the value at `--dk-target-large`                                                                                                                                                                          |
+| `hint`, `error`, `id` | none                                            | As for every field                                                                                                                                                                                                              |
+| `mark`, `markWords`   | as a field's                                    | As for every field                                                                                                                                                                                                              |
 
 <details>
 <summary>How a stepper is drawn</summary>

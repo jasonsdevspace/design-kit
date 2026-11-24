@@ -1672,9 +1672,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // Once the reset is done, and never once the stepper is let go, since the teardown clears it,
     // as with focus leaving it.
     let resetting = 0;
-    const onReset = () => {
+    const onReset = (event: Event) => {
         window.clearTimeout(resetting);
         resetting = window.setTimeout(() => {
+            // A reset the page calls off leaves the value, so its error stays, as the form's do.
+            if (event.defaultPrevented) return;
             quiet();
             mark();
             report(drawnWrong());
@@ -2758,7 +2760,7 @@ const attachedForms = new WeakMap<HTMLElement, Kept<Refuse, FormOptions>>();
 /** What checks a form, and clears what its check drew, from an attach in it. */
 type Checker = {
     readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
-    readonly clear: () => void;
+    readonly clear: () => boolean;
     readonly cleared: () => void;
 };
 
@@ -2781,12 +2783,12 @@ const unmark = (marks: readonly Element[]) => {
  * phase, which runs only where every field passes, so it can still check what they cannot express.
  * The form's own attach checks it where there is one, else the first part's, so the form's own goes
  * first and each part's after it. A reset a page calls off leaves the errors, since the values that
- * failed stay. One that goes through takes away the errors the kit drew, and where fewer fields are
- * marked invalid once it is done than as it fired says so, whoever marked them, the kit, a stepper
- * or a page that clears its own, since the errors go out of a screen reader's hearing and focus
- * stays on the button. A reset that takes no error away, as after a save, says nothing. The last
- * attach in the form taken down takes the check away, with a reset's timer still due, and gives the
- * form back its own noValidate, so the browser checks it again.
+ * failed stay. One that goes through takes away the errors the kit drew, and where it took any, or
+ * where fewer fields are marked invalid once it is done than as it fired, whoever marked them, the
+ * kit, a stepper or a page that clears its own, says so, since the errors go out of a screen
+ * reader's hearing and focus stays on the button. A reset that takes no error away, as after a
+ * save, says nothing. The last attach in the form taken down takes the check away, with a reset's
+ * timer still due, and gives the form back its own noValidate, so the browser checks it again.
  */
 const checkForm = (own: HTMLFormElement): CheckedForm => {
     const down = teardown();
@@ -2815,13 +2817,15 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
         (event) => {
             // Counted as the reset fires and again once every error it takes away has gone, the
             // kit's, a stepper's and a page's, so the first attach says so wherever fewer fields
-            // are marked invalid, whoever marked them.
-            const before = wrongFields(own).length;
+            // are marked invalid, whoever marked them, or the kit took an error of its own away.
+            const before = markedFields(own);
             const timer = window.setTimeout(() => {
                 timers.delete(timer);
                 if (event.defaultPrevented) return;
-                for (const one of checked.checkers) one.clear();
-                if (wrongFields(own).length < before) checked.checkers[0]?.cleared();
+                // Every attach's errors go, and an error the kit took away from a field the page
+                // marked invalid of its own counts too, though the field's mark stays.
+                const took = checked.checkers.map((one) => one.clear()).includes(true);
+                if (took || markedFields(own) < before) checked.checkers[0]?.cleared();
             });
             timers.add(timer);
         },
@@ -2844,6 +2848,17 @@ const takesFocus = (control: Element): control is HTMLElement =>
  */
 const reachable = (control: Element): control is HTMLElement =>
     !control.closest('[aria-disabled="true"]') && takesFocus(control);
+
+/**
+ * How many of a form's fields are marked invalid, each once, over the fields its check reads, those
+ * tied to it from outside by `form` among them.
+ */
+const markedFields = (form: HTMLFormElement): number =>
+    new Set(
+        [...form.elements]
+            .filter((control) => control.getAttribute('aria-invalid') === 'true')
+            .map(fieldOf)
+    ).size;
 
 /** The fields of a refused form in error, each once, in order. */
 const wrongFields = (form: HTMLElement): Element[] => [
@@ -2994,10 +3009,10 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * since VoiceOver on iOS reads a field's error only as a hint and focus moved by script may not
  * land. A set counts once however many of its choices are marked. The field's error stays not live.
  * A second refusal calls off one not yet landed, and each refusal returns what calls it off. A
- * reset that goes through takes away the errors the kit drew and, where fewer fields are marked
- * invalid after it, whoever marked them, says the form is cleared. Attached again, a form returns
- * what it returned first and runs on the options of its newest holder, its errors and its check
- * kept.
+ * reset that goes through takes away the errors the kit drew and, where it took any or fewer fields
+ * are marked invalid after it, whoever marked them, says the form is cleared. Attached again, a
+ * form returns what it returned first and runs on the options of its newest holder, its errors and
+ * its check kept.
  *
  * Taken down by its `signal`, it takes its listeners off, calls off a refusal and a reset's timer
  * still due, and takes away the errors it drew, so nothing is said after, and what it returned does
@@ -3132,13 +3147,16 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         failed = failures;
         // The refusal is the one message, so a stepper that fails takes back words of its own not
         // yet said, as one typed past its range and submitted at once has waiting.
-        // A stepper that fails shows its own error for it, so the refusal is the one message.
+        // A stepper that fails takes back its waiting words and shows its own error, so the refusal
+        // is the one message.
         for (const { control } of failures) refusedSteppers.get(control)?.();
-        // A stepper whose own error shows owns it, so the form draws nothing on it and hands the
-        // page no failure to draw from, while the refusal still counts and names the field. The
-        // second list, for a summary, holds every failure with the words its field shows, the
-        // stepper's own error's words among them.
+        // A stepper whose own error shows owns it, so the form draws nothing on it, takes away an
+        // error it drew there before, as for a refusal of the page's, and hands the page no failure
+        // to draw from, while the refusal still counts and names the field. The second list, for a
+        // summary, holds every failure with the words its field shows, the stepper's own error's
+        // words among them.
         const own = failures.filter((failure) => !shownRange(failure.control));
+        for (const failure of failures) if (shownRange(failure.control)) undraw(failure.field);
         if (chosen.invalid) {
             const shown = failures.map((failure) => {
                 const range = shownRange(failure.control);
@@ -3150,11 +3168,13 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         for (const failure of own) draw(failure);
         refuseIn(whole, false);
     };
-    // Takes away the errors the kit drew. A refusal still due is called off with them, since it
-    // would say errors no longer shown in place of what follows.
+    // Takes away the errors the kit drew, and says whether there were any. A refusal still due is
+    // called off with them, since it would say errors no longer shown in place of what follows.
     const clear = () => {
         pending?.();
+        const had = drawn.size > 0;
         for (const field of [...drawn.keys()]) undraw(field);
+        return had;
     };
     down.add(clear);
     down.add(joinForm(form, { check, clear, cleared: () => speak('Form cleared.') }));

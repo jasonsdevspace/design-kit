@@ -988,6 +988,25 @@ test('hands a page that draws its own errors nothing for a required stepper subm
     expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
 });
 
+test("takes away the kit's error a stepper refused by the page showed, once its own error shows", async ({
+    page,
+}) => {
+    await openBid(page);
+    await page.getByLabel('Name').fill('Ana');
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.evaluate((input) => {
+        (input as HTMLInputElement).setCustomValidity('Pick another bid.');
+    });
+    await page.getByRole('button', { name: 'Send' }).click();
+    expect((await bidErrors(page)).drawn).toEqual(['Error: Pick another bid.']);
+    // The page's refusal stays as a value past the range is typed, so the stepper's own error shows.
+    await bid.fill('99');
+    await bid.press('Enter');
+    await expect.poll(async () => (await bidErrors(page)).drawn).toEqual([RANGE]);
+    expect((await bidErrors(page)).described).toEqual([RANGE]);
+    await expect(bid).toHaveAttribute('aria-invalid', 'true');
+});
+
 test('takes away the mark a stepper outside any attached form set as its error clears', async ({
     page,
 }) => {
@@ -1252,6 +1271,23 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             expect(await saidAfterWait(page)).toEqual([]);
         });
 
+        test("keeps a stepper's refused error through a reset the page calls off", async ({
+            page,
+        }) => {
+            await openWay(page, { required: true, blank: true, reset: true });
+            await send(page).click();
+            await refused(page);
+            await page.locator('form').evaluate((form) => {
+                form.addEventListener('reset', (event) => {
+                    event.preventDefault();
+                });
+            });
+            await clear(page).click();
+            await page.clock.runFor(100);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
+        });
+
         /*
          * A summary built from the failures with the words each field shows lists the stepper with
          * its own error's words, where the page is handed no failure to draw for it, and the
@@ -1376,6 +1412,43 @@ test('clears the errors it drew on a formnovalidate submit, and keeps them throu
     await page.clock.runFor(100);
     await expect(page.locator('#n-error')).toBeVisible();
     await page.getByRole('button', { name: 'Save a draft' }).click();
+    await expect(page.locator('#n-error')).toHaveCount(0);
+});
+
+/** Waits for a message on the status line, then past any second one, and counts it. */
+const heardOnce = async (page: Page, words: string) => {
+    await expect.poll(() => heard(page)).toContain(words);
+    await page.waitForTimeout(300);
+    expect((await heard(page)).filter((one) => one === words)).toHaveLength(1);
+};
+
+test('says the form is cleared on a reset that takes an error away from a field tied to it from outside', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form id="f"><button type="submit">Send</button><button type="reset">Clear</button></form>
+<label for="o">Outside</label><input id="o" form="f" required>`
+    );
+    await send(page);
+    await expect(page.locator('#o-error')).toBeVisible();
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await heardOnce(page, 'Form cleared.');
+    await expect(page.locator('#o-error')).toHaveCount(0);
+});
+
+test('says the form is cleared once on a reset that takes its error from a field the page marked invalid', async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><label for="n">Name</label><input id="n" required aria-invalid="true">
+<button type="submit">Send</button><button type="reset">Clear</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#n-error')).toBeVisible();
+    await page.getByRole('button', { name: 'Clear' }).click();
+    await heardOnce(page, 'Form cleared.');
     await expect(page.locator('#n-error')).toHaveCount(0);
 });
 
