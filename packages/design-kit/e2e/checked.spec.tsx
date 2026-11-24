@@ -911,12 +911,11 @@ window.ready = true;`,
 };
 
 /**
- * Chooses the React page's size by the keyboard. A pointer `check()` on the radio once reported in
- * Firefox on a runner that the click left the radio unchanged. Its cause is not known: runs
- * repeated in Firefox under full load met none, with the click before the name was filled or
- * after, nor did a click after the browser kept the name in its form history, whose list could
- * have taken the click. A key pressed on the focused radio reaches the radio itself, whatever lies
- * over the point a click would land on.
+ * Chooses the React page's size by the keyboard. A pointer `check()` on the radio once found it
+ * unchanged in Firefox on a runner. The likely cause is Firefox's list of words a form sent before,
+ * which opens under the name just filled and swallows a press made as it opens, and which the
+ * Firefox project turns off. A key pressed on the focused radio reaches the radio itself, whatever
+ * lies over the point a click would land on.
  */
 const chooseSmall = async (page: Page) => {
     const small = page.getByLabel('Small');

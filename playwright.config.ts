@@ -45,6 +45,17 @@ export default defineConfig({
         // The pieces Safari draws its own way, in its engine too.
         { name: 'webkit', testMatch: specsOf(WEBKIT), use: { ...devices['Desktop Safari'] } },
         // The pieces Firefox draws its own way, in its engine too.
-        { name: 'firefox', testMatch: specsOf(FIREFOX), use: { ...devices['Desktop Firefox'] } },
+        {
+            name: 'firefox',
+            testMatch: specsOf(FIREFOX),
+            use: {
+                ...devices['Desktop Firefox'],
+                launchOptions: {
+                    // Firefox keeps the words a form sent for every context of the browser, and a
+                    // press made as it lists them under a field typed again never reaches the page.
+                    firefoxUserPrefs: { 'browser.formfill.enable': false },
+                },
+            },
+        },
     ],
 });
