@@ -9,10 +9,13 @@ import type { AttachOptions } from './teardown.js';
  * `./controls`.
  */
 
-/** What has focus, or null where nothing does and the page's body stands in for it. */
-export const focusedNow = (): Element | null => {
-    const active = activeOf();
-    return active === document.body ? null : active;
+/**
+ * What has focus in the document given, the page's own unless the toast names the one it sits in,
+ * or null where nothing does and the document's body stands in for it.
+ */
+export const focusedNow = (doc: Document = document): Element | null => {
+    const active = activeIn(doc) ?? null;
+    return active === doc.body ? null : active;
 };
 
 /**
@@ -36,18 +39,26 @@ type Place = Element | null | undefined | (() => readonly Element[]);
 /**
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
- * that takes focus or refused it, so the walk goes on.
+ * that takes focus or refused it, so the walk goes on. Focus is read in the document given, the
+ * page's own unless the toast names the one it sits in. An HTML or SVG element of the page's own
+ * window or of that document's is tried, so one the page made and moved into a frame counts.
  */
-const tryFocus = (place: Element | null | undefined): boolean | undefined => {
+const tryFocus = (place: Element | null | undefined, doc: Document): boolean | undefined => {
+    const view = doc.defaultView ?? window;
     if (
-        !(place instanceof HTMLElement || place instanceof SVGElement) ||
+        !(
+            place instanceof HTMLElement ||
+            place instanceof SVGElement ||
+            place instanceof view.HTMLElement ||
+            place instanceof view.SVGElement
+        ) ||
         !place.isConnected ||
-        place === document.body
+        place === doc.body
     )
         return undefined;
-    const before = focusedNow();
+    const before = focusedNow(doc);
     place.focus({ preventScroll: place.matches('.dk-app-body') });
-    const now = focusedNow();
+    const now = focusedNow(doc);
     if (holds(place, now) && (now !== before || place === before)) return true;
     return now && now !== before ? false : undefined;
 };
@@ -66,14 +77,17 @@ const tryFocus = (place: Element | null | undefined): boolean | undefined => {
  * only once every place before it has refused focus, so places that cost a search of the page are
  * looked for only where they are needed, in the same walk.
  */
-export const focusFirst = (...places: readonly Place[]): boolean => {
+export const focusFirst = (...places: readonly Place[]): boolean => focusFirstIn(document, places);
+
+/** Focuses the first of the places given that takes focus, as `focusFirst` does, in `doc`. */
+const focusFirstIn = (doc: Document, places: readonly Place[]): boolean => {
     for (const given of places)
         // An element is never called, though an object or an embed is a function to some
         // browsers.
         for (const place of typeof given === 'function' && !(given instanceof Element)
             ? given()
             : [given]) {
-            const took = tryFocus(place);
+            const took = tryFocus(place, doc);
             if (took !== undefined) return took;
         }
     return false;
@@ -82,12 +96,13 @@ export const focusFirst = (...places: readonly Place[]): boolean => {
 /**
  * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
  * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
- * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. The
+ * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. Focus
+ * is read in the document given, the page's own unless the toast names the one it sits in. The
  * toast, the dialog and the panels hand focus back by this one rule. The stepper does not use it,
  * and hands focus back only where focus is on one of the buttons it hides.
  */
-export const mayHandBack = (piece: Element, had: boolean): boolean => {
-    const active = focusedNow();
+export const mayHandBack = (piece: Element, had: boolean, doc: Document = document): boolean => {
+    const active = focusedNow(doc);
     return active ? holds(piece, active) : had;
 };
 
@@ -97,8 +112,15 @@ export const mayHandBack = (piece: Element, had: boolean): boolean => {
  * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
  * Returns whether it focused a place.
  */
-export const handBack = (...places: readonly Place[]): boolean => {
-    if (!focusFirst(...places)) return false;
+export const handBack = (...places: readonly Place[]): boolean => handBackIn(document, ...places);
+
+/**
+ * Hands focus back as `handBack` does, in the document given, as the toast does in the one it sits
+ * in. What it keeps is the page's own view of focus, so a request asked in the page compares it
+ * with what the page sees.
+ */
+export const handBackIn = (doc: Document, ...places: readonly Place[]): boolean => {
+    if (!focusFirstIn(doc, places)) return false;
     handed.to = activeOf();
     handed.at = performance.now();
     return true;
@@ -107,11 +129,19 @@ export const handBack = (...places: readonly Place[]): boolean => {
 /** Where focus is asked to go: an element, an element's id, one found as focus moves, or nothing. */
 export type FocusTarget = Element | string | (() => Element | null) | null | undefined;
 
-/** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
-export const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-    rootOf(element).querySelector('main') ??
-    document.querySelector('main');
+/**
+ * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
+ * for in the shadow root the element sits in, then in the document given, the page's own unless the
+ * toast names the one it sits in.
+ */
+export const homeOf = (element: Element, doc: Document = document): Element | null => {
+    const root = rootOf(element);
+    return (
+        element.closest('.dk-app')?.querySelector('.dk-app-body') ??
+        (root === document ? doc : root).querySelector('main') ??
+        doc.querySelector('main')
+    );
+};
 
 /**
  * How focus is moved after a change, and the signal that calls the request off. A request asked as

@@ -4,7 +4,7 @@ import { bundle } from './bundle.js';
 import { countLeaks, type Counts, expectEngineAgrees, leaksOf, openCounted } from './leaks.js';
 import { type Leaks } from './leaks-page.js';
 import { servePage, stillClock } from './page.js';
-import { BODY, KEPT, type Piece, PIECES, script } from './teardown-pieces.js';
+import { BODY, DRAW_FRAME, KEPT, type Piece, PIECES, script } from './teardown-pieces.js';
 
 /*
  * Record 22's promise that a piece taken down leaves nothing running, held for every attach and
@@ -154,6 +154,38 @@ test('listens to the document for F8 only while a toast with an action is shown'
     await page.locator('.dk-toast-close').click();
     expect(await listening()).toBe(attached.documentListeners);
     await expectEngineAgrees(page);
+});
+
+test('leaves nothing in the page or its frame once a toast the page attached in the frame is taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(DRAW_FRAME);
+    const inFrame = (): Promise<Counts> => page.evaluate('frame.contentWindow.leaks.counts()');
+    const before = await leaksOf(page);
+    const frameBefore = await inFrame();
+    await page.evaluate(`(() => {
+        window.framed = new AbortController();
+        window.showIn = kit.attachToast(frameToast, { signal: framed.signal });
+        showIn('Round 2 saved.');
+    })()`);
+    // The toast listens in the frame's document and adds nothing to the page's, and a message with
+    // an action adds the frame's listener for F8.
+    const attached = await inFrame();
+    expect(attached.documentListeners).toBeGreaterThan(frameBefore.documentListeners);
+    await page.evaluate(`showIn('Round 3 saved.', { label: 'Undo', onAction: () => undefined })`);
+    await page.clock.runFor(150);
+    expect((await inFrame()).documentListeners).toBe(attached.documentListeners + 1);
+    // It listens to the frame's window for its size, and to nothing more of the page's.
+    expect(attached.windowListeners).toBe(frameBefore.windowListeners + 1);
+    expect((await leaksOf(page)).documentListeners).toBe(before.documentListeners);
+    expect((await leaksOf(page)).windowListeners).toBe(before.windowListeners);
+    await page.evaluate('framed.abort()');
+    await expectBack(page, frameBefore, { what: 'the frame', read: inFrame });
+    await expectBack(page, before, { what: 'the page' });
+    await page.clock.runFor(10_000);
+    await expectBack(page, frameBefore, { what: 'the frame, later', read: inFrame });
+    await expectBack(page, before, { what: 'the page, later' });
 });
 
 for (const name of KEPT) {

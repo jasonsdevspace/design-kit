@@ -43,7 +43,8 @@ import { textSize } from './text-size.js';
  * their group, or as they were without it, its place above an app's dock or at the foot of a page,
  * nothing drawn before a message or printed, the same function returned when attached again, a
  * solid edge in forced colors outside WebKit, which draws none, and no audit findings in either
- * theme.
+ * theme. A toast the page attaches inside a frame of its own origin is reached by F8 pressed in the
+ * frame and hands focus back to the control there.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
@@ -432,6 +433,36 @@ test.describe('F8', () => {
         await expect(page.locator('iframe')).toBeFocused();
         await expect(inner).toBeFocused();
         await expect(toast(page)).toHaveAttribute('data-shown');
+    });
+
+    test("reaches the action and hands focus back inside a frame of the page's own origin that the page attaches a toast in", async ({
+        page,
+    }) => {
+        await open(page, { body: TOAST_FRAMED, attach: false });
+        await attachInFrame(page);
+        const frame = page.frameLocator('iframe');
+        const inner = frame.locator('#inner');
+        await inner.focus();
+        await page.evaluate(() => {
+            (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+                label: 'Undo',
+                onAction: () => undefined,
+            });
+        });
+        const action = frame.getByRole('button', { name: 'Undo' });
+        await expect(action).toBeVisible();
+        // F8 is pressed in the frame, so the toast hears it in the frame's document.
+        await page.keyboard.press('F8');
+        await expect(action).toBeFocused();
+        // Pressed in the toast, it goes back to the control in the frame, the toast still shown.
+        await page.keyboard.press('F8');
+        await expect(inner).toBeFocused();
+        await page.keyboard.press('F8');
+        await expect(action).toBeFocused();
+        // A dismiss hands focus back to the control in the frame, not to the frame's body.
+        await page.keyboard.press('Escape');
+        await expect(frame.locator('.dk-toast-message')).toHaveText('');
+        await expect(inner).toBeFocused();
     });
 
     test('lets the toast that holds focus send it back where a second toast has an action shown', async ({
@@ -869,6 +900,35 @@ const framed = (
         '<button type=button id=next>Next</button>"'
 ): string => PAGE.replace('</button>', `</button><iframe title="Notes" ${source}></iframe>`);
 
+/**
+ * The page with a frame of its own origin that holds two buttons and the toast, drawn with the
+ * kit's sheet, for the page to attach.
+ */
+const TOAST_FRAMED = PAGE.replace(TOAST, '').replace(
+    '</button>',
+    '</button><iframe title="Notes" srcdoc="' +
+        `<link rel=stylesheet href=/kit.css><button type=button id=inner>Inside</button>
+<button type=button id=next>Next</button>${TOAST}`
+            .replaceAll('&', '&amp;')
+            .replaceAll('"', '&quot;') +
+        '"></iframe>'
+);
+
+/** Attaches the toast in the page's frame from the page, once the frame has loaded. */
+const attachInFrame = (page: Page): Promise<void> =>
+    page.evaluate(async () => {
+        const kit = (await import(`${location.origin}/controls.js`)) as {
+            attachToast: (element: HTMLElement) => Kit['show'];
+        };
+        const frame = document.querySelector('iframe');
+        const toastIn = () => frame?.contentDocument?.querySelector<HTMLElement>('.dk-toast');
+        if (!toastIn() || frame?.contentDocument?.readyState !== 'complete')
+            await new Promise((loaded) => frame?.addEventListener('load', loaded, { once: true }));
+        const found = toastIn();
+        if (!found) throw new Error('no toast in the frame');
+        (window as unknown as { show: Kit['show'] }).show = kit.attachToast(found);
+    });
+
 /** Opens the framed page with focus on the frame's first button, a message shown, and Undo. */
 const intoToastFromFrame = async (page: Page): Promise<Locator> => {
     await open(page, { body: framed() });
@@ -962,6 +1022,55 @@ test('hands focus back to the control inside a frame after a click on its empty 
     await expect(message(page)).toHaveText('');
     await expect(page.locator('iframe')).toBeFocused();
     await expect(inner).toBeFocused();
+});
+
+test("hands focus back on a dismiss inside a frame of the page's own origin that the page attaches a toast in", async ({
+    page,
+}) => {
+    await open(page, { body: TOAST_FRAMED, attach: false });
+    await attachInFrame(page);
+    const frame = page.frameLocator('iframe');
+    const inner = frame.locator('#inner');
+    await inner.focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    // Into the toast by a focus call, so the dismiss alone is tried.
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(inner).toBeFocused();
+});
+
+test('hands focus back inside a frame to a button the page made and moved into the frame', async ({
+    page,
+}) => {
+    await open(page, { body: TOAST_FRAMED, attach: false });
+    await attachInFrame(page);
+    const frame = page.frameLocator('iframe');
+    // Made by the page's document and moved into the frame, so it keeps the page's prototype.
+    await page.evaluate(() => {
+        const moved = document.createElement('button');
+        moved.type = 'button';
+        moved.id = 'moved';
+        moved.textContent = 'Moved';
+        document.querySelector('iframe')?.contentDocument?.body.prepend(moved);
+    });
+    const moved = frame.locator('#moved');
+    await moved.focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(moved).toBeFocused();
 });
 
 test('leaves focus on a frame whose control is marked off as it dismisses', async ({ page }) => {

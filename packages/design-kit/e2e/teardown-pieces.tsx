@@ -324,3 +324,20 @@ export type Piece = {
     readonly detach?: (handle: unknown) => void;
     readonly shows?: () => boolean;
 };
+
+/**
+ * Draws a frame of the page's own origin after the page's content, holding a button and a copy of
+ * the page's toast, and once it has loaded keeps the frame as `frame` and its toast as
+ * `frameToast`, for a test that attaches the toast from the page. The frame's own counters, loaded
+ * into it as into the page, count what the toast adds to the frame's document and elements.
+ */
+export const DRAW_FRAME = `(async () => {
+    const frame = document.createElement('iframe');
+    frame.title = 'Notes';
+    frame.srcdoc = '<button type="button" id="inner">Inside</button>' + $('.dk-toast').outerHTML;
+    const loaded = new Promise((done) => frame.addEventListener('load', done, { once: true }));
+    document.body.append(frame);
+    await loaded;
+    window.frame = frame;
+    window.frameToast = frame.contentDocument.querySelector('.dk-toast');
+})()`;
