@@ -158,9 +158,9 @@ export const teardown = <Options = AttachOptions>(
  * handed back as it is though its markup has since lost a part, and gives `idle`, what it returns
  * under a signal already aborted, which is returned for such a signal with nothing joined.
  */
-export const join = <Element extends object, Handle, Options>(
-    registry: WeakMap<Element, Kept<Handle, Options>>,
-    element: Element,
+export const join = <Key extends object, Handle, Options>(
+    registry: WeakMap<Key, Kept<Handle, Options>>,
+    element: Key,
     options?: Options & AttachOptions,
     idle?: Handle
 ): Handle | undefined => {
@@ -177,9 +177,9 @@ export const join = <Element extends object, Handle, Options>(
  * Keeps a control by its element until its teardown runs, and returns its handle. An attach whose
  * options can change gives the teardown its `set` first.
  */
-export const keep = <Element extends object, Handle, Options>(
-    registry: WeakMap<Element, Kept<Handle, Options>>,
-    element: Element,
+export const keep = <Key extends object, Handle, Options>(
+    registry: WeakMap<Key, Kept<Handle, Options>>,
+    element: Key,
     down: Teardown<Options>,
     handle: Handle
 ): Handle => {
