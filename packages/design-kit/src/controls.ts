@@ -1480,10 +1480,19 @@ const stepperParts = (
 };
 
 /**
- * What takes back each attached stepper's own words not yet said, by its value, which a form calls
- * for a stepper it refuses, so the refusal is the one message.
+ * What each attached stepper does as its form refuses it or is reset, by its value: it takes back
+ * its own words not yet said, so the form's message is the one message, and shows its own error.
  */
-const refusedSteppers = new WeakMap<Element, () => void>();
+const formSteppers = new WeakMap<Element, (reset: boolean) => void>();
+
+/** The forms the kit checks, each once however many of its parts are attached. */
+const checkedForms = new WeakMap<HTMLFormElement, CheckedForm>();
+
+/** An element's attribute put back as it was, or taken away where it had none. */
+const restore = (element: Element, name: string, value: string | null) => {
+    if (value === null) element.removeAttribute(name);
+    else element.setAttribute(name, value);
+};
 
 /**
  * Makes a stepper work: shows its two buttons, which the markup keeps hidden so a visitor without
@@ -1497,25 +1506,30 @@ const refusedSteppers = new WeakMap<Element, () => void>();
  * none at all in a field that is required, shows the stepper's own error once the value is changed
  * and says it on the status line, while a blank in a field that is not required passes and a
  * refusal the page sets of its own is left to the page. A form that refuses a stepper has it take
- * back words not yet said, so the refusal is the one message. A value drawn outside the limits or
- * between steps shows the error as the stepper is attached or a form's reset brings the value back,
- * with nothing said, unless the field is disabled or read only or the page shows an error of its
- * own. The error is cleared as soon as the value is right again. Only the error's own id and the
- * invalid state it set are added and taken away, so a hint or an error the page draws keeps its
- * place, and a shown error is put back whenever a page that draws the field again, as React does,
- * rewrites its description or its invalid mark. The field is described by its range in words, after
- * the page's own description, and while the error is shown by the error alone, which names the
- * range itself. A press that lands on a limit says so with the value, and a page's words, given as
- * an option, are said after it in the same message, on the page's status line when one is given.
- * Taken down while one of its buttons has focus, it hands focus to its value where the value is
- * read only and enabled, and otherwise, or where the value refuses focus, to the stepper itself,
- * since an editable value would open a phone's keyboard. The stepper, which the markup draws as a
- * group named by its field's label, then holds focus and draws the focus ring where the browser
- * shows focus. A stepper with no tabindex is given one of -1 then, which stays. Where the stepper
- * refuses focus too, focus goes on to the app frame's body or the page's main content. Focus the
- * page has moved elsewhere stays. It takes the stepper's field or the stepper, attaches each
- * stepper once whichever it is given, runs on the options of its newest holder, and returns what
- * takes it down again.
+ * back words not yet said, so the refusal is the one message, and show its own error for whichever
+ * of those failures it holds, a blank or letters as well as a value past the range, since the
+ * stepper owns its error at a submit and a reset as at a change and the form never draws on it. A
+ * value drawn outside the limits or between steps shows the error as the stepper is attached or a
+ * form's reset brings the value back, with nothing said, unless the field is disabled or read only
+ * or the page shows an error of its own. The error is cleared as soon as the value is right again,
+ * and a reset that goes through settles it on its reset value once its form's errors are gone. A
+ * stepper in which the page shows an error of its own leaves its failure to the form. Only the
+ * error's own id and the invalid state it set are added and taken away, the state put back to
+ * "false" in a form the kit checks, as the form marks every field not in error, so a hint or an
+ * error the page draws keeps its place, and a shown error is put back whenever a page that draws
+ * the field again, as React does, rewrites its description or its invalid mark. The field is
+ * described by its range in words, after the page's own description, and while the error is shown
+ * by the error alone, which names the range itself. A press that lands on a limit says so with the
+ * value, and a page's words, given as an option, are said after it in the same message, on the
+ * page's status line when one is given. Taken down while one of its buttons has focus, it hands
+ * focus to its value where the value is read only and enabled, and otherwise, or where the value
+ * refuses focus, to the stepper itself, since an editable value would open a phone's keyboard. The
+ * stepper, which the markup draws as a group named by its field's label, then holds focus and draws
+ * the focus ring where the browser shows focus. A stepper with no tabindex is given one of -1 then,
+ * which stays. Where the stepper refuses focus too, focus goes on to the app frame's body or the
+ * page's main content. Focus the page has moved elsewhere stays. It takes the stepper's field or
+ * the stepper, attaches each stepper once whichever it is given, runs on the options of its newest
+ * holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1586,8 +1600,8 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     let setInvalid = false;
     /**
      * Puts the range in words in the field's description, after the page's own, or the error in its
-     * place while the error shows, whoever showed it. Each is written only when it changes, so the
-     * watch below, woken by this writing, finds nothing left to write and stops.
+     * place while the error shows. Each is written only when it changes, so the watch below, woken
+     * by this writing, finds nothing left to write and stops.
      */
     const describe = () => {
         if (limits) {
@@ -1613,7 +1627,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             input.setAttribute('aria-invalid', 'true');
             setInvalid = true;
         } else if (!wrong && setInvalid && !pageError()) {
-            input.removeAttribute('aria-invalid');
+            // Put back as the form marks every field not in error, read as the error clears, and
+            // taken away where no checked form holds the stepper.
+            const checked = input.form ? checkedForms.get(input.form) : undefined;
+            restore(input, 'aria-invalid', checked ? 'false' : null);
+            if (checked && !checked.marks.includes(input)) checked.marks.push(input);
             setInvalid = false;
         }
     };
@@ -1650,7 +1668,17 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         if (status) hush(status);
         if (saidOn) unsay(saidOn, lastSaid);
     };
-    refusedSteppers.set(input, quiet);
+    /**
+     * Settles the stepper as its form refuses it or is reset: its waiting words go, and its error
+     * shows for what fails, or on a reset for a value drawn wrong, unless the page shows an error
+     * of its own in the field, which is the page's to show.
+     */
+    const settle = (reset: boolean) => {
+        quiet();
+        mark();
+        report(reset ? drawnWrong() : wrong() && !pageError());
+    };
+    formSteppers.set(input, settle);
     /** What a press says: the value, that it is a limit where it is one, and the page's words. */
     const spoken = (pressed: number) => {
         return () =>
@@ -1696,12 +1724,12 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // Once the reset is done, and never once the stepper is let go, since the teardown clears it,
     // as with focus leaving it.
     let resetting = 0;
-    const onReset = () => {
+    const onReset = (event: Event) => {
         window.clearTimeout(resetting);
         resetting = window.setTimeout(() => {
-            quiet();
-            mark();
-            report(drawnWrong());
+            // A reset the page calls off leaves the value, so its error stays, as the form's do.
+            if (event.defaultPrevented) return;
+            settle(true);
         });
     };
     down.addEventListener('click', press(false), { signal });
@@ -1754,7 +1782,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         window.clearTimeout(settling);
         window.clearTimeout(resetting);
         quiet();
-        if (refusedSteppers.get(input) === quiet) refusedSteppers.delete(input);
+        if (formSteppers.get(input) === settle) formSteppers.delete(input);
         report(false);
         // A button with focus is about to hide, so focus goes first to a read-only value, which
         // opens no keyboard, or else to the stepper, which the markup draws as a group named by the
@@ -2395,11 +2423,12 @@ export type FormOptions = AttachOptions & {
     readonly errorWords?: FailureWords | undefined;
     /**
      * Called with the fields that fail the browser's constraints on a submit, for a page that draws
-     * its errors itself, as React does from its state, and refuses once they are drawn. A stepper
-     * whose own range error shows is left out, since that error is the one drawn, so the list is
-     * empty where only such steppers fail. Called second with every failure in the form's order and
-     * the words its field shows, such a stepper's own error's words among them, for an error
-     * summary. Without it, the kit draws each error in the field and refuses.
+     * its errors itself, as React does from its state, and refuses once they are drawn. An attached
+     * stepper whose own error shows is left out, whatever its failure, a blank or letters among
+     * them, since the stepper owns that error, so the list is empty where only such steppers fail.
+     * Called second with every failure in the form's order and the words its field shows, such a
+     * stepper's own error's words among them, for an error summary. Without it, the kit draws each
+     * error in the field and refuses.
      */
     readonly invalid?:
         ((failures: readonly FieldFailure[], shown: readonly FieldFailure[]) => void) | undefined;
@@ -2677,12 +2706,6 @@ const marksOf = (field: Element, control: Element) => {
     };
 };
 
-/** An element's attribute put back as it was, or taken away where it had none. */
-const restore = (element: Element, name: string, value: string | null) => {
-    if (value === null) element.removeAttribute(name);
-    else element.setAttribute(name, value);
-};
-
 /** An id no element of a root holds yet, from the one a field's error would take. */
 const freeId = (base: string, near: Node): string => {
     let id = base;
@@ -2724,17 +2747,15 @@ const ownWords = (error: Element): string => {
 };
 
 /**
- * The error a failure is shown in, and what takes it away: a stepper's range error, which says what
- * is wrong already, left as it is, an error the page already drew for the field given the kit's
- * words, else one the kit draws after the field's hint, above the control or under a set's legend.
+ * The error a failure is shown in, and what takes it away: an error the page already drew for the
+ * field given the kit's words, else one the kit draws after the field's hint, above the control or
+ * under a set's legend.
  */
 const errorFor = (
     field: Element,
     control: Element,
     words: string
 ): { readonly error: HTMLElement; readonly takeAway: () => void } => {
-    const range = shownRange(control);
-    if (range) return { error: range, takeAway: () => undefined };
     const page = field.id ? byId(field, `${field.id}-error`) : null;
     if (page instanceof HTMLElement && page.matches('.dk-field-error')) {
         const kept = [...page.childNodes];
@@ -2798,9 +2819,6 @@ type CheckedForm = {
     readonly stop: () => void;
 };
 
-/** The forms the kit checks, each once however many of its parts are attached. */
-const checkedForms = new WeakMap<HTMLFormElement, CheckedForm>();
-
 /** Takes off the marks set on fields not in error, where they still say so. */
 const unmark = (marks: readonly Element[]) => {
     for (const one of marks)
@@ -2813,11 +2831,12 @@ const unmark = (marks: readonly Element[]) => {
  * phase, which runs only where every field passes, so it can still check what they cannot express.
  * The form's own attach checks it where there is one, else the first part's, so the form's own goes
  * first and each part's after it. A reset a page calls off leaves the errors, since the values that
- * failed stay. One that goes through takes away the errors the kit drew, and where there were any
- * says so, since they go out of a screen reader's hearing and focus stays on the button. A reset
- * with none the kit drew, as after a save, says nothing, and errors a page drew are the page's to
- * clear. The last attach in the form taken down takes the check away, with a reset's timer still
- * due, and gives the form back its own noValidate, so the browser checks it again.
+ * failed stay. One that goes through takes away the errors the kit drew, has each attached stepper
+ * settle on its reset value, and where the form has refused since its last reset or passing submit,
+ * whoever drew the errors, says so, since the errors go out of a screen reader's hearing and focus
+ * stays on the button. A reset with no refusal standing, as after a save, says nothing. The last
+ * attach in the form taken down takes the check away, with a reset's timer still due, and gives the
+ * form back its own noValidate, so the browser checks it again.
  */
 const checkForm = (own: HTMLFormElement): CheckedForm => {
     const down = teardown();
@@ -2847,9 +2866,13 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
             const timer = window.setTimeout(() => {
                 timers.delete(timer);
                 if (event.defaultPrevented) return;
-                // Every attach's errors go, and the first attach says so where there were any.
-                if (checked.checkers.map((one) => one.clear()).includes(true))
-                    checked.checkers[0]?.cleared();
+                // Every attach's errors go, and the first attach says so where any had a refusal
+                // standing.
+                const had = checked.checkers.map((one) => one.clear()).includes(true);
+                // Each attached stepper settles on its reset value once the kit's errors are gone,
+                // so an error of the kit's no longer holds back its own.
+                for (const control of own.elements) formSteppers.get(control)?.(true);
+                if (had) checked.checkers[0]?.cleared();
             });
             timers.add(timer);
         },
@@ -3003,13 +3026,15 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * script, or the form around an attached part of one, and the kit checks the browser's constraints
  * on submit, before the page's own handler, which runs only where every field passes, so a page
  * without script keeps the browser's check, as record 21 has it. Where a field fails, the submit is
- * stopped, a stepper that fails takes back its own words not yet said, and the kit draws each error
- * as its field draws one and refuses, or hands the failures to `invalid` for a page that draws them
- * itself and refuses, all but a stepper's whose own range error shows, which stays the one error
- * either way. `invalid` is handed every failure with the words its field shows as a second list,
- * for an error summary. Each failure's words are the field's own, else the page's `errorWords`,
- * else the kit's. A button marked formnovalidate submits unchecked, and errors the kit drew go once
- * their fields pass or the form is reset.
+ * stopped, a stepper that fails takes back its own words not yet said and shows its own error, and
+ * the kit draws each other error as its field draws one and refuses, or hands the other failures to
+ * `invalid` for a page that draws them itself and refuses. An attached stepper owns its error for
+ * every failure it holds, so the form never draws on it nor marks it, and its error is the one
+ * error either way. `invalid` is handed every failure with the words its field shows as a second
+ * list, for an error summary. Each failure's words are the field's own, else the page's
+ * `errorWords`, else the kit's, and a stepper's own error takes its `rangeError` alone. A button
+ * marked formnovalidate submits unchecked, and errors the kit drew go once their fields pass or the
+ * form is reset.
  *
  * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
  * page names one that can take focus, else the first field in error that can take focus, or in a
@@ -3020,9 +3045,10 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * since VoiceOver on iOS reads a field's error only as a hint and focus moved by script may not
  * land. A set counts once however many of its choices are marked. The field's error stays not live.
  * A second refusal calls off one not yet landed, and each refusal returns what calls it off. A
- * reset that goes through takes away the errors the kit drew and, where there were any, says the
- * form is cleared. Attached again, a form returns what it returned first and runs on the options of
- * its newest holder, its errors and its check kept.
+ * reset that goes through takes away the errors the kit drew and, where the form has refused since
+ * its last reset or passing submit, whoever drew the errors, says the form is cleared. Attached
+ * again, a form returns what it returned first and runs on the options of its newest holder, its
+ * errors and its check kept.
  *
  * Taken down by its `signal`, it takes its listeners off, calls off a refusal and a reset's timer
  * still due, and takes away the errors it drew, so nothing is said after, and what it returned does
@@ -3041,6 +3067,9 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     // The failures of the last submit the kit refused, said where a page that draws its own errors
     // marks none, so the refusal is still heard.
     let failed: readonly FieldFailure[] = [];
+    // Whether the form has refused since its last reset or passing submit, whoever drew the
+    // errors, so a reset that goes through says the form is cleared.
+    let standing = false;
     /** What puts back each field the kit drew an error in, as it was before. */
     const drawn = new Map<Element, () => void>();
     const undraw = (field: Element) => {
@@ -3050,8 +3079,8 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     /**
      * Draws a failure's error in its field as the kit's field draws one: after its hint, above the
      * control or under a set's legend, starting with a word a screen reader reads, and described
-     * after the hint. An error the page already drew for the field takes the kit's words, and a
-     * stepper's range error, which says what is wrong already, is left as it is and only marked.
+     * after the hint. An error the page already drew for the field takes the kit's words. An
+     * attached stepper whose own error shows never reaches it, since the stepper owns that error.
      */
     const draw = ({ field, control, words }: FieldFailure) => {
         undraw(field);
@@ -3076,7 +3105,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         drawn.set(field, () => {
             takeAway();
             // Only what the kit changed is put back, and only where it still holds the kit's
-            // change, so a mark a stepper or the page has since taken away or set stays theirs.
+            // change, so a mark the page has since taken away or set stays its own.
             for (const [one, invalid, describedBy] of before) {
                 if (marked.includes(one) && one.getAttribute('aria-invalid') === 'true')
                     restore(one, 'aria-invalid', invalid);
@@ -3095,6 +3124,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
      * hold.
      */
     const refuseIn = (within: HTMLElement, summed: boolean, from?: Element | null) => {
+        standing = true;
         pending?.();
         const failures = failed;
         failed = [];
@@ -3151,36 +3181,44 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
                 : failuresOf(whole, chosen.errorWords);
         const failing = new Set(failures.map(({ field }) => field));
         for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
-        if (failures.length === 0) return;
+        if (failures.length === 0) {
+            standing = false;
+            return;
+        }
         event.preventDefault();
         event.stopImmediatePropagation();
         failed = failures;
-        // The refusal is the one message, so a stepper that fails takes back words of its own not
-        // yet said, as one typed past its range and submitted at once has waiting.
-        for (const { control } of failures) refusedSteppers.get(control)?.();
+        // A stepper that fails settles first, with any error the kit drew on it taken away, so only
+        // the page's own error holds its own back, and takes back its waiting words, so the refusal
+        // is the one message.
+        for (const { field, control } of failures) {
+            const settle = formSteppers.get(control);
+            if (settle) {
+                undraw(field);
+                settle(false);
+            }
+        }
+        // A stepper whose own error shows owns it, so the form draws nothing there and hands the
+        // page no failure to draw from, while the refusal still counts and names the field. The
+        // second list, for a summary, holds every failure with the words its field shows.
+        const own = failures.filter((failure) => !shownRange(failure.control));
         if (chosen.invalid) {
-            // A stepper whose own error shows is the one that draws it, so the page is handed no
-            // failure to draw a second from, while the refusal still counts and names the field.
-            // The second list, for a summary, holds every failure with the words its field shows,
-            // the stepper's own error's words among them.
             const shown = failures.map((failure) => {
                 const range = shownRange(failure.control);
                 return range ? { ...failure, words: ownWords(range) } : failure;
             });
-            chosen.invalid(
-                failures.filter((failure, at) => shown[at] === failure),
-                shown
-            );
+            chosen.invalid(own, shown);
             return;
         }
-        for (const failure of failures) draw(failure);
+        for (const failure of own) draw(failure);
         refuseIn(whole, false);
     };
-    // Takes away the errors the kit drew, and says whether there were any. A refusal still due is
+    // Takes away the errors the kit drew, and says whether a refusal stood. A refusal still due is
     // called off with them, since it would say errors no longer shown in place of what follows.
     const clear = () => {
         pending?.();
-        const had = drawn.size > 0;
+        const had = standing;
+        standing = false;
         for (const field of [...drawn.keys()]) undraw(field);
         return had;
     };

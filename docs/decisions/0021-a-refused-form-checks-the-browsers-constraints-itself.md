@@ -2,7 +2,7 @@
 
 **Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, in 0.9.3 for record 22's
 teardown, which gives a form back its own `noValidate` once the last attach in it is taken down, and
-in 0.9.4 for a stepper's own error
+in 0.9.4 for a stepper's own error and for one owner of a stepper's error
 
 ## Context
 
@@ -94,23 +94,35 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - **In plain markup the kit draws the error** as its field draws one: after the hint, above the
   control or under a set's legend, starting with a word a screen reader reads, described after the
   hint, and marked as the kit's set of choices marks one, a set of radios on its fieldset and a set
-  of checkboxes on each box. An error the page already drew for the field takes the kit's words, and
-  a stepper's range error is left as it is. A stepper is wrong where its field's `validity` says so,
-  a blank only where the field is required. Where its range error shows at a submit, that is the one
-  error, in plain markup and in React, and its failure is left out of the failures `invalid` is
-  handed first. A second list, `invalid(failures, shown)`, holds every failure in the form's order
-  with the words its field shows, the form's words for a failure in the first list and the stepper's
-  own error's words for one left out of it, so a summary built from it lists the stepper. Handing
-  the stepper's failure in the first list with a mark that it is drawn already was turned down,
-  since every page that draws all its failures would have to filter them. As the form refuses, it
-  has each stepper that fails take its own waiting words back, so the refusal is the one message.
-  Two other ways were turned down. A form that kept its verdict for its steppers to read made two
-  owners of one error. A submit listener of the stepper's on the document heard every submit, so it
-  took back words no refusal would say, and it kept a removed stepper alive. The kit puts back what
-  it changed once the field passes on a later checked submit, or the form is reset, and only what
-  still holds the kit's change, so a mark a stepper has since taken away stays away. **In React the
-  failures go to `invalid`,** which the hook asks for, since the markup belongs to the page's state,
-  and the hook refuses after the render that draws them.
+  of checkboxes on each box. An error the page already drew for the field takes the kit's words. A
+  stepper is wrong where its field's `validity` says so, a blank only where the field is required.
+  An attached stepper owns everything about its own error, for every failure it holds, a blank in a
+  field that is required, letters, a value past the range and one off its step, at a change, as
+  focus leaves it, at a submit and at a reset. The form never draws on an attached stepper and never
+  marks it. At a submit the form tells each stepper that fails to show its error, and then refuses,
+  so the stepper's error is the one error, in plain markup and in React, and its failure is left out
+  of the failures `invalid` is handed first. React owns the page's error nodes, as record 20 has it,
+  so the stepper's failure stays away from the page entirely. A stepper in which the page shows an
+  error of its own leaves that failure to the form, as any field's, so the page is handed it and its
+  words are never shown beside the stepper's. A stepper whose error clears puts its mark back to
+  `aria-invalid="false"` where the kit checks its form, read as the error clears, as the form marks
+  every field not in error, and takes it away elsewhere. A second list, `invalid(failures, shown)`,
+  holds every failure in the form's order with the words its field shows, the form's words for a
+  failure in the first list and the stepper's own error's words for one left out of it, so a summary
+  built from it lists the stepper. Handing the stepper's failure in the first list with a mark that
+  it is drawn already was turned down, since every page that draws all its failures would have to
+  filter them. As the form refuses, it has each stepper that fails take its own waiting words back,
+  so the refusal is the one message. Other ways were turned down. A form that kept its verdict for
+  its steppers to read made two owners of one error. So did a form that owned the error after a
+  submit, which the stepper took away on a change through an undo it was handed: in React the page
+  owns its error nodes, which an undo of the kit's cannot take away, and `aria-invalid` would have
+  two writers. Writing the form's words into the stepper's range error was turned down too, since
+  React owns that element's children, and record 20's `NotFoundError` follows a write into them. A
+  submit listener of the stepper's on the document heard every submit, so it took back words no
+  refusal would say, and it kept a removed stepper alive. The kit puts back what it changed once the
+  field passes on a later checked submit, or the form is reset, and only what still holds the kit's
+  change. **In React the failures go to `invalid`,** which the hook asks for, since the markup
+  belongs to the page's state, and the hook refuses after the render that draws them.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
   words, and the first field's name and error where focus was already on the summary, which a screen
@@ -123,8 +135,16 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   description, which iOS reads only as a hint, and focus moved by script may not land.
 - **A field in error that cannot take focus is named,** as one out of sight or marked off, so the
   refusal says which field it is and what is wrong with it.
-- **A reset that takes away the errors the kit drew says so,** as "Form cleared.", and one with
-  none to take away says nothing.
+- **A reset after a refusal says so,** as "Form cleared.", where the form has refused since its last
+  reset or passing submit, whoever drew the errors, the kit, a stepper or the page, and the page has
+  not called the reset off. A reset with no refusal standing says nothing, a stepper's error shown
+  as focus left it among them. Counting the fields marked invalid as the reset fired and once it was
+  done was turned down: a page's reset listener that ran first, or a capture listener on the
+  document, took the marks away before the count, and a field that gained a mark as another lost one
+  kept the count level. Once the kit's errors are gone, the form has each attached stepper settle on
+  its reset value, so an error of the kit's never holds back the stepper's own. A stepper settles in
+  its own reset timer, and again from the form's reset timer once the kit's errors are gone. A reset
+  that takes no error away says nothing.
 - **Fields not in error are marked `aria-invalid="false"`** as the form is attached, so an empty
   required field is not read as invalid before anything is submitted. Only the fields drawn by then
   are marked, and in React a field whose error clears loses its mark. `required` stays, since the
@@ -143,8 +163,14 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   list can be empty on a refused submit, and a page reads the refusal for whether the form passed. A
   summary built from it would leave the stepper out, with nothing said for it, so a page builds one
   from the second list.
-- A submit never makes a stepper show its own error, so one that fails untouched takes the form's
-  error, and a value typed past its range over that error shows both until the next submit.
+- A page's words for each failure, `errorWords` and `data-error-*`, do not reach an attached stepper
+  with a range error, since the stepper's error is the one shown for every failure it holds.
+  `rangeError` on `StepperField`, or the range error's own words in the markup, is the way in.
+- An error the kit drew on a stepper for a page's own refusal, set with `setCustomValidity`, stays
+  beside a range error typed after it until the next submit, which takes it away.
+- A stepper that fails a page's own refusal, set with `setCustomValidity`, and its range at once
+  shows its range error alone, and the page's words show at the next submit once the value is in
+  range, since one error shows at a time and a value the field cannot hold comes first.
 - `attachForm` keeps a submit and a reset listener on its form, one of each however many of its
   parts are attached, which leave with the form, where it kept none.
 - A screen reader that reads a field's error as focus lands on it hears the error twice, which slows
@@ -174,20 +200,34 @@ The paths are in `packages/design-kit`.
   attached and a field tied to it from outside, takes errors away on a reset, leaves a stepper's
   range error as the one error, drawn, described and said once for a value typed past its range and
   submitted by Enter or a press on the button, in plain markup and in React, saves a stepper left
-  blank that is not required, gives a required one drawn blank and never touched the form's error,
-  leaves a stepper's own words said where no refusal follows, marks fields not in error before any
-  submit, and in React hands the failures, a set's among them, to the page, which draws them, and
-  refuses once they are drawn. It hands every failure with the words its field shows as a second
-  list, a stepper's own error's words among them, in plain markup and in React, where a summary
-  built from it lists the stepper with its own words and takes focus, and has the first field's name
-  and error said once it already has focus. It runs in Chromium, WebKit and Firefox.
+  blank that is not required, gives a required one drawn blank and never touched its own error, past
+  the page's words, with the page handed nothing for it, shows one error once a value past its range
+  is typed after that, marks the stepper `aria-invalid="false"` as its error clears by a value put
+  right or a reset in a checked form, and with no mark outside one, says "Form cleared." once on a
+  reset that takes a stepper's error away, in plain markup and in React, nothing on a reset with
+  none showing, keeps a stepper's error through a reset the page calls off, takes away an error the
+  kit drew on a stepper once its own error shows, says "Form cleared." for a field tied to the form
+  from outside, for one the page marked invalid, for a page whose own reset listener clears its
+  errors first, for a page that clears its errors with a stepper drawn past its range, and for a
+  refusal only a stepper made and put right since, says nothing on a reset after a stepper showed
+  its error as focus left it with no submit, or after a submit that passed, leaves a required
+  stepper's failure to the form where the page shows an error of its own, shows a stepper's range
+  error on a reset that brings back a value past its range over the kit's error, and takes away the
+  mark a stepper put back once its form's attach is taken down, shows a stepper's range error alone
+  where it fails the page's own refusal too and the page's words once it is in range, leaves a
+  stepper's own words said where no refusal follows, marks fields not in error before any submit,
+  and in React hands the failures, a set's among them, to the page, which draws them, and refuses
+  once they are drawn. It hands every failure with the words its field shows as a second list, a
+  stepper's own error's words among them, in plain markup and in React, where a summary built from
+  it lists the stepper with its own words and takes focus, and has the first field's name and error
+  said once it already has focus. It runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
   marked off and a summary hidden by an ancestor or a style, made inert or not focusable, says a
   focused summary's line where no field is marked, names a set none of whose controls can take
   focus, says the name and error of a field focus moves to or was already on, a set's where its
   choice does not read the error, and a field's name with the count where it is marked in error with
-  none drawn, and says "Form cleared." after a reset that takes away the kit's errors and nothing
-  after one with none to take away.
+  none drawn, and says nothing after a reset with no refusal standing and "Form cleared." after one
+  that follows a refusal, the page's own among them.
 - `e2e/teardown.spec.tsx` takes a form's check down by its signal with a refusal and a reset still
   due and finds nothing said after, its errors, marks and `noValidate` as the markup drew them, and
   the check kept until the last attach in the form is taken down. It finds nothing drawn through

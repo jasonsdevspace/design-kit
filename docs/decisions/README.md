@@ -94,8 +94,9 @@ costs, and the test behind it.
     itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
     the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`
     from script so a page without script keeps the browser's check, words for each failure a field
-    or a page can replace, the research behind it, and why leaving the check on, leaving the check
-    to each page and canceling each `invalid` event were turned down.
+    or a page can replace, an attached stepper as the one owner of its own error, the research
+    behind it, and why leaving the check on, leaving the check to each page and canceling each
+    `invalid` event were turned down.
 22. [Every attach takes a signal that takes its piece
     down](0022-every-attach-takes-a-signal-that-takes-its-piece-down.md):
     `{ signal }` on every attach, nothing attached for a signal already aborted, an abort that does
