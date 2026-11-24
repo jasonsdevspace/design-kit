@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { writePage } from './page.js';
+import { settle, writePage } from './page.js';
 
 /*
  * The step between pieces placed one after another in each container the kit draws, as the
@@ -82,6 +82,9 @@ test('stands each piece one step after the one before it in a dialog, and its ac
     await page.locator('dialog').evaluate((dialog) => {
         (dialog as HTMLDialogElement).showModal();
     });
+    // A sheet rises as it opens, and WebKit reads each piece where it stands at the moment it is
+    // asked, so pieces read during the rise are read at different heights and their gaps shrink.
+    await settle(page.locator('dialog'));
     expect(await gaps(page, 'dialog')).toEqual([
         ...each(['p', 'dk-field', 'dk-button-grid'], 12),
         'dk-dialog-actions 24',
