@@ -32,9 +32,10 @@ import { sentOf } from './parts.mjs';
  * back did, again once a handback that takes an SVG element did, again once focus falling to the
  * body and followed into a frame did, again once a control kept clear inside a frame did, and again
  * for 0.9.4 once a dated field's limit in words left too little room for another, and again once a
- * toast marking its frame did, and again once a stepper quiet as its form refuses it did.
+ * toast marking its frame did, and again once a stepper quiet as its form refuses it did, and again
+ * once a focus request dropped for a page out of sight rather than after a second did.
  */
-const BUDGET = 21.5 * 1024;
+const BUDGET = 21.75 * 1024;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;

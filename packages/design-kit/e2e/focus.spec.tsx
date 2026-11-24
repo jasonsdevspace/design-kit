@@ -8,15 +8,23 @@ import { frames, servePage, stillClock, tabKey } from './page.js';
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
  * `useArrivalFocus`, in Chromium, WebKit and Firefox: an id drawn after the request found, a target
  * gone, hidden, inert or off passed over for its fallbacks, focus a visitor moved since the request
- * left where it is, a control asked for twice focused twice, a request called off, and a view's
- * heading focused when its key changes but never as the page first draws. A request still waiting
- * as its component unmounts lands, from a row removed at once, after an await, from a timer or in a
- * transition, from a transition an urgent update overtook, on its fallback where the transition
- * draws its target, and from a component an `Activity` hides, unless the visitor moved focus first.
- * One made in a commit before its component goes lands, one asked from a ref as its component first
- * draws lands, one whose target an `Activity` hides with its component is held until it shows, one
- * asked after an await by a component that has gone lands, and one asked once the visitor is on the
- * next screen leaves focus there, whatever place it names.
+ * left where it is, a control asked for twice focused twice, a request called off, one a long task
+ * holds past a second on a page in sight landed, one whose frame comes more than ten seconds late
+ * dropped, one asked while the page was out of sight, or before it went, dropped, a view that joins
+ * views asked before the page went out of sight landed, and a view's heading focused when its key
+ * changes but never as the page first draws. A request still waiting as its component unmounts
+ * lands, from a row removed at once, after an await, from a timer or in a transition, from a
+ * transition an urgent update overtook, on its fallback where the transition draws its target, and
+ * from a component an `Activity` hides, unless the visitor moved focus first. One made in a commit
+ * before its component goes lands, one asked from a ref as its component first draws lands, one
+ * whose target an `Activity` hides with its component is held until it shows, one asked after an
+ * await by a component that has gone lands, and one asked once the visitor is on the next screen
+ * leaves focus there, whatever place it names.
+ *
+ * A browser run headless cannot be sent out of sight, nor made to order its frames and its
+ * visibility events as a real one does in each engine, so the tests that need the page out of sight
+ * set what `document.hidden` and `document.visibilityState` read and send the event themselves, and
+ * take the stand-ins away again.
  */
 
 const BODY =
@@ -25,8 +33,19 @@ const BODY =
     '<div inert><button id="inert">Inert</button></div><button id="off" disabled>Off</button>' +
     '<h2 id="heading" tabindex="-1">Round 2</h2></main>';
 
-const SCRIPT = `import { moveFocus } from './controls.js';
+const SCRIPT = `import { focusOnArrival, moveFocus } from './controls.js';
 window.moveFocus = moveFocus;
+window.focusOnArrival = focusOnArrival;
+window.outOfSight = (hidden, told) => {
+    Object.defineProperty(document, 'hidden', { value: hidden, configurable: true });
+    const state = hidden ? 'hidden' : 'visible';
+    Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+    if (told) document.dispatchEvent(new Event('visibilitychange'));
+};
+window.inSight = () => {
+    delete document.hidden;
+    delete document.visibilityState;
+};
 window.ready = true;`;
 
 type Mover = {
@@ -34,6 +53,11 @@ type Mover = {
         target: string | Element | null,
         options?: { fallbacks?: readonly (string | Element | null)[] }
     ) => () => void;
+    focusOnArrival: (heading: string, options?: { changed?: boolean }) => () => void;
+    /** Sets what the page reads of its being in sight, and sends the event where `told`. */
+    outOfSight: (hidden: boolean, told: boolean) => void;
+    /** Takes away what `outOfSight` set, so the page reads its own state again. */
+    inSight: () => void;
 };
 
 /**
@@ -114,6 +138,107 @@ test('passes over a target that is gone, hidden, inert or off for the first fall
         other?.remove();
     });
     await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('lands a request whose frame a long task holds past a second, with the page in sight', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('heading');
+        // A render that holds the page longer than a second, as on a slow phone or a busy runner.
+        const until = performance.now() + 1200;
+        while (performance.now() < until);
+    });
+    await expect(page.locator('#heading')).toBeFocused();
+});
+
+test('drops a request whose frame comes more than ten seconds late, with the page in sight', async ({
+    page,
+}) => {
+    await stillClock(page.clock);
+    await open(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('heading');
+    });
+    // The frame runs only once the clock has jumped, as a frame held back with no event would.
+    await page.clock.fastForward(10_500);
+    await page.clock.runFor(100);
+    await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('drops a request whose page went out of sight and came back before its frame', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const mover = window as unknown as Mover;
+        mover.moveFocus('heading');
+        mover.outOfSight(true, true);
+        mover.outOfSight(false, true);
+        mover.inSight();
+    });
+    await settled(page);
+    await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('drops a request whose page went out of sight before its frame, told of no return', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const mover = window as unknown as Mover;
+        mover.moveFocus('heading');
+        mover.outOfSight(true, true);
+        // Back in sight with no event yet, as where the waiting frame runs before the page is told.
+        mover.inSight();
+    });
+    await settled(page);
+    await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('drops a request whose frame runs while the page is out of sight', async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => {
+        const mover = window as unknown as Mover;
+        mover.moveFocus('heading');
+        mover.outOfSight(true, false);
+    });
+    await settled(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).inSight();
+    });
+    await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('drops a request asked while the page is out of sight, though its frame comes first', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const mover = window as unknown as Mover;
+        mover.outOfSight(true, false);
+        mover.moveFocus('heading');
+        // Back in sight with no event yet, as where a frame runs before the page is told.
+        mover.inSight();
+    });
+    await settled(page);
+    await expect(page.locator('#pressed')).toBeFocused();
+});
+
+test('lands a view that joins views asked before the page went out of sight and came back', async ({
+    page,
+}) => {
+    await open(page);
+    await page.evaluate(() => {
+        const mover = window as unknown as Mover;
+        mover.focusOnArrival('other', { changed: true });
+        mover.outOfSight(true, true);
+        mover.outOfSight(false, true);
+        mover.inSight();
+        mover.focusOnArrival('heading', { changed: true });
+    });
+    await expect(page.locator('#heading')).toBeFocused();
 });
 
 test('leaves focus a visitor moved since the request, and calls a request off', async ({
