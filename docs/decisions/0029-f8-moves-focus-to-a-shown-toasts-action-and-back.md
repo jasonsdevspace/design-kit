@@ -1,6 +1,7 @@
 # 29. F8 moves focus to a shown toast's action and back
 
-**Status:** accepted in 0.9.4
+**Status:** accepted in 0.9.4, amended in the same release for a toast the page attaches inside a
+frame of its own origin, which reads focus and hears F8 in the frame's document
 
 ## Context
 

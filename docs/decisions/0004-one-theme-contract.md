@@ -33,8 +33,8 @@ changes, when the portfolio saves or clears a choice in another tab, and when th
 the page from its back and forward cache, where a page hears no storage event. Where the page names
 a theme color for each scheme before it, it points both at the ground of the theme it draws, on the
 first paint and on every change of the root's theme, so the browser's bar follows the theme too.
-Print always draws the light values. A page built with Vite asks for it with `<!-- theme-script -->`, and a page built
-otherwise writes `themeScript` into its head itself.
+Print always draws the light values. A page built with Vite asks for it with
+`<!-- theme-script -->`, and a page built otherwise writes `themeScript` into its head itself.
 
 ## Consequences
 

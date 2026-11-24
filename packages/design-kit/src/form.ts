@@ -134,7 +134,9 @@ const breakable = (words: string): (string | HTMLElement)[] =>
         .split('@')
         .flatMap((part, at) => (at === 0 ? [part] : ['@', document.createElement('wbr'), part]));
 
-/** The words a screen reader starts an error with, so it is told from the hint by more than color. */
+/**
+ * The words a screen reader starts an error with, so it is told from the hint by more than color.
+ */
 const errorStart = () => {
     const said = document.createElement('span');
     said.className = 'dk-visually-hidden';
@@ -240,8 +242,8 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
         for (const timer of timers) window.clearTimeout(timer);
         own.noValidate = was;
         unmark(checked.marks);
-        // The marks are let go of, so a stepper that outlives this check leaves alone a mark a later
-        // one sets.
+        // The marks are let go of, so a stepper that outlives this check leaves alone a mark a
+        // later one sets.
         checked.marks.clear();
         checkedForms.delete(own);
     });
@@ -384,10 +386,14 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * without script keeps the browser's check, as record 21 has it. Where a field fails, the submit is
  * stopped, a stepper that fails takes back its own words not yet said and shows its own error, and
  * the kit draws each other error as its field draws one and refuses, or hands the other failures to
- * `invalid` for a page that draws them itself and refuses. An attached stepper owns its error for
- * every failure it holds, so the form never draws on it nor marks it, and its error is the one
- * error either way. `invalid` is handed every failure with the words its field shows as a second
- * list, for an error summary. Each failure's words are the field's own, else the page's
+ * `invalid` for a page that draws them itself and refuses. It draws its errors into the markup it
+ * finds, so it suits only markup nothing draws again, a page written by hand or the React
+ * components rendered to static HTML and attached from plain script. A form React still draws
+ * refuses through `useFormRefusal`, which hands the failures to the page, since React writes a
+ * field's error and marks again from its props, as record 20 has it. An attached stepper owns its
+ * error for every failure it holds, so the form never draws on it nor marks it, and its error is
+ * the one error either way. `invalid` is handed every failure with the words its field shows as a
+ * second list, for an error summary. Each failure's words are the field's own, else the page's
  * `errorWords`, else the kit's, and a stepper's own error takes its `rangeError` alone. A button
  * marked formnovalidate submits unchecked, and errors the kit drew go once their fields pass or the
  * form is reset.

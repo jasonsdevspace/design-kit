@@ -2,8 +2,12 @@
 
 **Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, in 0.9.3 for record 22's
 teardown, which gives a form back its own `noValidate` once the last attach in it is taken down, and
-in 0.9.4 for a stepper's own error, for one owner of a stepper's error, and for a stepper's letters
-shown as focus leaves it and its words naming its field
+in 0.9.4 for a stepper's own error, for one owner of a stepper's error, for a stepper's error for
+letters, shown as focus leaves its field, for the words a stepper says of its error as focus leaves
+it, which start with its field's name, for a stepper's error held back while a press outside it is
+down, for a form that lets go of a stepper whose field has left the page, for a second list of
+failures with the words each field shows, and for a dated limit and a step named as the field reads
+them
 
 ## Context
 
@@ -87,11 +91,15 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
 - **Each failure takes words that say what to do,** in the manner of GOV.UK's errors, chosen in a
   fixed order where several apply: bad input, missing, wrong type, pattern, length, range, step,
   then the page's own from `setCustomValidity`. A field's own words for a failure come first, as
-  `data-error-value-missing`, or its set's, then a map the page gives the form as `errorWords`,
-  then the kit's.
-  The browser's own words are never used, since they follow its language rather than the page's.
-  A pattern cannot be put in words from the pattern, so the reference asks a field with one to
-  give its own.
+  `data-error-value-missing`, or its set's, then a map the page gives the form as `errorWords`, then
+  the kit's. The browser's own words are never used, since they follow its language rather than the
+  page's. The kit's words are English, so a page in another language gives its own, on the field or
+  as `errorWords`. A dated limit in the kit's words is named as a visitor reads it, in the order of
+  the nearest `lang` around the field where that language is English, else of US English. It always
+  takes the Gregorian calendar, Latin digits and a year of four digits, as the field writes its
+  value, whatever calendar or digits a language tag picks, so the limit shown is one the field
+  takes. A step's words count from the browser's step base. A pattern cannot be put in words from
+  the pattern, so the reference asks a field with one to give its own.
 - **In plain markup the kit draws the error** as its field draws one: after the hint, above the
   control or under a set's legend, starting with a word a screen reader reads, described after the
   hint, and marked as the kit's set of choices marks one, a set of radios on its fieldset and a set
@@ -273,10 +281,10 @@ The paths are in `packages/design-kit`.
   takes focus, and has the first field's name and error said once it already has focus. It runs in
   Chromium, WebKit and Firefox.
 - `src/words.test.ts` gives the kit's words in plain Node for every failure and every dated limit
-  the browser test reads, and finds an ISO week put at its Monday, a year under a thousand written to
-  four digits, the Gregorian calendar and Latin digits kept whatever the language tag picks, steps
-  counted from the browser's step base, a fraction of a second shown to its own digits, an overnight
-  window given past either limit and a malformed language read as US English.
+  the browser test reads, and finds an ISO week put at its Monday, a year under a thousand written
+  to four digits, the Gregorian calendar and Latin digits kept whatever the language tag picks,
+  steps counted from the browser's step base, a fraction of a second shown to its own digits, an
+  overnight window given past either limit and a malformed language read as US English.
 - `e2e/stepper.spec.tsx` leaves letters typed into a blank stepper by Tab and finds its error drawn,
   the field marked invalid and the error said once, passes a blank required field by Tab and finds
   nothing, takes a press on its own button straight after letters with no error drawn in between,

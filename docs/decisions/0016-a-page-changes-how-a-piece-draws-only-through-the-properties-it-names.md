@@ -75,12 +75,12 @@ The path is in `packages/design-kit`.
 - `src/scope.test.ts` reads every property the sheets read with a fallback and fails when one is
   missing from the reference's table of properties a page sets, when the table lists one the sheets
   no longer read, when a row leaves its default or what it sets empty, or when a default written as
-  a number is not the sheets' fallback, so the table cannot fall behind the sheets. The reader of the
-  tokens, `declaredIn` in `examples/palette.ts`, takes the same properties from the sheets it is
+  a number is not the sheets' fallback, so the table cannot fall behind the sheets. The reader of
+  the tokens, `declaredIn` in `examples/palette.ts`, takes the same properties from the sheets it is
   given, every name they read with a fallback but the containers' grounds, and leaves them out, so
-  the site's tokens page, which reads the three sheets of the version it pins, lists none as a
-  token even where a piece of the kit's sets its own default. `src/tokens.test.ts` checks the reader
-  on a sheet of its own and on the kit's three.
+  the site's tokens page, which reads the three sheets of the version it pins, lists none as a token
+  even where a piece of the kit's sets its own default. `src/tokens.test.ts` checks the reader on a
+  sheet of its own and on the kit's three.
 - It also fails when a rule in the tokens sheet outside a `:where(:root)` rule declares a property
   the reference does not name and whose name does not start with `--_dk-`, or when the reference
   names a `--_dk-` property. `src/tokens.test.ts` fails when the sheet declares a property whose
