@@ -1593,10 +1593,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         off(down, locked() || (known && value <= least()));
         off(up, locked() || (known && value >= most()));
         // A read-only value is shown alone, with no buttons to change it, but a button that has
-        // focus stays, marked off, until focus leaves it, so focus is never dropped.
+        // focus stays, marked off, until focus leaves it, so focus is never dropped. Only an
+        // attached stepper gets here, since its listeners, its watch and its place in the form come
+        // off as it is taken down, which hides the buttons itself.
         const fixed = input.readOnly && !input.disabled;
-        for (const button of [down, up])
-            button.hidden = attached() && fixed ? activeOf() !== button : !attached();
+        for (const button of [down, up]) button.hidden = fixed && activeOf() !== button;
     };
     let setInvalid = false;
     /**
