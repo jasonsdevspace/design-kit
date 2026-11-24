@@ -202,20 +202,20 @@ let arriving: {
 
 /**
  * Moves focus to a view's heading as it is first drawn, as `moveFocus` does, where the visitor's
- * last input was a press on a button or a link, or a submit, in the last five seconds that no view
- * has taken focus for, and returns what calls it off. A view drawn as the page first draws takes
- * nothing, nor one drawn after a key that moves or types, such as Tab or an arrow along a row of
- * tabs, after a press on nothing, on a control that is off or in a row of tabs, or long after the
- * press, as one a poll brings. Views first drawn for the same press land together in one frame, and
- * the one first in the page takes focus, so a view's title is heard before a section of it. A
- * request called off before it lands hands its press back where no input has come since, so a view
- * asked for again, as React asks again in development, takes focus. A view already drawn that
- * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
- * with the views first drawn for the same press, and spends the press. Its `signal` calls the
- * request off as the function it returns does, a microtask after it aborts, as `moveFocus` has it,
- * and a signal already aborted asks for nothing and leaves the press for another view. A view is
- * dropped as a request to `moveFocus` is, and one asked once the page is back in sight lands
- * without the views asked before it went.
+ * last input, on the page or inside a frame of its own origin, was a press on a button or a link,
+ * or a submit, in the last five seconds that no view has taken focus for, and returns what calls it
+ * off. A view drawn as the page first draws takes nothing, nor one drawn after a key that moves or
+ * types, such as Tab or an arrow along a row of tabs, after a press on nothing, on a control that
+ * is off or in a row of tabs, or long after the press, as one a poll brings. Views first drawn for
+ * the same press land together in one frame, and the one first in the page takes focus, so a view's
+ * title is heard before a section of it. A request called off before it lands hands its press back
+ * where no input has come since, so a view asked for again, as React asks again in development,
+ * takes focus. A view already drawn that changed on a press asks with `changed`, so it takes focus
+ * whatever the last input was, lands with the views first drawn for the same press, and spends the
+ * press. Its `signal` calls the request off as the function it returns does, a microtask after it
+ * aborts, as `moveFocus` has it, and a signal already aborted asks for nothing and leaves the press
+ * for another view. A view is dropped as a request to `moveFocus` is, and one asked once the page
+ * is back in sight lands without the views asked before it went.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
