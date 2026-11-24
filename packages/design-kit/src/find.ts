@@ -65,13 +65,23 @@ export const fieldOf = (marked: Element): Element => {
 export const isElement = (node: unknown): node is Element =>
     (node as Partial<Node> | null | undefined)?.nodeType === 1;
 
+/** Whether a node is an HTML element, of the page's own window or of a frame's, as `isElement`. */
+export const isHtml = (node: unknown): node is HTMLElement =>
+    isElement(node) && node.namespaceURI === 'http://www.w3.org/1999/xhtml';
+
+/** Whether a node is a control a form checks, an input, a select or a text area, of any window. */
+export const isChecked = (
+    node: unknown
+): node is HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement =>
+    isHtml(node) && ['input', 'select', 'textarea'].includes(node.localName);
+
 /** Whether a control is marked off, kept in the tab order to say why rather than to act. */
 export const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
 
 /** Whether a control can take focus: enabled, not inert, and in sight. */
 export const takesFocus = (control: Element): control is HTMLElement =>
-    control instanceof HTMLElement &&
+    isHtml(control) &&
     !control.matches(':disabled') &&
     !control.closest('[inert]') &&
     control.checkVisibility();
@@ -87,10 +97,7 @@ export const namedText = (
 ): string =>
     idsOf(element, attribute)
         .map((id) => byId(element, id))
-        .filter(
-            (part): part is HTMLElement =>
-                part instanceof HTMLElement && !part.hidden && wanted(part)
-        )
+        .filter((part): part is HTMLElement => isHtml(part) && !part.hidden && wanted(part))
         .map((part) => part.textContent.trim())
         .join(' ');
 
@@ -109,11 +116,7 @@ const shownText = (element: Element | null | undefined): string | undefined => {
 export const fieldName = (field: Element): string => {
     const named =
         shownText(field.querySelector(':scope > legend')) ??
-        (field instanceof HTMLInputElement ||
-        field instanceof HTMLSelectElement ||
-        field instanceof HTMLTextAreaElement
-            ? shownText(field.labels?.[0])
-            : null) ??
+        (isChecked(field) ? shownText(field.labels?.[0]) : null) ??
         field.getAttribute('aria-label') ??
         '';
     return named.replace(/\s+/g, ' ').trim();

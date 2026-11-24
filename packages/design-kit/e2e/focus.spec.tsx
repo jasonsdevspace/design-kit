@@ -765,7 +765,7 @@ const openWithFrame = async (page: Page) => {
         body:
             '<p id="save-error" tabindex="-1">The round was not saved.</p>' +
             '<button type="button" id="target">Target</button>' +
-            '<iframe title="Notes" srcdoc="<button type=button id=inner>Inside</button><p id=save-error tabindex=-1>The frame' +
+            '<iframe title="Notes" srcdoc="<button type=button id=inner>Inside</button><button type=button id=other>Other</button><p id=save-error tabindex=-1>The frame' +
             "'" +
             's own.</p>"></iframe>',
         script: `import { moveFocus } from './controls.js';
@@ -798,4 +798,20 @@ test('lands a request asked from inside a frame that leaves the page before the 
         document.querySelector('iframe')?.remove();
     });
     await expect(page.locator('#target')).toBeFocused();
+});
+
+test('leaves focus where a visitor moved it between two controls of a frame, as a request asked from the first lands', async ({
+    page,
+}) => {
+    await openWithFrame(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('target');
+        document
+            .querySelector('iframe')
+            ?.contentDocument?.querySelector<HTMLElement>('#other')
+            ?.focus();
+    });
+    await settled(page);
+    await expect(page.locator('#target')).not.toBeFocused();
+    await expect(page.frameLocator('iframe').locator('#other')).toBeFocused();
 });

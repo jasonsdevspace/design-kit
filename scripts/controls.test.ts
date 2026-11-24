@@ -53,13 +53,13 @@ const BUDGET = 23.5 * 1024;
  * the same layout, the upper of the middle two where the count is even, rounded up to the next
  * quarter of a kilobyte. Set so in 0.9.4, and for `attachForm` alone again once a limit kept to the
  * field's calendar and digits, a year written in full and steps counted from the browser's step base
- * left too little room for another, and again once one view of focus that a focus request compares
- * through did.
+ * left too little room for another, again once one view of focus that a focus request compares
+ * through did, and again once a form inside a frame the page drives did.
  */
 const ENTRY_BUDGETS = [
     ['the module imported bare', [], 1.5 * 1024],
     ['attachTable alone', ['attachTable'], 2.75 * 1024],
-    ['attachForm alone', ['attachForm'], 9.75 * 1024],
+    ['attachForm alone', ['attachForm'], 10 * 1024],
 ] as const;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
@@ -107,20 +107,21 @@ describe('the controls', () => {
 
 /*
  * Focus is read from the page down in one place. Only the dialog and the toast, which keep a place
- * to hand focus back to, call the deep reader or the place it gives by name, and every other module
- * reaches the deep read only through the one view, as `seenNow` and `mayHandBack` give it. The
- * reader the controls had before it is gone.
+ * to hand focus back to, and a focus request, which keeps where focus was as it was asked so a move
+ * inside a frame counts, call the deep reader or the place it gives by name, and every other module
+ * reaches the deep read only through the one view, as `seenNow`, `isFocused` and `mayHandBack`
+ * give it. The reader the controls had before it is gone.
  */
 describe("the controls' reads of focus", () => {
     const sources = fileURLToPath(new URL('../packages/design-kit/src', import.meta.url));
     const files = readdirSync(sources).filter((name) => /^[^.]+\.tsx?$/.test(name));
     const textOf = (name: string) => readFileSync(join(sources, name), 'utf8');
 
-    it('call the deep reader or the place it gives by name outside the focus module only in the dialog and the toast', () => {
+    it('call the deep reader or the place it gives by name outside the focus module only in the dialog, the toast and a request', () => {
         const callers = files.filter(
             (name) => name !== 'focus.ts' && /\b(?:deepActive|placeNow)\(/.test(textOf(name))
         );
-        expect(callers.sort()).toEqual(['dialog.ts', 'toast.ts']);
+        expect(callers.sort()).toEqual(['dialog.ts', 'request.ts', 'toast.ts']);
     });
 
     it('have no reader of focus named focusedNow', () => {

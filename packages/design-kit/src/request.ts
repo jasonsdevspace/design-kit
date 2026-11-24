@@ -1,9 +1,12 @@
 import { byId, isOff } from './find.js';
 import {
     activeOf,
+    deepActive,
+    docOf,
     focusFirst,
     type FocusTarget,
     homeOf,
+    isBlank,
     type MoveFocusOptions,
     seen,
     seenNow,
@@ -41,18 +44,28 @@ const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
 const STALE = 10_000;
 
 /**
- * When a request was asked, and how many times the page had gone out of sight or come back by
- * then, or NaN, which matches no count, where the page was out of sight as it was asked.
+ * When a request was asked, how many times the page had gone out of sight or come back by then, or
+ * NaN, which matches no count, where the page was out of sight as it was asked, and where focus
+ * was: the element as the deep reader gives it, which the request compares through `seen` for its
+ * document, and the page's view of it, in whose root an id and the home are looked for.
  */
-type Asked = { readonly at: number; readonly sight: number };
+type Asked = {
+    readonly at: number;
+    readonly sight: number;
+    readonly from: Element | null;
+    readonly near: Element | null;
+};
 
 /**
- * The moment a request is asked. One asked out of sight is dropped whichever comes first as the
- * page comes back, its frame or the event that counts the return.
+ * The moment a request is asked, from where focus is or from the place a page gives. One asked out
+ * of sight is dropped whichever comes first as the page comes back, its frame or the event that
+ * counts the return.
  */
-const askedNow = (): Asked => ({
+const askedNow = (given: Element | null | undefined): Asked => ({
     at: performance.now(),
     sight: document.hidden ? NaN : sightChanges,
+    from: given === undefined ? deepActive() : given,
+    near: given === undefined ? activeOf() : given,
 });
 
 /** Whether a request may still land, in sight and unchanged since it was asked, and in time. */
@@ -60,38 +73,45 @@ const live = (asked: Asked) =>
     !document.hidden && sightChanges === asked.sight && performance.now() - asked.at <= STALE;
 
 /**
+ * Whether focus, as the request's view gives it, is still free for the request: nowhere, on a blank
+ * body around the request's document, the page's around a frame, as the page's own body is, where
+ * it was when the request was asked, or where the kit has handed it back since.
+ */
+const isFree = (
+    now: Element | null,
+    view: (element: Element | null) => Element | null,
+    asked: Asked
+): boolean =>
+    !now ||
+    isBlank(now) ||
+    now === view(asked.from) ||
+    (now === view(handed.to) && handed.at >= asked.at);
+
+/**
  * Focuses a request's target or a fallback, where focus is still where it was, or where the kit has
  * handed it back since the request was asked, and the request is live.
  */
-const land = (
-    target: FocusTarget,
-    fallbacks: readonly FocusTarget[] | undefined,
-    from: Element | null,
-    asked: Asked
-) => {
+const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined, asked: Asked) => {
     if (!live(asked)) return;
-    // Every place is compared as the page sees it, the view a request asks in, both sides alike.
-    const now = seenNow();
-    const page = (element: Element | null) => seen(element, document);
+    const { from, near } = asked;
+    // Every place is compared as a piece in the document focus was in sees it, both sides alike,
+    // the page's where focus was on the page or that document has left it.
+    const doc = docOf(from ?? document.body);
+    const now = seenNow(doc);
+    const view = (element: Element | null) => seen(element, doc);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
     // Focus on what had it as a dialog opened is free while that dialog is closed and its close
     // not yet handled, since the browser put it there as the dialog closed. A request that lands
     // takes that place from the dialog, so its close event leaves focus where the request put it.
-    const restored = [...restoring].filter(([dialog, to]) => page(to) === now && !dialog.open);
-    if (
-        now &&
-        now !== page(from) &&
-        (now !== page(handed.to) || handed.at < asked.at) &&
-        !restored[0]
-    )
-        return;
-    const place = placeOf(target, from);
+    const restored = [...restoring].filter(([dialog, to]) => view(to) === now && !dialog.open);
+    if (!isFree(now, view, asked) && !restored[0]) return;
+    const place = placeOf(target, near);
     if (
         focusFirst(
             place,
-            ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
-            homeOf(place ?? from ?? document.body)
+            ...(fallbacks ?? []).map((fallback) => placeOf(fallback, near)),
+            homeOf(place ?? near ?? document.body)
         )
     )
         for (const [dialog] of restored) restoring.delete(dialog);
@@ -120,12 +140,11 @@ export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): 
     // already landed is left where it put focus. A signal already aborted asks for nothing.
     if (options.signal?.aborted) return () => undefined;
     const down = teardown(options.signal);
-    const from = options.from === undefined ? activeOf() : options.from;
-    const asked = askedNow();
+    const asked = askedNow(options.from);
     const frame = window.requestAnimationFrame(() => {
         // Stopped as it lands, so a signal the page keeps for longer holds nothing of the request.
         down.stop();
-        land(target, options.fallbacks, from, asked);
+        land(target, options.fallbacks, asked);
     });
     down.add(() => {
         window.cancelAnimationFrame(frame);
@@ -148,9 +167,11 @@ export type ArrivalOptions = MoveFocusOptions & {
 /** A view asking to take focus for a press. */
 type Arrival = {
     readonly heading: FocusTarget;
-    readonly from: Element | null;
     readonly fallbacks: readonly FocusTarget[] | undefined;
-    /** When the view asked, so one asked before the page went out of sight lands nothing. */
+    /**
+     * When the view asked and where focus was, so one asked before the page went out of sight
+     * lands nothing.
+     */
     readonly asked: Asked;
     /** Calls the view's request off, and lets go of the signal it was given. */
     readonly stop: () => void;
@@ -200,7 +221,7 @@ export const focusOnArrival = (
             // A view asked since the page went out of sight or came back lands without the others.
             const asking = asked.filter((view) => live(view.asked));
             const places = asking.flatMap((view) => {
-                const place = placeOf(view.heading, view.from);
+                const place = placeOf(view.heading, view.asked.near);
                 return place?.isConnected ? [{ view, place }] : [];
             });
             places.sort((one, other) =>
@@ -209,11 +230,11 @@ export const focusOnArrival = (
                     : -1
             );
             const [first] = places;
-            if (first) land(first.place, first.view.fallbacks, first.view.from, first.view.asked);
+            if (first) land(first.place, first.view.fallbacks, first.view.asked);
             else {
                 // No heading is there to take focus, so the first view asked goes by its fallbacks.
                 const [view] = asking;
-                if (view) land(view.heading, view.fallbacks, view.from, view.asked);
+                if (view) land(view.heading, view.fallbacks, view.asked);
             }
         });
         arriving = { views, frame, at: inputs, press: pressed };
@@ -222,9 +243,8 @@ export const focusOnArrival = (
     const down = teardown(options.signal);
     const view: Arrival = {
         heading,
-        from: options.from === undefined ? activeOf() : options.from,
         fallbacks: options.fallbacks,
-        asked: askedNow(),
+        asked: askedNow(options.from),
         stop: down.stop,
     };
     batch.views.add(view);

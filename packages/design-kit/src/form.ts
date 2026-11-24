@@ -1,5 +1,15 @@
-import { byId, CHOICE, fieldName, fieldOf, idsOf, namedText, takesFocus } from './find.js';
-import { activeOf, type MoveFocusOptions } from './focus.js';
+import {
+    byId,
+    CHOICE,
+    fieldName,
+    fieldOf,
+    idsOf,
+    isChecked,
+    isHtml,
+    namedText,
+    takesFocus,
+} from './find.js';
+import { isFocused, type MoveFocusOptions } from './focus.js';
 import { speakOn } from './line.js';
 import { restore, unmark } from './marks.js';
 import { moveFocus } from './request.js';
@@ -85,11 +95,7 @@ const failuresOf = (form: HTMLFormElement, given: FailureWords | undefined): Fie
     const seen = new Set<Element | string>();
     return [...form.elements].flatMap((control) => {
         if (
-            !(
-                control instanceof HTMLInputElement ||
-                control instanceof HTMLSelectElement ||
-                control instanceof HTMLTextAreaElement
-            ) ||
+            !isChecked(control) ||
             !control.willValidate ||
             control.validity.valid ||
             control.closest('[aria-disabled="true"]')
@@ -150,7 +156,7 @@ const shownRange = (control: Element): HTMLElement | undefined =>
         .map((id) => byId(control, id))
         .find(
             (part): part is HTMLElement =>
-                part instanceof HTMLElement && part.matches('.dk-stepper-range') && !part.hidden
+                isHtml(part) && part.matches('.dk-stepper-range') && !part.hidden
         );
 
 /** An error's words, without the word a screen reader alone is given to start it. */
@@ -171,7 +177,7 @@ const errorFor = (
     words: string
 ): { readonly error: HTMLElement; readonly takeAway: () => void } => {
     const page = field.id ? byId(field, `${field.id}-error`) : null;
-    if (page instanceof HTMLElement && page.matches('.dk-field-error')) {
+    if (isHtml(page) && page.matches('.dk-field-error')) {
         const kept = [...page.childNodes];
         const hidden = page.hidden;
         page.replaceChildren(errorStart(), ...breakable(words));
@@ -355,7 +361,7 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
     // bubble, which fades, in place of the kit's errors, so the form takes noValidate from script
     // and the kit checks the same constraints on submit. A page without script keeps the browser's
     // check.
-    const own = form instanceof HTMLFormElement ? form : form.closest('form');
+    const own = form.localName === 'form' ? (form as HTMLFormElement) : form.closest('form');
     const checked = own ? (checkedForms.get(own) ?? checkForm(own)) : null;
     if (own) own.noValidate = true;
     // A field not in error says so, so a browser does not read an empty required field as invalid
@@ -514,7 +520,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
                     speak(unreachedWords(unmarked.field, unmarked.words, failures.length));
                 return;
             }
-            const focused = activeOf() === target;
+            const focused = isFocused(target);
             const wrong = fields.find((one) => focusIn(one) === field) ?? null;
             speak(refusalWords({ summary, wrong }, focused, fields.length));
         });
@@ -532,11 +538,9 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     // what the kit drew, which no longer stands.
     const check = (event: SubmitEvent, whole: HTMLFormElement) => {
         const { submitter } = event;
-        const failures =
-            (submitter instanceof HTMLButtonElement || submitter instanceof HTMLInputElement) &&
-            submitter.formNoValidate
-                ? []
-                : failuresOf(whole, chosen.errorWords);
+        const failures = submitter?.hasAttribute('formnovalidate')
+            ? []
+            : failuresOf(whole, chosen.errorWords);
         const failing = new Set(failures.map(({ field }) => field));
         for (const field of [...drawn.keys()]) if (!failing.has(field)) undraw(field);
         if (failures.length === 0) {

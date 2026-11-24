@@ -75,9 +75,9 @@ const langOf = (control: Element): string => {
         const named = at.closest('[lang]');
         if (named) return named.getAttribute('lang') ?? '';
         const root = rootOf(at);
-        at = root instanceof ShadowRoot ? root.host : null;
+        at = 'host' in root ? root.host : null;
     }
-    return document.documentElement.lang;
+    return control.ownerDocument.documentElement.lang;
 };
 
 /**
@@ -180,7 +180,7 @@ export const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
     valueMissing: (control) => {
         if (control.type === 'checkbox' && fieldOf(control) === control)
             return 'Check the box to go on.';
-        return control instanceof HTMLSelectElement || control.matches(CHOICE)
+        return control.localName === 'select' || control.matches(CHOICE)
             ? 'Choose an option.'
             : 'Enter a value.';
     },

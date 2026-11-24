@@ -1179,7 +1179,9 @@ fields in error that none can take focus in, as one out of sight, focus stays to
 field's name and error are said, with the count where more are wrong. In React, a form with no
 `StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
 attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
-already be in place when the first submit comes.
+already be in place when the first submit comes. A form the page attaches inside a frame of its own
+origin that it drives checks and refuses as it does on the page, and focus moves to the summary or
+the field in error in the frame.
 
 `attachForm(form, { status, signal })` is taken down by its `signal`, as [Taking a control
 down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet landed and a reset
@@ -2202,7 +2204,7 @@ moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 
 Focus a visitor has moved since the request is left where they put it: focus is free only while it
 is where it was when asked, or on the page's body, as it is once the control that had it is removed,
-or where the kit has handed it back since, as a toast, a dialog or a panel does as it closes and a
+or on the body of a frame focus was in, or where the kit has handed it back since, as a toast, a dialog or a panel does as it closes and a
 stepper as it is taken down, or on what the browser hands it to as a dialog closes, until the
 dialog's close is handled.
 
@@ -2221,11 +2223,13 @@ a shadow root finds its own control, never an element of the page around it that
 the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
 element's root. A panel and its button are found from the document the button sits in, which the
 panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
-root that holds it, as a request reads where focus was, for a page that asks later and passes `from`
-itself. Focus inside a frame reads as the frame there, as the page sees it. A request compares where
-focus is as the page sees it, a blank body of the page as nothing and a frame as the frame whatever
-has focus inside it, so focus a visitor put in a frame's blank space or an editor's body stays
-theirs.
+root that holds it, for a page that asks later and passes `from` itself. Focus inside a frame reads
+as the frame there, as the page sees it, so a request asked with focus in a frame looks its id up on
+the page. A request keeps where focus was inside a frame of the page's own origin as well, and
+compares where focus is as the document it was in sees it: a move between two controls of that frame
+counts as the visitor's, a body no one can type in, of that document or of the page around it,
+counts as free, and focus elsewhere counts as moved, so focus a visitor put in another frame's blank
+space or an editor's body stays theirs.
 
 #### Moving focus in React
 
@@ -3267,7 +3271,9 @@ focus goes to it, and leaves it there, so a script can focus the box while the t
 by. A tabindex the page gave the box is kept, and the box draws the kit's focus ring where the
 browser shows focus. Where the box refuses focus too, the tabindex it was given goes again at once,
 and focus goes on to the app frame's body or the page's main content, as it does from a toast, a
-dialog or a panel.
+dialog or a panel. A stepper the page attaches inside a frame of its own origin that it drives reads
+focus there as it does on the page, so a button that has focus as its value turns read only stays
+until focus leaves it, and a takedown hands focus to the value or the box in the frame.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -3655,7 +3661,8 @@ or below as the grid is drawn, so it holds at any count of columns, left and rig
 reading direction, and an arrow held with Alt, Control or Command is left to the browser. A cell
 marked off keeps its place, a cell that is disabled or out of sight is passed over and never the
 stop, and where the cell that had focus is taken out, focus goes to the next cell still there, or
-the one before. A grid attached while it is drawn at no size, as in a closed `details` or under
+the one before, in a grid the page attaches inside a frame of its own origin too. A grid attached
+while it is drawn at no size, as in a closed `details` or under
 `hidden`, places its stop as it comes into sight, and a cell a page's rule hides as it resizes the
 grid hands the stop on. A grid with the group's role, as above, or none takes the toolbar's while
 attached, so a screen reader says the arrows move within it, and keeps its `aria-label`, which a

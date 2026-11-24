@@ -4,7 +4,8 @@
 for a button let go while its panel is open, and by record 23 in 0.9.3, under which the toast and a
 dialog taken down by its signal hand focus back by this rule, in 0.9.4 for a search of the page made
 only once every button refuses focus, by record 29 in 0.9.4, under which F8 moves focus to a shown
-toast's action and back, and in 0.9.4 for a dialog and a panel the page attaches inside a frame
+toast's action and back, and in 0.9.4 for a dialog, a panel, a stepper, a form and a group of cells
+the page attaches inside a frame, and a focus request asked with focus inside one
 
 ## Context
 
@@ -122,13 +123,19 @@ it and the drop-in rule has the kit do it.
 - TalkBack and VoiceOver on iOS are walked on a device before a release that changes this, since a
   focusable panel may be read as one stop, which no browser test shows.
 
-## Amendment for 0.9.4: a dialog and a panel inside a frame
+## Amendment for 0.9.4: pieces inside a frame
 
-A page can attach its dialog or a panel's button to an element inside a frame of its own origin that
-it drives. Both read focus from the page's document, where focus anywhere in the frame reads as the
-frame, and the panels listened for presses, focus and Escape on the page's document, which never
-hears the frame's. So a dialog in the frame handed focus back to the frame rather than the control
-in it that opened it, or to nothing, and a panel's button in the frame did nothing.
+A page can attach its dialog, a panel's button, a stepper, a form or a group of cells to an element
+inside a frame of its own origin that it drives. Each read focus from the page's document, where
+focus anywhere in the frame reads as the frame, and the panels listened for presses, focus and
+Escape on the page's document, which never hears the frame's. So a dialog in the frame handed focus
+back to the frame rather than the control in it that opened it, or to nothing, a panel's button in
+the frame did nothing, a stepper hid the button that had focus as its value turned read only and
+handed nothing back as it was taken down, and a group of cells kept no cell where the one with focus
+was taken out. A focus request compared focus as the page sees it, so a visitor's move between two
+controls of a frame read as no move and the request took focus from them. The form and the group
+also told the frame's controls by the page's own classes, which a frame's are not, so a form in the
+frame let a submit through with nothing checked.
 
 **A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
 since the page would add listeners to every frame focus enters, and still read focus as the frame.
@@ -153,17 +160,18 @@ focus from the page's document into each shadow root that holds it and into each
 own origin that has it, an object showing a document among them, to the control focused inside or to
 the frame's body where nothing is, and a frame of another origin reads as the frame. A frame's
 record is read only while focus is in the frame, so a control it last focused is never taken for
-focus. What the kit stores, the focus it notes it handed back and what had focus as a dialog opened,
-is that element as it is, except that a blank body is kept as `seen` reads it for the piece's own
+focus. What the kit stores, the focus it notes it handed back, what had focus as a dialog opened and
+where focus was as a request was asked, is that element as it is, except that a blank body is kept as `seen` reads it for the piece's own
 document. Every comparison reads both sides through `seen`, for one document, and nowhere means
-`seen` reads null for the asker's: a piece asks for its own document and a focus request asks as the
-page. Through `seen`, a body no one can type in is nothing in that document, an element of the
+`seen` reads null for the asker's: a piece asks for its own document and a focus request for the
+document where focus was as it was asked. Through `seen`, a body no one can type in is nothing in that document, an element of the
 document or of one around it is itself, and an element of any other frame, one the document holds or
 one beside it, reads as the frame that holds it at the document's level, so focus a visitor put in
 another frame's blank space, or on the page around a frame, stays theirs. An editor's body, editable
 or in design mode, counts as focus wherever it is. The walk that hands focus back counts focus
 fallen to any blank body as no move of the page's. `activeOf` stays as 0.9.3 had it, followed into
-shadow roots only, so a request's `from`, its id and the stepper read the page's view.
+shadow roots only, and stays public, so a page that passes `from` itself and a request's id read the
+page's view.
 
 Option D. The dialog finds its opener, an element or an event of the frame's or the page's, from the
 deep reader, and hands focus back to an opener in the frame or on the page alike. What had focus as
@@ -178,7 +186,23 @@ copy has before the page takes it in, the listeners every panel shares are added
 that holds an attached button and taken off with the last button in it or once that document has
 lost its window, and the panel's id, its buttons, the button that opened it and whether it has
 started are kept for each document, so a panel of the page and one of a frame that share an id stay
-apart. Each stays in the document it was attached in, so a page that moves one into another takes it
+apart. The stepper and a group of cells read focus through `seen` for the document they sit in, the
+page's where it has no window, so a stepper keeps a button with focus shown as its value turns read
+only and hands focus to its value or itself in the frame as it is taken down, and a group hands
+focus on where focus fell to the frame's body. The form and the group tell a control by its name and
+an element by its node type rather than by the page's classes.
+
+A focus request keeps where focus was as the deep reader gives it, as the dialog and the toast keep a
+place, and asks for the document that element sits in, the page's where focus was on the page, none
+was given or that document has lost its window, as a frame that left the page has. So a move between
+two controls of a frame counts as the visitor's and the request drops. One rule stands around that
+view: a body no one can type in that `seen` reads as itself, which is only one of a document around
+the request's, the page's around the frame, counts as free for the request, as the page's own body
+always has, so focus that fell from the frame to the page as its control went still lets the request
+land. The pieces keep that body as elsewhere, so a visitor's click on the page around a frame still
+stays theirs as a piece in the frame closes. The id the request asks for and the home it falls back
+to are still looked for from the page's view of where focus was, as `activeOf` gives it, so a
+request asked with focus in a frame finds its id on the page as before. Each stays in the document it was attached in, so a page that moves one into another takes it
 down and attaches it again. The listeners the controls' shared module adds as it loads, which note a
 visitor's presses for a focus request, stay on the page's document, and neither the dialog nor the
 panels read them.
@@ -236,9 +260,17 @@ The path is in `packages/design-kit`.
   the page, `e2e/toast.spec.tsx` a request landing as a toast hands focus back to a frame whose
   control has gone, and `e2e/dialog.spec.ts` a dialog of the page handing focus back to its opener
   in a frame where focus is handed to that frame with nothing in it. `scripts/controls.test.ts`
-  finds that outside the focus module only the dialog and the toast call the deep reader or the
-  place it gives by name, so every other module reaches the deep read only through `seen`, as
-  `seenNow` and `mayHandBack` give it.
+  finds that outside the focus module only the dialog, the toast and a focus request call the deep
+  reader or the place it gives by name, so every other module reaches the deep read only through
+  `seen`, as `seenNow`, `isFocused` and `mayHandBack` give it.
+- For a stepper, a form, a group of cells and a focus request inside a frame,
+  `e2e/stepper-takedown.spec.tsx`, in Chromium, WebKit and Firefox, finds a stepper's focused button
+  kept shown as its value turns read only and focus handed to its value or its box in the frame as
+  it is taken down. `e2e/form.spec.tsx` finds a refused submit in the frame moving focus to the field
+  in error, and `e2e/roving.spec.tsx` focus handed on to the next cell in the frame where the one
+  with focus is taken out. `e2e/focus.spec.tsx` finds a request asked from one control of a frame
+  leaving focus on another of that frame that the visitor moved to. `src/words.test.ts` finds a
+  field's language read past a shadow root of a frame's, which the page's own class does not name.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.

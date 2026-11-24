@@ -252,6 +252,7 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes | 637 bytes       | 9.25 KB    |
 | 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
 | 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 667 bytes       | 9.75 KB    |
+| 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,340 bytes | 674 bytes       | 10 KB      |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

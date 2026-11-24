@@ -147,6 +147,32 @@ test('hands focus to the cell in the place of one taken out, and lets the group 
     await expect(page.locator('#r4')).not.toHaveAttribute('tabindex');
 });
 
+test('hands focus to the cell in the place of one taken out, in a group inside a frame the page attached', async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Roving',
+        body: '<main><iframe title="Cards" srcdoc="<!doctype html><title>Cards</title>"></iframe></main>',
+        script: `import { attachRoving } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.title !== 'Cards')
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+frame.contentDocument.body.innerHTML = ${JSON.stringify(GRID)};
+attachRoving(frame.contentDocument.querySelector('#grid'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inner = page.frameLocator('iframe');
+    await inner.locator('#n2').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(inner.locator('#n3')).toBeFocused();
+    await inner.locator('#n3').evaluate((cell) => {
+        cell.remove();
+    });
+    await expect(inner.locator('#n4')).toBeFocused();
+    await expect(inner.locator('#grid > [tabindex="0"]')).toHaveId('n4');
+});
+
 test('passes over a cell disabled or out of sight, which is never the stop', async ({ page }) => {
     await open(page);
     await page.locator('#r1').focus();

@@ -1,5 +1,5 @@
 import { fieldName, isOff } from './find.js';
-import { activeOf, handBack, homeOf } from './focus.js';
+import { handBack, homeOf, isFocused } from './focus.js';
 import { hush, say, type Spoken, unsay } from './line.js';
 import { describedBy, restore, unmark } from './marks.js';
 import { checkedForms, formSteppers } from './state.js';
@@ -46,7 +46,7 @@ const handToStepper = (stepper: HTMLElement, from: Element) => {
     if (given) stepper.tabIndex = -1;
     if (handBack(stepper)) return;
     if (given) stepper.removeAttribute('tabindex');
-    if (activeOf() === from) handBack(homeOf(stepper));
+    if (isFocused(from)) handBack(homeOf(stepper));
 };
 
 /** What a press says: the value, that it is a limit where it is one, and a page's words after it. */
@@ -213,7 +213,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         // attached stepper gets here, since its listeners, its watch and its place in the form come
         // off as it is taken down, which hides the buttons itself.
         const fixed = input.readOnly && !input.disabled;
-        for (const button of [down, up]) button.hidden = fixed && activeOf() !== button;
+        for (const button of [down, up]) button.hidden = fixed && !isFocused(button);
     };
     let setInvalid = false;
     // Every form the value has stood in, so a teardown that finds it gone from the page has each
@@ -419,7 +419,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // by its active button whether or not the button takes focus, as Safari's does not, is left to
     // the press, since an error drawn above would move the button from under the pointer. Tab to
     // the stepper's own button still reports, since no press follows it. Focus that stays on the
-    // value, as a switch of window leaves it, reports nothing.
+    // value, as a switch of window leaves it, reports nothing. The page's document tells that
+    // switch, since it has focus wherever focus is in its frames, where a frame's own would lose it
+    // as the visitor moves on to the page.
     input.addEventListener(
         'blur',
         () => {
@@ -429,7 +431,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
                 !locked() &&
                 !pageError() &&
                 !field.querySelector(':active') &&
-                activeOf() !== input &&
+                !isFocused(input) &&
                 document.hasFocus()
             )
                 onChange();
@@ -498,9 +500,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         // once, and focus goes on to the app frame's body or the page's main content, as it does
         // from the toast, the dialog and the panels. Focus the page moves elsewhere as the value or
         // the stepper is tried stays.
-        const at = activeOf();
-        if (at === down || at === up) {
-            if (!handBack(input.readOnly && !input.disabled ? input : null) && activeOf() === at) {
+        const at = [down, up].find(isFocused);
+        if (at) {
+            if (!handBack(input.readOnly && !input.disabled ? input : null) && isFocused(at)) {
                 handToStepper(stepper, at);
             }
         }
