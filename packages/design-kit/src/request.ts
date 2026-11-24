@@ -13,7 +13,8 @@ import { teardown } from './teardown.js';
 /*
  * A page's requests to move focus once a change is drawn, `moveFocus` and `focusOnArrival`, which
  * land in a frame where focus is still free, and drop where the page went out of sight. The form
- * refuses through them too. No entry of the package exports this module, so a page never reaches it.
+ * refuses through `moveFocus` too. No entry of the package exports this module, so a page never
+ * reaches it.
  */
 
 /**

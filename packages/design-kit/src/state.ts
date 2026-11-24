@@ -1,13 +1,14 @@
 import { isOff } from './find.js';
 
 /*
- * The state the parts of the controls share, held once for a page however its bundler splits
- * them: the visitor's last press and how many inputs they have made, how many times the page has
- * gone out of sight or come back, the focus the kit last handed back, what the browser hands focus
- * back to as each dialog closes, and the forms the kit checks with the steppers in them. It is the
- * one module of the controls that does something as it loads, adding the listeners that note
- * inputs and the page going out of sight, so the package names it in `sideEffects`. A plain value
- * is written only here, and what another module writes is held in an object or a map. No entry of the package exports this module, so a page never reaches it.
+ * The state the parts of the controls share, held once for a page however its bundler splits them:
+ * the visitor's last press and how many inputs they have made, how many times the page has gone out
+ * of sight or come back, the focus the kit last handed back, what the browser hands focus back to
+ * as each dialog closes, and the forms the kit checks with the steppers in them. It is the one
+ * module of the controls that does something as it loads, adding the listeners that note inputs and
+ * the page going out of sight, so the package names it in `sideEffects`. A plain value is written
+ * only here, and what another module writes is held in an object or a map. No entry of the package
+ * exports this module, so a page never reaches it.
  */
 
 /** A button or a link by its role, which Enter presses, and Space too but for a link. */
