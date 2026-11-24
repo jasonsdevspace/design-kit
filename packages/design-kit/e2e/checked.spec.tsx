@@ -811,6 +811,8 @@ type Bid = {
     /** Speaking on a second status line of the page's, given as its `status`. */
     readonly line?: boolean;
     readonly summary?: boolean;
+    /** In the React form, with its set of sizes left unchosen. */
+    readonly unchosen?: boolean;
     readonly errorWords?: Record<string, string>;
     /** Handed to a page that draws its own errors, which keeps both lists it is handed. */
     readonly own?: boolean;
@@ -945,6 +947,11 @@ for (const nested of [false, true])
                 const holder = document.createElement('span');
                 hidden?.replaceWith(holder);
                 if (hidden) holder.append(hidden);
+                // Its words wrapped over lines, as markup written by hand wraps them.
+                const words = [...range.childNodes].find(
+                    (node) => node.nodeType === Node.TEXT_NODE
+                );
+                if (words) words.textContent = '\n    Enter a whole number\n    from 0 to 10.\n';
             });
         const bid = page.getByRole('spinbutton', { name: 'Bid' });
         await bid.fill('99');
@@ -990,7 +997,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                     script: app,
                 });
                 await listen(page);
-                await chooseSmall(page);
+                if (!drawn.unchosen) await chooseSmall(page);
             }
             if (name) await page.getByLabel('Name').fill(name);
         };
@@ -1180,6 +1187,40 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                     expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
                     await expect(page.locator('#count')).toHaveText('0');
                 });
+
+        if (way === 'useFormRefusal')
+            test("keys and links a set's failure in a summary by its field, beside other failures", async ({
+                page,
+            }) => {
+                const warned: string[] = [];
+                page.on('console', (message) => {
+                    if (message.type() === 'error') warned.push(message.text());
+                });
+                await openWay(page, { summary: true, unchosen: true }, '');
+                await bidOf(page).fill('99');
+                await bidOf(page).press('Enter');
+                await expect(async () => {
+                    await page.clock.runFor(100);
+                    await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
+                }).toPass();
+                await expect(page.locator('#summary li')).toHaveText([
+                    'Enter your name.',
+                    'Choose an option.',
+                    OWN,
+                ]);
+                // Each link names an element on the page, a set's its fieldset, and no key repeats.
+                const missing = await page
+                    .locator('#summary a')
+                    .evaluateAll((links) =>
+                        links
+                            .map((link) => link.getAttribute('href') ?? '')
+                            .filter(
+                                (href) => href.length < 2 || !document.getElementById(href.slice(1))
+                            )
+                    );
+                expect(missing).toEqual([]);
+                expect(warned.filter((one) => one.includes('key'))).toEqual([]);
+            });
 
         if (way === 'useFormRefusal')
             test("says the first field's name and error when a summary already has focus", async ({

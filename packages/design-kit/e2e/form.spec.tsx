@@ -356,11 +356,32 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
         ]);
 });
 
+test("says a summary's line where it already has focus and no field is marked", async ({
+    page,
+}) => {
+    await open(page, { clock: true });
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        const summary = document.querySelector<HTMLElement>('#summary');
+        if (summary) summary.hidden = false;
+        (window as unknown as Form).summarised = true;
+    });
+    await refuse(page, []);
+    await page.clock.runFor(100);
+    await expect(page.locator('#summary')).toBeFocused();
+    // Refused again from the summary with no field marked, so its own line is what is said.
+    await refuse(page, []);
+    await page.clock.runFor(300);
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Two fields need attention.']);
+});
+
 /*
  * A summary that cannot take focus is passed over, as a field is: hidden itself, by an ancestor or
- * by a style, or made inert.
+ * by a style, made inert, or with no tabindex and not focusable by nature.
  */
-for (const how of ['hidden', 'ancestor', 'style', 'inert'] as const)
+for (const how of ['hidden', 'ancestor', 'style', 'inert', 'not focusable'] as const)
     test(`passes over a summary that cannot take focus, ${how}, to the first field in error`, async ({
         page,
     }) => {
@@ -378,6 +399,7 @@ for (const how of ['hidden', 'ancestor', 'style', 'inert'] as const)
             }
             if (way === 'style') summary.style.display = 'none';
             summary.inert = way === 'inert';
+            if (way === 'not focusable') summary.removeAttribute('tabindex');
             (window as unknown as Form).summarised = true;
         }, how);
         await refuse(page, [['name', 'Give the rule a name.']]);

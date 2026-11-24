@@ -2340,7 +2340,7 @@ export type FormOptions = AttachOptions & {
     readonly say?: Say | undefined;
     /**
      * An error summary the page draws over the form, focused in place of the first field, and
-     * passed over where it cannot take focus, as one hidden, inert or out of sight.
+     * passed over where it cannot take focus, as one hidden, inert, out of sight or not focusable.
      */
     readonly summary?: (() => Element | null) | undefined;
     /**
@@ -2675,7 +2675,7 @@ const shownRange = (control: Element): HTMLElement | undefined =>
 const ownWords = (error: Element): string => {
     const copy = error.cloneNode(true) as Element;
     for (const hidden of copy.querySelectorAll('.dk-visually-hidden')) hidden.remove();
-    return copy.textContent.trim();
+    return copy.textContent.replace(/\s+/g, ' ').trim();
 };
 
 /**
@@ -2887,10 +2887,11 @@ const countWords = (count: number): string =>
 /**
  * What a refusal says. Where focus moves to a summary, which reads its own words, it says nothing.
  * Elsewhere, the summary already focused among them, since focus that stays reads nothing, it says
- * the first field's name and error, with the count where more are wrong, whatever the field reads
- * itself, since VoiceOver on iOS reads a field's error only as a hint, after a pause or not at all,
- * and focus moved by script may not land. A screen reader that reads the error as focus lands hears
- * it twice, which slows a visitor less than an error never heard.
+ * the first field's name and error, with the count where more are wrong, or the summary's own words
+ * where it already has focus and no field is marked, whatever the field reads itself, since
+ * VoiceOver on iOS reads a field's error only as a hint, after a pause or not at all, and focus
+ * moved by script may not land. A screen reader that reads the error as focus lands hears it twice,
+ * which slows a visitor less than an error never heard.
  */
 const refusalWords = (
     to: {
@@ -2901,6 +2902,7 @@ const refusalWords = (
     count: number
 ): string => {
     if (to.summary && !focused) return '';
+    if (to.summary && !to.wrong) return to.summary.textContent.replace(/\s+/g, ' ').trim();
     if (!to.wrong || count === 0) return '';
     return unreachedWords(to.wrong, errorWords(to.wrong), count);
 };
@@ -2969,12 +2971,13 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * set its checked radio or its first control that can, and says one message on the status line:
  * nothing where focus moves to a summary, whose words it reads, and where it moves to a field or is
  * already on one or on the summary, the first field's name and error, with how many fields need
- * attention where more are wrong, since VoiceOver on iOS reads a field's error only as a hint and
- * focus moved by script may not land. A set counts once however many of its choices are marked. The
- * field's error stays not live. A second refusal calls off one not yet landed, and each refusal
- * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
- * where there were any, says the form is cleared. Attached again, a form returns what it returned
- * first and runs on the options of its newest holder, its errors and its check kept.
+ * attention where more are wrong, or on the summary with no field marked, the summary's own words,
+ * since VoiceOver on iOS reads a field's error only as a hint and focus moved by script may not
+ * land. A set counts once however many of its choices are marked. The field's error stays not live.
+ * A second refusal calls off one not yet landed, and each refusal returns what calls it off. A
+ * reset that goes through takes away the errors the kit drew and, where there were any, says the
+ * form is cleared. Attached again, a form returns what it returned first and runs on the options of
+ * its newest holder, its errors and its check kept.
  *
  * Taken down by its `signal`, it takes its listeners off, calls off a refusal and a reset's timer
  * still due, and takes away the errors it drew, so nothing is said after, and what it returned does
@@ -3054,10 +3057,15 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         // where focus was.
         let target: HTMLElement | null = null;
         const frame = window.requestAnimationFrame(() => {
-            // A summary that cannot take focus, hidden, inert or out of sight, is passed over, as
-            // one the page does not name.
+            // A summary that cannot take focus, hidden, inert, out of sight or not focusable, is
+            // passed over, as one the page does not name.
             const named = summed ? chosen.summary?.() : null;
-            const summary = named && takesFocus(named) ? named : null;
+            const summary =
+                named &&
+                takesFocus(named) &&
+                (named.hasAttribute('tabindex') || named.tabIndex >= 0)
+                    ? named
+                    : null;
             const fields = wrongFields(within);
             const field = fields.map(focusIn).find((one) => one !== null) ?? null;
             target = summary ?? field;
