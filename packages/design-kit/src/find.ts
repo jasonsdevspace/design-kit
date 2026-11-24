@@ -54,3 +54,59 @@ export const fieldOf = (marked: Element): Element => {
 /** Whether a control is marked off, kept in the tab order to say why rather than to act. */
 export const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';
+
+/** Whether a control can take focus: enabled, not inert, and in sight. */
+export const takesFocus = (control: Element): control is HTMLElement =>
+    control instanceof HTMLElement &&
+    !control.matches(':disabled') &&
+    !control.closest('[inert]') &&
+    control.checkVisibility();
+
+/**
+ * The words of the shown elements an element's attribute names by id, in order, as a screen reader
+ * reads them, such as its description, or only those of the parts a check keeps.
+ */
+export const namedText = (
+    element: Element,
+    attribute: string,
+    wanted: (part: HTMLElement) => boolean = () => true
+): string =>
+    idsOf(element, attribute)
+        .map((id) => byId(element, id))
+        .filter(
+            (part): part is HTMLElement =>
+                part instanceof HTMLElement && !part.hidden && wanted(part)
+        )
+        .map((part) => part.textContent.trim())
+        .join(' ');
+
+/** An element's words without those it hides from a screen reader, such as a required mark. */
+const shownText = (element: Element | null | undefined): string | undefined => {
+    if (!element) return undefined;
+    const copy = element.cloneNode(true) as Element;
+    for (const hidden of copy.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+    return copy.textContent;
+};
+
+/**
+ * A field's name, from its set's legend or its control's label, to say before an error, without
+ * the words the legend or label hides from a screen reader.
+ */
+export const fieldName = (field: Element): string => {
+    const named =
+        shownText(field.querySelector(':scope > legend')) ??
+        (field instanceof HTMLInputElement ||
+        field instanceof HTMLSelectElement ||
+        field instanceof HTMLTextAreaElement
+            ? shownText(field.labels?.[0])
+            : null) ??
+        field.getAttribute('aria-label') ??
+        '';
+    return named.replace(/\s+/g, ' ').trim();
+};
+
+/**
+ * What a press can land on that takes focus, so a press inside a button finds the button, with
+ * `*|href` matching an SVG link's `xlink:href` too.
+ */
+export const FOCUSABLE = 'a[*|href], button, input, select, textarea, summary, [tabindex]';

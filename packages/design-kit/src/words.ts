@@ -1,4 +1,3 @@
-import type { Failure } from './controls.js';
 import { byId, CHOICE, fieldOf, idsOf, rootOf } from './find.js';
 
 /*
@@ -6,6 +5,23 @@ import { byId, CHOICE, fieldOf, idsOf, rootOf } from './find.js';
  * `attachForm` to show where neither the field nor the page gives words of its own. No entry of
  * the package exports this module, so a page never reaches it.
  */
+
+/** The ways a field fails the browser's constraints, in the order their words are chosen. */
+export const FAILURES = [
+    'badInput',
+    'valueMissing',
+    'typeMismatch',
+    'patternMismatch',
+    'tooShort',
+    'tooLong',
+    'rangeUnderflow',
+    'rangeOverflow',
+    'stepMismatch',
+    'customError',
+] as const;
+
+/** A way a field fails the browser's constraints, named as its `validity` names it. */
+export type Failure = (typeof FAILURES)[number];
 
 export type Checked = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
