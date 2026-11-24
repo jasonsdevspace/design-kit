@@ -2087,8 +2087,9 @@ const openers = new Set<HTMLButtonElement>();
 const openersOf = (id: string): HTMLButtonElement[] =>
     [...openers]
         .filter((button) => button.isConnected && panelIdOf(button) === id)
-        // 2 marks the other button as coming before this one.
-        .sort((one, other) => (one.compareDocumentPosition(other) & 2 ? 1 : -1));
+        .sort((one, other) =>
+            one.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1
+        );
 
 /**
  * Where the visitor's place last was, the path of the last focus that moved or of their last
