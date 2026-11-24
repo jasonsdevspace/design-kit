@@ -8,8 +8,8 @@ by record 22 in 0.9.3, under which every attach takes a signal that takes its pi
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
 function writes on the frame, and in 0.9.4 for the listener the module adds for the page going out
 of sight or coming back. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0,
-0.9.3 and 0.9.4, as its tables give, and in 0.9.4 three entries of the controls were given budgets
-of their own and the rule was let lower a budget
+0.9.3 and 0.9.4, as its tables give, and in 0.9.4 for the budgets of three entries of the controls
+and a rule that lowers a budget
 
 ## Context
 
@@ -165,7 +165,7 @@ median piece or function, and the budget set. The figures of 0.6.0 and 0.7.0, wh
 not give when those budgets were set, are measured from those releases' commits by the budget tests'
 own functions, with the medians the package record gave at each.
 
-| Release | What raised it                                                                  | Sheets together | Median piece | Budget set |
+| Release | What set it                                                                     | Sheets together | Median piece | Budget set |
 | ------- | ------------------------------------------------------------------------------- | --------------- | ------------ | ---------- |
 | 0.6.0   | The size audit                                                                  | 8,947 bytes     | 186 bytes    | 9 KB       |
 | 0.7.0   | A toast's group of buttons and a table frame's shade                            | 9,235 bytes     | 210 bytes    | 9.25 KB    |
@@ -179,7 +179,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | The root's room written in em, with too little room left                        | 12,909 bytes    | 181 bytes    | 13 KB      |
 | 0.9.4   | A read-only value of words sized to its value, with too little room left        | 13,173 bytes    | 180 bytes    | 13.25 KB   |
 
-| Release | What raised it                                                                           | Every function | Median function | Budget set |
+| Release | What set it                                                                              | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
 | 0.6.0   | The size audit                                                                           | 5,777 bytes    | 600 bytes       | 6.25 KB    |
 | 0.8.4   | `attachPanel`, and the fixes for an off button and a button attached later               | 6,898 bytes    | 668 bytes       | 7.5 KB     |
@@ -218,27 +218,32 @@ were the status line, the toast, the form, the panels and the rest, and the one 
 focus back, shared by the toast, the dialog and the panels, came with a focus request asked before a
 handback still landing and a toast that forgets focus a visitor moved while it is off the page.
 
-Since 0.9.4 three entries of the controls carry budgets of their own beside the whole, since the
-whole is what a page that imports every function sends, which no page does, and a page pays for
-the functions it imports. They are the module imported bare, which sends the listeners it adds as
-it loads, and the smallest attach and the largest, `attachTable` and `attachForm`, each alone. Each
-is measured as the package record measures a function alone, from the package laid out as npm ships
-it, where a bundler reads the manifest's `sideEffects` and keeps the module's listeners on a bare
-import, and is set and set again by the rule above as the whole is: its size with room for one more
-function of the usual size, rounded up to the next quarter of a kilobyte. The median function is
-what each adds to every other, measured by leaving it out, the upper of the middle two where the
-count is even.
+Since 0.9.4 three entries of the controls carry budgets of their own beside the whole, because a
+page pays for the functions it imports and no page imports every one. They are the module imported
+bare, which sends the listeners it adds as it loads, and the attaches that send the least and the
+most alone, `attachTable` and `attachForm`. Each is measured from the package laid out as npm ships
+it, as the package record measures a function alone, so a bundler reads the manifest's
+`sideEffects` and keeps the module's listeners on a bare import. From 0.9.4 every budget of the
+controls, the whole and each entry, is measured from that layout, with one median. Each budget is
+set and set again by the rule above, its size with room for one more function of the usual size,
+rounded up to the next quarter of a kilobyte. The median function comes from the same layout. A
+function's cost is what every function sends less what every other sends without it, the costs are
+sorted, and the median is the middle cost, or the upper of the middle two where the count is even.
+Measured so at 0.9.4, every function comes to 21,541 bytes with a median function of 637, which
+fits the whole's budget of 21.75 KB, so it stays.
 
-| Release | Entry                    | Sent alone  | Median function | Budget set |
-| ------- | ------------------------ | ----------- | --------------- | ---------- |
-| 0.9.4   | The module imported bare | 706 bytes   | 637 bytes       | 1.5 KB     |
-| 0.9.4   | `attachTable` alone      | 2,016 bytes | 637 bytes       | 2.75 KB    |
-| 0.9.4   | `attachForm` alone       | 8,632 bytes | 637 bytes       | 9.25 KB    |
+| Release | Entry                    | What set it                   | Sent        | Median function | Budget set |
+| ------- | ------------------------ | ----------------------------- | ----------- | --------------- | ---------- |
+| 0.9.4   | The module imported bare | The first budget for an entry | 706 bytes   | 637 bytes       | 1.5 KB     |
+| 0.9.4   | `attachTable` alone      | The first budget for an entry | 2,016 bytes | 637 bytes       | 2.75 KB    |
+| 0.9.4   | `attachForm` alone       | The first budget for an entry | 8,632 bytes | 637 bytes       | 9.25 KB    |
 
-The rule stays the ledger, each row a budget set and why, and since 0.9.4 it lowers a budget as well
-as raising one: where a release measured whole leaves more room under a budget than two pieces or
-functions of the usual size, the budget may be set again by the rule, lower, with a row that names
-what returned the bytes.
+Each table stays the ledger, a row for each budget set and what set it. Since 0.9.4 the rule lowers
+a budget as well as raising one. Where a release, measured as the audit was, leaves more room under
+a budget, the budget less the size, than twice the median piece or function taken in the same
+measure, the budget may be set again by the rule, lower, from that size and that median, with a row
+that names what returned the bytes. This holds for the sheets, the controls' whole and each entry,
+and not for the theme script, whose budget is a kilobyte of its own.
 
 ## The sheets beside other systems
 
@@ -285,8 +290,9 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
 - `src/controls.test.ts` imports the module in plain Node and finds no export but its functions.
 - `scripts/controls.test.ts` holds what a page's bundler sends for every function, without comments,
   to the controls' budget, the module imported bare, `attachTable` alone and `attachForm` alone to
-  theirs, and the theme script to its own, and finds nothing of the theme script in what a bundler
-  sends of the controls. `scripts/sheets.test.ts` holds the three sheets to theirs, and
+  theirs, and the theme script to its own, and finds nothing of the theme script in a bundle of the
+  theme names the controls import. `src/theme.test.ts` finds each theme word written in quotes as
+  JSON writes it. `scripts/sheets.test.ts` holds the three sheets to theirs, and
   `scripts/parts.test.ts` the measure the record takes of each part.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.

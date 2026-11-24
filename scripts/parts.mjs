@@ -13,7 +13,7 @@
  * A function's cost is measured twice from the controls as a page's bundler takes them, without
  * comments and gzipped: alone, what a page that imports only that function sends, and added, what
  * it adds to a page that imports every other. A function a page could drop costs nothing alone
- * past what it needs, since the module runs nothing when it is imported.
+ * past what it needs and the listeners the module adds as it loads.
  */
 import {
     copyFileSync,
@@ -213,7 +213,8 @@ export const sentOf = async (module, names) => gzipSync(await bundledOf(module, 
  * folder given into a `dist` folder beside its manifest, in a folder of its own that the caller
  * removes. A bundler reads the manifest's `sideEffects` there as it does in a page's install, so
  * a page that imports the controls bare is measured with the listeners the module adds as it
- * loads, which a bundler drops from the sources the manifest does not name.
+ * loads. Measured from the sources, which the manifest's `sideEffects` does not name, a bundler
+ * would drop those listeners.
  *
  * @param {string} folder
  * @returns {Promise<string>} the folder the package is laid out in
@@ -223,17 +224,23 @@ export const packagedOf = async (folder) => {
     const { config } = ts.readConfigFile(join(folder, 'tsconfig.build.json'), ts.sys.readFile);
     const { options } = ts.parseJsonConfigFileContent(config, ts.sys, folder);
     const into = mkdtempSync(join(tmpdir(), 'design-kit-packaged-'));
-    mkdirSync(join(into, 'dist'));
-    copyFileSync(join(folder, 'package.json'), join(into, 'package.json'));
-    const sources = join(folder, 'src');
-    for (const file of readdirSync(sources).filter((name) => /^[^.]+\.ts$/.test(name))) {
-        const { outputText } = ts.transpileModule(readFileSync(join(sources, file), 'utf8'), {
-            compilerOptions: { ...options, declaration: false },
-            fileName: file,
-        });
-        writeFileSync(join(into, 'dist', file.replace(/\.ts$/, '.js')), outputText);
+    try {
+        mkdirSync(join(into, 'dist'));
+        copyFileSync(join(folder, 'package.json'), join(into, 'package.json'));
+        const sources = join(folder, 'src');
+        for (const file of readdirSync(sources).filter((name) => /^[^.]+\.ts$/.test(name))) {
+            const { outputText } = ts.transpileModule(readFileSync(join(sources, file), 'utf8'), {
+                compilerOptions: { ...options, declaration: false },
+                fileName: file,
+            });
+            writeFileSync(join(into, 'dist', file.replace(/\.ts$/, '.js')), outputText);
+        }
+        return into;
+    } catch (error) {
+        // The caller removes the folder only once it is handed back, so a failed layout goes here.
+        rmSync(into, { recursive: true, force: true });
+        throw error;
     }
-    return into;
 };
 
 /**

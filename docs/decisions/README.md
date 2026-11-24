@@ -46,8 +46,9 @@ costs, and the test behind it.
     toast, the dialog, the panel and the table as markup from a component and a function a page
     calls on it, from `./controls`, and the behaviors added since, a form's check and refusal, a
     busy button, progress, moving focus and a group's keys, the size budgets of the sheets and the
-    controls with each raise, the budgets of three entries alone and the rule that lowers a budget,
-    and why a stateful component and a script that builds the DOM were turned down.
+    controls with each raise, the budgets of the module imported bare and two attaches alone, and
+    the rule that lowers a budget, and why a stateful component and a script that builds the DOM
+    were turned down.
 14. [A piece with no state of its own ships as classes
     alone](0014-stateless-pieces-ship-as-classes.md): tabs, pills and the eyebrow as classes a page
     writes by hand, with the roles the page writes, the keys `attachRoving` runs and the chosen tab
