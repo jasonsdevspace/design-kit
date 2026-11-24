@@ -1006,12 +1006,13 @@ test("lines a read-only stepper's value up with a read-only field's, at a field'
         // figure.
         expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
         expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
-        // A value of words beside them starts its words where the field does, at its height.
+        // A value of words beside them starts its words where the field does, at its height. A
+        // letter and a figure leave a pixel or so of different room before themselves, by face.
         const words = page.locator('#dealer');
         expect.soft((await box(words)).x, `${at}, words`).toBeCloseTo(fieldBox.x, 0);
         expect
             .soft(Math.abs((await inkStart(page, words)) - fieldInk), `${at}, words`)
-            .toBeLessThanOrEqual(1);
+            .toBeLessThanOrEqual(2);
         expect.soft((await box(words)).height, `${at}, words`).toBeCloseTo(fieldBox.height, 0);
         // An inline stepper's value sits at its row's end, after its label, with no column of
         // values to line up with, so a read-only one keeps an editable value's centered figures
