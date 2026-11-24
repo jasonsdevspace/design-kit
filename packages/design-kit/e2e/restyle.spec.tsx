@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { Toast } from '../src/react.js';
+import { StepperField, Toast } from '../src/react.js';
 import { servePage } from './page.js';
 
 /*
@@ -10,19 +10,27 @@ import { servePage } from './page.js';
  * whatever changed and wherever. A rule that reads the page's state from the root, the body or an
  * app's frame and draws something inside it would so restyle the whole page on every element or
  * word added. The elements each recalculation restyled are read from the browser's own trace, so
- * the bound is a count, which a slow runner does not move, rather than a time. Showing a toast is
- * held apart: its attach function writes marks and reads styles in turn, and each read after a
- * write that reaches the whole page restyles it again.
+ * the bound is a count, which a slow runner does not move, rather than a time. A `:has()` on an
+ * earlier sibling restyles every later sibling the same way, so a change inside one field of a
+ * plain form is held to a share of the form rather than of the page. Showing a toast is held
+ * apart: its attach function writes marks and reads styles in turn, and each read after a write
+ * that reaches the whole page restyles it again.
  */
 
 const TOAST = renderToStaticMarkup(<Toast />);
+const STEPPER = renderToStaticMarkup(
+    <StepperField id="seats" label="Seats" min={1} max={8} defaultValue={4} />
+);
 
 const many = (count: number, draw: (index: number) => string): string =>
     Array.from({ length: count }, (_, index) => draw(index)).join('');
 
-/** A form of fields, a status line and a long run of sections, a few thousand elements in all. */
+/**
+ * A plain form of fields with a stepper among them, a status line and a long run of sections, a
+ * few thousand elements in all.
+ */
 const CONTENT =
-    `<p class="dk-status" role="status" id="line"></p><form>` +
+    `<p class="dk-status" role="status" id="line"></p><form id="form">${STEPPER}` +
     many(
         150,
         (index) =>
@@ -98,6 +106,20 @@ const CHANGES: Readonly<Record<string, () => void>> = {
 };
 
 /**
+ * A stepper's button shown, as its attach shows it, inside a field of the plain form, with whether
+ * the button was found and whether it was hidden before, so a change to the markup fails the test
+ * rather than leaving it nothing to show.
+ */
+const showButton = (): { found: boolean; hidden: boolean } => {
+    const button = document.querySelector('#form .dk-stepper-down');
+    if (!button) return { found: false, hidden: false };
+    const hidden = button.hasAttribute('hidden');
+    button.removeAttribute('hidden');
+    void getComputedStyle(button).color;
+    return { found: true, hidden };
+};
+
+/**
  * The page drawn with its toast attached, and how many elements a recalculation of the whole page
  * restyles, as a change of the root's text size restyles it, which sets the scale for the bounds.
  */
@@ -149,6 +171,28 @@ for (const [kind, body] of Object.entries(PAGES)) {
         expect(most(after), 'an element added while a toast is shown').toBeLessThanOrEqual(
             whole / 20
         );
+    });
+
+    test(`restyles the field a change is in, not the plain form around it, on ${kind}`, async ({
+        page,
+    }) => {
+        await drawn(page, body);
+        const elements = await page.locator('#form *').count();
+        expect(elements, 'the form is a few hundred elements').toBeGreaterThan(400);
+        // No more than a tenth of the form, a bound a rule that restyles every block after the
+        // field exceeds by far.
+        let shown = { found: false, hidden: false };
+        const counts = await restyled(page, async () => {
+            shown = await page.evaluate(showButton);
+        });
+        expect(shown, 'the stepper button, hidden before it is shown').toEqual({
+            found: true,
+            hidden: true,
+        });
+        expect(
+            most(counts),
+            `elements restyled, of ${String(elements)} in the form`
+        ).toBeLessThanOrEqual(elements / 10);
     });
 
     test(`restyles the whole page no more than once as a toast shows, on ${kind}`, async ({

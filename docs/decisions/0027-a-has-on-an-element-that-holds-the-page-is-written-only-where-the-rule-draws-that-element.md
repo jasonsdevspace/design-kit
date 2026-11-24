@@ -153,10 +153,11 @@ it. A body that ends in a tab bar keeps the padding, as it did before.
 - The sheets came to 13,061 bytes, within their budget, and the controls to 21,112, as the budget
   tests measure them, which left less room under the controls' budget than one more function of the
   usual size, so record 13's rule set it again, as its table gives.
-- A `hidden` attribute toggled on a stepper's button in a plain form still restyles a few hundred
+- A `hidden` attribute toggled on a stepper's button in a plain form restyled a few hundred
   elements, about 1.2 ms, through record 24's rule that spaces a plain form's blocks, whose `:has()`
-  is on a callout before the block it spaces. That rule is outside these three families, and this
-  record leaves it as it is.
+  was on a callout before the block it spaces. That rule is outside these three families, and
+  record 24 takes the `:has()` out of it by the same reasoning, so the change restyles the field it
+  is in, and an empty callout written without its mark counts there as a block.
 
 ## How it is tested
 
@@ -168,7 +169,8 @@ The paths are in `packages/design-kit`.
   not move. An element added, words said on a status line and a field marked in error each restyle
   no more than a twentieth of what a change to the root's font size does, showing a toast restyles
   the whole page no more than once, and an element added while a toast is shown is held to the same
-  bound.
+  bound. A stepper's button shown in the page's plain form restyles no more than a tenth of the
+  form.
 - `src/scope.test.ts` fails a selector that writes a `:has()` on the root, the body, a frame or a
   page that ends in a tab bar where that element is not the rule's subject, a pictured frame aside,
   and holds every list of an app's places to one form.
