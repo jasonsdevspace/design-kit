@@ -4,10 +4,11 @@
 functions return what shows or opens them, by record 20 in 0.9.0, for React pages, which attach some
 controls through a kit hook, in 0.9.0 for the listener the module adds to the document as it loads,
 by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down, by record
-23 in 0.9.3, under which each signal that attaches an element holds its control, and by record 27 in
+23 in 0.9.3, under which each signal that attaches an element holds its control, by record 27 in
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
-function writes on the frame. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6,
-0.9.0, 0.9.3 and 0.9.4, as its tables give
+function writes on the frame, and in 0.9.4 for the listener the module adds for the page coming back
+into sight. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4,
+as its tables give
 
 ## Context
 
@@ -42,12 +43,13 @@ Option C. `ThemeSwitch`, `CopyButton` and `CopyStatus` draw the markup, and `att
 attached, so a visitor without script meets no control that does nothing. Nothing runs when the
 module is imported but listeners on the document for keys, clicks and submits, in a page, which note
 whether the visitor's last input was a press for `focusOnArrival`, so the press that brings a page's
-first view is heard. The package marks `dist/controls.js`, the file `./controls` resolves to, as
-having side effects in its `sideEffects`, so a bundler keeps the module and its listeners wherever a
-page imports it, even bare, and the listeners wait for a document, so the module loads in Node. The
-functions set no style. The choices a switch saves, `system` and the two themes, are `THEME_CHOICES`
-in `./theme`, beside the key the theme script reads, and the theme script itself does not change, so
-its hash holds.
+first view is heard, and since 0.9.4 one for the page coming back into sight, which drops a focus
+request made while the page is out of sight or before it goes. The package marks `dist/controls.js`,
+the file `./controls` resolves to, as having side effects in its `sideEffects`, so a bundler keeps
+the module and its listeners wherever a page imports it, even bare, and the listeners wait for a
+document, so the module loads in Node. The functions set no style. The choices a switch saves,
+`system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the theme script
+reads, and the theme script itself does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -197,6 +199,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | A dated field's limit in words a visitor reads, with too little room left                | 20,708 bytes   | 626 bytes       | 21 KB      |
 | 0.9.4   | A toast's mark on its frame, with too little room left                                   | 21,112 bytes   | 627 bytes       | 21.25 KB   |
 | 0.9.4   | A stepper quiet as its form refuses it, with too little room left                        | 21,224 bytes   | 644 bytes       | 21.5 KB    |
+| 0.9.4   | A focus request dropped only for a page out of sight, with too little room left          | 21,444 bytes   | 621 bytes       | 21.75 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331

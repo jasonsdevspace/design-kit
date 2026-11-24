@@ -1746,7 +1746,8 @@ returns a function that takes it down again. The markup is hidden until it is at
 without script meets no control that does nothing, and the functions set no style, so a page's
 policy can refuse every style it did not serve. Nothing runs when the module is imported but
 listeners on the document for keys, clicks and submits, which note the visitor's last press for
-`focusOnArrival`.
+`focusOnArrival`, and for the page coming back into sight, which drops a focus request made while
+the page is out of sight or before it goes.
 
 ### Theme switch
 
@@ -2068,17 +2069,17 @@ since the request is left where they put it: focus is free only while it is wher
 or on the page's body, as it is once the control that had it is removed, or where the kit has handed
 it back since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down,
 or on what the browser hands it to as a dialog closes, until the dialog's close is handled. A
-request still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump
-when the visitor comes back. Each request is new, so the same control asked for twice is focused
-twice, and the function `moveFocus` returns calls a request off before it lands, as aborting the
-`signal` it is given does. A request asked as its component unmounts is given no signal that unmount
-aborts, so it still lands. An id is looked for in the root where focus was when the request was
-made, so a widget drawn inside a shadow root finds its own control, never an element of the page
-around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
-and labels they read in their own element's root. A panel and its button are found from the page's
-document, which the panel listens on. `activeOf()` from `./controls` returns what has focus,
-followed into each shadow root that holds it, as a request reads where focus was, for a page that
-asks later and passes `from` itself.
+request made while the page is out of sight, or before it goes, is dropped, so focus does not jump
+when the visitor comes back, while one a long render holds on a page in sight past a second still
+lands. Each request is new, so the same control asked for twice is focused twice, and the function
+`moveFocus` returns calls a request off before it lands, as aborting the `signal` it is given does.
+A request asked as its component unmounts is given no signal that unmount aborts, so it still lands.
+An id is looked for in the root where focus was when the request was made, so a widget drawn inside
+a shadow root finds its own control, never an element of the page around it that shares the id, and
+the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
+element's root. A panel and its button are found from the page's document, which the panel listens
+on. `activeOf()` from `./controls` returns what has focus, followed into each shadow root that holds
+it, as a request reads where focus was, for a page that asks later and passes `from` itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
