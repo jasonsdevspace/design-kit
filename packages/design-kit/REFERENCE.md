@@ -1871,9 +1871,10 @@ hand, and a function from `@jasonsdevspace/design-kit/controls` that a page call
 returns a function that takes it down again. The markup is hidden until it is attached, so a visitor
 without script meets no control that does nothing, and the functions set no style, so a page's
 policy can refuse every style it did not serve. Nothing runs when the module is imported but
-listeners on the document for keys, clicks and submits, which note the visitor's last press for
-`focusOnArrival`, and for the page going out of sight or coming back, which drops a focus request
-made while the page is out of sight or before it goes.
+listeners for keys, clicks and submits on the document and on that of each frame of the page's own
+origin, which note the visitor's last press for `focusOnArrival`, and for the page going out of
+sight or coming back, which drops a focus request made while the page is out of sight or before it
+goes.
 
 ### Theme switch
 
@@ -2291,6 +2292,13 @@ Views first drawn by one press land together, and the first in the page takes fo
 title is heard before a section of it. Focus a view placed itself as it drew, as a field with
 autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on a
 widget's own button there brings focus to the heading.
+
+The presses and keys heard are the page's and those inside each frame of the page's own origin that
+it holds, at any depth, a frame added later or one that loads another page among them. So a press on
+a control inside such a frame brings focus to the heading of the view it opens, and a key that moves
+or types inside one leaves no press standing, as on the page. Nothing is heard inside a frame of
+another origin, whose document the page cannot reach, or inside a frame within a shadow root, whose
+load the page never hears.
 
 What decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page
 without React calls as each view draws, and with `changed` as a view already drawn changes on a

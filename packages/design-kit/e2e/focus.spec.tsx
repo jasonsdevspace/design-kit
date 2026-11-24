@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { listenersOn, openCounted } from './leaks.js';
+import { leaksOf, listenersOn, openCounted } from './leaks.js';
 import { frames, servePage, stillClock, tabKey } from './page.js';
 
 /*
@@ -12,14 +12,16 @@ import { frames, servePage, stillClock, tabKey } from './page.js';
  * holds past a second on a page in sight landed, one whose frame comes more than ten seconds late
  * dropped, one asked while the page was out of sight, or before it went, dropped, a view that joins
  * views asked before the page went out of sight landed, and a view's heading focused when its key
- * changes but never as the page first draws. A request still waiting as its component unmounts
- * lands, from a row removed at once, after an await, from a timer or in a transition, from a
- * transition an urgent update overtook, on its fallback where the transition draws its target, and
- * from a component an `Activity` hides, unless the visitor moved focus first. One made in a commit
- * before its component goes lands, one asked from a ref as its component first draws lands, one
- * whose target an `Activity` hides with its component is held until it shows, one asked after an
- * await by a component that has gone lands, and one asked once the visitor is on the next screen
- * leaves focus there, whatever place it names.
+ * changes but never as the page first draws. A press inside a frame of the page's own origin, one
+ * added inside a frame or loaded again among them, brings focus to the view it opens, a key inside
+ * one leaves no press of the page's standing, and a frame's document is heard once. A request still
+ * waiting as its component unmounts lands, from a row removed at once, after an await, from a timer
+ * or in a transition, from a transition an urgent update overtook, on its fallback where the
+ * transition draws its target, and from a component an `Activity` hides, unless the visitor moved
+ * focus first. One made in a commit before its component goes lands, one asked from a ref as its
+ * component first draws lands, one whose target an `Activity` hides with its component is held
+ * until it shows, one asked after an await by a component that has gone lands, and one asked once
+ * the visitor is on the next screen leaves focus there, whatever place it names.
  *
  * A browser run headless cannot be sent out of sight, nor made to order its frames and its
  * visibility events as a real one does in each engine, so the tests that need the page out of sight
@@ -888,4 +890,126 @@ test('lands a request asked from inside a frame the page hides before the reques
         if (frame) frame.hidden = true;
     });
     await expect(page.locator('#target')).toBeFocused();
+});
+
+/**
+ * A page with a view it brings a second after a press, and a frame of its own origin with two
+ * controls, the first of which brings the view too.
+ */
+const openWithArrival = async (page: Page) => {
+    await stillClock(page.clock);
+    await servePage(page, {
+        title: 'Focus',
+        body:
+            '<button type="button" id="bring">Bring the scores</button>' +
+            '<h2 id="scores" tabindex="-1" hidden>Scores</h2>' +
+            '<iframe title="Notes" srcdoc="<button type=button id=first>First</button><button type=button id=second>Second</button>"></iframe>',
+        script: `import { focusOnArrival } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('#second'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+const inner = frame.contentDocument;
+const bring = () => {
+    setTimeout(() => {
+        document.querySelector('#scores').hidden = false;
+        focusOnArrival('scores');
+    }, 1000);
+};
+// The page's button brings the view and takes the visitor into the frame, as a page that opens its
+// notes beside the scores does.
+document.querySelector('#bring').addEventListener('click', () => {
+    inner.querySelector('#first').focus();
+    bring();
+});
+inner.querySelector('#first').addEventListener('click', bring);
+window.bring = bring;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+test('leaves focus in a frame where the visitor tabbed after a press on the page, as the view it brought arrives', async ({
+    page,
+    browserName,
+}) => {
+    await openWithArrival(page);
+    await press(page, '#bring');
+    const inner = page.frameLocator('iframe');
+    await expect(inner.locator('#first')).toBeFocused();
+    await page.keyboard.press(tabKey(browserName));
+    await expect(inner.locator('#second')).toBeFocused();
+    await page.clock.runFor(1100);
+    await expect(page.locator('#scores')).toBeVisible();
+    await page.clock.runFor(100);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(inner.locator('#second')).toBeFocused();
+});
+
+test("focuses a view's heading as it arrives, brought by a press on a control inside a frame", async ({
+    page,
+}) => {
+    await openWithArrival(page);
+    const inner = page.frameLocator('iframe');
+    await inner.locator('#first').focus();
+    await page.keyboard.press('Enter');
+    await page.clock.runFor(1100);
+    await expect(page.locator('#scores')).toBeVisible();
+    await page.clock.runFor(100);
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+for (const where of ['a frame that loaded another page', 'a frame the page added inside a frame'])
+    test(`focuses a view's heading as it arrives, brought by a press inside ${where}`, async ({
+        page,
+    }) => {
+        await openWithArrival(page);
+        await page.evaluate(async (nested) => {
+            const frame = document.querySelector('iframe');
+            const holder = nested ? frame?.contentDocument?.createElement('iframe') : frame;
+            if (!frame || !holder) return;
+            const loaded = new Promise((done) => {
+                holder.addEventListener('load', done, { once: true });
+            });
+            holder.srcdoc = '<button type="button" id="later">Later</button>';
+            if (nested) frame.contentDocument?.body.append(holder);
+            await loaded;
+            holder.contentDocument
+                ?.querySelector('#later')
+                ?.addEventListener('click', (window as unknown as { bring: () => void }).bring);
+        }, where === 'a frame the page added inside a frame');
+        const inner =
+            where === 'a frame that loaded another page'
+                ? page.frameLocator('iframe')
+                : page.frameLocator('iframe').frameLocator('iframe');
+        await inner.locator('#later').focus();
+        await page.keyboard.press('Enter');
+        await page.clock.runFor(1100);
+        await expect(page.locator('#scores')).toBeVisible();
+        await page.clock.runFor(100);
+        await expect(page.locator('#scores')).toBeFocused();
+    });
+
+test("hears a frame's document once, however often the frame is reached", async ({ page }) => {
+    await openCounted(page, {
+        clock: false,
+        title: 'Focus',
+        body: '<iframe title="Notes" srcdoc="<button type=button>Inside</button>"></iframe>',
+        script: `import './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('button'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+window.frame = frame;
+window.ready = true;`,
+    });
+    const inFrame = (): Promise<number> =>
+        page.evaluate('frame.contentWindow.leaks.counts().documentListeners');
+    const page0 = await leaksOf(page);
+    const heard = await inFrame();
+    expect(heard).toBeGreaterThan(0);
+    await page.evaluate(() => {
+        const frame = document.querySelector('iframe');
+        for (let time = 0; time < 3; time += 1) frame?.dispatchEvent(new Event('load'));
+    });
+    expect(await inFrame()).toBe(heard);
+    expect((await leaksOf(page)).documentListeners).toBe(page0.documentListeners);
 });

@@ -80,8 +80,8 @@ costs, and the test behind it.
     buttons given a tabindex for Safari, focus sent on to where a link in the panel jumps, Escape, a
     panel kept the kit's while an attached button names it, `moveFocus` falling back by the same
     walk, focus kept as it is and compared through one view for a dialog, a panel, a stepper, a form
-    and a group of cells inside a frame the page drives and for a focus request asked from one, and
-    why the path of the last click and a flag for interaction outside were turned down.
+    and a group of cells inside a frame the page drives and for a focus request asked from one, the
+    presses and keys a focus request hears in each frame of the page's own origin, and why the path of the last click and a flag for interaction outside were turned down.
 20. [The kit's React hooks wrap its attach
     functions](0020-react-hooks-wrap-the-attach-functions.md):
     a hook for each attach a React page needs, a form, a busy button, progress and a group of cells,

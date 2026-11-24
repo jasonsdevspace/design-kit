@@ -128,8 +128,9 @@ through each frame, since one on the page or in another frame is in a view the t
 in. The focus the kit notes it handed back is the control in the frame, so a focus request in the
 page compares the same view. A toast stays in the document it was attached in, so a page that moves
 it into another takes it down and attaches it again. The listeners the controls' shared module adds
-as it loads, which note a visitor's presses for a focus request, stay on the page's document, so a
-press in the frame is not counted there.
+as it loads, which note a visitor's presses for a focus request, sit on the page's document and on
+that of each frame of the page's own origin, as record 19 has it, so a press in the frame counts for
+a focus request as one on the page does, and the toast reads none of them.
 
 ## How it is tested
 

@@ -5,7 +5,8 @@ for a button let go while its panel is open, and by record 23 in 0.9.3, under wh
 dialog taken down by its signal hand focus back by this rule, in 0.9.4 for a search of the page made
 only once every button refuses focus, by record 29 in 0.9.4, under which F8 moves focus to a shown
 toast's action and back, and in 0.9.4 for a dialog, a panel, a stepper, a form and a group of cells
-the page attaches inside a frame, and a focus request asked with focus inside one
+the page attaches inside a frame, a focus request asked with focus inside one, and the presses and
+keys inside one that a focus request hears
 
 ## Context
 
@@ -135,7 +136,10 @@ handed nothing back as it was taken down, and a group of cells found none of the
 it gave the group no stop and its arrows moved nothing. A focus request compared focus as the page
 sees it, so a visitor's move between two controls of a frame read as no move and the request took
 focus from them. The form and the group also told the frame's controls by the page's own classes,
-which a frame's are not, so a form in the frame let a submit through with nothing checked.
+which a frame's are not, so a form in the frame let a submit through with nothing checked. The
+listeners that note a visitor's presses for a focus request sat on the page's document alone, so a
+key inside a frame left a press on the page standing for a view to take focus from where the visitor
+went on, and a press inside a frame never counted, so the view it brought took no focus.
 
 **A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
 since the page would add listeners to every frame focus enters, and still read focus as the frame.
@@ -209,9 +213,21 @@ request's, the page's around the frame, counts as free for the request, as the p
 always has, since Chromium drops focus to the page's body from a frame the page hides while a
 request asked inside it waits. The pieces keep that body as elsewhere, so a visitor's click on the
 page around a frame still stays theirs as a piece in the frame closes. The React hooks take where
-focus was from the request's module as they ask, so they read no focus of their own. The listeners
-the controls' shared module adds as it loads, which note a visitor's presses for a focus request,
-stay on the page's document, and neither the dialog nor the panels read them.
+focus was from the request's module as they ask, so they read no focus of their own.
+
+The listeners the controls' shared module adds as it loads, which note a visitor's presses for a
+focus request, sit on the page's document and on the document of each frame of the page's own
+origin that it holds, at any depth, found as the module loads and as each frame loads a page. A
+focus request hears the presses and keys of those documents, so a key inside a frame clears a
+standing press and a press inside one counts, as on the page. It hears none inside a frame of
+another origin, which shows no document, nor inside a frame within a shadow root, whose load goes no
+further than that root. The module hears every such frame rather than the frames focus enters, as
+option A would have it, since a frame that loads another page while focus stays in it, as a form
+sent inside it does, is entered by no move of focus, and rather than a frame a piece is attached or
+a request is asked in, which would miss the first press there. The listeners are the module's one
+set, the same functions on each document, which the DOM keeps once however often a document is
+reached, and they go with a document its frame leaves or replaces. They read no focus and tell an
+event and its target by type and node type, and neither the dialog nor the panels read them.
 
 ## How it is tested
 
@@ -285,6 +301,11 @@ The path is in `packages/design-kit`.
   control in a frame as `from` finding its id on the page, a request asked from inside a frame that
   loads another page before the request lands still landing, and a request asked from inside a
   frame the page hides landing where Chromium drops focus to the page's body.
+- `e2e/focus.spec.tsx`, in the three engines, finds focus left in a frame where the visitor tabbed
+  after a press on the page that brought a view, and a view's heading taking focus as it arrives
+  for a press inside a frame, a frame that loaded another page and a frame the page added inside a
+  frame, and the frame's document heard once however often its frame is reached, with nothing more
+  added to the page's.
 - `src/words.test.ts` finds a field's language read past a shadow root of a frame's, which the
   page's own class does not name, a document whose named properties hold a host taken for no shadow
   root, and a frame with no language of its own read in the page's.

@@ -1,14 +1,15 @@
-import { isOff } from './find.js';
+import { isElement, isOff } from './find.js';
 
 /*
  * The state the parts of the controls share, held once for a page however its bundler splits them:
  * the visitor's last press and how many inputs they have made, how many times the page has gone out
  * of sight or come back, the focus the kit last handed back, what the browser hands focus back to
  * as each dialog closes, and the forms the kit checks with the steppers in them. It is the one
- * module of the controls that does something as it loads, adding the listeners that note inputs and
- * the page going out of sight, so the package names it in `sideEffects`. A plain value is written
- * only here, and what another module writes is held in an object or a map. No entry of the package
- * names this module, so a page imports it only through `./controls`.
+ * module of the controls that does something as it loads, adding the listeners that note inputs, on
+ * the page and in its frames of its own origin, and the page going out of sight, so the package
+ * names it in `sideEffects`. A plain value is written only here, and what another module writes is
+ * held in an object or a map. No entry of the package names this module, so a page imports it only
+ * through `./controls`.
  */
 
 /** A button or a link by its role, which Enter presses, and Space too but for a link. */
@@ -37,18 +38,22 @@ const MOVES = [
     'PageDown',
 ];
 
-/** Whether an event presses a button or a link that is not off and is not in a row of tabs. */
+/**
+ * Whether an event presses a button or a link that is not off and is not in a row of tabs, told by
+ * its type and node types rather than the page's classes, which a frame's event and elements are not.
+ */
 const presses = (event: Event): boolean => {
     if (event.type === 'submit') return true;
     // The control itself, inside a shadow root too, where the document hears its host instead.
     const [target] = event.composedPath();
-    if (!(target instanceof Element) || target.closest('[role="tablist"]')) return false;
-    if (event instanceof KeyboardEvent) {
+    if (!isElement(target) || target.closest('[role="tablist"]')) return false;
+    if (event.type === 'keydown') {
+        const { key } = event as KeyboardEvent;
         const own = target.closest(ROLE_ACTIVATOR);
         return (
             own === target &&
             !isOff(own) &&
-            (event.key === 'Enter' || (event.key === ' ' && own.getAttribute('role') !== 'link'))
+            (key === 'Enter' || (key === ' ' && own.getAttribute('role') !== 'link'))
         );
     }
     const control = target.closest(ACTIVATOR);
@@ -66,31 +71,56 @@ export let sightChanges = 0;
 
 /**
  * When the visitor's last input was a press on a button or a link, or a submit, that no view has
- * taken focus for, and how many inputs they have made, so a press handed back is not handed back
- * over a later one. A press is any click or submit, a script's among them, so a page's own
- * `click()` and a test's count. A key that moves or types clears it, so a Tab, an arrow along a
- * row of tabs or typing in a field leaves none, as a click on nothing does, while a pointer going
- * down to scroll leaves it. A press on a control that is off or in a row of tabs counts for
- * nothing, since an off control only says why it is off and a tab keeps focus as its panel
- * changes, and Enter or Space on a control of the page's own that is a button or a link by its
- * role counts, since no click follows them.
+ * taken focus for, and how many inputs they have made, on the page or inside a frame of its own
+ * origin, so a press handed back is not handed back over a later one. A press is any click or
+ * submit, a script's among them, so a page's own `click()` and a test's count. A key that moves or
+ * types clears it, so a Tab, an arrow along a row of tabs or typing in a field leaves none, as a
+ * click on nothing does, while a pointer going down to scroll leaves it. A press on a control that
+ * is off or in a row of tabs counts for nothing, since an off control only says why it is off and a
+ * tab keeps focus as its panel changes, and Enter or Space on a control of the page's own that is a
+ * button or a link by its role counts, since no click follows them.
  */
 export const press: { at: number | null } = { at: null };
 export let inputs = 0;
 const heard = (event: Event) => {
-    if (event instanceof KeyboardEvent) {
+    if (event.type === 'keydown') {
+        const { key } = event as KeyboardEvent;
         if (presses(event)) press.at = performance.now();
-        else if (event.key.length === 1 || MOVES.includes(event.key)) press.at = null;
+        else if (key.length === 1 || MOVES.includes(key)) press.at = null;
         else return;
     } else press.at = presses(event) ? performance.now() : null;
     inputs += 1;
 };
 
+/**
+ * Hears the inputs made in a document, and in each frame of the page's own origin it holds or later
+ * loads, at any depth, so a press or a key inside a frame the page drives counts as one on the page
+ * does. A frame of another origin shows no document, and one inside a shadow root sends its load no
+ * further than that root, so neither is heard. The DOM ignores a listener added again with the same
+ * type, callback and capture, so a document is heard once however often it is reached, and a frame
+ * that leaves the page or loads another page takes its document's listeners with it.
+ */
+const hear = (doc: Document) => {
+    for (const type of ['keydown', 'click', 'submit']) doc.addEventListener(type, heard, true);
+    doc.addEventListener('load', loaded, true);
+    for (const frame of doc.querySelectorAll('iframe, frame, object')) hearIn(frame);
+};
+/** Hears the document a frame shows, where it shows one of the page's own origin. */
+const hearIn = (frame: EventTarget | null) => {
+    const inner = (frame as Partial<HTMLIFrameElement> | null)?.contentDocument;
+    if (inner) hear(inner);
+};
+/** Hears the document a frame has loaded, as a load the document hears gives the frame. */
+const loaded = (event: Event) => {
+    hearIn(event.target);
+};
+
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
-// view is heard and a request made before the page went out of sight is known. It notes inputs and
-// each time the page goes out of sight or comes back, and nothing else.
+// view is heard and a request made before the page went out of sight is known. It notes inputs, on
+// the page and in its frames, and each time the page goes out of sight or comes back, and nothing
+// else.
 if (typeof document !== 'undefined') {
-    for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
+    hear(document);
     document.addEventListener('visibilitychange', () => {
         sightChanges += 1;
     });
