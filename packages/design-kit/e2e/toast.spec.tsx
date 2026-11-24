@@ -2664,3 +2664,38 @@ test('lands a focus request asked as the toast hands focus back to a frame whose
     await expect(message(page)).toHaveText('');
     await expect(page.locator('#save')).toBeFocused();
 });
+
+test('works for a toast copied from a template and attached before the page takes it in', async ({
+    page,
+}) => {
+    await open(page, {
+        attach: false,
+        body: PAGE.replace(TOAST, `<template id="drawn">${TOAST}</template>`),
+    });
+    await page.evaluate(async () => {
+        const kit = (await import(`${location.origin}/controls.js`)) as {
+            attachToast: (element: HTMLElement) => Kit['show'];
+        };
+        // The copy belongs to the template's document, which has no window, until the page takes
+        // it in.
+        const copy = document
+            .querySelector<HTMLTemplateElement>('#drawn')
+            ?.content.cloneNode(true) as DocumentFragment;
+        const drawn = copy.querySelector<HTMLElement>('.dk-toast');
+        if (!drawn) throw new Error('no toast in the template');
+        (window as unknown as { show: Kit['show'] }).show = kit.attachToast(drawn);
+        document.body.append(copy);
+    });
+    await page.locator('#save').focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await page.keyboard.press('F8');
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});

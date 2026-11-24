@@ -255,8 +255,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const down = teardown(options?.signal);
     const { signal } = down;
     // The document the toast sits in, a frame's where the page attaches it inside one, where the
-    // keys are heard.
-    const doc = element.ownerDocument;
+    // keys are heard. One with no window, as a template's copy or a parsed document is before the
+    // page puts it in, counts as the page's, which takes the toast in.
+    const doc = element.ownerDocument.defaultView ? element.ownerDocument : document;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
     // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
     const given = [actionButton, close].filter((button) => !button.hasAttribute('tabindex'));

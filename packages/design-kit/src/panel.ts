@@ -337,8 +337,10 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     // The document the button sits in as it is attached, a frame's where the page attaches it
-    // inside one, which holds its panel and hears its presses, focus and keys.
-    const doc = opener.ownerDocument;
+    // inside one, which holds its panel and hears its presses, focus and keys. One with no window,
+    // as a template's copy or a parsed document is before the page puts it in, counts as the
+    // page's, which takes the button in.
+    const doc = opener.ownerDocument.defaultView ? opener.ownerDocument : document;
     const control: PanelControl = {
         set: (open) => {
             const id = panelIdOf(opener);

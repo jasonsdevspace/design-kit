@@ -173,7 +173,8 @@ it counting as nothing and one of another frame as that frame, and focus that re
 Chromium leaving focus on the frame's body, WebKit on the closed dialog's control and Firefox on the
 page's opener, and none puts it on the frame's earlier control. A dialog in a frame makes only that
 frame inert, so a page that needs the whole view held opens the dialog on the page. A panel's button
-keeps the document it was attached in, the listeners every panel shares are added to each document
+keeps the document it was attached in, the page's where that document has no window, as a template's
+copy has before the page takes it in, the listeners every panel shares are added to each document
 that holds an attached button and taken off with the last button in it or once that document has
 lost its window, and the panel's id, its buttons, the button that opened it and whether it has
 started are kept for each document, so a panel of the page and one of a frame that share an id stay
@@ -235,7 +236,9 @@ The path is in `packages/design-kit`.
   the page, `e2e/toast.spec.tsx` a request landing as a toast hands focus back to a frame whose
   control has gone, and `e2e/dialog.spec.ts` a dialog of the page handing focus back to its opener
   in a frame where focus is handed to that frame with nothing in it. `scripts/controls.test.ts`
-  finds the deep reader called outside the focus module only by the dialog and the toast.
+  finds that outside the focus module only the dialog and the toast call the deep reader or the
+  place it gives by name, so every other module reaches the deep read only through `seen`, as
+  `seenNow` and `mayHandBack` give it.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.

@@ -985,3 +985,31 @@ window.ready = true;`,
     await expect(page.locator('iframe')).toBeFocused();
     await expect(opener).toBeFocused();
 });
+
+test('works for a dialog copied from a template and attached before the page takes it in', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        body:
+            '<main><h1>Round 3</h1><button type="button" class="dk-button" id="drawn-opener">End the game</button></main>' +
+            '<template id="drawn"><dialog class="dk-dialog" id="drawn-dialog" aria-labelledby="drawn-title"><h2 class="dk-dialog-title" id="drawn-title">End the game now?</h2>' +
+            '<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Keep playing</button></form></dialog></template>',
+        script: `import { attachDialog } from './controls.js';
+// The copy belongs to the template's document, which has no window, until the page takes it in.
+const copy = document.querySelector('#drawn').content.cloneNode(true);
+const open = attachDialog(copy.querySelector('dialog'));
+document.body.append(copy);
+document.querySelector('#drawn-opener').addEventListener('click', open);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const opener = page.locator('#drawn-opener');
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'End the game now?' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'End the game now?' })).toBeHidden();
+    await expect(opener).toBeFocused();
+});

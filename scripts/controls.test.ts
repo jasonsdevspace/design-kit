@@ -106,18 +106,19 @@ describe('the controls', () => {
 });
 
 /*
- * Focus is read from the page down in one place, and every other read compares and judges through
- * the one view, so only the pieces that keep a raw place call the deep reader, and the reader the
- * controls had before it is gone.
+ * Focus is read from the page down in one place. Only the dialog and the toast, which keep a place
+ * to hand focus back to, call the deep reader or the place it gives by name, and every other module
+ * reaches the deep read only through the one view, as `seenNow` and `mayHandBack` give it. The
+ * reader the controls had before it is gone.
  */
 describe("the controls' reads of focus", () => {
     const sources = fileURLToPath(new URL('../packages/design-kit/src', import.meta.url));
     const files = readdirSync(sources).filter((name) => /^[^.]+\.tsx?$/.test(name));
     const textOf = (name: string) => readFileSync(join(sources, name), 'utf8');
 
-    it('call the deep reader outside the focus module only in the dialog and the toast', () => {
+    it('call the deep reader or the place it gives by name outside the focus module only in the dialog and the toast', () => {
         const callers = files.filter(
-            (name) => name !== 'focus.ts' && /\bdeepActive\(/.test(textOf(name))
+            (name) => name !== 'focus.ts' && /\b(?:deepActive|placeNow)\(/.test(textOf(name))
         );
         expect(callers.sort()).toEqual(['dialog.ts', 'toast.ts']);
     });

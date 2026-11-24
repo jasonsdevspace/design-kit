@@ -1971,3 +1971,31 @@ window.ready = true;`,
     await expect(page.locator('iframe')).toBeFocused();
     await expect(inner.locator('#deep')).toBeFocused();
 });
+
+test('works for a button and panel copied from a template and attached before the page takes them in', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        body:
+            '<main class="dk-page" tabindex="-1"><h1>Round 3</h1></main>' +
+            '<template id="drawn"><p><button type="button" class="dk-button" id="drawn-button" aria-expanded="false" aria-controls="drawn-tips">Tips</button></p>' +
+            '<div class="dk-panel" id="drawn-tips" hidden><p><a href="#rules" id="drawn-link">The rules</a></p></div></template>',
+        script: `import { attachPanel } from './controls.js';
+// The copy belongs to the template's document, which has no window, until the page takes it in.
+const copy = document.querySelector('#drawn').content.cloneNode(true);
+attachPanel(copy.querySelector('#drawn-button'));
+document.querySelector('main').append(copy);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const opener = page.locator('#drawn-button');
+    await opener.click();
+    await expect(page.locator('#drawn-tips')).toBeVisible();
+    await expect(opener).toHaveAttribute('aria-expanded', 'true');
+    await page.locator('#drawn-link').focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#drawn-tips')).toBeHidden();
+    await expect(opener).toBeFocused();
+});
