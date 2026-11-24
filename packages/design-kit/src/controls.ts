@@ -2338,7 +2338,10 @@ export type FormOptions = AttachOptions & {
     readonly status?: HTMLElement | null | undefined;
     /** What says the refusal, for a page that has one already, such as React's `useStatus`. */
     readonly say?: Say | undefined;
-    /** An error summary the page draws over the form, focused in place of the first field. */
+    /**
+     * An error summary the page draws over the form, focused in place of the first field, and
+     * passed over where it cannot take focus, as one hidden, inert, out of sight or not focusable.
+     */
     readonly summary?: (() => Element | null) | undefined;
     /**
      * The words for each way a field can fail the browser's constraints, in place of the kit's,
@@ -2349,10 +2352,12 @@ export type FormOptions = AttachOptions & {
      * Called with the fields that fail the browser's constraints on a submit, for a page that draws
      * its errors itself, as React does from its state, and refuses once they are drawn. A stepper
      * whose own range error shows is left out, since that error is the one drawn, so the list is
-     * empty where only such steppers fail. Without it, the kit draws each error in the field and
-     * refuses.
+     * empty where only such steppers fail. Called second with every failure in the form's order and
+     * the words its field shows, such a stepper's own error's words among them, for an error
+     * summary. Without it, the kit draws each error in the field and refuses.
      */
-    readonly invalid?: ((failures: readonly FieldFailure[]) => void) | undefined;
+    readonly invalid?:
+        ((failures: readonly FieldFailure[], shown: readonly FieldFailure[]) => void) | undefined;
 };
 
 /** The ways a field fails the browser's constraints, in the order their words are chosen. */
@@ -2666,6 +2671,13 @@ const shownRange = (control: Element): HTMLElement | undefined =>
                 part instanceof HTMLElement && part.matches('.dk-stepper-range') && !part.hidden
         );
 
+/** An error's words, without the word a screen reader alone is given to start it. */
+const ownWords = (error: Element): string => {
+    const copy = error.cloneNode(true) as Element;
+    for (const hidden of copy.querySelectorAll('.dk-visually-hidden')) hidden.remove();
+    return copy.textContent.replace(/\s+/g, ' ').trim();
+};
+
 /**
  * The error a failure is shown in, and what takes it away: a stepper's range error, which says what
  * is wrong already, left as it is, an error the page already drew for the field given the kit's
@@ -2873,12 +2885,13 @@ const countWords = (count: number): string =>
     count === 1 ? '1 field needs attention.' : `${String(count)} fields need attention.`;
 
 /**
- * What a refusal says. Where focus moves to a summary, which reads its own words, it says nothing,
- * and where the summary already had focus, its words. Where it moves to a field or is already on
- * one, it says the field's name and error, with the count where more are wrong, whatever the field
- * reads itself, since VoiceOver on iOS reads a field's error only as a hint, after a pause or not
- * at all, and focus moved by script may not land. A screen reader that reads the error as focus
- * lands hears it twice, which slows a visitor less than an error never heard.
+ * What a refusal says. Where focus moves to a summary, which reads its own words, it says nothing.
+ * Elsewhere, the summary already focused among them, since focus that stays reads nothing, it says
+ * the first field's name and error, with the count where more are wrong, or the summary's own words
+ * where it already has focus and no field is marked, whatever the field reads itself, since
+ * VoiceOver on iOS reads a field's error only as a hint, after a pause or not at all, and focus
+ * moved by script may not land. A screen reader that reads the error as focus lands hears it twice,
+ * which slows a visitor less than an error never heard.
  */
 const refusalWords = (
     to: {
@@ -2888,7 +2901,8 @@ const refusalWords = (
     focused: boolean,
     count: number
 ): string => {
-    if (to.summary) return focused ? to.summary.textContent.trim() : '';
+    if (to.summary && !focused) return '';
+    if (to.summary && !to.wrong) return to.summary.textContent.replace(/\s+/g, ' ').trim();
     if (!to.wrong || count === 0) return '';
     return unreachedWords(to.wrong, errorWords(to.wrong), count);
 };
@@ -2947,21 +2961,23 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
  * stopped, a stepper that fails takes back its own words not yet said, and the kit draws each error
  * as its field draws one and refuses, or hands the failures to `invalid` for a page that draws them
  * itself and refuses, all but a stepper's whose own range error shows, which stays the one error
- * either way. Each failure's words are the field's own, else the page's `errorWords`, else the
- * kit's. A button marked formnovalidate submits unchecked, and errors the kit drew go once their
- * fields pass or the form is reset.
+ * either way. `invalid` is handed every failure with the words its field shows as a second list,
+ * for an error summary. Each failure's words are the field's own, else the page's `errorWords`,
+ * else the kit's. A button marked formnovalidate submits unchecked, and errors the kit drew go once
+ * their fields pass or the form is reset.
  *
  * A refusal waits a frame, so the errors are drawn, then moves focus to an error summary where the
- * page names one, else the first field in error that can take focus, or in a set its checked radio
- * or its first control that can, and says one message on the status line: nothing where focus moves
- * to a summary, whose words it reads, its words where the summary already had focus, and where it
- * moves to a field or is already on one, that field's name and error, with how many fields need
- * attention where more are wrong, since VoiceOver on iOS reads a field's error only as a hint and
- * focus moved by script may not land. A set counts once however many of its choices are marked. The
- * field's error stays not live. A second refusal calls off one not yet landed, and each refusal
- * returns what calls it off. A reset that goes through takes away the errors the kit drew and,
- * where there were any, says the form is cleared. Attached again, a form returns what it returned
- * first and runs on the options of its newest holder, its errors and its check kept.
+ * page names one that can take focus, else the first field in error that can take focus, or in a
+ * set its checked radio or its first control that can, and says one message on the status line:
+ * nothing where focus moves to a summary, whose words it reads, and where it moves to a field or is
+ * already on one or on the summary, the first field's name and error, with how many fields need
+ * attention where more are wrong, or on the summary with no field marked, the summary's own words,
+ * since VoiceOver on iOS reads a field's error only as a hint and focus moved by script may not
+ * land. A set counts once however many of its choices are marked. The field's error stays not live.
+ * A second refusal calls off one not yet landed, and each refusal returns what calls it off. A
+ * reset that goes through takes away the errors the kit drew and, where there were any, says the
+ * form is cleared. Attached again, a form returns what it returned first and runs on the options of
+ * its newest holder, its errors and its check kept.
  *
  * Taken down by its `signal`, it takes its listeners off, calls off a refusal and a reset's timer
  * still due, and takes away the errors it drew, so nothing is said after, and what it returned does
@@ -3041,10 +3057,18 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         // where focus was.
         let target: HTMLElement | null = null;
         const frame = window.requestAnimationFrame(() => {
-            const summary = summed ? (chosen.summary?.() ?? null) : null;
+            // A summary that cannot take focus, hidden, inert, out of sight or not focusable, is
+            // passed over, as one the page does not name.
+            const named = summed ? chosen.summary?.() : null;
+            const summary =
+                named &&
+                takesFocus(named) &&
+                (named.hasAttribute('tabindex') || named.tabIndex >= 0)
+                    ? named
+                    : null;
             const fields = wrongFields(within);
             const field = fields.map(focusIn).find((one) => one !== null) ?? null;
-            target = summary instanceof HTMLElement ? summary : field;
+            target = summary ?? field;
             // Nothing in error and no summary leaves focus where it is. So do fields in error that
             // none can take focus in, whose first is named and its error said, and failures a page
             // that draws its own errors marked none of, whose first is said the same way.
@@ -3092,7 +3116,16 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         if (chosen.invalid) {
             // A stepper whose own error shows is the one that draws it, so the page is handed no
             // failure to draw a second from, while the refusal still counts and names the field.
-            chosen.invalid(failures.filter(({ control }) => !shownRange(control)));
+            // The second list, for a summary, holds every failure with the words its field shows,
+            // the stepper's own error's words among them.
+            const shown = failures.map((failure) => {
+                const range = shownRange(failure.control);
+                return range ? { ...failure, words: ownWords(range) } : failure;
+            });
+            chosen.invalid(
+                failures.filter((failure, at) => shown[at] === failure),
+                shown
+            );
             return;
         }
         for (const failure of failures) draw(failure);

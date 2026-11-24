@@ -8,8 +8,8 @@ import { servePage, stillClock } from './page.js';
 /*
  * A refused submit by `attachForm` and React's `useFormRefusal`: focus on the first field in error,
  * a radio set's checked radio, or a summary the page names, and one message on the status line,
- * nothing where focus moves to a summary, its words where the summary already had focus, and
- * otherwise that field's name and error with how many need attention where more are wrong, with a
+ * nothing where focus moves to a summary, and otherwise, the summary already focused among them,
+ * the first field's name and error with how many need attention where more are wrong, with a
  * second refusal heard again, "Form cleared." where a reset takes away the kit's errors, and a
  * field's error the page draws again with new words while a refusal through the hook stands.
  */
@@ -344,13 +344,70 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
     await page.clock.runFor(100);
     await expect(page.locator('#summary')).toBeFocused();
     // Moving focus reads the summary, so the line says nothing over it, and refused again from
-    // the summary, the line says the summary's words, since focus that stays reads nothing.
+    // the summary, the line says the first field's name and error, since focus that stays reads
+    // nothing.
     await refuse(page, []);
     await page.clock.runFor(300);
     await expect
         .poll(() => page.evaluate(() => (window as unknown as Form).heard))
-        .toEqual(['Match: Error: Choose how rules match.', 'Two fields need attention.']);
+        .toEqual([
+            'Match: Error: Choose how rules match.',
+            'Match: Error: Choose how rules match.',
+        ]);
 });
+
+test("says a summary's line where it already has focus and no field is marked", async ({
+    page,
+}) => {
+    await open(page, { clock: true });
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        const summary = document.querySelector<HTMLElement>('#summary');
+        if (summary) summary.hidden = false;
+        (window as unknown as Form).summarised = true;
+    });
+    await refuse(page, []);
+    await page.clock.runFor(100);
+    await expect(page.locator('#summary')).toBeFocused();
+    // Refused again from the summary with no field marked, so its own line is what is said.
+    await refuse(page, []);
+    await page.clock.runFor(300);
+    await expect
+        .poll(() => page.evaluate(() => (window as unknown as Form).heard))
+        .toEqual(['Two fields need attention.']);
+});
+
+/*
+ * A summary that cannot take focus is passed over, as a field is: hidden itself, by an ancestor or
+ * by a style, made inert, or with no tabindex and not focusable by nature.
+ */
+for (const how of ['hidden', 'ancestor', 'style', 'inert', 'not focusable'] as const)
+    test(`passes over a summary that cannot take focus, ${how}, to the first field in error`, async ({
+        page,
+    }) => {
+        await open(page);
+        await page.getByRole('button', { name: 'Save rule' }).focus();
+        await page.evaluate((way) => {
+            const summary = document.querySelector<HTMLElement>('#summary');
+            if (!summary) return;
+            summary.hidden = way === 'hidden';
+            if (way === 'ancestor') {
+                const holder = document.createElement('div');
+                holder.hidden = true;
+                summary.replaceWith(holder);
+                holder.append(summary);
+            }
+            if (way === 'style') summary.style.display = 'none';
+            summary.inert = way === 'inert';
+            if (way === 'not focusable') summary.removeAttribute('tabindex');
+            (window as unknown as Form).summarised = true;
+        }, how);
+        await refuse(page, [['name', 'Give the rule a name.']]);
+        await expect(page.locator('#name')).toBeFocused();
+        await expect(page.locator('.screen-status')).toHaveText(
+            'Rule name: Error: Give the rule a name.'
+        );
+    });
 
 test.describe('in React', () => {
     let app = '';
