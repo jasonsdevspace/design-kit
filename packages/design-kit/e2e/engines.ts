@@ -9,6 +9,7 @@ export type Engine = Readonly<Record<string, string>>;
 
 /** What Safari draws or does its own way, and what every engine does its own way. */
 export const WEBKIT: Engine = {
+    clock: "The still clock the specs share, which each engine's page runs.",
     app: "A bar that stays put and a height that follows the browser's own bars.",
     tabbar: 'A bar stuck to the bottom of the screen, clear of the home indicator.',
     toast: 'Where focus is after a press by pointer, which Safari leaves off the button.',
@@ -49,6 +50,7 @@ export const WEBKIT: Engine = {
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
 export const FIREFOX: Engine = {
+    clock: "The still clock the specs share, which each engine's page runs.",
     busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
     'stepper-say': 'A stepper attached again from a focusout handler, an event each engine fires.',
