@@ -5,6 +5,84 @@ each release's tag, so it matches the version a page installs. [The package READ
 what the kit is and how to set it up, and [the site](https://jasonsdevspace.com/design-kit/) shows
 each piece live in both themes.
 
+## Contents
+
+- [The sheets](#the-sheets)
+    - [Properties a page sets](#properties-a-page-sets)
+- [Page chrome](#page-chrome)
+    - [Site header](#site-header)
+- [Buttons, fields and callouts](#buttons-fields-and-callouts)
+    - [Buttons](#buttons)
+        - [A busy button](#a-busy-button)
+    - [Fields](#fields)
+        - [A field's width](#a-fields-width)
+        - [A field's height](#a-fields-height)
+        - [A plain form](#a-plain-form)
+        - [A required or an optional field](#a-required-or-an-optional-field)
+        - [Read only, off, busy and disabled](#read-only-off-busy-and-disabled)
+        - [A value of words](#a-value-of-words)
+        - [A field with a button](#a-field-with-a-button)
+        - [Fields side by side](#fields-side-by-side)
+        - [A refused form](#a-refused-form)
+    - [Choice fields](#choice-fields)
+    - [Callouts](#callouts)
+        - [A failure with Try again](#a-failure-with-try-again)
+    - [Pills](#pills)
+    - [Tabs](#tabs)
+        - [A tab row on its container's rule](#a-tab-row-on-its-containers-rule)
+    - [Icons](#icons)
+    - [Eyebrows](#eyebrows)
+    - [React components](#react-components)
+- [Taking a control down](#taking-a-control-down)
+- [Theme switch and copy button](#theme-switch-and-copy-button)
+    - [Theme switch](#theme-switch)
+    - [Copy button](#copy-button)
+        - [A copy button for a code block](#a-copy-button-for-a-code-block)
+- [Status, focus, waits and progress](#status-focus-waits-and-progress)
+    - [Status line](#status-line)
+    - [Moving focus after a change](#moving-focus-after-a-change)
+    - [A part of the page that is loading](#a-part-of-the-page-that-is-loading)
+    - [Progress](#progress)
+- [Content pages](#content-pages)
+    - [Bands and groups of sections](#bands-and-groups-of-sections)
+        - [A hero](#a-hero)
+    - [Stacks](#stacks)
+    - [Split rows, notes and numerals](#split-rows-notes-and-numerals)
+- [Explainer pages](#explainer-pages)
+    - [Page layout](#page-layout)
+    - [Steps](#steps)
+    - [Panels](#panels)
+        - [A raised panel](#a-raised-panel)
+    - [Tables](#tables)
+        - [A pinned first column](#a-pinned-first-column)
+    - [Code blocks](#code-blocks)
+- [App frame](#app-frame)
+    - [A compact action beside the main one](#a-compact-action-beside-the-main-one)
+- [Tab bar](#tab-bar)
+- [Stepper](#stepper)
+    - [A stepper in a row](#a-stepper-in-a-row)
+- [Toast](#toast)
+- [Button grid](#button-grid)
+- [Rows](#rows)
+    - [An empty state](#an-empty-state)
+    - [A row with several buttons](#a-row-with-several-buttons)
+    - [A row with a picture](#a-row-with-a-picture)
+    - [Tiles](#tiles)
+        - [Tiles in columns](#tiles-in-columns)
+- [Dialog](#dialog)
+    - [A Close in the corner](#a-close-in-the-corner)
+- [What the package exports](#what-the-package-exports)
+    - [`@jasonsdevspace/design-kit/tokens.css`](#jasonsdevspacedesign-kittokenscss)
+    - [`@jasonsdevspace/design-kit/tokens.resolver.json`](#jasonsdevspacedesign-kittokensresolverjson)
+    - [`@jasonsdevspace/design-kit/base.css`](#jasonsdevspacedesign-kitbasecss)
+    - [`@jasonsdevspace/design-kit/components.css`](#jasonsdevspacedesign-kitcomponentscss)
+    - [`@jasonsdevspace/design-kit/theme`](#jasonsdevspacedesign-kittheme)
+    - [`@jasonsdevspace/design-kit/controls`](#jasonsdevspacedesign-kitcontrols)
+    - [`@jasonsdevspace/design-kit/react`](#jasonsdevspacedesign-kitreact)
+    - [`@jasonsdevspace/design-kit/vite`](#jasonsdevspacedesign-kitvite)
+- [Layers and palettes](#layers-and-palettes)
+- [The theme contract](#the-theme-contract)
+
 ## The sheets
 
 `base.css` and `components.css` load after `tokens.css`, since the tokens' first statement declares
@@ -121,8 +199,8 @@ may change in any release.
 | `--dk-table-ground`        | the nearest container's, `--dk-ground`                             | The ground under a pinned column. The cells' text holds 4.5 to 1 on it                                                                                     |
 | `--dk-table-pinned-size`   | 8rem, with no room kept under 17.5rem wide                         | The width of a pinned column                                                                                                                               |
 | `--dk-field-measure`       | `--dk-measure`                                                     | The widest a field, a row of fields or a callout beside them grows inside a page, a band or a stack, a panel there included. `none` for its column's width |
-| `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                               |
 | `--dk-fields-least`        | 10rem                                                              | The width each field in a row of fields starts from, so two share a line only where both fit. At least a stepper's width where the row holds one           |
+| `--dk-stepper-digits`      | 2                                                                  | The figures a stepper's field keeps room for                                                                                                               |
 | `--dk-band-room`           | `--dk-space-7`                                                     | The room above and below a band, inside its ground                                                                                                         |
 | `--dk-sections-least`      | 20rem                                                              | The least width of a section in a group of sections, so a group of short sections can stand more to a row                                                  |
 | `--dk-band-hero-picture`   | 28rem, never past 45% of the row                                   | The width of a hero's picture beside its words from 48rem wide, and the tallest it stands over them on a narrower screen                                   |
@@ -428,9 +506,8 @@ look to fill and the open panel is the sign.
 
 A row of buttons, such as a page's actions under its lead, sits in a `dk-actions`, as above. It
 spaces the buttons by `--dk-space-2` and wraps them onto rows the same step apart, where spaces
-between buttons would leave the rows touching. It sets no margin of its own. In a form with no class
-attribute a bare button stands no step below a field above it, where a `dk-actions` does, so a
-form's buttons go in a `dk-actions`, a lone submit too.
+between buttons would leave the rows touching. It sets no margin of its own. A form's buttons go in
+a `dk-actions`, a lone submit too, as [a plain form](#a-plain-form) spaces it.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -598,36 +675,7 @@ or an open list never covers it, and the hint stays while the error shows, since
 to put the error right. The error starts with a visually hidden "Error: ", so it is told from the
 hint by more than its color. `aria-describedby` lists only what is drawn, the hint and then the
 error, followed by any description of the page's own, and is left off when there is none.
-`aria-invalid="true"` is there only while an error is drawn. A field holds to the width of its
-column, so a word with no place to break, such as an email address in an error, breaks inside it
-rather than pushing the field past the column's edge. In a page, a band or a stack, in a form there
-too, a field holds to `--dk-measure` as the prose beside it does, so a field for a short name never
-runs the width of a wide panel, and a callout in its form ends where the fields end. So does a
-callout written before or after a field or a row of fields in what holds them, for a page that draws
-its fields with no form. A page sets `--dk-field-measure` on a field or on its form, a shorter
-length for a short answer such as a ZIP code, or `none` for the column's width. A callout reads
-`--dk-field-measure` from what holds it, so a page that sets the property on one field sets it on
-the container, or on the callout too, for their ends to match. Fields set side by side go in a
-`dk-fields` row, as [fields side by side](#fields-side-by-side) shows, and a row of the page's own
-sets `none` on the row, so each field fills its cell. In a page's own row, a field shorter than the
-tallest beside it keeps its control at its own height, with the spare room below it, and in a
-`dk-fields` row the fields line up along their foot instead. In a dialog or a popover the property
-has no effect, since the dialog's own width sizes its fields. An inline stepper in a page's row
-keeps its label and stepper at the top of its cell, its label level with the labels beside it. A
-field given more height than its parts, by a height or a flex grow of the page's own, leaves the
-room below them too, so a control meant to fill its field, such as a textarea that fills a panel,
-takes the room by the page's own `grid-template-rows` on the field, which gives the control's row
-`1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a form with no
-class attribute, a field, a row of fields, a row of actions or a callout not marked `data-empty`
-stands `--dk-space-4` below what sits above it, once another of those has come before it, so a
-form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room.
-An empty callout counts as none there when it is marked `data-empty`, as `Callout` marks one, and
-one written empty without the mark counts as a block, so the block after it stands a step below it.
-A form with a class attribute lays out its own parts. An error's words allow a break after each "@",
-by a `<wbr>`, so an address too long for its line breaks there rather than at whichever letter or
-stop the line runs out on, and the kit's own words keep punctuation away from the address they show.
-A page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same
-break.
+`aria-invalid="true"` is there only while an error is drawn.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -646,6 +694,49 @@ tall as its rows, three unless given, its lines at the body's leading and its te
 than centered, and it resizes in height alone, since a wider one would push its column.
 
 </details>
+
+#### A field's width
+
+A field holds to the width of its column, so a word with no place to break, such as an email address
+in an error, breaks inside it rather than pushing the field past the column's edge. An error's words
+allow a break after each "@", by a `<wbr>`, so an address too long for its line breaks there rather
+than at whichever letter or stop the line runs out on, and the kit's own words keep punctuation away
+from the address they show. A page that puts an address in its own label or hint can add `<wbr>`
+after the "@" for the same break.
+
+In a page, a band or a stack, in a form there too, a field holds to `--dk-measure` as the prose
+beside it does, so a field for a short name never runs the width of a wide panel, and a callout in
+its form ends where the fields end. So does a callout written before or after a field or a row of
+fields in what holds them, for a page that draws its fields with no form. A page sets
+`--dk-field-measure` on a field or on its form, a shorter length for a short answer such as a ZIP
+code, or `none` for the column's width. A callout reads `--dk-field-measure` from what holds it, so
+a page that sets the property on one field sets it on the container, or on the callout too, for
+their ends to match. Fields set side by side go in a `dk-fields` row, as [fields side by
+side](#fields-side-by-side) shows, and a row of the page's own sets `none` on the row, so each field
+fills its cell. In a dialog or a popover the property has no effect, since the dialog's own width
+sizes its fields.
+
+#### A field's height
+
+In a page's own row, a field shorter than the tallest beside it keeps its control at its own height,
+with the spare room below it, and in a `dk-fields` row the fields line up along their foot instead.
+An inline stepper in a page's row keeps its label and stepper at the top of its cell, its label
+level with the labels beside it. A field given more height than its parts, by a height or a flex
+grow of the page's own, leaves the room below them too, so a control meant to fill its field, such
+as a textarea that fills a panel, takes the room by the page's own `grid-template-rows` on the
+field, which gives the control's row `1fr`, as `auto 1fr` for a label and its control or
+`auto auto 1fr` with a hint.
+
+#### A plain form
+
+In a form with no class attribute, a field, a row of fields, a row of actions or a callout not
+marked `data-empty` stands `--dk-space-4` below what sits above it, once another of those has come
+before it, so a form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form
+is given room. An empty callout counts as none there when it is marked `data-empty`, as `Callout`
+marks one, and one written empty without the mark counts as a block, so the block after it stands a
+step below it. A row whose fields are all hidden still takes a plain form's step, so a page that
+hides every field in a row hides the row itself, with `hidden`. A form with a class attribute lays
+out its own parts.
 
 #### A required or an optional field
 
@@ -886,27 +977,21 @@ what is left, so a field's width comes from the row alone and a long label, a hi
 moves the field beside it. Two fields share a line where the row is at least 21rem wide, two lengths
 and the gap, which in a page's column is a screen from 368 pixels, and a narrower row or a larger
 text size stacks them, each on a line of its own with its label whole. The fields stand
-`--dk-space-4` apart both ways, a plain form's step, and a row written straight in a panel, a
-dialog, a stack or anything else that spaces what it holds by `--dk-flow-step` stands its lines that
-step apart, so a wrapped field sits as far below as a field under another wherever the row is
-written. The fields line up along their foot, so their controls stand level where one label takes
-two lines or one field shows a hint or an error. A stepper is as tall as the fields beside it at
-every width, so its label stands level with theirs, and a tall stepper, at the larger target, stands
-its label above theirs. An inline stepper and a choice field each take a line of their own in the
-row. The row holds to `--dk-field-measure` as a field does, so in a page, a band or a stack it ends
-where the fields and the callout around it end, and a page sets `none` on the row for its column's
-width. A field in the row narrows by the same property, as a ZIP code's field with
-`--dk-field-measure: 6rem` does, and the others share the rest. A row with a stepper wider than
-10rem sets `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper of three figures,
-by `--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of three figures.
-Left at 10rem, such a stepper keeps its field as wide as itself in a browser with `:has()`, a tall
-one with its buttons narrowed toward the target but never under it, and the pair stacks on a screen
-where the two do not fit. A page that wants two fields side by side on a screen 360 pixels wide sets
-the length to 9.75rem, still as wide as a stepper of two figures. A row whose fields are all hidden
-still takes a plain form's step, so a page that hides every field in a row hides the row itself,
-with `hidden`. In a form with no class attribute the row is one of the kit's blocks, and stands
-`--dk-space-4` from a field or a row of actions above or below it. A page with React writes the
-`div` around the fields' components.
+`--dk-space-4` apart both ways, [a plain form's](#a-plain-form) step, and a row written straight in
+a panel, a dialog, a stack or anything else that spaces what it holds by `--dk-flow-step` stands its
+lines that step apart, so a wrapped field sits as far below as a field under another wherever the
+row is written. The fields line up along their foot, so their controls stand level where one label
+takes two lines or one field shows a hint or an error. A stepper is as tall as the fields beside it
+at every width, so its label stands level with theirs, and a tall stepper, at the larger target,
+stands its label above theirs. An inline stepper and a choice field each take a line of their own in
+the row. The row holds to `--dk-field-measure` as a field does, so in a page, a band or a stack it
+ends where the fields and the callout around it end, and a page sets `none` on the row for its
+column's width. A field in the row narrows by the same property, as a ZIP code's field with
+`--dk-field-measure: 6rem` does, and the others share the rest. The length a row sets for a stepper
+wider than 10rem, and for two fields on a screen 360 pixels wide, is under [a stepper in a
+row](#a-stepper-in-a-row). In a form with no class attribute the row is one of the kit's blocks, as
+[a plain form](#a-plain-form) spaces them. A page with React writes the `div` around the fields'
+components.
 
 ```tsx
 <div className="dk-fields">
@@ -916,51 +1001,6 @@ with `hidden`. In a form with no class attribute the row is one of the kit's blo
 ```
 
 #### A refused form
-
-The error is not live, since a form that fails in several fields at once would speak over itself. On
-a submit that fails a check of the page's own, the page draws its errors and calls the function
-`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal({
-invalid })` returns in React, which speaks on the screen's `StatusProvider`, and the kit does the
-same itself for the browser's constraints, as below. Once the errors are drawn, a frame after the
-call in a page without React, and in React a frame after the render that draws them commits, even
-where the page set them after an await, as a page that saves to the browser's storage first does,
-focus moves to an error summary where the page names one that can take focus, passed over where it
-is hidden, inert, out of sight or not focusable as a field is, else the first field in error that
-can take focus, passing over one that is disabled, inert, marked off, itself or by its set, or out
-of sight, or in a set its checked radio or its first control that can take focus, since the set's
-fieldset takes none. A set counts once, however many of its choices are marked. One message is said.
-Where focus moves to a summary, which reads its own words, nothing is said. Where focus moves to a
-field, or was already on it or on the summary, which a screen reader does not read again, the first
-field's name and error are said, its name without any part the label or legend hides from a screen
-reader, such as a required mark, with how many fields need attention where more are wrong, or its
-name and the count where it shows no error, and where focus was already on the summary and no field
-is marked, as for an error the page draws only in the summary, the summary's own words are said.
-VoiceOver on iOS reads a field's error only as a hint, after a pause, which other speech cuts off
-and which a visitor who turns hints off never hears, and focus moved by script may not land, so the
-error is always said. A screen reader that reads the error as focus lands hears it twice, which
-slows a visitor less than an error never heard. A reset that goes through calls off a refusal not
-yet landed, since it would say errors no longer shown. A second refusal calls off one not yet
-landed, moves focus and speaks again, so a visitor who submits again hears it again, and what each
-refusal returns calls off that refusal alone. Focus a visitor moved after the refusal was asked for
-stays where they put it, and a page that refuses later than it was asked passes `{ from }`, where
-focus was then, as `moveFocus` takes it. In React, `refuse` is called in the submit handler, after
-an await in it too, or in an effect with dependencies, never as the component renders nor in an
-effect that runs on every render, since refusing renders the component again. Errors set in a
-transition are refused inside the same `startTransition`, and errors drawn in another React root are
-not waited for. Refused with nothing wrong and no summary, focus stays where it is, and refused with
-fields in error that none can take focus in, as one out of sight, focus stays too and the first
-field's name and error are said, with the count where more are wrong. In React, a form with no
-`StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
-attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
-already be in place when the first submit comes.
-
-`attachForm(form, { status, signal })` is taken down by its `signal`, as [Taking a control
-down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet landed and a reset
-still waiting are called off, and the errors it drew go, so nothing is said after, not even "Form
-cleared.", and a refusal the page calls after does nothing. The form keeps the kit's check, its
-`noValidate` and the `aria-invalid="false"` marks while any attach in it is still attached, and gets
-back its own `noValidate` and loses the marks once the last is taken down, so the browser checks it
-again. A signal already aborted leaves the form as its markup drew it.
 
 The browser's constraints decide what is valid, `required`, `type`, `pattern`, `min`, `max`,
 `minlength`, `maxlength` and `step`, and the kit, never the browser's bubble, draws the errors, as
@@ -990,6 +1030,9 @@ attach checks it where a part of it was attached first, so its options are the o
 and a refusal the page calls looks only in the part it attached. Fields not in error are marked
 `aria-invalid="false"` as the form is attached, so a browser does not read an empty required field
 as invalid before anything is submitted.
+
+The kit checks only on a submit, never while someone is typing or as they leave a field, and checks
+beyond the browser's constraints are the page's.
 
 `attachForm` draws into the markup it finds, so a page lets it draw errors only in markup nothing
 will draw again, such as a page written by hand or the React components rendered to static HTML and
@@ -1091,8 +1134,50 @@ Each failure's field always has an id, made with `useId` where the page gives no
 keys its items by `field.id` and links each to its control's id, or to its field's where the control
 has none, as a set's choices may.
 
-The kit checks only on a submit, never while someone is typing or as they leave a field, and checks
-beyond the browser's constraints are the page's.
+The error is not live, since a form that fails in several fields at once would speak over itself. On
+a submit that fails a check of the page's own, the page draws its errors and calls the function
+`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal({
+invalid })` returns in React, which speaks on the screen's `StatusProvider`, and the kit does the
+same itself for the browser's constraints, as above. Once the errors are drawn, a frame after the
+call in a page without React, and in React a frame after the render that draws them commits, even
+where the page set them after an await, as a page that saves to the browser's storage first does,
+focus moves to an error summary where the page names one that can take focus, passed over where it
+is hidden, inert, out of sight or not focusable as a field is, else the first field in error that
+can take focus, passing over one that is disabled, inert, marked off, itself or by its set, or out
+of sight, or in a set its checked radio or its first control that can take focus, since the set's
+fieldset takes none. A set counts once, however many of its choices are marked. One message is said.
+Where focus moves to a summary, which reads its own words, nothing is said. Where focus moves to a
+field, or was already on it or on the summary, which a screen reader does not read again, the first
+field's name and error are said, its name without any part the label or legend hides from a screen
+reader, such as a required mark, with how many fields need attention where more are wrong, or its
+name and the count where it shows no error, and where focus was already on the summary and no field
+is marked, as for an error the page draws only in the summary, the summary's own words are said.
+VoiceOver on iOS reads a field's error only as a hint, after a pause, which other speech cuts off
+and which a visitor who turns hints off never hears, and focus moved by script may not land, so the
+error is always said. A screen reader that reads the error as focus lands hears it twice, which
+slows a visitor less than an error never heard. A reset that goes through calls off a refusal not
+yet landed, since it would say errors no longer shown. A second refusal calls off one not yet
+landed, moves focus and speaks again, so a visitor who submits again hears it again, and what each
+refusal returns calls off that refusal alone. Focus a visitor moved after the refusal was asked for
+stays where they put it, and a page that refuses later than it was asked passes `{ from }`, where
+focus was then, as `moveFocus` takes it. In React, `refuse` is called in the submit handler, after
+an await in it too, or in an effect with dependencies, never as the component renders nor in an
+effect that runs on every render, since refusing renders the component again. Errors set in a
+transition are refused inside the same `startTransition`, and errors drawn in another React root are
+not waited for. Refused with nothing wrong and no summary, focus stays where it is, and refused with
+fields in error that none can take focus in, as one out of sight, focus stays too and the first
+field's name and error are said, with the count where more are wrong. In React, a form with no
+`StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form is
+attached as it is drawn, never from its submit handler, since the kit's check and `noValidate` must
+already be in place when the first submit comes.
+
+`attachForm(form, { status, signal })` is taken down by its `signal`, as [Taking a control
+down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet landed and a reset
+still waiting are called off, and the errors it drew go, so nothing is said after, not even "Form
+cleared.", and a refusal the page calls after does nothing. The form keeps the kit's check, its
+`noValidate` and the `aria-invalid="false"` marks while any attach in it is still attached, and gets
+back its own `noValidate` and loses the marks once the last is taken down, so the browser checks it
+again. A signal already aborted leaves the form as its markup drew it.
 
 ### Choice fields
 
@@ -1206,14 +1291,14 @@ explains. A message that arrives after the page has loaded is made live in three
 1. Put the callout on the page with `role="status"` on `.dk-callout-body`, read when the screen
    reader is next idle, or `role="alert"`, read at once. The title and the tone's word are read with
    the message, and the actions are not.
-2. Leave the message empty at first, and mark the callout `data-empty`, as `Callout` does for a
-   live callout with no title, message or actions. A marked callout leaves the flow, drawn as
-   visually hidden text is, so it takes no room and opens no gap, the flow's step and the room kept
-   for a toast pass over it, and it stays in the tree a screen reader reads. The mark needs no
-   `:has()`, so the oldest browsers the kit supports draw no empty box. A callout with an empty
-   message and no actions is also taken out of sight where `:has()` works, so one written without
-   the mark is never drawn empty in a current browser, though a plain form still counts it as a
-   block and stands the block after it a step below, so a page marks it there too.
+2. Leave the message empty at first, and mark the callout `data-empty`, as `Callout` does for a live
+   callout with no title, message or actions. A marked callout leaves the flow, drawn as visually
+   hidden text is, so it takes no room and opens no gap, the flow's step and the room kept for a
+   toast pass over it, and it stays in the tree a screen reader reads. The mark needs no `:has()`,
+   so the oldest browsers the kit supports draw no empty box. A callout with an empty message and no
+   actions is also taken out of sight where `:has()` works, so one written without the mark is never
+   drawn empty in a current browser, though [a plain form](#a-plain-form) still counts it as a block
+   and stands the block after it a step below, so a page marks it there too.
 3. Fill the message when there is something to say, which is when a screen reader reads it, and take
    the mark away in the same step, as a page does when it gives the callout actions, since a callout
    left marked keeps its words out of sight. A page that empties the message again, with no actions,
@@ -3250,31 +3335,44 @@ both ways and the value as tall, at every width. [Decision record
 0026](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0026-a-stepper-is-as-tall-as-a-field-wherever-it-stands.md)
 gives why. Where a large text size leaves the stepper less room than its buttons take, on a phone,
 the buttons grow narrower, never under the target at the usual text size, and keep their height, so
-the stepper fits its field, in an app's dock too. A stepper's field with its label above is in turn
-never narrower than the stepper at that least width, in a browser with `:has()`, wherever the page's
-row leaves its items their own least width, so beside a text field the field keeps its stepper and
-the row's other fields take the room left. The stepper alone sets that width, so a long word, a
-picture or words that never wrap in its label, hint or error leave the field as wide as its stepper.
-A row whose items or tracks have no least width, such as `min-width: 0` or `minmax(0, 1fr)`, can
-still squeeze the field below its stepper, which is the row's choice. A stepper's field with its
-label to the left keeps that least width in such a row too, in every browser, its stepper moving
-under the label where the row leaves no room for both. Set beside other fields in a `dk-fields` row,
-as [fields side by side](#fields-side-by-side) shows, the stepper's field starts from the row's
-length, wider than a stepper of two figures, and a field with no room left beside it moves to a line
-of its own. In a page's own row that cannot wrap, the stepper's field keeps its least width and the
-fields beside it take what is left, which at a large text size can be too little for a word in their
-labels. The value is in the mono face with figures of one width, centered, with room for two figures
-unless `--dk-stepper-digits` says more, and for the spacing between letters WCAG asks a page to
-allow, so the field does not change width as the value changes and no figure is cut off, and in a
-tall stepper it is at the heading size. Its height, edge included, is its buttons', so it stands
-level with them. With its label to the left the label takes the room the stepper leaves and wraps
-within it, and the stepper moves under the label where a large text size leaves no room for both.
-Its errors sit on lines above it, as every field's do, and its hint on a line below, which only the
-inline stepper does. In a stepper with its label above, the hint sits under the label and over the
-errors, as in any field. The number field's own spin buttons are taken away, since the stepper's
-buttons stand in for them and they would keep their room even out of sight.
+the stepper fits its field, in an app's dock too. How wide its field stands in a row is under [a
+stepper in a row](#a-stepper-in-a-row). The value is in the mono face with figures of one width,
+centered, with room for two figures unless `--dk-stepper-digits` says more, and for the spacing
+between letters WCAG asks a page to allow, so the field does not change width as the value changes
+and no figure is cut off, and in a tall stepper it is at the heading size. Its height, edge
+included, is its buttons', so it stands level with them. With its label to the left the label takes
+the room the stepper leaves and wraps within it, and the stepper moves under the label where a large
+text size leaves no room for both. Its errors sit on lines above it, as every field's do, and its
+hint on a line below, which only the inline stepper does. In a stepper with its label above, the
+hint sits under the label and over the errors, as in any field. The number field's own spin buttons
+are taken away, since the stepper's buttons stand in for them and they would keep their room even
+out of sight.
 
 </details>
+
+### A stepper in a row
+
+A stepper's field with its label above is never narrower than the stepper at the least width its
+buttons narrow to, in a browser with `:has()`, wherever the page's row leaves its items their own
+least width, so beside a text field the field keeps its stepper and the row's other fields take the
+room left. The stepper alone sets that width, so a long word, a picture or words that never wrap in
+its label, hint or error leave the field as wide as its stepper. A row whose items or tracks have no
+least width, such as `min-width: 0` or `minmax(0, 1fr)`, can still squeeze the field below its
+stepper, which is the row's choice. A stepper's field with its label to the left keeps that least
+width in such a row too, in every browser, its stepper moving under the label where the row leaves
+no room for both. In a page's own row that cannot wrap, the stepper's field keeps its least width
+and the fields beside it take what is left, which at a large text size can be too little for a word
+in their labels.
+
+Set beside other fields in a `dk-fields` row, as [fields side by side](#fields-side-by-side) shows,
+the stepper's field starts from the row's length, wider than a stepper of two figures, and a field
+with no room left beside it moves to a line of its own. A row with a stepper wider than 10rem sets
+`--dk-fields-least` to hold it at its full size: 10.5rem for a stepper of three figures, by
+`--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of three figures. Left at
+10rem, such a stepper keeps its field as wide as itself in a browser with `:has()`, a tall one with
+its buttons narrowed toward the target but never under it, and the pair stacks on a screen where the
+two do not fit. A page that wants two fields side by side on a screen 360 pixels wide sets the
+length to 9.75rem, still as wide as a stepper of two figures.
 
 ## Toast
 
