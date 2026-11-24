@@ -524,7 +524,7 @@ test.describe("a dated field's limit", () => {
         );
     });
 
-    test('keeps a year under 100 as written, and shows a year past any date as written', async ({
+    test('writes a year under 1000 in full, and shows a year past any date as written', async ({
         page,
     }) => {
         await openWith(
@@ -541,7 +541,7 @@ test.describe("a dated field's limit", () => {
         });
         await sendDated(page, { old: '0049-12-31' });
         expect(await datedErrors(page)).toEqual({
-            'old-error': 'Error: Enter January 1, 50 or later.',
+            'old-error': 'Error: Enter January 1, 0050 or later.',
             'far-error': 'Error: Enter 275760-09-13T12:00 or earlier.',
         });
     });
@@ -608,6 +608,40 @@ test.describe("a dated field's limit", () => {
         await expect(page.locator('#lap-error')).toHaveText(
             `Error: Enter 9:00:00.5${AM} or later.`
         );
+    });
+
+    test("names a limit in the Gregorian calendar and Latin digits, whatever the language's tag picks", async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><div lang="en-u-ca-buddhist"><label for="day">Day</label><input id="day" type="date" max="2026-11-22"></div>
+<div lang="en-u-nu-arab"><label for="at">At</label><input id="at" type="time" max="17:30"></div>
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { day: '2026-11-23', at: '18:00' });
+        expect(await datedErrors(page)).toEqual({
+            'day-error': 'Error: Enter November 22, 2026 or earlier.',
+            'at-error': `Error: Enter 5:30${PM} or earlier.`,
+        });
+    });
+
+    test("counts a number field's steps from its value attribute where it has no least, as the browser does", async ({
+        page,
+    }) => {
+        await openWith(
+            page,
+            `<form><label for="count">Count</label><input id="count" type="number" step="5" value="2">
+<button type="submit">Send</button></form>`
+        );
+        await sendDated(page, { count: '9' });
+        await expect(page.locator('#count-error')).toHaveText(
+            'Error: Enter 2, or 2 plus a multiple of 5.'
+        );
+        // The value the words point to is one the browser takes.
+        await sendDated(page, { count: '7' });
+        await expect(page.locator('#count-error')).toHaveCount(0);
+        expect(await submits(page)).toBe(1);
     });
 
     test('takes the language of the page around a shadow root a field sits in', async ({

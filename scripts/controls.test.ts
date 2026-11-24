@@ -38,9 +38,11 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * toast marking its frame did, and again once a stepper quiet as its form refuses it did, and again
  * once a focus request dropped for a page out of sight rather than after a second did, and again
  * once a stepper's letters shown as focus leaves it and its words naming its field did, and again
- * once a stepper holding its error back while a press outside it is down did.
+ * once a stepper holding its error back while a press outside it is down did, and again once a
+ * limit kept to the field's calendar and digits, a year written in full and steps counted from the
+ * browser's step base did.
  */
-const BUDGET = 22.25 * 1024;
+const BUDGET = 22.5 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
@@ -48,12 +50,14 @@ const BUDGET = 22.25 * 1024;
  * attach, each alone. Each is set by the rule of record 13 for that entry: its size with room for
  * one more function of the usual size, the median of what each function adds to every other, from
  * the same layout, the upper of the middle two where the count is even, rounded up to the next
- * quarter of a kilobyte. Set so in 0.9.4.
+ * quarter of a kilobyte. Set so in 0.9.4, and for `attachForm` alone again once a limit kept to the
+ * field's calendar and digits, a year written in full and steps counted from the browser's step base
+ * left too little room for another.
  */
 const ENTRY_BUDGETS = [
     ['the module imported bare', [], 1.5 * 1024],
     ['attachTable alone', ['attachTable'], 2.75 * 1024],
-    ['attachForm alone', ['attachForm'], 9.25 * 1024],
+    ['attachForm alone', ['attachForm'], 9.5 * 1024],
 ] as const;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
