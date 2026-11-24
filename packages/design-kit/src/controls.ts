@@ -2095,7 +2095,8 @@ const openersOf = (id: string): HTMLButtonElement[] =>
  * Where the visitor's place last was, the path of the last focus that moved or of their last
  * press, from what it reached up, so a panel it was in still counts after the page draws away or
  * turns off the button pressed. A press by a page's script is not the visitor's and is not kept.
- * It is dropped once the last button is let go, so it keeps no element of the page alive.
+ * It is kept once the last button is let go, since a page that draws its only button again lets
+ * the old one go before the new one is attached, and the place in the panel has to outlive that.
  */
 let lastPath: readonly EventTarget[] = [];
 /** Whether that last place was a press, as a link followed is, rather than focus that moved. */
@@ -2350,7 +2351,6 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
             else lastOpener.delete(id);
         }
         if (openers.size) return;
-        lastPath = [];
         document.removeEventListener('focusin', onPanelFocus, true);
         document.removeEventListener('click', onPanelPress, true);
         document.removeEventListener('pointerdown', onPanelDown, true);
