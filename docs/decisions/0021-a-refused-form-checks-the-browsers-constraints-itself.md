@@ -142,9 +142,9 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   done was turned down: a page's reset listener that ran first, or a capture listener on the
   document, took the marks away before the count, and a field that gained a mark as another lost one
   kept the count level. Once the kit's errors are gone, the form has each attached stepper settle on
-  its reset value, so an error of the kit's never holds back the stepper's own. A stepper clears its
-  error in a reset listener of the capture phase, so it goes before the form counts. A reset that
-  takes no error away says nothing.
+  its reset value, so an error of the kit's never holds back the stepper's own. A stepper settles in
+  its own reset timer, and again from the form's reset timer once the kit's errors are gone. A reset
+  that takes no error away says nothing.
 - **Fields not in error are marked `aria-invalid="false"`** as the form is attached, so an empty
   required field is not read as invalid before anything is submitted. Only the fields drawn by then
   are marked, and in React a field whose error clears loses its mark. `required` stays, since the
@@ -168,6 +168,9 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   `rangeError` on `StepperField`, or the range error's own words in the markup, is the way in.
 - An error the kit drew on a stepper for a page's own refusal, set with `setCustomValidity`, stays
   beside a range error typed after it until the next submit, which takes it away.
+- A stepper that fails a page's own refusal, set with `setCustomValidity`, and its range at once
+  shows its range error alone, and the page's words show at the next submit once the value is in
+  range, since one error shows at a time and a value the field cannot hold comes first.
 - `attachForm` keeps a submit and a reset listener on its form, one of each however many of its
   parts are attached, which leave with the form, where it kept none.
 - A screen reader that reads a field's error as focus lands on it hears the error twice, which slows
@@ -210,13 +213,14 @@ The paths are in `packages/design-kit`.
   its error as focus left it with no submit, or after a submit that passed, leaves a required
   stepper's failure to the form where the page shows an error of its own, shows a stepper's range
   error on a reset that brings back a value past its range over the kit's error, and takes away the
-  mark a stepper put back once its form's attach is taken down, leaves a stepper's own words said
-  where no refusal follows, marks fields not in error before any submit, and in React hands the
-  failures, a set's among them, to the page, which draws them, and refuses once they are drawn. It
-  hands every failure with the words its field shows as a second list, a stepper's own error's words
-  among them, in plain markup and in React, where a summary built from it lists the stepper with its
-  own words and takes focus, and has the first field's name and error said once it already has
-  focus. It runs in Chromium, WebKit and Firefox.
+  mark a stepper put back once its form's attach is taken down, shows a stepper's range error alone
+  where it fails the page's own refusal too and the page's words once it is in range, leaves a
+  stepper's own words said where no refusal follows, marks fields not in error before any submit,
+  and in React hands the failures, a set's among them, to the page, which draws them, and refuses
+  once they are drawn. It hands every failure with the words its field shows as a second list, a
+  stepper's own error's words among them, in plain markup and in React, where a summary built from
+  it lists the stepper with its own words and takes focus, and has the first field's name and error
+  said once it already has focus. It runs in Chromium, WebKit and Firefox.
 - `e2e/form.spec.tsx` refuses a form the page wrote without `noValidate`, passes over controls
   marked off and a summary hidden by an ancestor or a style, made inert or not focusable, says a
   focused summary's line where no field is marked, names a set none of whose controls can take

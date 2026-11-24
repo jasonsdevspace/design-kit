@@ -1390,6 +1390,28 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                 await expect(page.locator('#name-error')).toHaveCount(0);
             });
 
+        test("shows a stepper's range error alone where it fails the page's own refusal too, and the page's words once in range", async ({
+            page,
+        }) => {
+            await openWay(page);
+            await bidOf(page).evaluate((input) => {
+                (input as HTMLInputElement).setCustomValidity('Pick another bid.');
+            });
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Enter');
+            await saidOf(page);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            await forget(page);
+            await bidOf(page).fill('5');
+            await bidOf(page).press('Enter');
+            await saidOf(page);
+            const words = 'Error: Pick another bid.';
+            await expect
+                .poll(async () => bidErrors(page))
+                .toEqual({ drawn: [words], described: [words] });
+            await expect(page.locator('#bid-range')).toBeHidden();
+        });
+
         test("keeps a stepper's refused error through a reset the page calls off", async ({
             page,
         }) => {
