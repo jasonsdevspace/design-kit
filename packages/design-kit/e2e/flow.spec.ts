@@ -172,7 +172,6 @@ test("adds no step for a hidden input or a piece out of sight before a plain for
         body: `<form id="form" style="display: flow-root"><input type="hidden" name="t"><script type="application/json">{}</script><template><p>Later.</p></template><dialog><p>Later.</p></dialog><datalist id="d"><option value="Ana"></option></datalist><p hidden>Saved.</p><h2 class="dk-visually-hidden">Join</h2>${FIELD('a')}</form>
 <form id="status" style="display: flow-root"><div class="dk-callout dk-visually-hidden"><p class="dk-callout-body" role="status">Saved.</p></div>${FIELD('s')}</form>
 <form id="empty" style="display: flow-root"><div class="dk-callout" data-empty><div class="dk-callout-body" role="status"></div></div>${FIELD('e')}</form>
-<form id="unmarked" style="display: flow-root"><div class="dk-callout"><div class="dk-callout-body" role="status"></div></div>${FIELD('m')}</form>
 <form id="pair">${FIELD('b')}<input type="hidden" name="u">${FIELD('c')}</form>`,
     });
     // Each form holds its own margins, so a step on the field would show rather than collapse.
@@ -190,10 +189,6 @@ test("adds no step for a hidden input or a piece out of sight before a plain for
     // callout marked so.
     for (const form of ['#form', '#status', '#empty'])
         expect.soft(await under(form), form).toEqual({ margin: '0px', top: 0 });
-    // An empty callout written without its mark is out of sight but counts as a block, as the
-    // reference says, since telling it apart would take a :has() on it from the block after it,
-    // which restyles every later block for a change inside any one of them.
-    expect.soft(await under('#unmarked'), '#unmarked').toEqual({ margin: '16px', top: 16 });
     // Two fields with a hidden input between them still stand one step apart.
     const apart = await page.locator('#pair').evaluate((form) => {
         const [first, second] = [...form.querySelectorAll('.dk-field')].map((field) =>
@@ -202,6 +197,29 @@ test("adds no step for a hidden input or a piece out of sight before a plain for
         return Math.round((second?.top ?? 0) - (first?.bottom ?? 0));
     });
     expect(apart).toBe(16);
+});
+
+test("counts an empty callout not marked data-empty as a block before a plain form's first part", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Flow',
+        body: `<form id="unmarked" style="display: flow-root"><div class="dk-callout"><div class="dk-callout-body" role="status"></div></div>${FIELD('m')}</form>`,
+    });
+    // The form holds its own margins, so the field's step shows rather than collapses.
+    const under = await page.locator('#unmarked').evaluate((holder) => {
+        const field = holder.querySelector('.dk-field');
+        return {
+            margin: field ? getComputedStyle(field).marginTop : '',
+            top: Math.round(
+                (field?.getBoundingClientRect().top ?? 0) - holder.getBoundingClientRect().top
+            ),
+        };
+    });
+    // The callout is out of sight but counts as a block, as the reference says, since telling it
+    // apart would take a :has() on it from the block after it, which restyles every later block
+    // for a change inside any one of them.
+    expect(under).toEqual({ margin: '16px', top: 16 });
 });
 
 test('adds nothing to fields in a form that lays them out itself, in a grid or side by side', async ({

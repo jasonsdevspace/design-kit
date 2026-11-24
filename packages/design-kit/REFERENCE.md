@@ -618,15 +618,16 @@ field given more height than its parts, by a height or a flex grow of the page's
 room below them too, so a control meant to fill its field, such as a textarea that fills a panel,
 takes the room by the page's own `grid-template-rows` on the field, which gives the control's row
 `1fr`, as `auto 1fr` for a label and its control or `auto auto 1fr` with a hint. In a form with no
-class attribute, a field, a row of fields, a row of actions or a callout that is not empty stands
-`--dk-space-4` below what sits above it, once another of those has come before it, so a form's
-buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room. An
-empty callout counts as none there when it is marked `data-empty`, as `Callout` marks one, and one
-written empty without the mark counts as a block, so the block after it stands a step below it. A
-form with a class attribute lays out its own parts. An error's words allow a break after each "@", by a
-`<wbr>`, so an address too long for its line breaks there rather than at whichever letter or stop
-the line runs out on, and the kit's own words keep punctuation away from the address they show. A
-page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same break.
+class attribute, a field, a row of fields, a row of actions or a callout not marked `data-empty`
+stands `--dk-space-4` below what sits above it, once another of those has come before it, so a
+form's buttons go in a `dk-actions`, a lone submit too. Nothing else in a plain form is given room.
+An empty callout counts as none there when it is marked `data-empty`, as `Callout` marks one, and
+one written empty without the mark counts as a block, so the block after it stands a step below it.
+A form with a class attribute lays out its own parts. An error's words allow a break after each "@",
+by a `<wbr>`, so an address too long for its line breaks there rather than at whichever letter or
+stop the line runs out on, and the kit's own words keep punctuation away from the address they show.
+A page that puts an address in its own label or hint can add `<wbr>` after the "@" for the same
+break.
 
 <details>
 <summary>How a field is drawn</summary>
@@ -1121,9 +1122,10 @@ explains. A message that arrives after the page has loaded is made live in three
    the mark is never drawn empty in a current browser, though a plain form still counts it as a
    block and stands the block after it a step below, so a page marks it there too.
 3. Fill the message when there is something to say, which is when a screen reader reads it, and take
-   the mark away, as a page does when it gives the callout actions. A page that empties the message
-   again, with no actions, marks it again. For success, warning or danger, put the hidden word in
-   with it, as `<span class="dk-visually-hidden">Success: </span>Saved.`
+   the mark away in the same step, as a page does when it gives the callout actions, since a callout
+   left marked keeps its words out of sight. A page that empties the message again, with no actions,
+   marks it again. For success, warning or danger, put the hidden word in with it, as
+   `<span class="dk-visually-hidden">Success: </span>Saved.`
 
 #### A failure with Try again
 

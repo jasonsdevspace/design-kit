@@ -105,11 +105,18 @@ const CHANGES: Readonly<Record<string, () => void>> = {
     },
 };
 
-/** A stepper's button shown, as its attach shows it, inside a field of the plain form. */
-const showButton = () => {
+/**
+ * A stepper's button shown, as its attach shows it, inside a field of the plain form, with whether
+ * the button was found and whether it was hidden before, so a change to the markup fails the test
+ * rather than leaving it nothing to show.
+ */
+const showButton = (): { found: boolean; hidden: boolean } => {
     const button = document.querySelector('#form .dk-stepper-down');
-    button?.removeAttribute('hidden');
-    void getComputedStyle(button ?? document.body).color;
+    if (!button) return { found: false, hidden: false };
+    const hidden = button.hasAttribute('hidden');
+    button.removeAttribute('hidden');
+    void getComputedStyle(button).color;
+    return { found: true, hidden };
 };
 
 /**
@@ -174,7 +181,14 @@ for (const [kind, body] of Object.entries(PAGES)) {
         expect(elements, 'the form is a few hundred elements').toBeGreaterThan(400);
         // No more than a tenth of the form, a bound a rule that restyles every block after the
         // field exceeds by far.
-        const counts = await restyled(page, () => page.evaluate(showButton));
+        let shown = { found: false, hidden: false };
+        const counts = await restyled(page, async () => {
+            shown = await page.evaluate(showButton);
+        });
+        expect(shown, 'the stepper button, hidden before it is shown').toEqual({
+            found: true,
+            hidden: true,
+        });
         expect(
             most(counts),
             `elements restyled, of ${String(elements)} in the form`
