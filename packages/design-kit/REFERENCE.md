@@ -34,6 +34,11 @@ each piece live in both themes.
     - [Eyebrows](#eyebrows)
     - [React components](#react-components)
 - [Taking a control down](#taking-a-control-down)
+    - [A signal already aborted](#a-signal-already-aborted)
+    - [Signals that hold a control](#signals-that-hold-a-control)
+    - [Handing focus back](#handing-focus-back)
+    - [Whose options apply](#whose-options-apply)
+    - [A page that draws its own screens](#a-page-that-draws-its-own-screens)
 - [Theme switch and copy button](#theme-switch-and-copy-button)
     - [Theme switch](#theme-switch)
     - [Copy button](#copy-button)
@@ -41,6 +46,11 @@ each piece live in both themes.
 - [Status, focus, waits and progress](#status-focus-waits-and-progress)
     - [Status line](#status-line)
     - [Moving focus after a change](#moving-focus-after-a-change)
+        - [When a request lands](#when-a-request-lands)
+        - [An id inside a shadow root](#an-id-inside-a-shadow-root)
+        - [Moving focus in React](#moving-focus-in-react)
+        - [A request as its component unmounts](#a-request-as-its-component-unmounts)
+        - [Focus on arrival](#focus-on-arrival)
     - [A part of the page that is loading](#a-part-of-the-page-that-is-loading)
     - [Progress](#progress)
 - [Content pages](#content-pages)
@@ -1743,15 +1753,21 @@ returns does, and the rest of this section covers the attaches. The status line,
 check and the dialog return what says, shows, refuses or opens rather than what takes them down, so
 the signal alone takes them down: the line is let go, the toast's message is dismissed as its Close
 dismisses it, and an open dialog closes with focus handed back to what opened it, and what each
-returned does nothing after. The others return a function that takes them down. Once a control is
-taken down, nothing it started acts, such as a copy the clipboard answers late, and calling that
-function or aborting a signal again does nothing. A signal already aborted does nothing: the control
-stays as the markup drew it, a control already attached keeps the options it had, and what the
-attach returns does nothing. A part a control cannot work without is looked for at the first attach,
-before the signal is read, so markup missing one, such as a stepper with no buttons or a panel's
-button with no `aria-controls`, throws under a signal already aborted as it does under any other. A
-control already attached is handed back as it is, so attaching it again after its markup has lost a
-part returns the control and throws nothing.
+returned does nothing after. The others return a function that takes them down.
+
+Once a control is taken down, nothing it started acts, such as a copy the clipboard answers late,
+and calling that function or aborting a signal again does nothing.
+
+### A signal already aborted
+
+A signal already aborted does nothing: the control stays as the markup drew it, a control already
+attached keeps the options it had, and what the attach returns does nothing. A part a control cannot
+work without is looked for at the first attach, before the signal is read, so markup missing one,
+such as a stepper with no buttons or a panel's button with no `aria-controls`, throws under a signal
+already aborted as it does under any other. A control already attached is handed back as it is, so
+attaching it again after its markup has lost a part returns the control and throws nothing.
+
+### Signals that hold a control
 
 Each signal an attach of an element is given holds that element's control, and a control attached
 again returns what its first attach returned, as [decision
@@ -1764,23 +1780,30 @@ its state, such as a busy wait, a form's check and its errors, an open dialog or
 page that aborts and attaches the same element in one task keeps its control, and one that attaches
 after a microtask starts afresh. Until the takedown lands, the control is whole, so a call in the
 abort's own task, such as a panel's `set`, still acts, and a dialog left open keeps the page behind
-it inert. The function an attach returns takes the control down at once, whoever holds it, so a page
-that means to start afresh within the task calls it. A call with no signal holds the control for the
+it inert.
+
+The function an attach returns takes the control down at once, whoever holds it, so a page that
+means to start afresh within the task calls it. A call with no signal holds the control for the
 page's life where nothing else holds it, an attach in the abort's own task among them, is filed
 under that hold where the page already holds the control without a signal, and elsewhere speaks for
 the newest holder without holding. An attach made from inside a control's own takedown, as a
 dialog's close handler that attaches it again, gets a control of its own. A page that passes a fresh
 signal it never aborts on every call keeps each one as a holder, so it aborts what it no longer
-needs. The kit hands focus back as a toast, a dialog, a panel or a stepper is taken down. A toast, a
-dialog or a panel hands it back only where focus is in it, inside a shadow tree within it too, such
-as on a page's own button component in a toast or a dialog's form, or where focus is on the body or
-nowhere and the piece had it as it left, and a dialog also where focus is still on what the browser
-handed it to as the dialog closed. A stepper hands it back only where focus is on one of the buttons
-it hides. Either way, focus a page sets in the abort's own task stays, and a `moveFocus` asked in
-that task still lands. A control slotted into a piece drawn inside a shadow root counts as in the
-piece. Each place a piece hands focus back to can be any HTML or SVG element that takes focus, such
-as a link in an inline chart, and one that is hidden, inert or disabled is passed over for the next.
-A control marked off with `aria-disabled` still takes focus, so it is passed over only where a piece
+needs.
+
+### Handing focus back
+
+The kit hands focus back as a toast, a dialog, a panel or a stepper is taken down. A toast, a dialog
+or a panel hands it back only where focus is in it, inside a shadow tree within it too, such as on a
+page's own button component in a toast or a dialog's form, or where focus is on the body or nowhere
+and the piece had it as it left, and a dialog also where focus is still on what the browser handed
+it to as the dialog closed. A stepper hands it back only where focus is on one of the buttons it
+hides. Either way, focus a page sets in the abort's own task stays, and a `moveFocus` asked in that
+task still lands. A control slotted into a piece drawn inside a shadow root counts as in the piece.
+
+Each place a piece hands focus back to can be any HTML or SVG element that takes focus, such as a
+link in an inline chart, and one that is hidden, inert or disabled is passed over for the next. A
+control marked off with `aria-disabled` still takes focus, so it is passed over only where a piece
 checks for it, as a panel does for its buttons. The toast and the dialog hand focus to it, though a
 toast does not follow a frame on to a control marked off inside it.
 
@@ -1793,20 +1816,25 @@ not taken for a handback, so a `moveFocus` asked before it leaves alone what the
 dialog lists what the browser handed focus to as it closed last, so where its opener has gone and
 nothing else takes focus, a `moveFocus` asked in the task that closed it still lands.
 
+### Whose options apply
+
 A control runs on its newest holder's options. A new holder's options apply at once. A later call
 from the newest holder, or from the holder whose options apply, replaces them, and a call from an
 older holder is kept and applies once every newer holder that gave options has let go. When the
 holder whose options apply lets go, the newest one left that gave options takes over with them a
 microtask later, unless a newer holder has given its own by then. A call with no signal applies its
 options at once, and they stay with the page where the page holds the control without a signal, and
-elsewhere leave with the newest holder they are filed under. Options count as given only where a key
-other than `signal` has a value, `null` and `false` among values, so `{}`, `{ signal }` and options
-whose every other key is `undefined` count as none, and a call that gives none keeps its holder's
-last ones. Options that count as given replace the holder's last ones whole, so a key left out goes
-back to its default, and a page puts every default back by giving one option the value it has by
-default, as `{ stay: false }` for a dialog, which puts back its `returnTo` too. Where no holder left
-gave options, the control goes back to its defaults, as a first attach that gave none has them,
-though a copy button keeps the source and status line it has.
+elsewhere leave with the newest holder they are filed under.
+
+Options count as given only where a key other than `signal` has a value, `null` and `false` among
+values, so `{}`, `{ signal }` and options whose every other key is `undefined` count as none, and a
+call that gives none keeps its holder's last ones. Options that count as given replace the holder's
+last ones whole, so a key left out goes back to its default, and a page puts every default back by
+giving one option the value it has by default, as `{ stay: false }` for a dialog, which puts back
+its `returnTo` too. Where no holder left gave options, the control goes back to its defaults, as a
+first attach that gave none has them, though a copy button keeps the source and status line it has.
+
+### A page that draws its own screens
 
 A page that draws its screens itself gives each screen's controls one controller, and aborts the old
 screen's as it attaches the next, so a control the next screen draws afresh is attached afresh and
@@ -2156,28 +2184,12 @@ given as an element or an id, once the change is drawn, a frame later, so a cont
 in answer to the same press or key is there. Ask in the handler of the press or key that makes the
 change, or, for a change React draws later, in a transition or behind a suspense, in an effect once
 it is drawn. A page in React asks through `useFocusAfterDraw`, below, which waits for the render
-that draws the change rather than a frame alone, so a change set after an await is drawn too. Where
-the target is gone, hidden, inert, disabled or marked off, focus goes to the first of the fallbacks
-that takes it, and then to the app frame's body or the page's main content, by the walk a closing
-panel hands focus back by. A target or a fallback, here and for `focusOnArrival` below, can be any
-HTML or SVG element that takes focus, such as a link in an inline chart. Focus a visitor has moved
-since the request is left where they put it: focus is free only while it is where it was when asked,
-or on the page's body, as it is once the control that had it is removed, or where the kit has handed
-it back since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down,
-or on what the browser hands it to as a dialog closes, until the dialog's close is handled. A
-request made while the page is out of sight, or before it goes, is dropped, so focus does not jump
-when the visitor comes back, and so is one whose frame comes more than ten seconds late, as a frame
-the browser holds back out of view can, while one a long render holds on a page in sight for less
-still lands. Each request is new, so the same control asked for twice is focused twice, and the
-function `moveFocus` returns calls a request off before it lands, as aborting the `signal` it is
-given does. A request asked as its component unmounts is given no signal that unmount aborts, so it
-still lands. An id is looked for in the root where focus was when the request was made, so a widget
-drawn inside a shadow root finds its own control, never an element of the page around it that shares
-the id, and the form's refusal, a stepper and progress find the errors, hints and labels they read
-in their own element's root. A panel and its button are found from the page's document, which the
-panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
-root that holds it, as a request reads where focus was, for a page that asks later and passes `from`
-itself.
+that draws the change rather than a frame alone, so a change set after an await is drawn too.
+
+Where the target is gone, hidden, inert, disabled or marked off, focus goes to the first of the
+fallbacks that takes it, and then to the app frame's body or the page's main content, by the walk a
+closing panel hands focus back by. A target or a fallback, here and for `focusOnArrival` below, can
+be any HTML or SVG element that takes focus, such as a link in an inline chart.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -2186,52 +2198,96 @@ import { moveFocus } from '@jasonsdevspace/design-kit/controls';
 moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 ```
 
-In React, `useFocusAfterDraw()` returns the same function, the same across renders, and makes each
-request once the render it was asked in commits, so it lands in the frame that paints the change. A
-page that sets its state after an await, as a save to the browser's storage does, and then asks
-finds the control drawn and on, though React draws that state in a task of its own and a frame can
-come before it, and so does a page whose change is drawn by another component. Where focus was is
-read as the request is asked, inside a shadow root too. Ask in a handler, after an await in it too,
-or in an effect with dependencies, never as the component renders nor in an effect that runs on
-every render, since asking renders the component again. A change made in a transition is asked for
-inside the same `startTransition`, and a change drawn in another React root is not waited for. A
-request takes the place of one not yet landed, so the last asked for wins, and what it returns calls
-off that request alone. One asked as the component first draws, from a ref on its own markup, waits
-for its render as any other does. One still waiting when the component unmounts, or when an
-`Activity` hides it, is made then, with where focus was read as it was asked, so a row that asks for
-focus on the next as its press removes it moves focus there, at once, after an await, from a timer
-or in a transition. Nothing at unmount calls a request off, only what it returned or a newer
-request, and it lands only where focus is still where it was or has fallen to the page's body, so a
-visitor who moved on keeps their place. React tells the hook nothing of which update unmounted the
-component, so a request in a transition an urgent update overtook lands before the transition draws,
-and goes to its fallbacks where the transition draws its target. One asked after the component has
-gone, as a panel that closes itself and then asks after an await, waits a frame and is made then,
-taking focus only from the page's body, whatever `from` it was given, and only where its target is
-in sight, so a visitor already on the next screen is left where they are. It still finds an id in
-the root where focus was as it was asked, or where the `from` it was given is. Focus has most often
-fallen to the page's body by then, so a widget drawn inside a shadow root passes `from`, an element
-still in that root, to find its own control, and with no `from` an id is found there only while
-focus is still in that root. One whose target an `Activity` hides with the component is held until
-the component shows, and is made then. `useArrivalFocus(key)` returns a ref for a view's heading,
-gives the heading a tabindex of -1 where it has none, and focuses it when the key changes, such as
-the round on screen, and when the view is first drawn by a visitor's press on a button or a link, or
-a submit, as a tab bar's view is. A first draw takes nothing as the page first draws, after a key
-that moves or types, such as Tab or an arrow along a row of tabs, after a press on nothing or on a
-control that is off, or more than five seconds after the press, as a view a poll brings. A row of
-tabs' panels take no focus on arrival, since a tab keeps focus as its panel changes, so they leave
-the hook out. Views first drawn by one press land together, and the first in the page takes focus,
-so a view's title is heard before a section of it. Focus a view placed itself as it drew, as a field
-with autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on
-a widget's own button there brings focus to the heading. What decides a first draw is
-`focusOnArrival(heading, { from })` from `./controls`, which a page without React calls as each view
-draws, and with `changed` as a view already drawn changes on a press, which then lands with any view
-first drawn for that press, so the first in the page still takes focus. A view is dropped as a
-request to `moveFocus` is, and one asked once the page is back in sight lands without the views
-asked before it went. It takes a `signal` as `moveFocus` does: an abort calls off a request not yet
-landed, as the function it returns does, and a signal already aborted asks for nothing and leaves
-the press for another view. The key is a string, a number or a boolean, compared by value, and
-changes on a press or a submit, never as a visitor chooses in a list or a set of radios, which would
-move them as they choose, as WCAG 3.2.2 has it.
+#### When a request lands
+
+Focus a visitor has moved since the request is left where they put it: focus is free only while it
+is where it was when asked, or on the page's body, as it is once the control that had it is removed,
+or where the kit has handed it back since, as a toast, a dialog or a panel does as it closes and a
+stepper as it is taken down, or on what the browser hands it to as a dialog closes, until the
+dialog's close is handled.
+
+A request made while the page is out of sight, or before it goes, is dropped, so focus does not jump
+when the visitor comes back, and so is one whose frame comes more than ten seconds late, as a frame
+the browser holds back out of view can, while one a long render holds on a page in sight for less
+still lands.
+
+Each request is new, so the same control asked for twice is focused twice, and the function
+`moveFocus` returns calls a request off before it lands, as aborting the `signal` it is given does.
+A request asked as its component unmounts is given no signal that unmount aborts, so it still lands.
+
+#### An id inside a shadow root
+
+An id is looked for in the root where focus was when the request was made, so a widget drawn inside
+a shadow root finds its own control, never an element of the page around it that shares the id, and
+the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
+element's root. A panel and its button are found from the page's document, which the panel listens
+on. `activeOf()` from `./controls` returns what has focus, followed into each shadow root that holds
+it, as a request reads where focus was, for a page that asks later and passes `from` itself.
+
+#### Moving focus in React
+
+In React, `useFocusAfterDraw()` returns a function like `moveFocus`, the same across renders, and
+makes each request once the render it was asked in commits, so it lands in the frame that paints the
+change. A page that sets its state after an await, as a save to the browser's storage does, and then
+asks finds the control drawn and on, though React draws that state in a task of its own and a frame
+can come before it, and so does a page whose change is drawn by another component.
+
+Where focus was is read as the request is asked, inside a shadow root too. Ask in a handler, after
+an await in it too, or in an effect with dependencies, never as the component renders nor in an
+effect that runs on every render, since asking renders the component again. A change made in a
+transition is asked for inside the same `startTransition`, and a change drawn in another React root
+is not waited for.
+
+A request takes the place of one not yet landed, so the last asked for wins, and what it returns
+calls off that request alone. One asked as the component first draws, from a ref on its own markup,
+waits for its render as any other does.
+
+#### A request as its component unmounts
+
+A request still waiting when the component unmounts, or when an `Activity` hides it, is made then,
+with where focus was read as it was asked, so a row that asks for focus on the next as its press
+removes it moves focus there, at once, after an await, from a timer or in a transition. Nothing at
+unmount calls a request off, only what it returned or a newer request, and it lands only where focus
+is still where it was or has fallen to the page's body, so a visitor who moved on keeps their place.
+React tells the hook nothing of which update unmounted the component, so a request in a transition
+an urgent update overtook lands before the transition draws, and goes to its fallbacks where the
+transition draws its target.
+
+A request asked after the component has gone, as a panel that closes itself and then asks after an
+await, waits a frame and is made then, taking focus only from the page's body, whatever `from` it
+was given, and only where its target is in sight, so a visitor already on the next screen is left
+where they are. It still finds an id in the root where focus was as it was asked, or where the
+`from` it was given is. Focus has most often fallen to the page's body by then, so a widget drawn
+inside a shadow root passes `from`, an element still in that root, to find its own control, and with
+no `from` an id is found there only while focus is still in that root. One whose target an
+`Activity` hides with the component is held until the component shows, and is made then.
+
+#### Focus on arrival
+
+`useArrivalFocus(key)` returns a ref for a view's heading, gives the heading a tabindex of -1 where
+it has none, and focuses it when the key changes, such as the round on screen, and when the view is
+first drawn by a visitor's press on a button or a link, or a submit, as a tab bar's view is. A first
+draw takes nothing as the page first draws, after a key that moves or types, such as Tab or an arrow
+along a row of tabs, after a press on nothing or on a control that is off, or more than five seconds
+after the press, as a view a poll brings. A row of tabs' panels take no focus on arrival, since a
+tab keeps focus as its panel changes, so they leave the hook out.
+
+Views first drawn by one press land together, and the first in the page takes focus, so a view's
+title is heard before a section of it. Focus a view placed itself as it drew, as a field with
+autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on a
+widget's own button there brings focus to the heading.
+
+What decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page
+without React calls as each view draws, and with `changed` as a view already drawn changes on a
+press, which then lands with any view first drawn for that press, so the first in the page still
+takes focus. A view is dropped as a request to `moveFocus` is, and one asked once the page is back
+in sight lands without the views asked before it went. It takes a `signal` as `moveFocus` does: an
+abort calls off a request not yet landed, as the function it returns does, and a signal already
+aborted asks for nothing and leaves the press for another view.
+
+The hook's key is a string, a number or a boolean, compared by value, and changes on a press or a
+submit, never as a visitor chooses in a list or a set of radios, which would move them as they
+choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
