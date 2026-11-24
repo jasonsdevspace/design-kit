@@ -160,12 +160,13 @@ field again, since the same `InputField` rendered to static HTML and attached fr
 the kit's site draws its refused form, is markup nothing draws again, and there the kit draws its
 errors as it does in a page written by hand. So the choice is made where the form is attached.
 `useFormRefusal` requires `invalid` and hands the failures to the page, and `attachForm` without it
-draws them itself. A stepper's range error that shows is the kit's in a React form too, as record 21
-has it. A mark on every React field that turned the kit's drawing off was weighed and rejected,
-since it turned it off for static output too, which left the site's form with no errors and focus on
-its button. So was an observer that put the kit's error back after each React render while a refusal
-stood, since it could not put back a hint React inserts without moving React's nodes, and following
-React as it cleared its error would leave a value the browser still refuses with no error shown.
+draws them itself. An attached stepper's failing error is the kit's in a React form too, for every
+failure it holds, so the page is handed nothing to draw on it, as record 21 has it. A mark on every
+React field that turned the kit's drawing off was weighed and rejected, since it turned it off for
+static output too, which left the site's form with no errors and focus on its button. So was an
+observer that put the kit's error back after each React render while a refusal stood, since it could
+not put back a hint React inserts without moving React's nodes, and following React as it cleared
+its error would leave a value the browser still refuses with no error shown.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.
