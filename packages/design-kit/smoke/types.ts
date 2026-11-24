@@ -11,6 +11,7 @@ import {
     StatusLine,
     StepperField,
     TextareaField,
+    ValueField,
     type ArrivalKey,
     type FocusAfterDraw,
     type ProgressProps,
@@ -185,6 +186,15 @@ export const noteField = TextareaField({ ref: createRef<HTMLTextAreaElement>(), 
 
 // @ts-expect-error A textarea field's ref is the textarea drawn, not some other element.
 export const wrongNote = TextareaField({ ref: createRef<HTMLInputElement>(), label: 'Note' });
+
+// A value's ref is the textarea drawn, and it is read only and one row by its nature.
+export const roundValue = ValueField({ ref: createRef<HTMLTextAreaElement>(), label: 'Round' });
+
+// @ts-expect-error A value's ref is the textarea drawn, not some other element.
+export const wrongValue = ValueField({ ref: createRef<HTMLInputElement>(), label: 'Round' });
+
+// @ts-expect-error A value is read only by its nature, so it takes no readOnly.
+export const editableValue = ValueField({ label: 'Round', readOnly: false });
 
 // @ts-expect-error An input field's ref is the input drawn, not some other element.
 export const wrongField = InputField({ ref: createRef<HTMLSelectElement>(), label: 'Name' });

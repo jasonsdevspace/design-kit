@@ -687,11 +687,16 @@ color and is told apart by its words.
 ```html
 <div class="dk-field">
     <label class="dk-field-label" for="round" id="round-label">Round</label>
-    <input class="dk-input" readonly="" id="round" value="Round 3 of 10" />
+    <textarea class="dk-textarea dk-value" rows="1" readonly="" id="round">Round 3 of 10</textarea>
+</div>
+<div class="dk-field">
+    <label class="dk-field-label" for="score" id="score-label">Score</label>
+    <input class="dk-input" readonly="" id="score" value="42" />
 </div>
 <div class="dk-field">
     <label class="dk-field-label" for="game" id="game-label">Game</label>
-    <input class="dk-input" readonly="" id="game" value="Wizard" />
+    <textarea class="dk-textarea dk-value" rows="1" readonly="" id="game">
+Wizard, the card game of tricks and bids</textarea>
     <input type="hidden" name="game" value="wizard" />
 </div>
 <div class="dk-field">
@@ -728,20 +733,25 @@ color and is told apart by its words.
 
 A value a visitor should read but not change, such as a saved round's total or a setting fixed for
 this game, is read only, `readOnly` on the field. It stays in the tab order, so a keyboard reaches
-it and a screen reader reads it, and its words can be copied. It keeps its edge's width, drawn
-clear on a clear ground with its text in the page's color, so it lines up with the fields beside it
-and reads as a value, while a field that can be changed keeps its edge and its well. In forced
-colors its edge takes the ground's color. A select has no read-only state, so a read-only
-`SelectField` draws a read-only field with the chosen option's words, and a hidden field carries
-its value, so the form still sends it, and it is read only for the page rather than for a moment,
-since turning it on or off draws a new control. A read-only stepper shows its value alone, its
-buttons hidden while the field is read only, and with both hidden its figures start where a
-read-only field's words start, at a field's height, so it keeps the edge of a column of read-only
-values, in a browser with `:has()`. Without it the figures stay centered. A tall one keeps the
-larger target. An inline stepper's value sits at its row's end, after its label, with no column to
-line up with, so it keeps its centered figures. A read-only value stands as tall as one that can be
-changed, at every width. A stepper is read only for the page, as a setting fixed for the game is,
-since hiding its buttons changes its row.
+it and a screen reader reads it, and its words can be copied. It keeps its edge's width, drawn clear
+on a clear ground with its text in the page's color, so it lines up with the fields beside it and
+reads as a value, while a field that can be changed keeps its edge and its well. In forced colors
+its edge takes the ground's color. A value of words is a `ValueField`, which wraps and shows whole
+where the browser sizes a field to its content, as the next section says. A read-only `InputField`
+is one line and cuts off what runs past its edge, so it is for a short figure, such as a score, or
+for a field held read only for a moment while it saves, which keeps its place and its height as it
+turns. A select has no read-only state, so a read-only `SelectField` draws the chosen option's words
+as a value, as `ValueField` draws one, so a long option wraps rather than being cut off, and a
+hidden field carries its value, so the form still sends it. Enter in it does not submit the form, as
+Enter in a field of one line would. It is read only for the page rather than for a moment, since
+turning it on or off draws a new control. A read-only stepper shows its value alone, its buttons
+hidden while the field is read only, and with both hidden its figures start where a read-only
+field's words start, at a field's height, so it keeps the edge of a column of read-only values, in a
+browser with `:has()`. Without it the figures stay centered. A tall one keeps the larger target. An
+inline stepper's value sits at its row's end, after its label, with no column to line up with, so it
+keeps its centered figures. A read-only value stands as tall as one that can be changed, at every
+width. A stepper is read only for the page, as a setting fixed for the game is, since hiding its
+buttons changes its row.
 
 A button that can do nothing for now is off, `aria-disabled`, kept in the tab order with the reason
 beside it. `aria-disabled` does not stop typing in a field, so a field held for a moment is read
@@ -752,6 +762,48 @@ whose field turns read only while a button has focus keeps that button, marked o
 where it stood, the other button keeping its room out of sight in a browser with `:has()`, until
 focus leaves it, so focus is never dropped and nothing moves under it. A stepper in the middle of a
 save is busy, not read only.
+
+#### A value of words
+
+<!-- example: valueField -->
+
+```html
+<div class="dk-field">
+    <label class="dk-field-label" for="dealer" id="dealer-label">Dealer</label>
+    <p class="dk-field-hint" id="dealer-hint">Chosen for this round</p>
+    <textarea
+        class="dk-textarea dk-value"
+        rows="1"
+        readonly=""
+        id="dealer"
+        aria-describedby="dealer-hint"
+    >
+Ann deals, and Ben keeps the score</textarea>
+</div>
+```
+
+A value of words a visitor reads but cannot change, such as who deals this round, is a `ValueField`:
+a read-only textarea with `dk-value` and one row, which the kit sizes to its value. Words that run
+past the field's width wrap and show whole, at 320 wide with twice the text size and wider spacing
+too, where a read-only field of one line cuts them off. A value of one line stands as tall as a
+field beside it, its words level with the field's. It is drawn as every read-only field is, its edge
+clear and its text in the page's color, and it stays in the tab order with words that can be copied.
+A screen reader may call it a text area where it calls a field of one line a text field. It is read
+only for the page, with no `readOnly` to turn off, and Enter in it does not submit the form. A
+browser that cannot size a field to its content, Firefox before 152 and Safari before 26.2, draws it
+one field tall, and a long value scrolls inside it, and on a desktop browser it can be dragged
+taller by its handle.
+
+```tsx
+<ValueField
+    label="Dealer"
+    hint="Chosen for this round"
+    defaultValue="Ann deals, and Ben keeps the score"
+/>
+```
+
+A `ValueField` takes an `action` as `InputField` does, and the value keeps the room the button
+leaves in its row.
 
 #### A field with a button
 
@@ -1507,18 +1559,19 @@ Every other prop goes to the `<button>`, `ref` and `className` included, except 
 button does not submit. Other handlers, for keys or a pointer, still run, so they must check `off`
 themselves.
 
-**`InputField`, `SelectField` and `TextareaField` props**
+**`InputField`, `SelectField`, `TextareaField` and `ValueField` props**
 
-| `InputField`, `SelectField`, `TextareaField` | Default         | What it does                                                                                               |
-| -------------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
-| `label`                                      | required        | Names the control                                                                                          |
-| `hint`                                       | none            | Drawn when it holds something, and read as a description                                                   |
-| `error`                                      | none            | Drawn when it holds something, and marks the control invalid                                               |
-| `id`                                         | from `useId`    | The control's id. Set it when something else links to the field                                            |
-| `action`                                     | none            | Drawn after the control in a `dk-field-action` row, on `InputField` and `SelectField`                      |
-| `mark`                                       | none            | `'required'` or `'optional'`, drawn in words in the label, apart from the native `required`                |
-| `markWords`                                  | the kit's words | The mark's words in place of the kit's, as in another language                                             |
-| `readOnly`                                   | `false`         | On `SelectField`, draws a read-only field with the chosen option's words and a hidden field for each value |
+| `InputField`, `SelectField`, `TextareaField`, `ValueField` | Default         | What it does                                                                                        |
+| ---------------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------- |
+| `label`                                                    | required        | Names the control                                                                                   |
+| `hint`                                                     | none            | Drawn when it holds something, and read as a description                                            |
+| `error`                                                    | none            | Drawn when it holds something, and marks the control invalid                                        |
+| `id`                                                       | from `useId`    | The control's id. Set it when something else links to the field                                     |
+| `action`                                                   | none            | Drawn after the control in a `dk-field-action` row, on `InputField`, `SelectField` and `ValueField` |
+| `mark`                                                     | none            | `'required'` or `'optional'`, drawn in words in the label, apart from the native `required`         |
+| `markWords`                                                | the kit's words | The mark's words in place of the kit's, as in another language                                      |
+| `readOnly`                                                 | `false`         | On `SelectField`, draws the chosen option's words as a value and a hidden field for each value      |
+| `rows`, `cols`, `readOnly`                                 | none            | Not taken by `ValueField`, which is one row, sized to its value, and read only for the page         |
 
 Every other prop goes to the control, `ref` and `className` included, except `style`, `aria-invalid`
 and `action`, which the field draws beside the control. A select field's children are its options,
@@ -4130,13 +4183,13 @@ control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`
 ### `@jasonsdevspace/design-kit/react`
 
 It holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`, `SelectField`,
-`TextareaField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`, `CopyButton`,
-`StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and `StatusProvider`, a props type
-for each named after it, such as `ButtonProps`, the hooks `useStatus()`, `useFocusAfterDraw()`,
-`useArrivalFocus()`, `useRoving()`, `useFormRefusal()`, `useBusy()` and `useProgress()`, the
-`FocusAfterDraw` and `ArrivalKey` types they use, the `Choice` and `CalloutTone` types a page writes
-a choice or a tone with, and the URLs the chrome links, `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and
-`GITHUB_PROFILE_URL`.
+`TextareaField`, `ValueField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
+`CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and `StatusProvider`,
+a props type for each named after it, such as `ButtonProps`, the hooks `useStatus()`,
+`useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`, `useBusy()` and
+`useProgress()`, the `FocusAfterDraw` and `ArrivalKey` types they use, the `Choice` and
+`CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
+`PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ### `@jasonsdevspace/design-kit/vite`
 

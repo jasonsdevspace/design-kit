@@ -888,9 +888,17 @@
         min-width: 0;
     }
 
-    :where(.dk-field-action > :is(.dk-input, .dk-select)) {
+    :where(.dk-field-action > :is(.dk-input, .dk-select, .dk-value)) {
         flex: 1 1 10rem;
         min-width: 0;
+    }
+
+    /*
+     * A value stands at its own height in the middle of the row, so its line stays level with the
+     * button's words where they take two lines, as an input's centered line does.
+     */
+    :where(.dk-field-action > .dk-value) {
+        align-self: center;
     }
 
     /* The button keeps its words' width, and wraps them where even its own row is too narrow. */
@@ -955,6 +963,24 @@
     }
 
     /*
+     * A value of words a visitor reads but cannot change, as tall as its value where the browser
+     * sizes a field to its content, so words that run past its width wrap and show whole, with
+     * nothing to resize. Its block padding centers one line in a field's height, so a value of one
+     * line stands as tall as a read-only field beside it with its words level. Where the browser
+     * cannot size it, its one row is a field's height and a long value scrolls inside it.
+     */
+    :where(.dk-textarea.dk-value) {
+        padding-block: max(var(--dk-space-1), (var(--dk-field-height) - 1lh) / 2 - 1px);
+    }
+
+    @supports (field-sizing: content) {
+        :where(.dk-textarea.dk-value) {
+            field-sizing: content;
+            resize: none;
+        }
+    }
+
+    /*
      * The browser's own list opens, but the closed select is drawn here, so its caret is in the
      * muted text and sits as far from the right edge as the text does from the left. The padding
      * keeps a long value short of the caret, cut off with an ellipsis where the browser draws one.
@@ -1010,6 +1036,10 @@
         :where(.dk-input, .dk-select, .dk-textarea) {
             min-height: var(--dk-target);
         }
+
+        :where(.dk-textarea.dk-value) {
+            padding-block: max(var(--dk-space-1), (var(--dk-target) - 1lh) / 2 - 1px);
+        }
     }
 
     :where(
@@ -1023,6 +1053,19 @@
             :is(.dk-input, .dk-select, .dk-textarea)
     ) {
         min-height: var(--dk-target);
+    }
+
+    :where(
+        :is(
+                .dk-app,
+                .dk-tabbar-page,
+                :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *) ~ .dk-dialog,
+                .dk-dialog:has(~ :is(.dk-app, .dk-tabbar-page):not(.dk-picture, .dk-picture *)),
+                .dk-dialog-app
+            )
+            .dk-textarea.dk-value
+    ) {
+        padding-block: max(var(--dk-space-1), (var(--dk-target) - 1lh) / 2 - 1px);
     }
 
     /*

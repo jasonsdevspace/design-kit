@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { InputField, StepperField } from '../src/react.js';
+import { InputField, StepperField, ValueField } from '../src/react.js';
 import {
     box,
     KIT,
@@ -939,7 +939,8 @@ const inkStart = async (page: Page, locator: Locator): Promise<number> => {
 const READ_ONLY = renderToStaticMarkup(
     <main>
         <h1>Round 3</h1>
-        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <InputField id="score" label="Score" defaultValue="42" readOnly />
+        <ValueField id="dealer" label="Dealer" defaultValue="Ann deals" />
         <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
         <StepperField id="seats" label="Seats" min={2} max={8} defaultValue={4} readOnly tall />
         <StepperField id="deals" label="Deals" min={1} max={10} defaultValue={3} />
@@ -995,7 +996,7 @@ test("lines a read-only stepper's value up with a read-only field's, at a field'
     for (const size of sizes) {
         const at = `${String(size.width)} at ${String(size.scale)}x${size.app ? ' in an app' : ''}`;
         await openReadOnly(page, size);
-        const field = page.locator('#round');
+        const field = page.locator('#score');
         const value = page.locator('#cards');
         const [fieldBox, valueBox] = [await box(field), await box(value)];
         expect.soft(valueBox.x, at).toBeCloseTo(fieldBox.x, 0);
@@ -1005,6 +1006,14 @@ test("lines a read-only stepper's value up with a read-only field's, at a field'
         // figure.
         expect.soft(Math.abs(valueInk - fieldInk), at).toBeLessThanOrEqual(2);
         expect.soft(valueBox.height, at).toBeCloseTo(fieldBox.height, 0);
+        // A value of words beside them starts its words where the field does, at its height. A
+        // letter and a figure leave a pixel or so of different room before themselves, by face.
+        const words = page.locator('#dealer');
+        expect.soft((await box(words)).x, `${at}, words`).toBeCloseTo(fieldBox.x, 0);
+        expect
+            .soft(Math.abs((await inkStart(page, words)) - fieldInk), `${at}, words`)
+            .toBeLessThanOrEqual(2);
+        expect.soft((await box(words)).height, `${at}, words`).toBeCloseTo(fieldBox.height, 0);
         // An inline stepper's value sits at its row's end, after its label, with no column of
         // values to line up with, so a read-only one keeps an editable value's centered figures
         // and its height.
@@ -1026,7 +1035,7 @@ test("keeps a tall read-only stepper's larger target, its figures at a field's p
 }) => {
     for (const width of [390, 1280]) {
         await openReadOnly(page, { width });
-        const field = page.locator('#round');
+        const field = page.locator('#score');
         const value = page.locator('#seats');
         expect.soft((await box(value)).height, String(width)).toBeCloseTo(56, 0);
         const [fieldInk, valueInk] = [await inkStart(page, field), await inkStart(page, value)];

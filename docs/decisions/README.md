@@ -134,3 +134,9 @@ costs, and the test behind it.
     marking a frame with `data-toast-rows`, a dialog told by the frame it sits in or beside or by
     `dk-dialog-app`, and why a property the root sets, a sibling `:has()`, a class on each subject
     and the body's own padding were turned down.
+28. [A read-only value of words is a textarea the kit sizes to its
+    value](0028-a-read-only-value-of-words-is-a-textarea-the-kit-sizes-to-its-value.md):
+    `ValueField` and a read-only select drawing a read-only textarea with `dk-value`, one row, as
+    tall as its words where the browser sizes a field to its content and one field tall where it
+    cannot, its first line level with a read-only field's, and why a read-only input, a selector
+    keyed on `[readonly]` and one keyed on `[rows='1']` were turned down.

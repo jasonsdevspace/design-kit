@@ -331,7 +331,19 @@ export const CONTROLS: readonly Control[] = [
                 name: 'Values to read but not change',
                 attribute: 'readonly',
                 react: `<>
-    <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+    <div className="dk-field">
+        <label className="dk-field-label" htmlFor="round" id="round-label">
+            Round
+        </label>
+        <textarea
+            className="dk-textarea dk-value"
+            rows={1}
+            readOnly
+            id="round"
+            defaultValue="Round 3 of 10"
+        />
+    </div>
+    <InputField id="score" label="Score" defaultValue="42" readOnly />
     <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
         <option value="flip-7">Flip 7</option>
         <option value="wizard">Wizard</option>
@@ -340,12 +352,26 @@ export const CONTROLS: readonly Control[] = [
 </>`,
                 draw: ({ InputField, SelectField, StepperField }, id) => (
                     <>
-                        <InputField
-                            id={id('round')}
-                            label="Round"
-                            defaultValue="Round 3 of 10"
-                            readOnly
-                        />
+                        {/* The value written as the markup ValueField draws, which the version
+                            the site pins may not have, and the game's option short, which that
+                            version's read-only select draws on one line. */}
+                        <div className="dk-field">
+                            <label
+                                className="dk-field-label"
+                                htmlFor={id('round')}
+                                id={`${id('round')}-label`}
+                            >
+                                Round
+                            </label>
+                            <textarea
+                                className="dk-textarea dk-value"
+                                rows={1}
+                                readOnly
+                                id={id('round')}
+                                defaultValue="Round 3 of 10"
+                            />
+                        </div>
+                        <InputField id={id('score')} label="Score" defaultValue="42" readOnly />
                         <SelectField
                             id={id('game')}
                             name={id('game')}

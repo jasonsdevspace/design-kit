@@ -32,6 +32,7 @@ export const VALUE_EXPORTS = {
         'useProgress',
         'useRoving',
         'useStatus',
+        'ValueField',
     ],
     '@jasonsdevspace/design-kit/theme': ['THEME_CHOICES', 'THEMES', 'THEME_KEY', 'themeScript'],
     '@jasonsdevspace/design-kit/controls': [

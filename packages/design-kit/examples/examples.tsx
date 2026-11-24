@@ -18,6 +18,7 @@ import {
     TextareaField,
     ThemeSwitch,
     Toast,
+    ValueField,
 } from '../src/react.js';
 import * as pieces from './pieces.js';
 
@@ -165,16 +166,30 @@ export const fieldMarks: ReactElement = (
     </>
 );
 
-/** Values a visitor reads but cannot change: a text field, a select and a stepper, read only. */
+/**
+ * Values a visitor reads but cannot change: a value of words, a short figure in a text field, a
+ * select whose chosen option's words are long, and a stepper, each read only.
+ */
 export const readOnlyFields: ReactElement = (
     <>
-        <InputField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+        <ValueField id="round" label="Round" defaultValue="Round 3 of 10" />
+        <InputField id="score" label="Score" defaultValue="42" readOnly />
         <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
             <option value="flip-7">Flip 7</option>
-            <option value="wizard">Wizard</option>
+            <option value="wizard">Wizard, the card game of tricks and bids</option>
         </SelectField>
         <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
     </>
+);
+
+/** A value of words a visitor reads but cannot change, with a hint. */
+export const valueField: ReactElement = (
+    <ValueField
+        id="dealer"
+        label="Dealer"
+        hint="Chosen for this round"
+        defaultValue="Ann deals, and Ben keeps the score"
+    />
 );
 
 /** A text field with a hint and an error, a select with neither, and a textarea with a hint. */
@@ -1110,6 +1125,7 @@ export const EXAMPLES = {
     fields,
     fieldMarks,
     readOnlyFields,
+    valueField,
     fieldAction,
     fieldsRow,
     choiceField,
