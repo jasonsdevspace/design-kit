@@ -1,10 +1,19 @@
-import type { AttachOptions } from './controls.js';
-
 /*
  * How an attach takes itself down, kept in one place so each attach keeps record 22's contract,
  * and record 23's holders, the same way rather than with flags of its own. No entry of the package
  * exports this module, so a page never reaches it.
  */
+
+/**
+ * How a page takes a piece down with an `AbortSignal`, as records 22 and 23 have it. Each signal an
+ * attach of the element is given holds the piece, and once every one of them has aborted, the piece
+ * is taken down a microtask later, as its detach takes it down at once. An attach of the same
+ * element before then keeps the piece as it was, so a page that aborts and attaches again in one
+ * task, as a ref made afresh on every render does, keeps it, and one that attaches after a
+ * microtask starts afresh. Attached again, a piece returns what its attach returned first and runs
+ * on the options of its newest holder. A signal already aborted does nothing.
+ */
+export type AttachOptions = { readonly signal?: AbortSignal | undefined };
 
 /**
  * What an attach takes down when it is let go. Its listeners take `signal`, so they come off

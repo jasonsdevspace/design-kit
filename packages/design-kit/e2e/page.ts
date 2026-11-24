@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { type BrowserContext, type Clock, expect, type Locator, type Page } from '@playwright/test';
 import ts from 'typescript';
@@ -65,6 +65,16 @@ export const js = (file: string): string =>
     ts.transpileModule(readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8'), {
         compilerOptions: { target: ts.ScriptTarget.ES2023, module: ts.ModuleKind.ESNext },
     }).outputText;
+
+/**
+ * Every module of the controls, the entry and each internal module it gathers, as a browser loads
+ * them, by the path the entry imports them from, so a module added to the controls is served too.
+ */
+const MODULES: Readonly<Record<string, readonly [string, string]>> = Object.fromEntries(
+    readdirSync(new URL('../src/', import.meta.url))
+        .filter((file) => /^[a-z-]+\.ts$/.test(file))
+        .map((file) => [`/${file.replace(/\.ts$/, '.js')}`, [js(file), 'text/javascript'] as const])
+);
 
 /** A sheet of the kit's, as the source has it. */
 export const sheet = (name: string): string =>
@@ -133,17 +143,7 @@ export const servePage = async (
 ): Promise<void> => {
     const files: Readonly<Record<string, readonly [string, string]>> = {
         '/kit.css': [`${KIT}${css}`, 'text/css'],
-        '/controls.js': [js('controls.ts'), 'text/javascript'],
-        // The controls import the theme's names from it.
-        '/theme.js': [js('theme.ts'), 'text/javascript'],
-        // The controls keep each status line's state and speech in it.
-        '/line.js': [js('line.ts'), 'text/javascript'],
-        // The controls take each attach down through it.
-        '/teardown.js': [js('teardown.ts'), 'text/javascript'],
-        // The controls and their words find a piece's parts through it.
-        '/find.js': [js('find.ts'), 'text/javascript'],
-        // The controls take the kit's words for a failure from it.
-        '/words.js': [js('words.ts'), 'text/javascript'],
+        ...MODULES,
         ...(script === undefined ? {} : { '/page.js': [script, 'text/javascript'] as const }),
     };
     const html =

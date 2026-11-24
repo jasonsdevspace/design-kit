@@ -1,4 +1,14 @@
-import { byId, CHOICE, fieldOf, idsOf, rootOf } from './find.js';
+import { byId, CHOICE, fieldOf, idsOf, isOff } from './find.js';
+import {
+    activeIn,
+    activeOf,
+    focusedNow,
+    handBack,
+    holds,
+    homeOf,
+    mayHandBack,
+    type MoveFocusOptions,
+} from './focus.js';
 import {
     claimLine,
     hush,
@@ -11,7 +21,9 @@ import {
     type Spoken,
     unsay,
 } from './line.js';
-import { join, keep, type Kept, teardown } from './teardown.js';
+import { moveFocus } from './request.js';
+import { type CheckedForm, checkedForms, type Checker, formSteppers, restoring } from './state.js';
+import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 import { type Checked, KIT_WORDS } from './words.js';
 
@@ -33,451 +45,12 @@ import { type Checked, KIT_WORDS } from './words.js';
  * style it did not serve.
  */
 
+export { activeOf, type FocusTarget, type MoveFocusOptions } from './focus.js';
+export { type ArrivalOptions, focusOnArrival, moveFocus } from './request.js';
+export type { AttachOptions } from './teardown.js';
+
 const isChoice = (value: string | null): value is ThemeChoice =>
     THEME_CHOICES.some((choice) => choice === value);
-
-/** What has focus, or null where nothing does and the page's body stands in for it. */
-const focusedNow = (): Element | null => {
-    const active = activeOf();
-    return active === document.body ? null : active;
-};
-
-/** Whether a control is marked off, kept in the tab order to say why rather than to act. */
-const isOff = (control: Element | undefined): boolean =>
-    control?.getAttribute('aria-disabled') === 'true';
-
-/**
- * Whether a node is the place or inside it, through the shadow trees it holds and the slots a node
- * is drawn in, so a control slotted into a piece drawn inside a shadow root counts as in it.
- */
-const holds = (place: Element, node: Node | null): boolean => {
-    let inside = node;
-    while (inside && inside !== place)
-        inside =
-            (inside as Partial<Element>).assignedSlot ??
-            inside.parentNode ??
-            (inside as Partial<ShadowRoot>).host ??
-            null;
-    return !!inside;
-};
-
-/** A place focus may be handed to, or a function that gives more of them when it is reached. */
-type Place = Element | null | undefined | (() => readonly Element[]);
-
-/**
- * Tries one place of a walk: true where it took focus, false where a page's own listener moved
- * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
- * that takes focus or refused it, so the walk goes on.
- */
-const tryFocus = (place: Element | null | undefined): boolean | undefined => {
-    if (
-        !(place instanceof HTMLElement || place instanceof SVGElement) ||
-        !place.isConnected ||
-        place === document.body
-    )
-        return undefined;
-    const before = focusedNow();
-    place.focus({ preventScroll: place.matches('.dk-app-body') });
-    const now = focusedNow();
-    if (holds(place, now) && (now !== before || place === before)) return true;
-    return now && now !== before ? false : undefined;
-};
-
-/**
- * Focuses the first of the elements given that takes focus, an HTML control or an SVG one such as a
- * link in an inline chart, so focus never falls to nowhere while a place for it is named. One gone
- * from the page is skipped, and one that is hidden, inert or disabled is passed over as the browser
- * refuses it focus. A control marked off is left out only where a caller checks for it, as a panel
- * does for its buttons and a focus request for its target, so the toast and the dialog hand focus
- * to one. Focus that moves onto a place or inside it, in a shadow tree it holds or on a control
- * slotted into it too, as a host that delegates focus or a widget that forwards it, counts as
- * taken, as does a place that has focus already, while a place that refuses focus is passed over
- * though focus is inside it. Where a page's own listener moves focus elsewhere as one is tried, the
- * walk stops and that focus stays. A function among the places gives more of them, and is called
- * only once every place before it has refused focus, so places that cost a search of the page are
- * looked for only where they are needed, in the same walk.
- */
-const focusFirst = (...places: readonly Place[]): boolean => {
-    for (const given of places)
-        // An element is never called, though an object or an embed is a function to some
-        // browsers.
-        for (const place of typeof given === 'function' && !(given instanceof Element)
-            ? given()
-            : [given]) {
-            const took = tryFocus(place);
-            if (took !== undefined) return took;
-        }
-    return false;
-};
-
-/**
- * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
- * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
- * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. The
- * toast, the dialog and the panels hand focus back by this one rule. The stepper does not use it,
- * and hands focus back only where focus is on one of the buttons it hides.
- */
-const mayHandBack = (piece: Element, had: boolean): boolean => {
-    const active = focusedNow();
-    return active ? holds(piece, active) : had;
-};
-
-/** The element the kit last handed focus back to as a piece closed or left, and when. */
-let handedTo: Element | null = null;
-let handedAt = 0;
-
-/**
- * For each attached dialog, what had focus as it opened, which the browser hands focus back to as
- * the dialog closes, ahead of the close event. Kept until the dialog's close is handled or it is
- * taken down, until a request lands while focus is there, or until a request finds the dialog gone
- * from the page.
- */
-const restoring = new Map<HTMLDialogElement, Element>();
-
-/**
- * Hands focus back to the first of the places given that takes it, as `focusFirst` does, and keeps
- * the place it focused, so a request asked before it finds that focus free and not the visitor's.
- * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
- * Returns whether it focused a place.
- */
-const handBack = (...places: readonly Place[]): boolean => {
-    if (!focusFirst(...places)) return false;
-    handedTo = activeOf();
-    handedAt = performance.now();
-    return true;
-};
-
-/** Where focus is asked to go: an element, an element's id, one found as focus moves, or nothing. */
-export type FocusTarget = Element | string | (() => Element | null) | null | undefined;
-
-/** Where focus goes when nothing nearer takes it, the app frame's body or the main content. */
-const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-    rootOf(element).querySelector('main') ??
-    document.querySelector('main');
-
-/**
- * How focus is moved after a change, and the signal that calls the request off. A request asked as
- * its component unmounts is meant to land, as record 20 has it, so it is given no signal that the
- * same unmount aborts.
- */
-export type MoveFocusOptions = AttachOptions & {
-    /** Where focus goes, in order, when the target is gone, hidden, inert, disabled or off. */
-    readonly fallbacks?: readonly FocusTarget[] | undefined;
-    /**
-     * Where focus was when the change was asked for, for a request made after the change began,
-     * such as from an effect, so focus a view placed as it drew is not taken for the visitor's.
-     */
-    readonly from?: Element | null | undefined;
-};
-
-/**
- * What has focus, followed into each shadow root that holds it, as a request reads where focus was
- * when it was asked for.
- */
-export const activeOf = (): Element | null => activeIn(document) ?? null;
-
-/** What has focus in the document or shadow root given, followed into each shadow root. */
-const activeIn = (root: DocumentOrShadowRoot | null | undefined): Element | null | undefined => {
-    let active = root?.activeElement;
-    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-    return active;
-};
-
-/**
- * A place to focus, or nothing where it is an id with no element yet or a control marked off. An id
- * is looked for in the root of the element given, as where focus was when it was asked for.
- */
-const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
-    const place =
-        typeof target === 'string'
-            ? byId(near, target)
-            : typeof target === 'function'
-              ? target()
-              : (target ?? null);
-    return place && !isOff(place) ? place : null;
-};
-
-/**
- * How many times the page has gone out of sight or come back, the rule for which request is
- * dropped. A browser runs no frame while the page is out of sight, so a request that sees this
- * change before its frame was waiting while the visitor was away, and is dropped so focus does not
- * jump when they come back. The page is told it is going before it stops drawing, so a request
- * whose frame the browser runs on the way back, before it tells the page, is dropped too.
- */
-let sightChanges = 0;
-
-/**
- * How late a frame may come before its request is dropped, in milliseconds, a backstop for a frame
- * held back with the page in sight, as a browser holds a frame out of view with no event. It is
- * far past any render, since a render held past it on a page in sight would lose its request and
- * leave focus where a removed control left it, on the page's body.
- */
-const STALE = 10_000;
-
-/**
- * When a request was asked, and how many times the page had gone out of sight or come back by
- * then, or NaN, which matches no count, where the page was out of sight as it was asked.
- */
-type Asked = { readonly at: number; readonly sight: number };
-
-/**
- * The moment a request is asked. One asked out of sight is dropped whichever comes first as the
- * page comes back, its frame or the event that counts the return.
- */
-const askedNow = (): Asked => ({
-    at: performance.now(),
-    sight: document.hidden ? NaN : sightChanges,
-});
-
-/** Whether a request may still land, in sight and unchanged since it was asked, and in time. */
-const live = (asked: Asked) =>
-    !document.hidden && sightChanges === asked.sight && performance.now() - asked.at <= STALE;
-
-/**
- * Focuses a request's target or a fallback, where focus is still where it was, or where the kit has
- * handed it back since the request was asked, and the request is live.
- */
-const land = (
-    target: FocusTarget,
-    fallbacks: readonly FocusTarget[] | undefined,
-    from: Element | null,
-    asked: Asked
-) => {
-    if (!live(asked)) return;
-    const now = focusedNow();
-    // A dialog taken from the page with no takedown hands nothing back, so its place goes.
-    for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
-    // Focus on what had it as a dialog opened is free while that dialog is closed and its close
-    // not yet handled, since the browser put it there as the dialog closed. A request that lands
-    // takes that place from the dialog, so its close event leaves focus where the request put it.
-    const restored = [...restoring].filter(([dialog, to]) => to === now && !dialog.open);
-    if (now && now !== from && (now !== handedTo || handedAt < asked.at) && !restored[0]) return;
-    const place = placeOf(target, from);
-    if (
-        focusFirst(
-            place,
-            ...(fallbacks ?? []).map((fallback) => placeOf(fallback, from)),
-            homeOf(place ?? from ?? document.body)
-        )
-    )
-        for (const [dialog] of restored) restoring.delete(dialog);
-};
-
-/**
- * Moves focus to a control once a change is drawn, such as the field a refusal points at or the
- * next player's entry, and returns what calls it off before it lands, as its `signal` does a
- * microtask after it aborts, which is still before the frame the request waits for. It waits for
- * the next frame, so a page that draws the control in answer to the same press or key has drawn it,
- * and finds an id then. A change React draws later, in a transition or behind a suspense, asks from
- * an effect once it is drawn. Where the target is gone from the page, hidden, inert, disabled or
- * off, focus goes to the first fallback that takes it, and then to the app frame's body or the
- * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
- * page. Focus a visitor has moved since the request is left where they put it: focus is free only
- * while it is where it was when asked, on the page's body, or where the kit has handed it back
- * since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down, or on
- * what the browser hands it to as a dialog closes, until the dialog's close is handled. A request
- * made while the page is out of sight, or before it goes, is dropped, so focus does not jump when
- * the visitor comes back, and so is one whose frame comes more than ten seconds late, while one a
- * long render holds on a page in sight for less still lands. Each request is new, so a control
- * asked for twice is focused twice.
- */
-export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
-    // Aborting calls off a request that has not landed, as the function it returns does, and one
-    // already landed is left where it put focus. A signal already aborted asks for nothing.
-    if (options.signal?.aborted) return () => undefined;
-    const down = teardown(options.signal);
-    const from = options.from === undefined ? activeOf() : options.from;
-    const asked = askedNow();
-    const frame = window.requestAnimationFrame(() => {
-        // Stopped as it lands, so a signal the page keeps for longer holds nothing of the request.
-        down.stop();
-        land(target, options.fallbacks, from, asked);
-    });
-    down.add(() => {
-        window.cancelAnimationFrame(frame);
-    });
-    return down.stop;
-};
-
-/** A button or a link by its role, which Enter presses, and Space too but for a link. */
-const ROLE_ACTIVATOR = '[role="button"], [role="link"], [role="menuitem"]';
-/** What a press is made on: a button or a link, native or by its role. */
-const ACTIVATOR = [
-    'button',
-    'a[*|href]',
-    'input[type="button"]',
-    'input[type="submit"]',
-    'input[type="reset"]',
-    'input[type="image"]',
-    'summary',
-    ROLE_ACTIVATOR,
-].join(', ');
-/** Keys that move rather than press. */
-const MOVES = [
-    'Tab',
-    'ArrowUp',
-    'ArrowDown',
-    'ArrowLeft',
-    'ArrowRight',
-    'Home',
-    'End',
-    'PageUp',
-    'PageDown',
-];
-/** How long a press may wait for the view it brings, in milliseconds, as one a slow load brings. */
-const PRESS_LIVES = 5000;
-
-/** Whether an event presses a button or a link that is not off and is not in a row of tabs. */
-const presses = (event: Event): boolean => {
-    if (event.type === 'submit') return true;
-    // The control itself, inside a shadow root too, where the document hears its host instead.
-    const [target] = event.composedPath();
-    if (!(target instanceof Element) || target.closest('[role="tablist"]')) return false;
-    if (event instanceof KeyboardEvent) {
-        const own = target.closest(ROLE_ACTIVATOR);
-        return (
-            own === target &&
-            !isOff(own) &&
-            (event.key === 'Enter' || (event.key === ' ' && own.getAttribute('role') !== 'link'))
-        );
-    }
-    const control = target.closest(ACTIVATOR);
-    return control !== null && !isOff(control);
-};
-
-/**
- * When the visitor's last input was a press on a button or a link, or a submit, that no view has
- * taken focus for, and how many inputs they have made, so a press handed back is not handed back
- * over a later one. A press is any click or submit, a script's among them, so a page's own
- * `click()` and a test's count. A key that moves or types clears it, so a Tab, an arrow along a
- * row of tabs or typing in a field leaves none, as a click on nothing does, while a pointer going
- * down to scroll leaves it. A press on a control that is off or in a row of tabs counts for
- * nothing, since an off control only says why it is off and a tab keeps focus as its panel
- * changes, and Enter or Space on a control of the page's own that is a button or a link by its
- * role counts, since no click follows them.
- */
-let pressedAt: number | null = null;
-let inputs = 0;
-const heard = (event: Event) => {
-    if (event instanceof KeyboardEvent) {
-        if (presses(event)) pressedAt = performance.now();
-        else if (event.key.length === 1 || MOVES.includes(event.key)) pressedAt = null;
-        else return;
-    } else pressedAt = presses(event) ? performance.now() : null;
-    inputs += 1;
-};
-// The one thing the module does as it loads, in a page, so the press that brings a page's first
-// view is heard and a request made before the page went out of sight is known. It notes inputs and
-// each time the page goes out of sight or comes back, and nothing else.
-if (typeof document !== 'undefined') {
-    for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
-    document.addEventListener('visibilitychange', () => {
-        sightChanges += 1;
-    });
-}
-
-/** How a view asks to take focus as it arrives. */
-export type ArrivalOptions = MoveFocusOptions & {
-    /**
-     * Whether the view was drawn before and changed on a press of the page's, as a round that moves
-     * on, so it takes focus whatever the visitor's last input was, and spends the press.
-     */
-    readonly changed?: boolean | undefined;
-};
-
-/** A view asking to take focus for a press. */
-type Arrival = {
-    readonly heading: FocusTarget;
-    readonly from: Element | null;
-    readonly fallbacks: readonly FocusTarget[] | undefined;
-    /** When the view asked, so one asked before the page went out of sight lands nothing. */
-    readonly asked: Asked;
-    /** Calls the view's request off, and lets go of the signal it was given. */
-    readonly stop: () => void;
-};
-/** The views asking for the press now being answered, landed together in one frame. */
-let arriving: {
-    readonly views: Set<Arrival>;
-    readonly frame: number;
-    readonly at: number;
-    readonly press: number | null;
-} | null = null;
-
-/**
- * Moves focus to a view's heading as it is first drawn, as `moveFocus` does, where the visitor's
- * last input was a press on a button or a link, or a submit, in the last five seconds that no view
- * has taken focus for, and returns what calls it off. A view drawn as the page first draws takes
- * nothing, nor one drawn after a key that moves or types, such as Tab or an arrow along a row of
- * tabs, after a press on nothing, on a control that is off or in a row of tabs, or long after the
- * press, as one a poll brings. Views first drawn for the same press land together in one frame, and
- * the one first in the page takes focus, so a view's title is heard before a section of it. A
- * request called off before it lands hands its press back where no input has come since, so a view
- * asked for again, as React asks again in development, takes focus. A view already drawn that
- * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
- * with the views first drawn for the same press, and spends the press. Its `signal` calls the
- * request off as the function it returns does, a microtask after it aborts, as `moveFocus` has it,
- * and a signal already aborted asks for nothing and leaves the press for another view. A view is
- * dropped as a request to `moveFocus` is, and one asked once the page is back in sight lands
- * without the views asked before it went.
- */
-export const focusOnArrival = (
-    heading: FocusTarget,
-    options: ArrivalOptions = {}
-): (() => void) => {
-    // Read before the press, so a signal already aborted spends none.
-    if (options.signal?.aborted) return () => undefined;
-    if (!arriving) {
-        const fresh = pressedAt !== null && performance.now() - pressedAt <= PRESS_LIVES;
-        if (!fresh && !options.changed) return () => undefined;
-        const press = pressedAt;
-        pressedAt = null;
-        const views = new Set<Arrival>();
-        const frame = window.requestAnimationFrame(() => {
-            arriving = null;
-            // Stopped as they land, so a signal the page keeps for longer holds nothing of a view.
-            const asked = [...views];
-            for (const view of asked) view.stop();
-            // A view asked since the page went out of sight or came back lands without the others.
-            const asking = asked.filter((view) => live(view.asked));
-            const places = asking.flatMap((view) => {
-                const place = placeOf(view.heading, view.from);
-                return place?.isConnected ? [{ view, place }] : [];
-            });
-            places.sort((one, other) =>
-                one.place.compareDocumentPosition(other.place) & Node.DOCUMENT_POSITION_PRECEDING
-                    ? 1
-                    : -1
-            );
-            const [first] = places;
-            if (first) land(first.place, first.view.fallbacks, first.view.from, first.view.asked);
-            else {
-                // No heading is there to take focus, so the first view asked goes by its fallbacks.
-                const [view] = asking;
-                if (view) land(view.heading, view.fallbacks, view.from, view.asked);
-            }
-        });
-        arriving = { views, frame, at: inputs, press };
-    }
-    const batch = arriving;
-    const down = teardown(options.signal);
-    const view: Arrival = {
-        heading,
-        from: options.from === undefined ? activeOf() : options.from,
-        fallbacks: options.fallbacks,
-        asked: askedNow(),
-        stop: down.stop,
-    };
-    batch.views.add(view);
-    down.add(() => {
-        batch.views.delete(view);
-        if (batch.views.size > 0 || arriving !== batch) return;
-        window.cancelAnimationFrame(batch.frame);
-        arriving = null;
-        if (inputs === batch.at) pressedAt = batch.press;
-    });
-    return down.stop;
-};
 
 /** The system's scheme, read once a switch is attached, as light where the browser cannot say. */
 let media: MediaQueryList | null | undefined;
@@ -601,16 +174,6 @@ const listen = () => {
  * Each control attached, by its element, one map for each kind so none answers for another.
  */
 const attachedSwitches = new WeakMap<HTMLElement, Kept<() => void>>();
-/**
- * How a page takes a piece down with an `AbortSignal`, as records 22 and 23 have it. Each signal an
- * attach of the element is given holds the piece, and once every one of them has aborted, the piece
- * is taken down a microtask later, as its detach takes it down at once. An attach of the same
- * element before then keeps the piece as it was, so a page that aborts and attaches again in one
- * task, as a ref made afresh on every render does, keeps it, and one that attaches after a
- * microtask starts afresh. Attached again, a piece returns what its attach returned first and runs
- * on the options of its newest holder. A signal already aborted does nothing.
- */
-export type AttachOptions = { readonly signal?: AbortSignal | undefined };
 /** What a copy button reads, which attaching it again replaces, and the signal that holds it. */
 export type CopyOptions = AttachOptions & {
     readonly source: () => HTMLElement;
@@ -1468,15 +1031,6 @@ const stepperParts = (
     if (input.readOnly) return null;
     throw new Error('a stepper needs its two buttons, or a read-only value');
 };
-
-/**
- * What each attached stepper does as its form refuses it or is reset, by its value: it takes back
- * its own words not yet said, so the form's message is the one message, and shows its own error.
- */
-const formSteppers = new WeakMap<Element, (reset: boolean) => void>();
-
-/** The forms the kit checks, each once however many of its parts are attached. */
-const checkedForms = new WeakMap<HTMLFormElement, CheckedForm>();
 
 /** An element's attribute put back as it was, or taken away where it had none. */
 const restore = (element: Element, name: string, value: string | null) => {
@@ -2718,20 +2272,6 @@ const errorFor = (
 export type Refuse = (options?: Pick<MoveFocusOptions, 'from'>) => () => void;
 
 const attachedForms = new WeakMap<HTMLElement, Kept<Refuse, FormOptions>>();
-
-/** What checks a form, and clears what its check drew, from an attach in it. */
-type Checker = {
-    readonly check: (event: SubmitEvent, whole: HTMLFormElement) => void;
-    readonly clear: () => boolean;
-    readonly cleared: () => void;
-};
-
-/** A form the kit checks, with the attaches in it and the marks they set on fields not in error. */
-type CheckedForm = {
-    readonly checkers: Checker[];
-    readonly marks: Set<Element>;
-    readonly stop: () => void;
-};
 
 /** Takes off the marks set on fields not in error, where they still say so. */
 const unmark = (marks: Iterable<Element>) => {

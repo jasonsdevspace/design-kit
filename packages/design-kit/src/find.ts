@@ -1,7 +1,8 @@
 /*
  * How the controls find a piece's parts: the root a node lives in, the element an id names there,
- * the ids an attribute names and the field a control stands for, shared by the controls and the
- * kit's words for a failure. No entry of the package exports this module, so a page never reaches
+ * the ids an attribute names and the field a control stands for, whether a control is off or takes
+ * focus, and the words that name a field, shared by the parts of the controls and the kit's words
+ * for a failure. No entry of the package exports this module, so a page never reaches
  * it.
  */
 
@@ -49,3 +50,7 @@ export const fieldOf = (marked: Element): Element => {
     const set = marked.closest('fieldset');
     return set && holdsOneSet(set) ? set : marked;
 };
+
+/** Whether a control is marked off, kept in the tab order to say why rather than to act. */
+export const isOff = (control: Element | undefined): boolean =>
+    control?.getAttribute('aria-disabled') === 'true';
