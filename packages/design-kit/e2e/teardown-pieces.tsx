@@ -150,13 +150,14 @@ window.pieces = {
     },
     'the toast': {
         attach: (signal) => kit.attachToast($('.dk-toast'), { signal }),
+        // The second message has an action, so the toast listens to the document for F8.
         use: (show) => {
             show('Round 2 saved.');
-            window.dismiss = show('Round 3 saved.');
+            window.dismiss = show('Round 3 saved.', { label: 'Undo', onAction: () => undefined });
         },
         after: (show) => {
             window.dismiss?.();
-            show('Round 4 saved.');
+            show('Round 4 saved.', { label: 'Undo', onAction: () => undefined });
         },
         shows: () => $('.dk-toast-close').hasAttribute('tabindex'),
     },
