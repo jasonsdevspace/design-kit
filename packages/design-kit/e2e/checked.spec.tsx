@@ -933,23 +933,32 @@ for (const [drawn, where] of [
         expect((await bidErrors(page)).drawn).toEqual([RANGE]);
     });
 
-test('hands a page that draws its own errors every failure with the words its field shows, a stepper showing its own among them', async ({
-    page,
-}) => {
-    await openBid(page, { own: true });
-    const bid = page.getByRole('spinbutton', { name: 'Bid' });
-    await bid.fill('99');
-    await bid.press('Enter');
-    const lists = await page.evaluate(() => {
-        const { handed, shown } = window as unknown as { handed: string[]; shown: string[] };
-        return { handed, shown };
+for (const nested of [false, true])
+    test(`hands a page that draws its own errors every failure with the words its field shows, a stepper showing its own among them${nested ? ', its hidden start nested' : ''}`, async ({
+        page,
+    }) => {
+        await openBid(page, { own: true });
+        // The word a screen reader alone is given is left out wherever it sits in the error.
+        if (nested)
+            await page.locator('#bid-range').evaluate((range) => {
+                const hidden = range.querySelector('.dk-visually-hidden');
+                const holder = document.createElement('span');
+                hidden?.replaceWith(holder);
+                if (hidden) holder.append(hidden);
+            });
+        const bid = page.getByRole('spinbutton', { name: 'Bid' });
+        await bid.fill('99');
+        await bid.press('Enter');
+        const lists = await page.evaluate(() => {
+            const { handed, shown } = window as unknown as { handed: string[]; shown: string[] };
+            return { handed, shown };
+        });
+        expect(lists).toEqual({
+            handed: ['name name: Enter a value.'],
+            shown: ['name name: Enter a value.', `bid bid: ${OWN}`],
+        });
+        await expect(page.locator('#count')).toHaveText('0');
     });
-    expect(lists).toEqual({
-        handed: ['name name: Enter a value.'],
-        shown: ['name name: Enter a value.', `bid bid: ${OWN}`],
-    });
-    await expect(page.locator('#count')).toHaveText('0');
-});
 
 /*
  * A stepper is wrong exactly where the browser's constraints say its field is, and where its own
@@ -1171,6 +1180,29 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                     expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
                     await expect(page.locator('#count')).toHaveText('0');
                 });
+
+        if (way === 'useFormRefusal')
+            test('says a list summary that already has focus with its heading and each item apart', async ({
+                page,
+            }) => {
+                await openWay(page, { summary: true }, '');
+                await bidOf(page).fill('99');
+                await bidOf(page).press('Enter');
+                await expect(async () => {
+                    await page.clock.runFor(100);
+                    await expect(page.locator('#summary')).toBeFocused({ timeout: 100 });
+                }).toPass();
+                expect(await saidAfterWait(page)).toEqual([]);
+                // Submitted again with focus kept on the summary, which reads nothing, so its
+                // words are said.
+                await page.locator('form').evaluate((form) => {
+                    (form as HTMLFormElement).requestSubmit();
+                });
+                expect(await saidOf(page)).toEqual([
+                    `page: There is a problem. Enter your name. ${OWN}`,
+                ]);
+                await expect(page.locator('#summary')).toBeFocused();
+            });
     });
 }
 

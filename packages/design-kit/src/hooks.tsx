@@ -453,12 +453,12 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
  * its refusal would reach no one. A submit whose fields fail the browser's constraints is stopped
  * before the page's handler, and the failures are handed to `invalid`, which the page must give,
  * since the markup is its own: it sets the page's errors from them, and the refusal follows once
- * they are drawn. A stepper whose own range error shows is left out of what `invalid` is handed, so
- * the list can be empty on a refused submit, and is among the second list it is handed, which holds
- * every failure in the form's order with the words its field shows, for an error summary. `invalid`
- * is called only for a submit that fails, so the page's own submit handler clears the errors it
- * set. `errorWords` gives the words for each failure in place of the kit's, read as each is put in
- * words.
+ * they are drawn. A stepper whose own range error shows is left out of the first list `invalid` is
+ * handed, so the first list can be empty on a refused submit. The second list holds every failure
+ * in the form's order with the words its field shows, such a stepper's own error's words among
+ * them, for an error summary. `invalid` is called only for a submit that fails, so the page's own
+ * submit handler clears the errors it set. `errorWords` gives the words for each failure in place
+ * of the kit's, read as each is put in words.
  */
 export const useFormRefusal = <Form extends HTMLElement>(
     options: Pick<FormOptions, 'say' | 'summary' | 'errorWords'> & {

@@ -30,7 +30,7 @@ const drawn = root?.dataset['bid'] ?? '';
 
 const Join = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [listed, setListed] = useState<readonly string[]>([]);
+    const [listed, setListed] = useState<readonly { id: string; words: string }[]>([]);
     const [count, setCount] = useState(0);
     const say = useStatus();
     const bid = useRef<HTMLDivElement>(null);
@@ -47,7 +47,8 @@ const Join = () => {
         invalid: (failures, shown) => {
             (window as Handed).handed = failures.map(({ field, words }) => `${field.id}: ${words}`);
             setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));
-            if (drawn.includes('summary')) setListed(shown.map(({ words }) => words));
+            if (drawn.includes('summary'))
+                setListed(shown.map(({ control, words }) => ({ id: control.id, words })));
         },
     });
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -61,8 +62,8 @@ const Join = () => {
             <div ref={summary} id="summary" tabIndex={-1}>
                 <p>There is a problem.</p>
                 <ul>
-                    {listed.map((words) => (
-                        <li key={words}>{words}</li>
+                    {listed.map(({ id, words }) => (
+                        <li key={id}>{words}</li>
                     ))}
                 </ul>
             </div>

@@ -864,37 +864,37 @@ with `hidden`. In a form with no class attribute the row is one of the kit's blo
 
 The error is not live, since a form that fails in several fields at once would speak over itself. On
 a submit that fails a check of the page's own, the page draws its errors and calls the function
-`attachForm(form, { status, summary })` from `./controls` returns, or the one
-`useFormRefusal({ invalid })` returns in React, which speaks on the screen's `StatusProvider`, and
-the kit does the same itself for the browser's constraints, as below. Once the errors are drawn, a
-frame after the call in a page without React, and in React a frame after the render that draws them
-commits, even where the page set them after an await, as a page that saves to the browser's storage
-first does, focus moves to an error summary where the page names one, else the first field in error
-that can take focus, passing over one that is disabled, inert, marked off, itself or by its set, or
-out of sight, or in a set its checked radio or its first control that can take focus, since the
-set's fieldset takes none. A set counts once, however many of its choices are marked. One message is
-said. Where focus moves to a summary, which reads its own words, nothing is said, and where the
-summary already had focus, its words are said. Where focus moves to a field or was already on it,
-that field's name and error are said, with how many fields need attention where more are wrong, or
-its name and the count where it shows no error. VoiceOver on iOS reads a field's error only as a
-hint, after a pause, which other speech cuts off and which a visitor who turns hints off never
-hears, and focus moved by script may not land, so the error is always said. A screen reader that
-reads the error as focus lands hears it twice, which slows a visitor less than an error never heard.
-A reset that goes through calls off a refusal not yet landed, since it would say errors no longer
-shown. A second refusal calls off one not yet landed, moves focus and speaks again, so a visitor who
-submits again hears it again, and what each refusal returns calls off that refusal alone. Focus a
-visitor moved after the refusal was asked for stays where they put it, and a page that refuses later
-than it was asked passes `{ from }`, where focus was then, as `moveFocus` takes it. In React,
-`refuse` is called in the submit handler, after an await in it too, or in an effect with
-dependencies, never as the component renders nor in an effect that runs on every render, since
-refusing renders the component again. Errors set in a transition are refused inside the same
-`startTransition`, and errors drawn in another React root are not waited for. Refused with nothing
-wrong and no summary, focus stays where it is, and refused with fields in error that none can take
-focus in, as one out of sight, focus stays too and the first field's name and error are said, with
-the count where more are wrong. In React, a form with no `StatusProvider` above it and no `say`
-throws, since its refusal would reach no one. A form is attached as it is drawn, never from its
-submit handler, since the kit's check and `noValidate` must already be in place when the first
-submit comes.
+`attachForm(form, { status, summary })` from `./controls` returns, or the one `useFormRefusal({
+invalid })` returns in React, which speaks on the screen's `StatusProvider`, and the kit does the
+same itself for the browser's constraints, as below. Once the errors are drawn, a frame after the
+call in a page without React, and in React a frame after the render that draws them commits, even
+where the page set them after an await, as a page that saves to the browser's storage first does,
+focus moves to an error summary where the page names one and does not hide it, else the first field
+in error that can take focus, passing over one that is disabled, inert, marked off, itself or by its
+set, or out of sight, or in a set its checked radio or its first control that can take focus, since
+the set's fieldset takes none. A set counts once, however many of its choices are marked. One
+message is said. Where focus moves to a summary, which reads its own words, nothing is said, and
+where the summary already had focus, its words are said, each heading, paragraph and list item apart
+and ending in a stop. Where focus moves to a field or was already on it, that field's name and error
+are said, with how many fields need attention where more are wrong, or its name and the count where
+it shows no error. VoiceOver on iOS reads a field's error only as a hint, after a pause, which other
+speech cuts off and which a visitor who turns hints off never hears, and focus moved by script may
+not land, so the error is always said. A screen reader that reads the error as focus lands hears it
+twice, which slows a visitor less than an error never heard. A reset that goes through calls off a
+refusal not yet landed, since it would say errors no longer shown. A second refusal calls off one
+not yet landed, moves focus and speaks again, so a visitor who submits again hears it again, and
+what each refusal returns calls off that refusal alone. Focus a visitor moved after the refusal was
+asked for stays where they put it, and a page that refuses later than it was asked passes `{ from
+}`, where focus was then, as `moveFocus` takes it. In React, `refuse` is called in the submit
+handler, after an await in it too, or in an effect with dependencies, never as the component renders
+nor in an effect that runs on every render, since refusing renders the component again. Errors set
+in a transition are refused inside the same `startTransition`, and errors drawn in another React
+root are not waited for. Refused with nothing wrong and no summary, focus stays where it is, and
+refused with fields in error that none can take focus in, as one out of sight, focus stays too and
+the first field's name and error are said, with the count where more are wrong. In React, a form
+with no `StatusProvider` above it and no `say` throws, since its refusal would reach no one. A form
+is attached as it is drawn, never from its submit handler, since the kit's check and `noValidate`
+must already be in place when the first submit comes.
 
 `attachForm(form, { status, signal })` is taken down by its `signal`, as [Taking a control
 down](#taking-a-control-down) has it. Its listeners come off, a refusal not yet landed and a reset
@@ -972,8 +972,8 @@ in the first list, and a stepper's own error's words, without the "Error:" a scr
 given, for one left out of it. A summary built from the first list would leave such a stepper out,
 with nothing said for it, since the summary takes focus and reads its own words. A page that takes
 one argument reads the first list alone, and `attachForm` given `invalid` hands both lists the same
-way. `invalid` is called only for a submit that fails, so the page's own submit
-handler clears the errors it set.
+way. `invalid` is called only for a submit that fails, so the page's own submit handler clears the
+errors it set.
 
 ```js
 import { attachForm } from '@jasonsdevspace/design-kit/controls';
@@ -988,9 +988,11 @@ form.addEventListener('submit', (event) => {
 
 ```tsx
 const summary = useRef<HTMLDivElement>(null);
+const [listed, setListed] = useState<readonly { id: string; words: string }[]>([]);
 const [form] = useFormRefusal<HTMLFormElement>({
     errorWords: { valueMissing: 'Enter your name.' },
-    summary: () => summary.current,
+    // No summary while nothing is listed, so a refusal of the page's own goes to the field.
+    summary: () => (listed.length > 0 ? summary.current : null),
     // Errors drawn in the fields, and a summary of every failure with the words its field shows.
     invalid: (failures, shown) => {
         setErrors(Object.fromEntries(failures.map(({ field, words }) => [field.id, words])));

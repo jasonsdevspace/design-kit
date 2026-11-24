@@ -352,6 +352,21 @@ test("focuses a radio set's checked radio, and a summary the page names", async 
         .toEqual(['Match: Error: Choose how rules match.', 'Two fields need attention.']);
 });
 
+test('passes over a summary the page keeps hidden, to the first field in error', async ({
+    page,
+}) => {
+    await open(page);
+    await page.getByRole('button', { name: 'Save rule' }).focus();
+    await page.evaluate(() => {
+        (window as unknown as Form).summarised = true;
+    });
+    await refuse(page, [['name', 'Give the rule a name.']]);
+    await expect(page.locator('#name')).toBeFocused();
+    await expect(page.locator('.screen-status')).toHaveText(
+        'Rule name: Error: Give the rule a name.'
+    );
+});
+
 test.describe('in React', () => {
     let app = '';
     test.beforeAll(async () => {
