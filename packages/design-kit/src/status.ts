@@ -4,7 +4,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 /*
  * `attachStatus`, which hands a page the function that says a message on a status line, and the
  * types of what it says. The line's state and speech, which every piece that speaks shares, are in
- * the line module. No entry of the package exports this module, so a page never reaches it.
+ * the line module. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** How a message is said on a status line. */

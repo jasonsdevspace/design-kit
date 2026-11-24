@@ -228,6 +228,254 @@ test('dismisses by its named close button, and by Escape, with focus back where 
     expect(await page.evaluate(() => (window as unknown as { kit: Kit }).kit.done)).toEqual([]);
 });
 
+/*
+ * A page of many controls before the toast, so the action is far down the Tab order: links, a
+ * field, a choice and buttons, with Save raising the message and Share standing for a control
+ * deep in the page.
+ */
+const MANY = PAGE.replace(
+    '<h1>Scores</h1>',
+    '<h1>Scores</h1><nav><a href="#last">Rounds</a> <a href="#last">Players</a></nav>' +
+        '<label>Name <input id="name"></label><label>Game <select id="game">' +
+        '<option>Flip 7</option><option>Skyjo</option></select></label>'
+).replace(
+    '</button>',
+    '</button><button type="button" class="dk-button" id="share">Share</button>' +
+        '<button type="button" class="dk-button" id="print">Print</button>'
+);
+
+/** Notes, on the window after every listener of the kit's, whether each F8 had its default kept. */
+const noteF8 = (page: Page): Promise<void> =>
+    page.evaluate(() => {
+        const notes: boolean[] = [];
+        (window as unknown as { f8: boolean[] }).f8 = notes;
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'F8') notes.push(event.defaultPrevented);
+        });
+    });
+
+/** Whether each F8 so far had its default prevented, in order. */
+const f8Prevented = (page: Page): Promise<boolean[]> =>
+    page.evaluate(() => (window as unknown as { f8: boolean[] }).f8);
+
+test.describe('F8', () => {
+    for (const key of ['Enter', 'Escape'] as const) {
+        test(`moves focus to a shown action from anywhere on the page, and ${key} there sends it back`, async ({
+            page,
+        }) => {
+            await open(page, { body: MANY });
+            await noteF8(page);
+            await page.locator('#save').focus();
+            await page.keyboard.press('Enter');
+            await expect(undo(page)).toBeVisible();
+            // Focus never moves as a message shows.
+            await expect(page.locator('#save')).toBeFocused();
+            await page.locator('#share').focus();
+            await page.keyboard.press('F8');
+            await expect(undo(page)).toBeFocused();
+            await page.keyboard.press(key);
+            await expect(message(page)).toHaveText('');
+            await expect(page.locator('#share')).toBeFocused();
+            expect(await page.evaluate(() => (window as unknown as { kit: Kit }).kit.done)).toEqual(
+                key === 'Enter' ? ['Undo'] : []
+            );
+            expect(await f8Prevented(page)).toEqual([true]);
+        });
+    }
+
+    test('sends focus back where it came from when pressed in the toast, the toast still shown', async ({
+        page,
+    }) => {
+        await open(page, { body: MANY });
+        await noteF8(page);
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        await page.locator('#name').focus();
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        await page.keyboard.press('F8');
+        await expect(page.locator('#name')).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+        await expect(undo(page)).toBeVisible();
+        // From the close button too, and again to the action from where focus went back.
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        await closeButton(page).focus();
+        await page.keyboard.press('F8');
+        await expect(page.locator('#name')).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+        expect(await f8Prevented(page)).toEqual([true, true, true, true]);
+    });
+
+    test('moves nothing and keeps the default with no toast, no action, a modifier or a repeat', async ({
+        page,
+    }) => {
+        await open(page, { body: MANY });
+        await noteF8(page);
+        const share = page.locator('#share');
+        await share.focus();
+        // No toast shown.
+        await page.keyboard.press('F8');
+        await expect(share).toBeFocused();
+        // A toast with no action.
+        await show(page, 'Round 2 saved.');
+        await page.keyboard.press('F8');
+        await expect(share).toBeFocused();
+        // A toast with an action, with each modifier held.
+        await show(page, 'Round 3 saved.', 'Undo');
+        for (const modifier of ['Shift', 'Control', 'Alt', 'Meta']) {
+            await page.keyboard.press(`${modifier}+F8`);
+            await expect(share, modifier).toBeFocused();
+        }
+        // Held, the first press moves focus and the repeats move nothing.
+        await page.keyboard.down('F8');
+        await expect(undo(page)).toBeFocused();
+        await page.keyboard.down('F8');
+        await page.keyboard.down('F8');
+        await page.keyboard.up('F8');
+        await expect(undo(page)).toBeFocused();
+        // Dismissed, the toast hears F8 no more.
+        await page.keyboard.press('Escape');
+        await expect(share).toBeFocused();
+        await page.keyboard.press('F8');
+        await expect(share).toBeFocused();
+        expect(await f8Prevented(page)).toEqual([
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+        ]);
+    });
+
+    test('moves nothing and keeps the default for an F8 that converts text in an input method', async ({
+        page,
+    }) => {
+        await open(page, { body: MANY });
+        await noteF8(page);
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        const name = page.locator('#name');
+        await name.focus();
+        // A Japanese input method converts what is being typed on F8, and Safari sends key code 229
+        // in place of the composing flag.
+        for (const init of [{ isComposing: true }, { keyCode: 229 }]) {
+            await name.evaluate((field, given) => {
+                field.dispatchEvent(
+                    new KeyboardEvent('keydown', {
+                        key: 'F8',
+                        bubbles: true,
+                        cancelable: true,
+                        ...given,
+                    })
+                );
+            }, init);
+            await expect(name, JSON.stringify(init)).toBeFocused();
+        }
+        expect(await f8Prevented(page)).toEqual([false, false]);
+    });
+
+    test('sends focus back on down the list where the control it came from is gone, and stays in the toast where nothing takes it', async ({
+        page,
+    }) => {
+        await open(page, { body: MANY.replace('<main>', '<main tabindex="-1">') });
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        await page.locator('#share').focus();
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        // Share gone, focus goes back to Save, where it was as the message came.
+        await page.locator('#share').evaluate((share) => share.remove());
+        await page.keyboard.press('F8');
+        await expect(page.locator('#save')).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+        // Save gone too, it goes to the main content.
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        await page.locator('#save').evaluate((save) => save.remove());
+        await page.keyboard.press('F8');
+        await expect(page.locator('main')).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+    });
+
+    test('leaves focus on the action where nothing on the list takes it', async ({ page }) => {
+        await open(page, { body: MANY });
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        // The main content takes no focus here, so with Save gone nothing on the list does.
+        await page.locator('#save').evaluate((save) => save.remove());
+        await page.keyboard.press('F8');
+        await expect(undo(page)).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+    });
+
+    test("sends focus back to the control inside a frame of the page's own origin that had it as the message came", async ({
+        page,
+        browserName,
+    }) => {
+        await open(page, { body: framed() });
+        const inner = page.frameLocator('iframe').locator('#inner');
+        await inner.focus();
+        await show(page, 'Round 3 saved.', 'Undo');
+        // Into the toast past the frame's next button, which counts as coming from nowhere.
+        await page.keyboard.press(tabKey(browserName));
+        await page.keyboard.press(tabKey(browserName));
+        await expect(undo(page)).toBeFocused();
+        await page.keyboard.press('F8');
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(inner).toBeFocused();
+        await expect(toast(page)).toHaveAttribute('data-shown');
+    });
+
+    test('lets the toast that holds focus send it back where a second toast has an action shown', async ({
+        page,
+    }) => {
+        await open(page, {
+            // After the first, which the page's script attaches.
+            body: `${MANY}${TOAST.replace('dk-toast"', 'dk-toast" id="second"')}`,
+        });
+        await page.locator('#save').focus();
+        await page.keyboard.press('Enter');
+        await page.evaluate(async () => {
+            const kit = (await import(`${location.origin}/controls.js`)) as {
+                attachToast: (element: HTMLElement) => Kit['show'];
+            };
+            const second = document.querySelector<HTMLElement>('#second');
+            if (!second) throw new Error('no second toast');
+            kit.attachToast(second)('Player 2 left.', { label: 'Undo', onAction: () => undefined });
+        });
+        await page.locator('#share').focus();
+        await page.keyboard.press('F8');
+        await expect(undo(page).first()).toBeFocused();
+        await page.locator('#print').focus();
+        await page.locator('#second .dk-toast-action').focus();
+        await page.keyboard.press('F8');
+        await expect(page.locator('#print')).toBeFocused();
+        await expect(page.locator('#second')).toHaveAttribute('data-shown');
+    });
+
+    test('is named on the action while it is shown, and not after', async ({ page }) => {
+        await open(page);
+        await expect(page.locator('.dk-toast-action')).not.toHaveAttribute('aria-keyshortcuts');
+        await show(page, 'Round 3 saved.', 'Undo');
+        await expect(undo(page)).toHaveAttribute('aria-keyshortcuts', 'F8');
+        // The next message, with no action, takes the key away with the action.
+        await show(page, 'Round 4 saved.');
+        await expect(page.locator('.dk-toast-action')).not.toHaveAttribute('aria-keyshortcuts');
+        await show(page, 'Round 5 saved.', 'Undo');
+        await expect(undo(page)).toHaveAttribute('aria-keyshortcuts', 'F8');
+        await closeButton(page).click();
+        await expect(page.locator('.dk-toast-action')).not.toHaveAttribute('aria-keyshortcuts');
+    });
+});
+
 test('hands focus back where it was when its close button is pressed by pointer, Safari included', async ({
     page,
 }) => {

@@ -8,7 +8,7 @@ import { isOff } from './find.js';
  * module of the controls that does something as it loads, adding the listeners that note inputs and
  * the page going out of sight, so the package names it in `sideEffects`. A plain value is written
  * only here, and what another module writes is held in an object or a map. No entry of the package
- * exports this module, so a page never reaches it.
+ * names this module, so a page imports it only through `./controls`.
  */
 
 /** A button or a link by its role, which Enter presses, and Space too but for a link. */

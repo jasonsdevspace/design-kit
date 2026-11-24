@@ -71,10 +71,11 @@ export const js = (file: string): string =>
 /**
  * Every module of the controls, the entry and each internal module it gathers, as a browser loads
  * them, by the path the entry imports them from, so a module added to the controls is served too.
+ * Read by the pattern `packagedOf` in the repository's scripts lays the package out by.
  */
 const MODULES: Readonly<Record<string, readonly [string, string]>> = Object.fromEntries(
     readdirSync(new URL('../src/', import.meta.url))
-        .filter((file) => /^[a-z-]+\.ts$/.test(file))
+        .filter((file) => /^[^.]+\.ts$/.test(file))
         .map((file) => [`/${file.replace(/\.ts$/, '.js')}`, [js(file), 'text/javascript'] as const])
 );
 

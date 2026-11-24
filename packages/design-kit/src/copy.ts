@@ -3,7 +3,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 
 /*
  * The copy button, which copies a block or selects it where the browser refuses the clipboard, and
- * says which. No entry of the package exports this module, so a page never reaches it.
+ * says which. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** What a copy button reads, which attaching it again replaces, and the signal that holds it. */

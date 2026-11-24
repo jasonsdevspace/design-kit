@@ -133,6 +133,29 @@ test('adds no listener to the document as a stepper is attached', async ({ page 
     expect(attached.documentListeners).toBe(before.documentListeners);
 });
 
+test('listens to the document for F8 only while a toast with an action is shown', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(`window.show = kit.attachToast($('.dk-toast'))`);
+    const attached = await leaksOf(page);
+    const listening = () => leaksOf(page).then((counts) => counts.documentListeners);
+    await page.evaluate(`window.dismiss = show('Round 2 saved.')`);
+    expect(await listening()).toBe(attached.documentListeners);
+    await page.evaluate(`show('Round 3 saved.', { label: 'Undo', onAction: () => undefined })`);
+    expect(await listening()).toBe(attached.documentListeners + 1);
+    // Another message with an action adds no second listener, and one without takes it off.
+    await page.evaluate(`show('Round 4 saved.', { label: 'Undo', onAction: () => undefined })`);
+    expect(await listening()).toBe(attached.documentListeners + 1);
+    await page.evaluate(`show('Round 5 saved.')`);
+    expect(await listening()).toBe(attached.documentListeners);
+    // Dismissed by its close button, the toast hears F8 no more.
+    await page.evaluate(`show('Round 6 saved.', { label: 'Undo', onAction: () => undefined })`);
+    await page.locator('.dk-toast-close').click();
+    expect(await listening()).toBe(attached.documentListeners);
+    await expectEngineAgrees(page);
+});
+
 for (const name of KEPT) {
     test(`keeps ${name} joined ${OVER} without growing, and leaves nothing once taken down`, async ({
         page,

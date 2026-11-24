@@ -45,17 +45,18 @@ attached, so a visitor without script meets no control that does nothing. Nothin
 module is imported but listeners on the document for keys, clicks and submits, in a page, which note
 whether the visitor's last input was a press for `focusOnArrival`, so the press that brings a page's
 first view is heard, and since 0.9.4 one for the page going out of sight or coming back, which drops
-a focus request made while the page is out of sight or before it goes. Since 0.9.4 the controls
-ship in parts: `dist/controls.js`, the file `./controls` resolves to, gathers an internal module for
-each piece, and the state two pieces share, the presses, the focus requests and the checked forms,
-sits in `dist/state.js`, the one module that adds listeners as it loads, so every part on a page
-reads one copy. No part imports another, so a site that loads a piece on one page sends its module
-to that page alone, which a single module kept whole in the chunk every page shares could not. The
-package marks `dist/controls.js` and `dist/state.js` as having side effects in its `sideEffects`, so
-a bundler keeps the listeners wherever a page imports the controls, even bare, and the listeners
-wait for a document, so the module loads in Node. The functions set no style. The choices
-a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the
-theme script reads, and the theme script itself does not change, so its hash holds.
+a focus request made while the page is out of sight or before it goes. Since 0.9.4 the controls ship
+in parts: `dist/controls.js`, the file `./controls` resolves to, gathers an internal module for each
+piece, and the state two pieces share, the presses, the focus the kit hands back and the checked
+forms, sits in `dist/state.js`, the one module that adds listeners as it loads, so every part on a
+page reads one copy. The focus handback, the focus requests, the lookups and the marks are modules
+the parts share, and no piece's module imports another piece's, so a site that loads a piece on one
+page sends its module to that page alone, which a single module kept whole in the chunk every page
+shares could not. The package marks `dist/controls.js` and `dist/state.js` as having side effects in
+its `sideEffects`, so a bundler keeps the listeners wherever a page imports the controls, even bare,
+and the listeners wait for a document, so the module loads in Node. The functions set no style. The
+choices a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the
+key the theme script reads, and the theme script itself does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -209,6 +210,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | Letters shown as a stepper is left and its field named, with too little room left        | 21,751 bytes   | 651 bytes       | 22 KB      |
 | 0.9.4   | A stepper's error held back while a press outside it is down, with too little room left  | 21,994 bytes   | 651 bytes       | 22.25 KB   |
 | 0.9.4   | Limit and step words as the field reads them, with too little room left                  | 22,260 bytes   | 649 bytes       | 22.5 KB    |
+| 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,498 bytes   | 735 bytes       | 22.75 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
@@ -255,12 +257,12 @@ window from the form code they share text with, and both budgets keep more room 
 function, so neither is set again.
 
 In 0.9.4 the controls moved into a module for each piece behind the same entry, with their shared
-state in one module, which took every function from 22,260 bytes to 22,268, the module imported bare
+state in one module, which took every function from 22,519 bytes to 22,435, the module imported bare
 from 706 to 729, `attachTable` alone from 2,012 to 2,036 and `attachForm` alone from 8,879 to 8,871,
-with a median function of 672 bytes where it was 649. No code changed, but each module a page
-reaches adds its own imports, and a function a page leaves out takes the imports of the module it
-alone reaches with it, which raised the median. Every budget keeps more room than that median, so
-none is set again.
+with a median function of 666 bytes where it was 741, measured after F8 reached a toast's action. No
+code changed, but each module a page reaches adds its own imports, and a function a page leaves out
+takes the imports of the module it alone reaches with it. Every budget keeps more room than that
+median, so none is set again.
 
 Each table stays the ledger, a row for each budget set and what set it. Since 0.9.4 the rule lowers
 a budget as well as raising one. Where a release, measured as the audit was, leaves more room under

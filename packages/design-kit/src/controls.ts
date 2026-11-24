@@ -18,8 +18,9 @@ import './state.js';
  * style it did not serve.
  *
  * Each piece's code is a module of its own, which this one gathers, so a page's bundler can send a
- * piece only to the pages that import it. The state two pieces share, the presses, the focus
- * requests and the checked forms, is held in one module, so every part on a page reads one copy.
+ * piece only to the pages that import it. The state two pieces share, the presses, the focus the
+ * kit hands back and the checked forms, is held in one module, so every part on a page reads one
+ * copy.
  */
 
 export { attachBusy, type BusyOptions } from './busy.js';

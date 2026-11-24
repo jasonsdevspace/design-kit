@@ -11,7 +11,8 @@ import { type Checked, type Failure, FAILURES, KIT_WORDS } from './words.js';
 /*
  * The form's check of the browser's constraints, its errors and its refusal, and the check each
  * form keeps once however many of its parts are attached, which the steppers in it read from the
- * shared state. No entry of the package exports this module, so a page never reaches it.
+ * shared state. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** How a form is attached, for the step after a submit it refuses, and the signal that holds it. */

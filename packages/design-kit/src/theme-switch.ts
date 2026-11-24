@@ -6,7 +6,7 @@ import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
  * The theme switch and `chooseTheme`, with the choice the page shows, held once for every switch on
  * it, and the page's own listeners for a choice saved in another tab, a page brought back from the
  * cache and a change of the system's scheme, added as the first switch is attached or a choice is
- * made. No entry of the package exports this module, so a page never reaches it.
+ * made. No entry of the package names this module, so a page imports it only through `./controls`.
  */
 
 const isChoice = (value: string | null): value is ThemeChoice =>

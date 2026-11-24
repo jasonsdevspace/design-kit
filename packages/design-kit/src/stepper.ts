@@ -9,7 +9,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 /*
  * The stepper, which steps a number field by its buttons, says each press, and owns its error at a
  * change, a submit and a reset, settling as its form refuses it or is reset through the state the
- * form shares. No entry of the package exports this module, so a page never reaches it.
+ * form shares. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** How a stepper is attached, and the signal that holds it. */

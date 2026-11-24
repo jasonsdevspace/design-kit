@@ -5,7 +5,7 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 
 /*
  * Progress, which says how far a bar has come at the steps a page sets and once at the end. No
- * entry of the package exports this module, so a page never reaches it.
+ * entry of the package names this module, so a page imports it only through `./controls`.
  */
 
 /**

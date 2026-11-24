@@ -4,7 +4,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 
 /*
  * The busy button, which refuses a press while busy and says so once a wait is long enough to
- * notice. No entry of the package exports this module, so a page never reaches it.
+ * notice. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /**

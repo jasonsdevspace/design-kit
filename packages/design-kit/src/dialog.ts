@@ -7,7 +7,7 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 /*
  * The dialog, which closes on a tap on its scrim and hands focus back to what opened it, and keeps
  * in the shared state what the browser hands focus to as it closes, for a focus request to read. No
- * entry of the package exports this module, so a page never reaches it.
+ * entry of the package names this module, so a page imports it only through `./controls`.
  */
 
 /**

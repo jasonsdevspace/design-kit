@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -98,12 +98,12 @@ describe('the teardown table', () => {
     });
 
     it('attaches each part of the controls that keeps a registry of attached pieces', () => {
-        // Every part the controls gather, by the paths the entry exports and imports them from.
-        const read = (file: string) =>
-            readFileSync(new URL(`../packages/design-kit/src/${file}`, import.meta.url), 'utf8');
-        const parts = [...read('controls.ts').matchAll(/['"]\.\/([\w-]+)\.js['"]/g)].map(
-            ([, name]) => `${name ?? ''}.ts`
-        );
+        // Every module of the source, so a part the entry does not name is read too, by the
+        // pattern the package's layout reads them by.
+        const folder = new URL('../packages/design-kit/src/', import.meta.url);
+        const read = (file: string) => readFileSync(new URL(file, folder), 'utf8');
+        const parts = readdirSync(folder).filter((file) => /^[^.]+\.ts$/.test(file));
+        expect(parts).toContain('marks.ts');
         const keeping = parts.filter((file) =>
             /\bnew WeakMap<[^;]*\bKept</.test(withoutComments(read(file)))
         );

@@ -1,7 +1,7 @@
 /*
  * How the controls put back what they marked on a page's element: an attribute as it was, a field's
  * description with a stepper's parts in their place, and the marks a form set on fields not in
- * error. No entry of the package exports this module, so a page never reaches it.
+ * error. No entry of the package names this module, so a page imports it only through `./controls`.
  */
 
 /** An element's attribute put back as it was, or taken away where it had none. */

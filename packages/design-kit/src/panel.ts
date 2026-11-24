@@ -5,7 +5,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 /*
  * The panels a button opens and closes, with the buttons attached, the visitor's last place, and
  * the listeners on the document every panel shares, added with the first button attached and taken
- * off with the last. No entry of the package exports this module, so a page never reaches it.
+ * off with the last. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** Opens or closes a panel attached by its button, from the page's own code. */

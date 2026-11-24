@@ -5,7 +5,8 @@ import type { AttachOptions } from './teardown.js';
 /*
  * How the controls move focus and hand it back: what has focus, through shadow roots, the walk that
  * focuses the first place that takes it, and the one rule by which a piece closing or leaving hands
- * focus back. No entry of the package exports this module, so a page never reaches it.
+ * focus back. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** What has focus, or null where nothing does and the page's body stands in for it. */

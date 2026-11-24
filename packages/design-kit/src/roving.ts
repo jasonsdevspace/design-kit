@@ -4,8 +4,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 
 /*
  * A group of cells with one stop for the Tab key, moved among by the arrow keys, Home and End, and
- * each cell's own tabindex, put back as its group is let go. No entry of the package exports this
- * module, so a page never reaches it.
+ * each cell's own tabindex, put back as its group is let go. No entry of the package names this
+ * module, so a page imports it only through `./controls`.
  */
 
 /** How a group's cells are laid out, which sets the arrow keys that move among them. */

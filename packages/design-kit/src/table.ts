@@ -2,7 +2,8 @@ import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.
 
 /*
  * The table's frame, which brings what the keyboard reaches fully into view, clear of a pinned
- * column. No entry of the package exports this module, so a page never reaches it.
+ * column. No entry of the package names this module, so a page imports it only through
+ * `./controls`.
  */
 
 /** The pinned cell in the row of what has focus, in this frame, unless focus is in it. */

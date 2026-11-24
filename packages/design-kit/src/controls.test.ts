@@ -117,13 +117,14 @@ describe('the controls', () => {
     );
 
     it('throws only errors whose words a case above holds to a signal already aborted', async () => {
-        const { readFileSync } = await import('node:fs');
+        const { readdirSync, readFileSync } = await import('node:fs');
         const read = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8');
-        // Every part the module gathers, which hold the attaches and what they throw.
-        const parts = [...read('./controls.ts').matchAll(/['"]\.\/([\w-]+)\.js['"]/g)].map(
-            ([, name]) => `./${name ?? ''}.ts`
-        );
-        expect(parts).toContain('./stepper.ts');
+        // Every module of the source but the build's plugin, so an internal module the entry does
+        // not name, as the marks, is read too, by the pattern the package's layout reads them by.
+        const parts = readdirSync(new URL('./', import.meta.url))
+            .filter((file) => /^[^.]+\.ts$/.test(file) && file !== 'vite.ts')
+            .map((file) => `./${file}`);
+        expect(parts).toEqual(expect.arrayContaining(['./stepper.ts', './marks.ts']));
         const source = parts.map(read).join('\n');
         // The modules' code without their comments, which speak of what throws.
         const code = source
