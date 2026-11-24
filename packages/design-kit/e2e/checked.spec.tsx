@@ -836,6 +836,8 @@ type Bid = {
     readonly detachable?: boolean;
     /** In the React form, whose page clears its errors on a reset. */
     readonly clears?: boolean;
+    /** With a Save button below the bid, which an error drawn above the button moves. */
+    readonly below?: boolean;
 };
 
 /** The bid in a form attached with `attachForm`, on a clock that stands still. */
@@ -863,6 +865,7 @@ const openBid = async (page: Page, drawn: Bid = {}) => {
                             error={drawn.taken ? 'That bid is taken.' : undefined}
                         />
                     </div>
+                    {drawn.below ? <button type="submit">Save</button> : null}
                     {drawn.reset ? <button type="reset">Clear</button> : null}
                     <p id="count">0</p>
                 </form>
@@ -1102,6 +1105,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
                     drawn.high && 'high',
                     drawn.taken && 'taken',
                     drawn.clears && 'clears',
+                    drawn.below && 'below',
                 ].filter(Boolean);
                 await stillClock(page.clock);
                 await servePage(page, {
@@ -1142,6 +1146,66 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await bidOf(page).fill('99');
             await bidOf(page).press('Enter');
             await refused(page);
+        });
+
+        /** The line a stepper's own words show on: its own, or the page's in React, through `say`. */
+        const ownLine = way === 'attachForm' ? 'stepper' : 'page';
+
+        /** Presses Save, below the bid, with the pointer, and lets go where the page says. */
+        const pressSave = async (page: Page, off = false) => {
+            const box = await page.getByRole('button', { name: 'Save' }).boundingBox();
+            if (!box) throw new Error('the page has no Save');
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Dragged off the form before it is let go, to the page's far corner, so no click
+            // follows.
+            if (off) {
+                const size = page.viewportSize();
+                if (!size) throw new Error('the page has no size');
+                const [x, y] = [size.width - 1, size.height - 1];
+                const outside = await page.evaluate(
+                    ([atX, atY]) => !document.elementFromPoint(atX, atY)?.closest('form'),
+                    [x, y] as const
+                );
+                expect(outside).toBe(true);
+                await page.mouse.move(x, y, { steps: 4 });
+            }
+            await page.mouse.up();
+        };
+
+        test('refuses on the one press of a button below a stepper typed past its range, pressed and let go by a pointer', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await pressSave(page);
+            await refused(page);
+        });
+
+        test('shows the error of a stepper typed past its range at once as Tab leaves it, above a button', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            expect(await saidAfterWait(page)).toEqual([`${ownLine}: Bid: ${RANGE}`]);
+        });
+
+        test('shows the error of a stepper typed past its range once a press below it is dragged off and let go', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await pressSave(page, true);
+            await expect
+                .poll(async () => {
+                    await page.clock.runFor(100);
+                    return bidErrors(page);
+                })
+                .toEqual({ drawn: [RANGE], described: [RANGE] });
+            expect(await saidAfterWait(page)).toEqual([`${ownLine}: Bid: ${RANGE}`]);
+            await expect(page.locator('#count')).toHaveText('0');
         });
 
         test('says one message for a stepper typed past its range and submitted by a press on the button', async ({

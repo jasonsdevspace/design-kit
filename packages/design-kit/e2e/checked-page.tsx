@@ -21,8 +21,9 @@ import {
  * as its field's id and its words, both lists of them. The root's `data-bid` names how the bid is
  * drawn: `required`, `blank` for one drawn with no value, `summary` for a form whose refusal moves
  * focus to a summary, which lists every failure with the words its field shows, `reset` for a
- * form with a reset button, `clears` for a page that clears its errors on a reset, `high` for a bid
- * drawn at 99, past its range, and `taken` for a bid drawn with an error of the page's own.
+ * form with a reset button, `below` for a Save button below the bid, `clears` for a page that
+ * clears its errors on a reset, `high` for a bid drawn at 99, past its range, and `taken` for a bid
+ * drawn with an error of the page's own.
  */
 
 type Handed = { handed?: string[]; shown?: string[] };
@@ -121,6 +122,7 @@ const Join = () => {
                     }
                 />
             </div>
+            {drawn.includes('below') ? <Button type="submit">Save</Button> : null}
             {drawn.includes('reset') ? <Button type="reset">Clear</Button> : null}
             <p id="count">{count}</p>
         </form>
