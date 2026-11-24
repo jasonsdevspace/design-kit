@@ -2,8 +2,10 @@
 
 **Status:** accepted, amended by record 23 in 0.9.3, under which every signal that attaches an
 element holds its control, taken down a microtask after the last of them aborts unless the element
-is attached again by then, and the control runs on its newest holder's options, and by record 27 in
-0.9.4, for the mark a toast's takedown takes off its app's frame
+is attached again by then, and the control runs on its newest holder's options, by record 27 in
+0.9.4, for the mark a toast's takedown takes off its app's frame, and in 0.9.4 for a missing part
+told at the first attach whatever its signal and for `focusOnArrival`, which reads the signal its
+options name
 
 ## Context
 

@@ -2,8 +2,9 @@
 
 **Status:** accepted, amended in 0.9.0 for `moveFocus`, which falls back by the same walk, in 0.9.3
 for a button let go while its panel is open, and by record 23 in 0.9.3, under which the toast and a
-dialog taken down by its signal hand focus back by this rule, and by record 29 in 0.9.4, under
-which F8 moves focus to a shown toast's action and back
+dialog taken down by its signal hand focus back by this rule, in 0.9.4 for a search of the page made
+only once every button refuses focus, and by record 29 in 0.9.4, under which F8 moves focus to a
+shown toast's action and back
 
 ## Context
 

@@ -81,8 +81,8 @@ Firefox, each of which sizes the value by `field-sizing` in the versions the tes
 The same spec fills a value's field, keeps a button's place beside a read-only select and under it
 on a narrow screen as beside a read-only input, keeps the select's line level with a button whose
 words take two lines, finds Enter in a read-only select submits nothing, and draws the read-only
-look, its error edge and its forced colors on a value and on a field alike. `e2e/stepper.spec.tsx` lines a read-only
-stepper's figures up with a read-only field's words and a value's.
+look, its error edge and its forced colors on a value and on a field alike. `e2e/stepper.spec.tsx`
+lines a read-only stepper's figures up with a read-only field's words and a value's.
 
 ## Sources
 

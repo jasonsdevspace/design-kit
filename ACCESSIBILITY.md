@@ -152,10 +152,10 @@ is its CSS transformer, as the package README shows.
 - Chrome 123 to 133 lets a page refuse a dialog's close only once, so a dialog attached to stay
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.
-- The browser tests run in Chromium, the app's frame, tab bar, toast, dialog, stepper, a table's
-  frame and an icon in WebKit as well, and the stepper, the controls, the pieces, a table's frame
-  and an icon in the current Firefox. What Firefox 120 lacks at the floor is known from its
-  documented support rather than from a test here.
+- The browser tests run in Chromium, and the specs listed in
+  [`packages/design-kit/e2e/engines.ts`](packages/design-kit/e2e/engines.ts) run in WebKit and in
+  the current Firefox as well, each with the reason it runs there. What Firefox 120 lacks at the
+  floor is known from its documented support rather than from a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
   states the browser gives it, and a status line through the words put in it, the same words said
   twice put in twice. The screen readers themselves were walked by hand, as [Checked by

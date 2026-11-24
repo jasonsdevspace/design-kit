@@ -4,7 +4,8 @@
 a view's arrival, in 0.9.1 for the hooks whose request reads what the page draws, in 0.9.3 for refs
 that return their cleanup and the focus requests around an unmount, by record 23 in 0.9.3, under
 which the hooks take their part down at once and the kit keeps the control, and in 0.9.4 for a form
-React still draws, which refuses only through `useFormRefusal`
+React still draws, which refuses only through `useFormRefusal`, while an attached stepper in it
+keeps its own error and the observer that puts it back, the one exception to one owner
 
 ## Context
 
@@ -167,6 +168,17 @@ static output too, which left the site's form with no errors and focus on its bu
 observer that put the kit's error back after each React render while a refusal stood, since it could
 not put back a hint React inserts without moving React's nodes, and following React as it cleared
 its error would leave a value the browser still refuses with no error shown.
+
+An attached stepper keeps an observer of its own, the one exception to one owner for each node and
+attribute of a field. It watches its value's `aria-describedby`, `aria-invalid` and limits, and
+where React writes the description or the mark again from its props, it puts its shown range error
+back into them, or its range in words after the page's description. That is safe where an observer
+for the form was not. It writes only those two attributes on the value, after React has written
+them, and never inserts, moves or removes a node. The range error and the range in words are the
+stepper's own markup, which React draws once, so the kit writes only the error's `hidden`, which
+React never writes again since that prop does not change, and the words of a span React leaves
+empty. And the stepper's error follows its value's `validity` rather than an error React draws, so a
+value the browser refuses keeps its error.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
 components still render on a server and draw the same markup a page writes by hand.

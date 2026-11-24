@@ -87,17 +87,18 @@ costs, and the test behind it.
     callback ref whose cleanup aborts the signal it gave its attach and taking its part down at
     once, while the kit keeps the control through a ref made afresh, setting its options again only
     when one changes, and making a focus request once the page's change is drawn or as its component
-    unmounts, a form React still draws refused only through `useFormRefusal`, the markup components
-    held free of effects by the lint, and why leaving pages to attach in an effect, behavior written
-    in React, three ways of telling a stale focus request apart, and a mark on every React field
-    and an observer that repairs React's markup were turned down.
+    unmounts, a form React still draws refused only through `useFormRefusal`, with an attached
+    stepper's observer the one exception to one owner, the markup components held free of effects by
+    the lint, and why leaving pages to attach in an effect, behavior written in React, three ways of
+    telling a stale focus request apart, and a mark on every React field and an observer that
+    repairs React's markup were turned down.
 21. [A refused form checks the browser's constraints
     itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
     the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`
     from script so a page without script keeps the browser's check, words for each failure a field
-    or a page can replace, an attached stepper as the one owner of its own error, the research
-    behind it, and why leaving the check on, leaving the check to each page and canceling each
-    `invalid` event were turned down.
+    or a page can replace, a dated limit and a step named as the field reads them, an attached
+    stepper as the one owner of its own error, the research behind it, and why leaving the check on,
+    leaving the check to each page and canceling each `invalid` event were turned down.
 22. [Every attach takes a signal that takes its piece
     down](0022-every-attach-takes-a-signal-that-takes-its-piece-down.md):
     `{ signal }` on every attach, nothing attached for a signal already aborted, an abort that does
@@ -143,8 +144,9 @@ costs, and the test behind it.
     cannot, its first line level with a read-only field's, and why a read-only input, a selector
     keyed on `[readonly]` and one keyed on `[rows='1']` were turned down.
 29. [F8 moves focus to a shown toast's action and
-    back](0029-f8-moves-focus-to-a-shown-toasts-action-and-back.md): the key with no modifier and not
-    held, back where focus came from with the toast still shown, `aria-keyshortcuts` while the action
-    is shown, a listener on the document only while a message with an action is shown, why focus on
-    show, the toast next in the Tab order and F6 were turned down, and why a spoken hint is left to a
-    screen reader walk.
+    back](0029-f8-moves-focus-to-a-shown-toasts-action-and-back.md): the key with no modifier and
+    not held, back where focus came from with the toast still shown, `aria-keyshortcuts` while the
+    action is shown, a listener on the document only while a message with an action is shown, a
+    toast inside a frame of the page's own origin listening in the frame's document, why focus on
+    show, the toast next in the Tab order and F6 were turned down, and why a spoken hint is left to
+    a screen reader walk.

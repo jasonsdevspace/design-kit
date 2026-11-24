@@ -62,8 +62,11 @@ specificity.
 ## Setup
 
 ```sh
-npm install @jasonsdevspace/design-kit
+npm install --save-exact @jasonsdevspace/design-kit
 ```
+
+It saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes, so a page
+moves to a new version once it has read them.
 
 Load the sheets in this order, tokens first, through a bundler that resolves package exports, such
 as Vite.

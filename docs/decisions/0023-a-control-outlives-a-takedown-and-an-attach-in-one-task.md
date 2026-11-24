@@ -5,7 +5,8 @@ first attach owns a piece, record 13's rule for an attach called again, record 1
 the signal its first attach took, record 19's rule for handing focus back, which the toast and a
 dialog taken down now share, and record 20's hooks, which now take their part down at once rather
 than a microtask after a null call, and amended in 0.9.4 for a stepper that hands focus back from
-its buttons as it is taken down
+its buttons as it is taken down, and by record 29 in 0.9.4, under which a toast attached inside a
+frame reads focus in the frame's document
 
 ## Context
 
@@ -105,9 +106,9 @@ Option C.
   its attach returned still acts, so record 22's calls after teardown do nothing from the moment the
   takedown lands. A focus request's takedown waits the same microtask, which changes nothing for it,
   since its frame cannot come first.
-- **A takedown hands focus back by one rule.** The toast, the dialog and the panels hand focus back
-  only where focus is in the piece, inside a shadow tree within it or on a control slotted into it
-  too, which the kit finds by walking out through each slot a node is drawn in and each shadow
+- **The toast, the dialog and the panels hand focus back by one rule.** Each hands focus back only
+  where focus is in the piece, inside a shadow tree within it or on a control slotted into it too,
+  which the kit finds by walking out through each slot a node is drawn in and each shadow
   root's host, as the walk that hands focus back does, or where focus is on the body or nowhere and
   the piece had it as it left, which is record 19's rule for a panel and record 15's for a toast. A
   toast hands focus to the first of these that takes it: the control focus last came into it from,
@@ -115,9 +116,11 @@ Option C.
   latest message came, then the body of the app's frame or the page's main content. It reads the
   control focus came from as that control loses focus, inside an open shadow root too, where the
   event's related target names only the host, and takes the related target itself where the page
-  stopped that focusout before it reached the document. An entry from nowhere names none. A page
-  sees focus inside a frame only as the frame, and focus that comes into the toast from inside a
-  frame as coming from nowhere. Where its handback focuses a frame of the page's own origin, the
+  stopped that focusout before it reached the document. An entry from nowhere names none. A toast
+  on the page sees focus inside a frame only as the frame, and focus that comes into it from inside
+  a frame as coming from nowhere, while one the page attaches inside a frame of its own origin reads
+  focus in the frame's document, as record 29 has it.
+  Where its handback focuses a frame of the page's own origin, the
   toast goes on to the control that had focus there as the latest message came, read as it came,
   since a frame's document drops its focus to its body once focus leaves. Focus stays on the frame
   where that control is gone, marked off, on a page the frame has since replaced, and on a frame of

@@ -1,6 +1,7 @@
 # 17. A content page is a container of its own
 
-**Status:** accepted, amended in 0.8.4 for a landing page in bands, a stack in a grid's cell and a group of sections
+**Status:** accepted, amended in 0.8.4 for a landing page in bands, a stack in a grid's cell and a
+group of sections
 
 ## Context
 

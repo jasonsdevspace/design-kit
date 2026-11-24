@@ -1,28 +1,30 @@
 # 25. A row of fields sizes each field by a length, never by its content
 
-**Status:** accepted in 0.9.4
+**Status:** accepted in 0.9.4, amended in the same release for the step a wrapped row's lines stand
+apart in a column of pieces
 
 ## Context
 
 A page that set fields side by side, such as a stepper's field beside a player's name, wrote a flex
 row of its own, and a row that could not wrap squeezed the text field at a large text size until its
-label broke inside a word. The kit added `dk-fields`, a row that wraps, and first sized a stepper's
-field from its stepper, with `flex: 0 1 auto`, while each text field started from 7rem. That
-content-sized field had four faults, each found by review and each patched in turn:
+label broke inside a word. The kit adds `dk-fields`, a row that wraps, so the question is how the
+row sizes each field. The first way weighed sizes a stepper's field from its stepper, with
+`flex: 0 1 auto`, while each text field starts from 7rem. A field sized by its content has four
+faults, and each needs a rule of its own to mend:
 
-- A long label or a range error shown widened the stepper's field, and pushed the text field beside
-  it onto the next line, so a rule had to contain the field's words.
-- Without `:has()`, as in Firefox 120, the stepper's field took a text field's basis, and its raise
-  button ran past the field into the one beside it, so a fallback had to give every field in the row
-  a least width from its parts.
-- That fallback reached into a field's own parts, which the rules of a field, a stepper and a choice
-  field already own, and each round of review found one more case it changed, a legend that shrank
-  to nothing and an inline stepper that could no longer narrow its buttons among them.
-- An inline stepper and a set of choices needed rules of their own to keep their layout in a row
-  their content sized.
+- A long label or a range error shown widens the stepper's field, and pushes the text field beside
+  it onto the next line, so a rule has to contain the field's words.
+- Without `:has()`, as in Firefox 120, the stepper's field takes a text field's basis, and its raise
+  button runs past the field into the one beside it, so a fallback has to give every field in the
+  row a least width from its parts.
+- That fallback reaches into a field's own parts, which the rules of a field, a stepper and a choice
+  field already own, and changes cases it was not written for, a legend that shrinks to nothing and
+  an inline stepper that can no longer narrow its buttons among them.
+- An inline stepper and a set of choices need rules of their own to keep their layout in a row
+  their content sizes.
 
-Each patch was right where it landed, and each added a rule that had to be measured in three
-engines, with and without `:has()`, against every kind of field.
+Each of those rules has to be measured in three engines, with and without `:has()`, against every
+kind of field, and each one mended opens the case the next one mends.
 
 ## Research
 
@@ -39,9 +41,10 @@ engines, with and without `:has()`, against every kind of field.
 
 ## Options
 
-**A. The patched flex row.** A stepper's field takes its stepper's width, its words contained, with
-a fallback for browsers without `:has()` and exceptions for an inline stepper and choices. Rejected,
-for the faults above: the rules reached a field's parts, and each fix needed the next.
+**A. A flex row sized by content, with its rules.** A stepper's field takes its stepper's width, its
+words contained, with a fallback for browsers without `:has()` and exceptions for an inline stepper
+and choices. Rejected, for the faults above: the rules reach a field's parts, and each one needs the
+next.
 
 **B. A grid of equal tracks.** Each field takes a track of `repeat(auto-fit, minmax(7rem, 1fr))`.
 Rejected, since a track sets its own least width rather than the field's. At 320 wide two tracks of

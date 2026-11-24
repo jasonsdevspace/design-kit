@@ -25,9 +25,9 @@ supports, as Dev setup describes.
 Every file is held to one style, which the prose check enforces: no em dashes, no semicolons joining
 clauses, American spelling, no issue numbers in comments, and no notes about the process, such as a
 list of what is left to do, in anything a reader sees. A commit message says what changed and why in
-plain sentences, with no em dash or semicolon, and names the work rather than whatever tool wrote it,
-which the commit message check enforces. Installing with `npm ci` sets that check up as a hook on
-each commit, and CI runs it on a pull request's title and body.
+plain sentences, with no em dash or semicolon, and names the work rather than whatever tool wrote
+it, which the commit message check enforces. Installing with `npm ci` sets that check up as a hook
+on each commit, and CI runs it on a pull request's title and body.
 
 ## Issues
 
@@ -61,17 +61,19 @@ release reaches npm". Around it, a maintainer:
 - moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
   with `npm dist-tag add @jasonsdevspace/design-kit@VERSION next`, so `next` is never older than
   `latest`
+- reviews the pull request the release workflow opens with the package's record, taken from the
+  tagged commit, once a stable version is staged
 - moves the site's pin in `packages/site/package.json` to the promoted version, in a pull request,
   as a demo's pin moves, with no record in it
-- reviews the pull request the release workflow opens with the package's and the site's records,
-  taken from the tagged commit, once a stable version is staged
+- reviews the pull request the site pages workflow opens with the site's record, taken from the
+  commit on main that moves the pin, once that pull request merges
 
-The workflow stops on a version npm already holds, staged or published, since it cannot tell one
-staged by an earlier run from one staged from other code. A run whose later step failed is repeated
-with "Re-run failed jobs", which keeps the staging and runs only what failed.
+The release workflow stops on a version npm already holds, staged or published, since it cannot tell
+one staged by an earlier run from one staged from other code. A run whose later step failed is
+repeated with "Re-run failed jobs", which keeps the staging and runs only what failed.
 
 ## Security and accessibility
 
 Report a security issue privately, as the [security policy](SECURITY.md) says, not in a public
-issue. Report a barrier to using the kit or its site as the [accessibility statement](ACCESSIBILITY.md)
-says.
+issue. Report a barrier to using the kit or its site as the [accessibility
+statement](ACCESSIBILITY.md) says.

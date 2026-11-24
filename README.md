@@ -52,8 +52,11 @@ choice the portfolio does, so it holds across jasonsdevspace.com.
 ## Using it
 
 ```sh
-npm install @jasonsdevspace/design-kit
+npm install --save-exact @jasonsdevspace/design-kit
 ```
+
+It saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes, so a page
+moves to a new version once it has read them.
 
 A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite. A Vite build takes the theme script from the plugin, which puts it inline where the page's
@@ -198,6 +201,7 @@ follow by area.
 | The focus ring follows the keyboard, on the accent button and inside every callout                    | `packages/design-kit/e2e/controls.spec.tsx` |
 | Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | `packages/design-kit/e2e/controls.spec.tsx` |
 | An empty live callout draws nothing, and takes the callout's look once it is filled                   | `packages/design-kit/e2e/controls.spec.tsx` |
+| Fields side by side share a line where they fit and stack where they do not, every label whole        | `packages/design-kit/e2e/fields.spec.tsx`   |
 | The controls have no axe findings in any state, in either theme, wide and on a phone                  | `packages/design-kit/e2e/controls.spec.tsx` |
 
 </details>
@@ -213,6 +217,7 @@ follow by area.
 | A grid and a tab row are one Tab stop moved by the arrows                                                   | `packages/design-kit/e2e/roving.spec.tsx`      |
 | A busy button saves once however often it is pressed                                                        | `packages/design-kit/e2e/busy.spec.tsx`        |
 | Each hook attaches a swapped element and sets nothing again on a redraw                                     | `packages/design-kit/e2e/hooks.spec.tsx`       |
+| A piece taken down leaves no listener, observer, timer or frame running                                     | `packages/design-kit/e2e/leaks.spec.tsx`       |
 
 </details>
 
@@ -280,10 +285,12 @@ follow by area.
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 13.25 KB, and the theme script goes inline in the page's head. A page that attaches a
-  control loads the controls too, which a test holds, as a bundler sends every function, to
-  22.75 KB gzipped without their comments, and the theme script to 1 KB of its own. The package
-  npm publishes is 132 KB packed, the sheets and modules a page loads together with the README, the
-  types and the tokens in the design tokens format, which it never does. [The
+  control loads the controls too, which a test holds, as a bundler sends every function, to 22.75 KB
+  gzipped without their comments, and the theme script to 1 KB of its own. The controls ship in
+  parts, so a bundler sends a page only what it imports, and tests hold the module imported bare to
+  1.5 KB, `attachTable` alone to 2.75 KB and `attachForm` alone to 9.5 KB. The package npm publishes
+  is 132 KB packed, the sheets and modules a page loads together with the README, the types and the
+  tokens in the design tokens format, which it never does. [The
   record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
   comments, and from 0.6.0 what each piece of the sheets and each function of the controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
@@ -404,6 +411,15 @@ options rejected, what the choice costs, and the test behind it.
     A change to a page restyles what it touches in Chrome, where it restyled every element, at the
     cost of a shown toast written by hand in a live frame keeping no room until the page marks the
     frame, and a dialog set apart from its frame saying so with a class.
+28. [A read-only value of words is a textarea the kit sizes to its value](docs/decisions/0028-a-read-only-value-of-words-is-a-textarea-the-kit-sizes-to-its-value.md).
+    A value a visitor reads but cannot change, drawn by `ValueField` or a read-only select, wraps
+    and shows whole at twice the text size on a phone, at the cost of a screen reader calling it a
+    text area, and of a long value scrolling inside one field's height where a browser cannot size
+    a field to its content.
+29. [F8 moves focus to a shown toast's action and back](docs/decisions/0029-f8-moves-focus-to-a-shown-toasts-action-and-back.md).
+    A keyboard user reaches a toast's action, such as Undo, in one keystroke from anywhere and goes
+    back where they were, at the cost of a key the kit names only to a screen reader, and only once
+    focus is on the action, by its `aria-keyshortcuts`.
 
 </details>
 
@@ -490,10 +506,10 @@ it names is the code it measured. The release workflow records the package from 
 version's tagged commit, which is on main. The site pages workflow records the pages from the commit
 on main that moves the site's pin, since the pin is what changes what the pages draw, and at the tag
 the site still draws from the version before. A run by hand records them where the record names
-another version than the site pins, as after a run that failed. Each opens a pull request with its record, with a
-token from the records app, since a pull request opened with the run's own token runs no other
-workflow. To measure a change before it ships, run `npm run lighthouse`, which audits the same pages
-and writes no record.
+another version than the site pins, as after a run that failed. Each opens a pull request with its
+record, with a token from the records app, since a pull request opened with the run's own token runs
+no other workflow. To measure a change before it ships, run `npm run lighthouse`, which audits the
+same pages and writes no record.
 
 ```bash
 npm run bench:package

@@ -1,6 +1,7 @@
 # 29. F8 moves focus to a shown toast's action and back
 
-**Status:** accepted in 0.9.4
+**Status:** accepted in 0.9.4, amended in the same release for a toast the page attaches inside a
+frame of its own origin, which reads focus and hears F8 in the frame's document
 
 ## Context
 
@@ -128,8 +129,8 @@ The paths are in `packages/design-kit`.
   a dismiss moving nothing and keeping its default, as does an F8 that converts text in an input
   method. F8 in the toast goes on down the walk where the control focus came from is gone, to the
   main content, stays where nothing takes focus, follows a frame of the page's own origin on to its
-  control as a dismiss does, and with two toasts shown is heard by the one that holds focus. It finds
-  `aria-keyshortcuts` on the action while it is shown and gone after.
+  control as a dismiss does, and with two toasts shown is heard by the one that holds focus.
+  It finds `aria-keyshortcuts` on the action while it is shown and gone after.
 - `e2e/leaks.spec.tsx`, in the same engines, counts a listener on the document only while a message
   with an action is shown, one however many such messages come, and none once a message with no
   action replaces it or the toast is dismissed. Its table, shared with `e2e/teardown.spec.tsx`, uses
