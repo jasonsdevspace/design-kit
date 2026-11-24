@@ -17,6 +17,10 @@ describe('the theme contract', () => {
         expect(THEMES).toEqual(['light', 'dark']);
     });
 
+    it('is words the script can write in quotes as they are, as JSON writes them', () => {
+        for (const word of [THEME_KEY, ...THEMES]) expect(JSON.stringify(word)).toBe(`"${word}"`);
+    });
+
     it('is the key and the values the script reads', () => {
         expect(themeScript).toContain(`localStorage.getItem(${JSON.stringify(THEME_KEY)})`);
         for (const theme of THEMES) expect(themeScript).toContain(JSON.stringify(theme));

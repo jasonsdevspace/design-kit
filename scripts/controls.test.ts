@@ -1,16 +1,19 @@
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as controls from '../packages/design-kit/src/controls.js';
-import { themeScript } from '../packages/design-kit/src/theme.js';
-import { sentOf } from './parts.mjs';
+import * as theme from '../packages/design-kit/src/theme.js';
+import { bundledOf, packagedOf, sentOf } from './parts.mjs';
 
 /*
  * The controls as a page's bundler sends them: every function, without comments and gzipped, small
- * enough to send to every visitor of a page that attaches one. The package record measures each
- * function through the same function, as a bundler sends it from the packed package.
+ * enough to send to every visitor of a page that attaches one. Every budget here but the theme
+ * script's is measured from the package laid out as npm ships it, as the package record measures
+ * each function, so a bundler reads the manifest's `sideEffects` as it does in a page's install.
  * The theme script the theme module exports goes inline in a page's head and is dropped from the
  * controls by a bundler, so it is held to a budget of its own.
  */
@@ -37,19 +40,59 @@ import { sentOf } from './parts.mjs';
  */
 const BUDGET = 21.75 * 1024;
 
+/*
+ * What a page that imports one function pays, beside the whole, on three sentinels: the module
+ * imported bare, which sends the listeners it adds as it loads, and the smallest and the largest
+ * attach, each alone. Each is set by the rule of record 13 for that entry: its size with room for
+ * one more function of the usual size, the median of what each function adds to every other, from
+ * the same layout, the upper of the middle two where the count is even, rounded up to the next
+ * quarter of a kilobyte. Set so in 0.9.4.
+ */
+const ENTRY_BUDGETS = [
+    ['the module imported bare', [], 1.5 * 1024],
+    ['attachTable alone', ['attachTable'], 2.75 * 1024],
+    ['attachForm alone', ['attachForm'], 9.25 * 1024],
+] as const;
+
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;
 
+/* The theme module's names, which the controls import, without the script that goes inline. */
+const THEME_NAMES = Object.keys(theme).filter((name) => name !== 'themeScript');
+
 describe('the controls', () => {
-    it(`stay within ${String(BUDGET / 1024)} KB gzipped as a bundler sends every function, without comments`, async () => {
-        const sent = await sentOf(
-            fileURLToPath(new URL('../packages/design-kit/src/controls.ts', import.meta.url)),
-            Object.keys(controls)
+    let packaged = '';
+    beforeAll(async () => {
+        packaged = await packagedOf(
+            fileURLToPath(new URL('../packages/design-kit', import.meta.url))
         );
+    });
+    afterAll(() => {
+        rmSync(packaged, { recursive: true, force: true });
+    });
+
+    it(`stay within ${String(BUDGET / 1024)} KB gzipped as a bundler sends every function, without comments`, async () => {
+        const sent = await sentOf(join(packaged, 'dist', 'controls.js'), Object.keys(controls));
         expect(sent).toBeLessThanOrEqual(BUDGET);
     }, 60_000);
 
+    it.each(ENTRY_BUDGETS)(
+        'send %s within its budget',
+        async (_, names, budget) => {
+            const sent = await sentOf(join(packaged, 'dist', 'controls.js'), names);
+            expect(sent).toBeLessThanOrEqual(budget);
+        },
+        60_000
+    );
+
+    // The theme script is the theme module's one template, so a backtick left in a bundle of the
+    // other names is the script's text, kept since a bundler could not prove it harmless.
+    it('bundle the theme names the controls import with nothing of the theme script', async () => {
+        const bundled = await bundledOf(join(packaged, 'dist', 'theme.js'), THEME_NAMES);
+        expect(bundled).not.toContain('`');
+    }, 60_000);
+
     it(`keep the theme script a page puts inline within ${String(SCRIPT_BUDGET / 1024)} KB gzipped`, () => {
-        expect(gzipSync(themeScript).length).toBeLessThanOrEqual(SCRIPT_BUDGET);
+        expect(gzipSync(theme.themeScript).length).toBeLessThanOrEqual(SCRIPT_BUDGET);
     });
 });

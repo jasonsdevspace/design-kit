@@ -4,11 +4,18 @@
  */
 export const THEME_KEY = 'theme';
 
+/*
+ * The two themes as plain strings, which the theme script writes in quotes as they are, so its text
+ * calls nothing as the module loads and a bundler drops it from a page that imports only the names.
+ */
+const LIGHT = 'light';
+const DARK = 'dark';
+
 /**
  * The two themes the script sets on the root as data-theme, each with a rule in the tokens. The
  * portfolio also saves `system`, which the script treats as nothing saved.
  */
-export const THEMES = ['light', 'dark'] as const;
+export const THEMES = [LIGHT, DARK] as const;
 
 export type Theme = (typeof THEMES)[number];
 
@@ -19,9 +26,6 @@ export type Theme = (typeof THEMES)[number];
 export const THEME_CHOICES = ['system', ...THEMES] as const;
 
 export type ThemeChoice = (typeof THEME_CHOICES)[number];
-
-const [LIGHT, DARK] = THEMES;
-const quoted = (text: string) => JSON.stringify(text);
 
 /**
  * The script a page runs inline in its head, before anything paints, so it never flashes the other
@@ -64,7 +68,7 @@ export const themeScript = `(function () {
     var paint = function () {
         if (!lightGround || !darkGround) return;
         var theme = root.getAttribute('data-theme');
-        var ground = theme === ${quoted(LIGHT)} ? lightGround : theme === ${quoted(DARK)} ? darkGround : null;
+        var ground = theme === "${LIGHT}" ? lightGround : theme === "${DARK}" ? darkGround : null;
         if (!ground) return;
         for (var j = 0; j < metas.length; j += 1) metas[j].setAttribute('content', ground);
     };
@@ -76,8 +80,8 @@ export const themeScript = `(function () {
     }
     var saved = function () {
         try {
-            var value = localStorage.getItem(${quoted(THEME_KEY)});
-            return value === ${quoted(LIGHT)} || value === ${quoted(DARK)} ? value : null;
+            var value = localStorage.getItem("${THEME_KEY}");
+            return value === "${LIGHT}" || value === "${DARK}" ? value : null;
         } catch (error) {
             return null;
         }
@@ -93,11 +97,11 @@ export const themeScript = `(function () {
         new MutationObserver(paint).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
     }
     var apply = function () {
-        root.setAttribute('data-theme', saved() || (dark() ? ${quoted(DARK)} : ${quoted(LIGHT)}));
+        root.setAttribute('data-theme', saved() || (dark() ? "${DARK}" : "${LIGHT}"));
     };
     apply();
     window.addEventListener('storage', function (event) {
-        if (event.key === null || event.key === ${quoted(THEME_KEY)}) apply();
+        if (event.key === null || event.key === "${THEME_KEY}") apply();
     });
     window.addEventListener('pageshow', function (event) {
         if (event.persisted) apply();
