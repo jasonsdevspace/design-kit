@@ -140,6 +140,10 @@ export const servePage = async (
         '/line.js': [js('line.ts'), 'text/javascript'],
         // The controls take each attach down through it.
         '/teardown.js': [js('teardown.ts'), 'text/javascript'],
+        // The controls and their words find a piece's parts through it.
+        '/find.js': [js('find.ts'), 'text/javascript'],
+        // The controls take the kit's words for a failure from it.
+        '/words.js': [js('words.ts'), 'text/javascript'],
         ...(script === undefined ? {} : { '/page.js': [script, 'text/javascript'] as const }),
     };
     const html =

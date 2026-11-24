@@ -251,6 +251,10 @@ The paths are in `packages/design-kit`.
   plain markup and in React, where a summary built from it lists the stepper with its own words and
   takes focus, and has the first field's name and error said once it already has focus. It runs in
   Chromium, WebKit and Firefox.
+- `src/words.test.ts` gives the kit's words in plain Node for every failure and every dated limit
+  the browser test reads, and finds an ISO week put at its Monday, a year under a hundred kept as
+  written, a fraction of a second shown to its own digits, an overnight window given past either
+  limit and a malformed language read as US English.
 - `e2e/stepper.spec.tsx` leaves letters typed into a blank stepper by Tab and finds its error drawn,
   the field marked invalid and the error said once, passes a blank required field by Tab and finds
   nothing, takes a press on its own button straight after letters with no error drawn in between,
