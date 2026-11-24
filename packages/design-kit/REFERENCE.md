@@ -507,7 +507,7 @@ look to fill and the open panel is the sign.
 A row of buttons, such as a page's actions under its lead, sits in a `dk-actions`, as above. It
 spaces the buttons by `--dk-space-2` and wraps them onto rows the same step apart, where spaces
 between buttons would leave the rows touching. It sets no margin of its own. A form's buttons go in
-a `dk-actions`, a lone submit too, as [a plain form](#a-plain-form) spaces it.
+a `dk-actions`, a lone submit too, since [a plain form](#a-plain-form) gives a bare button no room.
 
 Mark an unavailable button `aria-disabled="true"`, never `disabled`. This reference calls such a
 button off, as the React prop does. A disabled button drops focus and leaves the tab order, while an
@@ -2407,11 +2407,11 @@ display size, with the lead `--dk-space-2` under it, as an explainer's is, and a
 the title size, `--dk-space-3` over its text. It starts its text at the strip's inset, by the same
 band insets, so the page reads as one column from the strip to the footer and keeps clear of a
 phone's sides. Only its prose holds to the measure, its paragraphs, its plain lists and a quote, and
-its [fields](#fields), so a table, a grid of tiles or a figure takes the column. The spacing is set
-on the page, between what it holds, never on a paragraph's own margin, so a reader's own sheet that
-adds room under a paragraph adds the room it asks for and breaks nothing, and nothing is reordered,
-so focus and reading follow the markup. `dk-lead` is the lead, in the page's text color at the lead
-size and held to the measure, the explainer's lead under a name of its own. [Decision
+its [fields](#a-fields-width), so a table, a grid of tiles or a figure takes the column. The spacing
+is set on the page, between what it holds, never on a paragraph's own margin, so a reader's own
+sheet that adds room under a paragraph adds the room it asks for and breaks nothing, and nothing is
+reordered, so focus and reading follow the markup. `dk-lead` is the lead, in the page's text color
+at the lead size and held to the measure, the explainer's lead under a name of its own. [Decision
 0017](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0017-a-content-page-is-a-container.md)
 says why a content page is a container of its own.
 
@@ -3368,11 +3368,11 @@ Set beside other fields in a `dk-fields` row, as [fields side by side](#fields-s
 the stepper's field starts from the row's length, wider than a stepper of two figures, and a field
 with no room left beside it moves to a line of its own. A row with a stepper wider than 10rem sets
 `--dk-fields-least` to hold it at its full size: 10.5rem for a stepper of three figures, by
-`--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of three figures. Left at
-10rem, such a stepper keeps its field as wide as itself in a browser with `:has()`, a tall one with
-its buttons narrowed toward the target but never under it, and the pair stacks on a screen where the
-two do not fit. A page that wants two fields side by side on a screen 360 pixels wide sets the
-length to 9.75rem, still as wide as a stepper of two figures.
+`--dk-stepper-digits`, 12rem for a tall stepper and 13.25rem for a tall one of three figures. Left
+at 10rem, such a stepper keeps its field as wide as itself in a browser with `:has()`, a tall one
+with its buttons narrowed toward the target but never under it, and the pair stacks on a screen
+where the two do not fit. A page that wants two fields side by side on a screen 360 pixels wide sets
+the length to 9.75rem, still as wide as a stepper of two figures.
 
 ## Toast
 

@@ -13,11 +13,17 @@ import { repositoryFiles } from './repository.mjs';
 
 const PATH = 'packages/design-kit/REFERENCE.md';
 
-/** Every file git holds or would add that can link the reference, with its text. */
+/** Every file git holds or would add that can link the reference, the sheets too, with its text. */
 const files = repositoryFiles(import.meta.url, (path) =>
-    /\.(?:md|[cm]?[jt]sx?|json|ya?ml|html)$/.test(path)
+    /\.(?:md|[cm]?[jt]sx?|json|ya?ml|html|css)$/.test(path)
 );
 const reference = files.get(PATH) ?? '';
+const { version } = JSON.parse(files.get('packages/design-kit/package.json') ?? '{}') as {
+    version: string;
+};
+
+/** A page with its code blocks taken out, so a heading or a link shown as code is not read. */
+const withoutCode = (markdown: string): string => markdown.replaceAll(/^```[\s\S]*?^```/gm, '');
 
 /** A heading's id as GitHub writes it: lower case, punctuation dropped, each space a hyphen. */
 const slug = (heading: string): string =>
@@ -37,7 +43,7 @@ interface Heading {
 /** The headings of a page outside its code blocks, a repeated id numbered as GitHub numbers it. */
 const headingsOf = (markdown: string): Heading[] => {
     const seen = new Map<string, number>();
-    return [...markdown.replaceAll(/^```[\s\S]*?^```/gm, '').matchAll(/^(#+) (.+)$/gm)].map(
+    return [...withoutCode(markdown).matchAll(/^(#+) (.+)$/gm)].map(
         ([, hashes = '', title = '']) => {
             const id = slug(title);
             const count = seen.get(id) ?? 0;
@@ -47,29 +53,41 @@ const headingsOf = (markdown: string): Heading[] => {
     );
 };
 
-/** Every link into the reference: a heading named after its file, or after `#` inside it. */
-const linksIn = (all: ReadonlyMap<string, string>): string[] =>
+/**
+ * Every link into the reference, each as its file and the id it asks for: a heading named after the
+ * file's name, or inside the reference after `#` in a link, an `href` or a link's definition. An id
+ * ends at its last letter, figure or hyphen, so the stop after a link in a sentence is not read as
+ * part of it. A link pinned to a release of the kit other than the package's own version is passed
+ * over, since that release's reference is the one it reaches. It is checked once the pin moves to
+ * the version, as a release moves every pin in the package README.
+ */
+const linksIn = (all: ReadonlyMap<string, string>, current: string): string[] =>
     [...all].flatMap(([path, text]) => [
-        ...[...text.matchAll(/REFERENCE\.md#([^\s)>"'`\]]+)/g)].map(
-            ([, id = '']) => `${path} ${id}`
-        ),
+        ...[...text.matchAll(/([^\s(<"'`]*)REFERENCE\.md#([\w-]+)/g)]
+            .filter(([, address = '']) => {
+                const release = /\/blob\/design-kit-v([^/]+)\//.exec(address)?.[1];
+                return release === undefined || release === current;
+            })
+            .map(([, , id = '']) => `${path} ${id}`),
         ...(path === PATH
-            ? [...text.replaceAll(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(#([^)\s]+)\)/g)].map(
-                  ([, id = '']) => `${path} ${id}`
-              )
+            ? [
+                  ...withoutCode(text).matchAll(
+                      /\]\(#([^)\s]+)\)|href="#([^"]+)"|^\[[^\]]+\]:\s*<?#([^\s>]+)/gm
+                  ),
+              ].map(([, link, href, definition]) => `${path} ${link ?? href ?? definition ?? ''}`)
             : []),
     ]);
 
 /** The links whose heading the reference does not have, each as its file and the id it asks for. */
-const unresolved = (all: ReadonlyMap<string, string>): string[] => {
+const unresolved = (all: ReadonlyMap<string, string>, current = version): string[] => {
     const ids = new Set(headingsOf(all.get(PATH) ?? '').map(({ id }) => id));
-    return linksIn(all).filter((link) => !ids.has(link.slice(link.indexOf(' ') + 1)));
+    return linksIn(all, current).filter((link) => !ids.has(link.slice(link.indexOf(' ') + 1)));
 };
 
 describe('the links into the reference', () => {
     it('find the reference and links into it from outside and from within', () => {
         expect(reference).not.toBe('');
-        const links = linksIn(files);
+        const links = linksIn(files, version);
         expect(links.some((link) => !link.startsWith(`${PATH} `))).toBe(true);
         expect(links.some((link) => link.startsWith(`${PATH} `))).toBe(true);
     });
@@ -93,6 +111,42 @@ describe('the links into the reference', () => {
         ).toEqual([`${PATH} steps`, 'README.md a-form']);
     });
 
+    it('read a link in a sheet, and end an id before the stop after it', () => {
+        const page =
+            '## Rows\n\nAs [rows](#rows), [panels](#panels). and <a href="#tiles">tiles</a>.\n\n[x]: #dk-x\n';
+        const file = 'REFERENCE.md';
+        const sheet = `/* Rows, as ${file}#rows. says, and panels, as ${file}#panels, says. */`;
+        expect(
+            unresolved(
+                new Map([
+                    [PATH, page],
+                    ['packages/design-kit/src/rows.css', sheet],
+                ])
+            )
+        ).toEqual([
+            `${PATH} panels`,
+            `${PATH} tiles`,
+            `${PATH} dk-x`,
+            'packages/design-kit/src/rows.css panels',
+        ]);
+    });
+
+    it("check a link pinned to the package's own release, and pass over one pinned to another", () => {
+        const page = '## Rows\n';
+        const blob = 'https://github.com/jasonsdevspace/design-kit/blob';
+        const file = 'packages/design-kit/REFERENCE.md';
+        const readme = `[a](${blob}/design-kit-v1.0.0/${file}#gone) [b](${blob}/design-kit-v0.9.0/${file}#old) [c](${blob}/main/${file}#lost)`;
+        expect(
+            unresolved(
+                new Map([
+                    [PATH, page],
+                    ['README.md', readme],
+                ]),
+                '1.0.0'
+            )
+        ).toEqual(['README.md gone', 'README.md lost']);
+    });
+
     it('number a repeated heading as GitHub does, and read no heading inside a code block', () => {
         const page = '## Rows\n\n```md\n## Inside\n```\n\n### Rows\n\n## A `dk-row`, at last\n';
         expect(headingsOf(page).map(({ id }) => id)).toEqual([
@@ -108,7 +162,9 @@ describe("the reference's contents", () => {
     const listed = (markdown: string): string[] => {
         const start = markdown.indexOf('\n## Contents\n');
         const end = markdown.indexOf('\n#', start + 1);
-        return start === -1 ? [] : (markdown.slice(start, end).match(/^ *- .+$/gm) ?? []);
+        return start === -1
+            ? []
+            : (markdown.slice(start, end === -1 ? undefined : end).match(/^ *- .+$/gm) ?? []);
     };
 
     /** The list a page's headings make, each heading below the contents indented under its own. */
