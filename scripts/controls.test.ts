@@ -33,7 +33,7 @@ import { sentOf } from './parts.mjs';
  * body and followed into a frame did, again once a control kept clear inside a frame did, and again
  * for 0.9.4 once a dated field's limit in words left too little room for another, and again once a
  * toast marking its frame did, and again once a stepper quiet as its form refuses it did, and again
- * once a stepper owning its error at a submit and a reset did.
+ * once a focus request dropped for a page out of sight rather than after a second did.
  */
 const BUDGET = 21.75 * 1024;
 

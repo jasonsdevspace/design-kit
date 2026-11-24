@@ -1748,7 +1748,8 @@ returns a function that takes it down again. The markup is hidden until it is at
 without script meets no control that does nothing, and the functions set no style, so a page's
 policy can refuse every style it did not serve. Nothing runs when the module is imported but
 listeners on the document for keys, clicks and submits, which note the visitor's last press for
-`focusOnArrival`.
+`focusOnArrival`, and for the page going out of sight or coming back, which drops a focus request
+made while the page is out of sight or before it goes.
 
 ### Theme switch
 
@@ -2070,17 +2071,19 @@ since the request is left where they put it: focus is free only while it is wher
 or on the page's body, as it is once the control that had it is removed, or where the kit has handed
 it back since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down,
 or on what the browser hands it to as a dialog closes, until the dialog's close is handled. A
-request still waiting a second later, as in a tab out of sight, is dropped, so focus does not jump
-when the visitor comes back. Each request is new, so the same control asked for twice is focused
-twice, and the function `moveFocus` returns calls a request off before it lands, as aborting the
-`signal` it is given does. A request asked as its component unmounts is given no signal that unmount
-aborts, so it still lands. An id is looked for in the root where focus was when the request was
-made, so a widget drawn inside a shadow root finds its own control, never an element of the page
-around it that shares the id, and the form's refusal, a stepper and progress find the errors, hints
-and labels they read in their own element's root. A panel and its button are found from the page's
-document, which the panel listens on. `activeOf()` from `./controls` returns what has focus,
-followed into each shadow root that holds it, as a request reads where focus was, for a page that
-asks later and passes `from` itself.
+request made while the page is out of sight, or before it goes, is dropped, so focus does not jump
+when the visitor comes back, and so is one whose frame comes more than ten seconds late, as a frame
+the browser holds back out of view can, while one a long render holds on a page in sight for less
+still lands. Each request is new, so the same control asked for twice is focused twice, and the
+function `moveFocus` returns calls a request off before it lands, as aborting the `signal` it is
+given does. A request asked as its component unmounts is given no signal that unmount aborts, so it
+still lands. An id is looked for in the root where focus was when the request was made, so a widget
+drawn inside a shadow root finds its own control, never an element of the page around it that shares
+the id, and the form's refusal, a stepper and progress find the errors, hints and labels they read
+in their own element's root. A panel and its button are found from the page's document, which the
+panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
+root that holds it, as a request reads where focus was, for a page that asks later and passes `from`
+itself.
 
 ```js
 import { moveFocus } from '@jasonsdevspace/design-kit/controls';
@@ -2128,12 +2131,13 @@ with autofocus does, is never taken. Where focus was is read inside a shadow roo
 a widget's own button there brings focus to the heading. What decides a first draw is
 `focusOnArrival(heading, { from })` from `./controls`, which a page without React calls as each view
 draws, and with `changed` as a view already drawn changes on a press, which then lands with any view
-first drawn for that press, so the first in the page still takes focus. It takes a `signal` as
-`moveFocus` does: an abort calls off a request not yet landed, as the function it returns does, and
-a signal already aborted asks for nothing and leaves the press for another view. The key is a
-string, a number or a boolean, compared by value, and changes on a press or a submit, never as a
-visitor chooses in a list or a set of radios, which would move them as they choose, as WCAG 3.2.2
-has it.
+first drawn for that press, so the first in the page still takes focus. A view is dropped as a
+request to `moveFocus` is, and one asked once the page is back in sight lands without the views
+asked before it went. It takes a `signal` as `moveFocus` does: an abort calls off a request not yet
+landed, as the function it returns does, and a signal already aborted asks for nothing and leaves
+the press for another view. The key is a string, a number or a boolean, compared by value, and
+changes on a press or a submit, never as a visitor chooses in a list or a set of radios, which would
+move them as they choose, as WCAG 3.2.2 has it.
 
 ```tsx
 import { useArrivalFocus } from '@jasonsdevspace/design-kit/react';
