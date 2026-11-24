@@ -22,21 +22,21 @@ page's markup keeps the place the browser and the page give it.
 **A. Space every part after the first, and guess from tag names what to pass over.** One rule stands
 each child a step below the one before it, skipping what draws nothing and what shares a line, from
 lists such as `[hidden]`, `[type='hidden']`, `script`, `template`, `button`, `input` and `label`.
-Rejected. Each list is open-ended, and each round of review found markup it missed: a hidden input
-between two controls on one line, a closed dialog or a datalist first, a `<br>` between a bare label
-and its control, and a page's own row with no class. Every miss gave the page's markup a band it
-never asked for, and every fix grew the selector. Every part's own margins were taken too, as the
-flow takes them in a panel, which took a page's heading and paragraph off the browser's margins.
+Rejected. Each list is open-ended, and markup a page writes falls outside it: a hidden input between
+two controls on one line, a closed dialog or a datalist first, a `<br>` between a bare label and its
+control, and a page's own row with no class. Each case left out gives the page's markup a band it
+never asked for, and each case added grows the selector. It takes every part's own margins too, as
+the flow does in a panel, which takes a page's heading and paragraph off the browser's margins.
 
 **B. Lay a plain form out as a flex column with a gap.** Rejected. A column restacks bare markup,
 putting a label, its control and their button on lines of their own. Margins in a flex column no
 longer collapse, so a page's heading and paragraph take the gap on top of their own margins, and a
 page that sets only `display: flex` on a classless form to make a row finds it turned to a column.
 
-**C. Space only the kit's own blocks, and only after another of them.** A field, a row of actions
-and a callout that is not empty each stand `--dk-space-4` below what sits above them, once another
-of those has come before them, so a hidden input or a script between two of them leaves them a step
-apart. Nothing else in the form is given room.
+**C. Space only the kit's own blocks, and only after another of them.** A field, a row of fields, a
+row of actions and a callout that is not empty each stand `--dk-space-4` below what sits above them,
+once another of those has come before them, so a hidden input or a script between two of them leaves
+them a step apart. Nothing else in the form is given room.
 
 ## Decision
 

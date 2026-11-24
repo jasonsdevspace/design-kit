@@ -493,7 +493,7 @@ const Install = ({ version }: { readonly version: string }) => (
                 tabIndex={0}
                 translate="no"
             >
-                <code>{`npm install @jasonsdevspace/design-kit@${version}`}</code>
+                <code>{`npm install --save-exact @jasonsdevspace/design-kit@${version}`}</code>
             </pre>
             <div className="dk-code-head">
                 <span className="dk-visually-hidden site-code-name" id="install">
