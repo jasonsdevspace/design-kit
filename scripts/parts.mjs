@@ -21,11 +21,12 @@ import {
     mkdtempSync,
     readdirSync,
     readFileSync,
+    realpathSync,
     rmSync,
     writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 import { withoutComments } from './summary.mjs';
@@ -194,6 +195,71 @@ export const bundledOf = async (module, names) => {
             compilerOptions: { removeComments: true, target: ts.ScriptTarget.ESNext },
         }).outputText;
         return stripped.replace(/^[ \t]*\n/gm, '');
+    } finally {
+        rmSync(entries, { recursive: true, force: true });
+    }
+};
+
+/**
+ * What a site's bundler sends each of its pages, where each page imports the functions named from
+ * the module given and the pages are built together, as a site with a page that attaches only a
+ * form beside a page that attaches only a table builds them. Code that two pages import goes into a
+ * chunk they share, and a module only one page imports stays out of the other's chunks. For each
+ * page it gives the modules of the package folder that its entry chunk and the chunks that entry
+ * imports hold, by their paths in that folder, and their code.
+ *
+ * @param {string} module the module's path inside a folder laid out as `packagedOf` lays it out
+ * @param {readonly (readonly string[])[]} pages the names each page imports, none for a bare import
+ * @returns {Promise<{ modules: string[], code: string }[]>}
+ */
+export const chunksOf = async (module, pages) => {
+    const { build } = await import('vite');
+    const entries = mkdtempSync(join(tmpdir(), 'design-kit-pages-'));
+    // The package folder, whose `dist` holds the module, as the bundler names it, past links.
+    const folder = realpathSync(join(module, '..', '..'));
+    try {
+        /** @type {Record<string, string>} */
+        const entry = {};
+        pages.forEach((names, at) => {
+            const page = join(entries, `page${String(at)}.js`);
+            writeFileSync(
+                page,
+                names.length === 0
+                    ? `import ${JSON.stringify(module)};\n`
+                    : `export { ${names.join(', ')} } from ${JSON.stringify(module)};\n`
+            );
+            entry[`page${String(at)}`] = page;
+        });
+        const output = await build({
+            configFile: false,
+            logLevel: 'silent',
+            build: { write: false, minify: false, lib: { entry, formats: ['es'] } },
+        });
+        const chunks = (Array.isArray(output) ? output : [output])
+            .flatMap((result) => ('output' in result ? result.output : []))
+            .filter((file) => file.type === 'chunk');
+        const byFile = new Map(chunks.map((chunk) => [chunk.fileName, chunk]));
+        return pages.map((_, at) => {
+            const first = chunks.find(
+                (chunk) => chunk.isEntry && chunk.name === `page${String(at)}`
+            );
+            if (!first) throw new Error(`expected a chunk for page ${String(at)}`);
+            // The entry chunk and every chunk it imports, and those they import in turn.
+            const reached = new Set([first]);
+            for (const chunk of reached)
+                for (const name of chunk.imports) {
+                    const imported = byFile.get(name);
+                    if (imported) reached.add(imported);
+                }
+            const modules = [...reached]
+                .flatMap((chunk) => chunk.moduleIds)
+                .filter((id) => id.startsWith(folder))
+                .map((id) => relative(folder, id).split(sep).join('/'));
+            return {
+                modules: [...new Set(modules)].sort(),
+                code: [...reached].map((chunk) => chunk.code).join('\n'),
+            };
+        });
     } finally {
         rmSync(entries, { recursive: true, force: true });
     }

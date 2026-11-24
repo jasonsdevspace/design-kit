@@ -97,6 +97,27 @@ describe('the teardown table', () => {
         expect(notInTable(ATTACHES, TABLE)).toEqual([]);
     });
 
+    it('attaches each part of the controls that keeps a registry of attached pieces', () => {
+        // Every part the controls gather, by the paths the entry exports and imports them from.
+        const read = (file: string) =>
+            readFileSync(new URL(`../packages/design-kit/src/${file}`, import.meta.url), 'utf8');
+        const parts = [...read('controls.ts').matchAll(/['"]\.\/([\w-]+)\.js['"]/g)].map(
+            ([, name]) => `${name ?? ''}.ts`
+        );
+        const keeping = parts.filter((file) =>
+            /\bnew WeakMap<[^;]*\bKept</.test(withoutComments(read(file)))
+        );
+        // The registries are there to read, so the check cannot pass on parts that keep none.
+        expect(keeping).toContain('stepper.ts');
+        for (const file of keeping) {
+            const attaches = [
+                ...withoutComments(read(file)).matchAll(/^export const (attach[A-Z]\w*)/gm),
+            ].map(([, name]) => name ?? '');
+            expect(attaches, file).not.toEqual([]);
+            expect(notInTable(attaches, TABLE), file).toEqual([]);
+        }
+    });
+
     it('names each of its pieces in the list the specs run', () => {
         expect(namedIn(TABLE)).toEqual([...PIECES]);
     });
