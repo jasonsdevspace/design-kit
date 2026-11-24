@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page, test } from '@playwright/test';
+import { expect, type Frame, type Locator, type Page, test } from '@playwright/test';
 
 import { box, forceColors, servePage, tabKey } from './page.js';
 
@@ -7,7 +7,8 @@ import { box, forceColors, servePage, tabKey } from './page.js';
  * frame's end edge, or hidden under a pinned column wider than the room the frame keeps for it,
  * brought fully into view once the table is attached, in a table that reads right to left too, a
  * link cut by no more than a target's width brought into view by the frame's own room without any
- * script, and the frame attached once and let go again.
+ * script, the frame attached once and let go again, and a table in a frame of the page's own origin
+ * the page attaches.
  */
 
 /** Each frame attached through itself and again through its table, which attaches it once. */
@@ -67,11 +68,14 @@ const open = async (
     if (attach) await page.waitForFunction(() => 'ready' in window);
 };
 
-const frame = (page: Page): Locator => page.getByRole('region', { name: 'Scores' });
-const link = (page: Page, round: number): Locator => page.locator(`#r${String(round)}`);
+/** The page, or a frame of its own origin a table is drawn in. */
+type Scope = Page | Frame;
+
+const frame = (page: Scope): Locator => page.getByRole('region', { name: 'Scores' });
+const link = (page: Scope, round: number): Locator => page.locator(`#r${String(round)}`);
 
 /** Where the frame's room runs, clear of the pinned column, across the page. */
-const room = async (page: Page): Promise<{ from: number; to: number }> => {
+const room = async (page: Scope): Promise<{ from: number; to: number }> => {
     const drawn = await box(frame(page), 'the frame');
     const pinned = await box(page.getByRole('rowheader'), 'the pinned cell');
     const width = await frame(page).evaluate((element) => element.clientWidth);
@@ -81,7 +85,7 @@ const room = async (page: Page): Promise<{ from: number; to: number }> => {
 };
 
 /** Scrolls the frame so the link shows only so much of itself, past the room's end or start. */
-const cut = (page: Page, round: number, shown: number, at: 'end' | 'start'): Promise<void> =>
+const cut = (page: Scope, round: number, shown: number, at: 'end' | 'start'): Promise<void> =>
     page.evaluate(
         ([id, showing, side]) => {
             const scroller = document.querySelector<HTMLElement>('.dk-table-scroll');
@@ -110,7 +114,7 @@ const cut = (page: Page, round: number, shown: number, at: 'end' | 'start'): Pro
     );
 
 /** Whether the link stands whole in the frame's room, clear of the pinned column. */
-const whole = async (page: Page, round: number): Promise<boolean> => {
+const whole = async (page: Scope, round: number): Promise<boolean> => {
     const { from, to } = await room(page);
     const drawn = await box(link(page, round), 'the link');
     return drawn.x >= from - 0.5 && drawn.x + drawn.width <= to + 0.5;
@@ -148,6 +152,42 @@ test('brings a link out from under a pinned column wider than the room kept for 
         await page.keyboard.press(`Shift+${tabKey(browserName)}`);
         await expect(link(page, 5)).toBeFocused();
         expect(await whole(page, 5), `${String(shown)}px showing`).toBe(true);
+    }
+});
+
+test('brings a link out from under a pinned column in a table inside a frame the page attached', async ({
+    page,
+    browserName,
+}) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await servePage(page, {
+        title: 'Scores',
+        body: '<main><h1>Scores</h1><iframe title="Scores" srcdoc="<!doctype html><title>Frame</title>" style="display: block; width: 100%; height: 400px; border: 0"></iframe></main>',
+        script: `import { attachTable } from './controls.js';
+const holder = document.querySelector('iframe');
+if (holder.contentDocument?.title !== 'Frame')
+    await new Promise((loaded) => holder.addEventListener('load', loaded, { once: true }));
+const inner = holder.contentDocument;
+inner.documentElement.lang = 'en';
+inner.head.insertAdjacentHTML('beforeend', '<link rel="stylesheet" href="/kit.css">');
+await new Promise((loaded) => inner.querySelector('link').addEventListener('load', loaded, { once: true }));
+inner.body.innerHTML = ${JSON.stringify(
+            table('Annabelle-Ruth', false)
+        )} + '<style>.dk-table-scroll { --dk-table-pinned-size: 3rem; }</style>';
+attachTable(inner.querySelector('.dk-table-scroll'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const holder = await page.locator('iframe').elementHandle();
+    const scope = await holder.contentFrame();
+    if (!scope) throw new Error('expected the frame');
+    for (const shown of [4, 12, 60]) {
+        await cut(scope, 5, shown, 'start');
+        expect(await whole(scope, 5), `${String(shown)}px showing, before`).toBe(false);
+        await link(scope, 6).focus();
+        await page.keyboard.press(`Shift+${tabKey(browserName)}`);
+        await expect(link(scope, 5)).toBeFocused();
+        expect(await whole(scope, 5), `${String(shown)}px showing`).toBe(true);
     }
 });
 

@@ -413,6 +413,51 @@ for (const how of ['hidden', 'ancestor', 'style', 'inert', 'not focusable'] as c
         );
     });
 
+/** A form drawn inside a frame of the page's own origin and attached from the page. */
+const IN_FRAME = renderToStaticMarkup(
+    <form id="seats" noValidate>
+        <InputField id="seat" label="Seat" required />
+        <button type="submit">Save seats</button>
+    </form>
+);
+
+test('focuses the field in error inside a frame, where the page attached the form', async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Form',
+        body: `<main><iframe title="Seats" srcdoc="<!doctype html><title>Seats</title>"></iframe>${renderToStaticMarkup(
+            <StatusLine className="screen-status" />
+        )}</main>`,
+        script: `import { attachForm } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.title !== 'Seats')
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+frame.contentDocument.body.innerHTML = ${JSON.stringify(IN_FRAME)};
+attachForm(frame.contentDocument.querySelector('form'), {
+    status: document.querySelector('.screen-status'),
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inner = page.frameLocator('iframe');
+    await inner.getByRole('button', { name: 'Save seats' }).click();
+    const seat = inner.locator('#seat');
+    await expect(seat).toHaveAttribute('aria-invalid', 'true');
+    await expect(seat).toBeFocused();
+    await expect(page.locator('iframe')).toBeFocused();
+    // The kit's error drawn in the frame, its words the kit's, and the field described by it.
+    const error = inner.locator('.dk-field-error');
+    await expect(error).toHaveText('Error: Enter a value.');
+    const errorId = await error.getAttribute('id');
+    expect(errorId).toBeTruthy();
+    await expect(seat).toHaveAttribute(
+        'aria-describedby',
+        new RegExp(`(^| )${errorId ?? ''}( |$)`)
+    );
+    await expect(page.locator('.screen-status')).toHaveText('Seat: Error: Enter a value.');
+});
+
 test.describe('in React', () => {
     let app = '';
     test.beforeAll(async () => {

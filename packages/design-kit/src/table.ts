@@ -1,3 +1,4 @@
+import { isElement } from './find.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
 /*
@@ -38,7 +39,7 @@ export const attachTable = (element: HTMLElement, options?: AttachOptions): (() 
     if (already) return already;
     const down = teardown(options?.signal);
     const onFocusIn = ({ target }: FocusEvent) => {
-        if (!(target instanceof Element) || !target.matches(':focus-visible')) return;
+        if (!isElement(target) || !target.matches(':focus-visible')) return;
         // Measured along the way the frame reads, so a start is the smaller figure either way.
         const read = getComputedStyle(frame);
         const way = read.direction === 'rtl' ? -1 : 1;

@@ -1,5 +1,5 @@
-import { isOff, takesFocus } from './find.js';
-import { activeOf } from './focus.js';
+import { isElement, isOff, takesFocus } from './find.js';
+import { docOf, seenNow } from './focus.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
 /*
@@ -197,7 +197,7 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         if (!isOff(cell)) chosen.onMove?.(cell);
     };
     const cellOf = (target: EventTarget | null) =>
-        cellsIn(group).find((one) => target instanceof Node && one.contains(target));
+        cellsIn(group).find((one) => isElement(target) && one.contains(target));
     const onReach = (event: Event) => {
         const cell = cellOf(event.target);
         if (!cell) return;
@@ -210,13 +210,13 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
     // to nothing as the cell holding it was taken out is still held here, so it is handed on.
     const onLeave = (event: FocusEvent) => {
         const to = event.relatedTarget;
-        if (to instanceof Node) {
+        if (isElement(to)) {
             if (!group.contains(to)) holding = null;
             return;
         }
         const from = event.target;
         queueMicrotask(() => {
-            if (from instanceof Element && from.isConnected) holding = null;
+            if (isElement(from) && from.isConnected) holding = null;
         });
     };
     let before = cellsIn(group);
@@ -229,7 +229,11 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         if (gone) {
             const next = inPlaceOf(gone, before, cells) ?? null;
             last = next;
-            const fell = activeOf() === document.body || activeOf() === null;
+            // Focus fell where the group's document reads nothing, or its body that a visitor can
+            // type in, which is where focus goes from a cell taken out of an editable page.
+            const doc = docOf(group);
+            const at = seenNow(doc);
+            const fell = at === null || at === doc.body;
             if (holding === gone && fell && next) next.focus();
         }
         before = cells;

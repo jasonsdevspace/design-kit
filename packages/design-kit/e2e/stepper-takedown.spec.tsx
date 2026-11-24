@@ -408,3 +408,57 @@ test.describe('taken down with a button focused', () => {
         await expect(page.locator('#next')).toBeFocused();
     });
 });
+
+/**
+ * The steppers drawn inside a frame of the page's own origin, each attached from the page with a
+ * signal of its own, as `ATTACH_HELD` attaches the page's.
+ */
+const ATTACH_IN_FRAME = `import { attachStepper } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.title !== 'Round 3')
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+const inner = frame.contentDocument;
+inner.body.innerHTML = ${JSON.stringify(TAKEN)};
+window.held = {};
+for (const stepper of inner.querySelectorAll('.dk-stepper')) {
+    const controller = new AbortController();
+    const detach = attachStepper(stepper, { signal: controller.signal });
+    window.held[stepper.querySelector('input').id] = { controller, detach };
+}
+window.ready = true;`;
+
+test.describe('inside a frame, attached from the page', () => {
+    for (const stepper of TAKEN_DOWN)
+        test(`keeps focus on ${stepper.kind} stepper's button${stepper.readOnly ? ' as its value turns read only,' : ''} and hands it to ${stepper.readOnly ? 'its value' : 'the group'} as it is taken down`, async ({
+            page,
+        }) => {
+            await page.setViewportSize({ width: 390, height: 700 });
+            await servePage(page, {
+                title: 'Round 3',
+                body: '<main><iframe title="Round 3" srcdoc="<!doctype html><title>Round 3</title>" style="width: 100%; height: 600px"></iframe></main>',
+                script: ATTACH_IN_FRAME,
+            });
+            await page.waitForFunction(() => 'ready' in window);
+            const inner = page.frameLocator('iframe');
+            const raise = inner.getByRole('button', { name: `Raise ${stepper.label}` });
+            await raise.focus();
+            if (stepper.readOnly) {
+                await inner.locator(`#${stepper.id}`).evaluate((input: HTMLInputElement) => {
+                    input.readOnly = true;
+                });
+                await expect(raise).toHaveAttribute('aria-disabled', 'true');
+                await expect(raise).toBeVisible();
+                await expect(raise).toBeFocused();
+            }
+            await page.evaluate(async (id) => {
+                (window as unknown as Held).held[id]?.controller.abort();
+                await Promise.resolve();
+            }, stepper.id);
+            const place = stepper.readOnly
+                ? inner.locator(`#${stepper.id}`)
+                : inner.getByRole('group', { name: stepper.label, exact: true });
+            await expect(place).toBeFocused();
+            await expect(raise).toBeHidden();
+            await expect(page.locator('iframe')).toBeFocused();
+        });
+});

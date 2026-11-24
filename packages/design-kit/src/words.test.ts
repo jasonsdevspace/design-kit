@@ -15,16 +15,19 @@ import {
  * Intl standing in for the browser's.
  */
 
-/** A shadow root, which a field's language is read past to the element that holds it. */
+/**
+ * A shadow root, which a field's language is read past to the element that holds it, told by its
+ * node type and its host as one of a frame's is, which the page's own `ShadowRoot` does not name.
+ */
 class Shadow {
+    readonly nodeType = 11;
     constructor(readonly host: unknown) {}
 }
 
-/** A stand-in for a select, which the words tell from an input by its class. */
-class Select {}
-
 type Given = {
     readonly type?: string;
+    /** The element's name, a select's or an input's. */
+    readonly localName?: string;
     readonly attributes?: Readonly<Record<string, string>>;
     /** The language of the nearest element that names one, or none where no element does. */
     readonly lang?: string | null;
@@ -32,6 +35,8 @@ type Given = {
     readonly matches?: readonly string[];
     /** The root the field lives in, the document where it is not given. */
     readonly root?: unknown;
+    /** The document the field sits in, a frame's, the page's where it is not given. */
+    readonly doc?: unknown;
     readonly validationMessage?: string;
     readonly fieldset?: unknown;
 };
@@ -39,16 +44,23 @@ type Given = {
 /** A field with only what the words read of it. */
 const field = ({
     type = 'text',
+    localName = 'input',
     attributes = {},
     lang = 'en-US',
     matches = [],
     root = {},
+    doc,
     validationMessage = '',
     fieldset = null,
 }: Given = {}): Checked =>
     ({
         type,
+        localName,
         validationMessage,
+        // The document the field sits in, the page's as each test sets it where none is given.
+        get ownerDocument() {
+            return doc ?? document;
+        },
         getAttribute: (name: string) => attributes[name] ?? null,
         closest: (selector: string) => {
             if (selector === '[lang]') return lang === null ? null : { getAttribute: () => lang };
@@ -72,8 +84,6 @@ const whenWords = (control: Checked, limit: string) => plain(whenWordsOf(control
 const limits = (control: Checked) => [limitWords(control, 'min'), limitWords(control, 'max')];
 
 beforeEach(() => {
-    vi.stubGlobal('ShadowRoot', Shadow);
-    vi.stubGlobal('HTMLSelectElement', Select);
     vi.stubGlobal('document', { documentElement: { lang: 'en-US' } });
 });
 
@@ -140,6 +150,57 @@ describe("a dated field's limit", () => {
             root: new Shadow(host),
         });
         expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
+    });
+
+    it("takes the language around a shadow root of a frame's, which the page's own class does not name", () => {
+        vi.stubGlobal('document', { documentElement: { lang: 'fr' } });
+        const host = {
+            closest: (selector: string) =>
+                selector === '[lang]' ? { getAttribute: () => 'en-GB' } : null,
+            getRootNode: () => ({}),
+        };
+        const inside = field({
+            type: 'date',
+            attributes: { min: '2026-11-22' },
+            lang: null,
+            root: new Shadow(host),
+        });
+        expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
+    });
+
+    it(
+        'stops at a document whose named properties hold a host, as a form named host gives it',
+        {
+            timeout: 1000,
+        },
+        () => {
+            vi.stubGlobal('document', { documentElement: { lang: 'en-GB' } });
+            // A form named host, and two of them as a collection, each among the document's named
+            // properties, where reading the document as a shadow root would climb forever or throw.
+            for (const host of [{ closest: () => null }, [{}, {}]]) {
+                const inside = field({
+                    type: 'date',
+                    attributes: { min: '2026-11-22' },
+                    lang: null,
+                    root: { nodeType: 9, host },
+                });
+                expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
+            }
+        }
+    );
+
+    it("takes a frame's own language, else the page's, where no element around the field names one", () => {
+        const inFrame = (lang: string) =>
+            field({
+                type: 'date',
+                attributes: { min: '2026-11-22' },
+                lang: null,
+                doc: { documentElement: { lang } },
+            });
+        vi.stubGlobal('document', { documentElement: { lang: 'fr' } });
+        expect(limitWords(inFrame('en-GB'), 'min')).toBe('Enter 22 November 2026 or later.');
+        vi.stubGlobal('document', { documentElement: { lang: 'en-GB' } });
+        expect(limitWords(inFrame(''), 'min')).toBe('Enter 22 November 2026 or later.');
     });
 
     it('names a limit in the Gregorian calendar and Latin digits the field takes', () => {
@@ -270,9 +331,7 @@ describe("the kit's words for each failure", () => {
 
     it('ask for a value, a choice or a box checked where one is missing', () => {
         expect(KIT_WORDS.valueMissing(field())).toBe('Enter a value.');
-        expect(KIT_WORDS.valueMissing(Object.assign(new Select(), field()))).toBe(
-            'Choose an option.'
-        );
+        expect(KIT_WORDS.valueMissing(field({ localName: 'select' }))).toBe('Choose an option.');
         // A box alone stands for itself, while a radio in a set stands for its fieldset.
         expect(KIT_WORDS.valueMissing(field({ type: 'checkbox', matches: [CHOICE] }))).toBe(
             'Check the box to go on.'

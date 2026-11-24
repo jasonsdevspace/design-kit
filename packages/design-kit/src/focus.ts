@@ -49,6 +49,19 @@ export const seen = (element: Element | null, doc: Document = document): Element
 export const seenNow = (doc?: Document): Element | null => seen(deepActive(), doc);
 
 /**
+ * The document a piece reads focus in: the one its element sits in, or the page's where that one
+ * has no window, as a template's copy has before the page takes it in.
+ */
+export const docOf = (element: Element): Document =>
+    element.ownerDocument.defaultView ? element.ownerDocument : document;
+
+/** Whether focus is on the element given, as a piece in the element's document sees it. */
+export const isFocused = (element: Element): boolean => {
+    const doc = docOf(element);
+    return seenNow(doc) === seen(element, doc);
+};
+
+/**
  * What a piece in the document given keeps as a place to hand focus back to: the element that has
  * focus, read from the page down, kept as it is so a control inside a nested frame is reached, but
  * a blank body as the piece sees it, so one of another frame is kept as that frame.

@@ -69,15 +69,18 @@ const stepWords = (control: Checked): string => {
         : `Enter ${base}, or ${base} plus a multiple of ${step}.`;
 };
 
-/** The language nearest a field, past each shadow root it sits in, else the document's. */
+/**
+ * The language nearest a field, past each shadow root it sits in, else its own document's, else
+ * the page's, so a frame of the page's own origin with no language of its own reads as the page.
+ */
 const langOf = (control: Element): string => {
     for (let at: Element | null = control; at;) {
         const named = at.closest('[lang]');
         if (named) return named.getAttribute('lang') ?? '';
         const root = rootOf(at);
-        at = root instanceof ShadowRoot ? root.host : null;
+        at = root.nodeType === 11 ? (root as ShadowRoot).host : null;
     }
-    return document.documentElement.lang;
+    return control.ownerDocument.documentElement.lang || document.documentElement.lang;
 };
 
 /**
@@ -180,7 +183,7 @@ export const KIT_WORDS: Record<Failure, (control: Checked) => string> = {
     valueMissing: (control) => {
         if (control.type === 'checkbox' && fieldOf(control) === control)
             return 'Check the box to go on.';
-        return control instanceof HTMLSelectElement || control.matches(CHOICE)
+        return control.localName === 'select' || control.matches(CHOICE)
             ? 'Choose an option.'
             : 'Enter a value.';
     },
