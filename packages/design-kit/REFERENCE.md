@@ -3360,16 +3360,22 @@ F8 reaches a shown action in one keystroke from anywhere on the page, so a keybo
 Tab through the whole page to get to it, as [decision record
 0029](https://github.com/jasonsdevspace/design-kit/blob/main/docs/decisions/0029-f8-moves-focus-to-a-shown-toasts-action-and-back.md)
 has it. Pressed with no modifier while a toast with an action is shown, it moves focus to the
-action, and pressed again in the toast it sends focus back where it came from, with the toast still
-shown. From the action, Enter or Space chooses it and Escape dismisses the toast, and either way
-focus goes back to the control F8 was pressed on. The action carries `aria-keyshortcuts="F8"` while
-it is shown. Focus never moves as a message shows, so a second Enter on the control that raised it
-does what it did the first time. F8 with Shift, Control, Alt or Meta, held so that it repeats, or
-already handled by the page does nothing, and the toast keeps the key's default wherever it moves no
-focus. On a Mac keyboard that sends media keys from its top row, it is Fn and F8. A page needs
-nothing to give the key to its toast, and the toast listens for it on the document only while a
-message with an action is shown. Focus inside a frame sends its keys to the frame, so F8 there does
-not reach the toast.
+action, and pressed again in the toast it sends focus back by the list above, with the toast still
+shown. Where nothing on that list takes focus, F8 in the toast leaves focus where it is. From the
+action, Enter or Space chooses it and Escape dismisses the toast, and either way focus goes back to
+the control F8 was pressed on. The action carries `aria-keyshortcuts="F8"` while it is shown. Focus
+never moves as a message shows, so a second Enter on the control that raised it does what it did the
+first time. F8 with Shift, Control, Alt or Meta, held so that it repeats, or pressed to convert text
+in an input method does nothing, and the toast keeps the key's default wherever it moves no focus. A
+page's own F8 handler on an element below the document runs first and wins where it prevents the
+default, while one on the window or the document may run after the toast's, so it checks
+`defaultPrevented`. On a keyboard whose top row sends media or action keys, a Mac's and many
+laptops' among them, it is Fn and F8, and on a Chromebook Search and the top-row key in its place.
+Without F8 the action is still last in the Tab order and stays until dismissed. A page needs nothing
+to give the key to its toast, and the toast listens for it on the document only while a message with
+an action is shown. Focus inside a frame sends its keys to the frame, so F8 there does not reach the
+toast. A page whose visitors should learn the key names it where its keyboard help lives, or in the
+message's words, which the status line reads.
 
 Focus leaves the toast where nothing on that list takes it, so it falls to the page's body in every
 engine rather than staying on the toast's hidden button. The toast takes off its shown state before

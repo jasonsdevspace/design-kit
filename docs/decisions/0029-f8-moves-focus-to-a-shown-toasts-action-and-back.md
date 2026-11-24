@@ -21,15 +21,18 @@ for.
 - **Radix's toast takes F8.** Its viewport's hotkey, F8 by default, focuses the toasts, and its
   label reads "Notifications (F8)". Radix leaves the key's discoverability to the page.
 - **F6 is the browser's own.** Chromium and Firefox move between the address bar and the page by
-  F6, so a page that takes it takes the visitor's way out of the page.
+  F6, so a page that takes it takes the visitor's way out of the page. React Aria reaches toast
+  regions by F6 among its landmarks, which a kit with no landmark manager cannot do without taking
+  the browser's F6.
 - **F8 has no default on a page in any engine.** In the dev tools it pauses or resumes a script,
   in Chromium's Sources panel and in Firefox's debugger, which hear it only while the dev tools have
-  focus or a script is paused, so a page's keydown and the tools do not meet. On a Mac keyboard the
-  top row sends media keys unless Fn is held or the system is set to send function keys, so there it
-  is Fn and F8.
-- **A screen reader's browse mode may never send the key.** A browse mode, as NVDA's is, keeps
-  most keys for itself, so whether a visitor hears a hint and can press F8 to use it waits on a walk
-  with NVDA and VoiceOver.
+  focus or a script is paused, so a page's keydown and the tools do not meet. On a keyboard whose
+  top row sends media or action keys, a Mac's and many laptops' among them, it is Fn and F8, and on
+  a Chromebook Search and the top-row key in its place. Without F8 the action is still last in the
+  Tab order and stays until dismissed.
+- **A screen reader's browse mode keeps its own keys.** A screen reader's browse mode keeps the
+  letter and arrow keys it reads with, so the page cannot tell from keydowns that a keyboard is in
+  use. NVDA and JAWS pass an unbound F8 to the page, which a walk confirms.
 
 ## Options
 
@@ -52,10 +55,12 @@ Option D. F8 pressed anywhere on the page while a toast with an action is shown 
 action, and pressed with focus in the toast sends focus back where it came from, by the walk a
 dismiss hands it back by, with the toast still shown. From the action, Enter and Space choose it and
 Escape dismisses the toast, and focus goes back by record 19's rule, to the control F8 was pressed
-on. F8 held with Shift, Control, Alt or Meta, or held down so that it repeats, does nothing, nor does
-one a page has handled already, one with no toast shown or with a toast that has no action, or one
-where the toast refuses focus, as it does under a modal dialog. The kit prevents the key's default
-only where focus moved.
+on. Where nothing on that walk takes focus, F8 in the toast leaves focus where it is. F8 held with
+Shift, Control, Alt or Meta, held down so that it repeats, or pressed to convert text in an input
+method does nothing, nor does one a page has handled already, one with no toast shown or with a
+toast that has no action, or one where the toast refuses focus, as it does under a modal dialog.
+With focus in another toast, that toast hears the key and sends focus back. The kit prevents the
+key's default only where focus moved.
 
 The toast listens for the key on the document only while a message with an action is shown. Its
 listener is added as such a message shows, taken off as the toast hides or a message with no action
@@ -63,25 +68,28 @@ replaces it, and tied to the toast's signal, so a toast taken down leaves nothin
 21 turned down a listener on the document for a form, since it heard every press and kept a removed
 piece alive. The module's own listener, which it adds as it loads and which hears every keydown in
 the capture phase, was weighed and turned down, since it would need a list of shown toasts the
-module holds, and it would hear the key ahead of a page that handles F8 itself. The toast's own
-listener is the smaller of the two, hears keys only while there is an action to reach, comes after a
-page's handlers in the bubble phase, and keeps nothing once the toast hides.
+module holds, and it would hear the key ahead of every page handler. The toast's own listener is
+the smaller of the two, hears keys only while there is an action to reach, comes after a page's
+handlers on the elements below the document, and keeps nothing once the toast hides.
 
-The action carries `aria-keyshortcuts="F8"` while it is shown, which a screen reader may read with
-its name, and loses it as the toast hides or a message with no action comes. The reference names the
-key. A spoken hint naming the key on the status line waits for a walk with NVDA and VoiceOver, since
-a screen reader's browse mode may never send the keydown that would tell the kit a keyboard is in
-use.
+The action carries `aria-keyshortcuts="F8"` while it is shown, which NVDA and JAWS in Chromium and
+Firefox are documented to expose with its name, heard once focus is on the action, so it tells the
+way back and not the way there. A sighted keyboard or magnifier user gets no hint from the kit. The
+action loses the attribute as the toast hides or a message with no action comes. The reference
+names the key. A spoken hint on the status line would reach pointer and touch users too, so it
+waits for that walk.
 
 ## Consequences
 
 - A page needs nothing to give F8 to its toast, Game Table Tally's Undo among them.
-- A page whose own F8 does something handles it first and prevents its default, and the toast
-  leaves that press alone.
+- A page's own F8 handler on an element below the document runs first and wins where it prevents
+  the default, while one on the window, or on the document added after the toast showed, runs
+  after the kit and checks `defaultPrevented`.
 - Focus inside a frame sends its keys to the frame's document, so F8 there reaches no toast on the
   page around it.
-- With more than one toast on a page, against the reference's one toast to a page, the first
-  attached with an action shown takes the key.
+- With more than one toast on a page, against the reference's one toast to a page, the toast
+  whose message with an action came first since it last had none takes the key from the page, and
+  the toast that holds focus sends it back.
 
 ## How it is tested
 
@@ -92,8 +100,11 @@ The paths are in `packages/design-kit`.
   running the action and Escape dismissing the toast, each with focus back on the control F8 was
   pressed on. It finds F8 in the toast, on the action and on its Close, sending focus back with the
   toast still shown, and F8 with no toast, with no action, with each modifier, as a repeat and after
-  a dismiss moving nothing and keeping its default. It finds `aria-keyshortcuts` on the action while
-  it is shown and gone after.
+  a dismiss moving nothing and keeping its default, as does an F8 that converts text in an input
+  method. F8 in the toast goes on down the walk where the control focus came from is gone, to the
+  main content, stays where nothing takes focus, follows a frame of the page's own origin on to its
+  control as a dismiss does, and with two toasts shown is heard by the one that holds focus. It finds
+  `aria-keyshortcuts` on the action while it is shown and gone after.
 - `e2e/leaks.spec.tsx`, in the same engines, counts a listener on the document only while a message
   with an action is shown, one however many such messages come, and none once a message with no
   action replaces it or the toast is dismissed. Its table, shared with `e2e/teardown.spec.tsx`, uses
@@ -102,6 +113,7 @@ The paths are in `packages/design-kit`.
 
 ## Sources
 
+- React Aria, [Toast](https://react-aria.adobe.com/Toast), read 2026-11-24.
 - Radix Primitives, [Toast](https://www.radix-ui.com/primitives/docs/components/toast), read
   2026-11-24.
 - W3C, [ARIA Authoring Practices: Alert Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/alert/),
