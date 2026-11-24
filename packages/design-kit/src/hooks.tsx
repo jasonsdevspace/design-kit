@@ -35,7 +35,7 @@ import {
 } from './controls.js';
 
 /*
- * The kit's React hooks, each a thin wrapper over a function from `./controls`, as decision 20 has
+ * The kit's React hooks, each a thin wrapper over a function from `./controls`, as record 20 has
  * it: one over an attach attaches through a ref and keeps only the attach's handle, one over a
  * function that acts once keeps only what calls it off, and each returns what the function returns,
  * the same across renders. `./react` exports them beside the markup, whose components run

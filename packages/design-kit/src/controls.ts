@@ -186,8 +186,11 @@ const byId = (near: Node | null | undefined, id: string): Element | null =>
  * What has focus, followed into each shadow root that holds it, as a request reads where focus was
  * when it was asked for.
  */
-export const activeOf = (): Element | null => {
-    let active = document.activeElement;
+export const activeOf = (): Element | null => activeIn(document) ?? null;
+
+/** What has focus in the document or shadow root given, followed into each shadow root. */
+const activeIn = (root: DocumentOrShadowRoot | null | undefined): Element | null | undefined => {
+    let active = root?.activeElement;
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
 };
@@ -606,8 +609,7 @@ const listen = () => {
 };
 
 /**
- * Each control attached, by its element, one map for each kind so neither answers for the
- * other.
+ * Each control attached, by its element, one map for each kind so none answers for another.
  */
 const attachedSwitches = new WeakMap<HTMLElement, Kept<() => void>>();
 /**
@@ -914,9 +916,9 @@ export const attachCopyButton = (button: HTMLButtonElement, options: CopyOptions
     // another, so it never claims that one copied, and kept where it gives the same. The source is
     // read only while a word is shown, and one that throws, as one reading a ref not yet drawn
     // does, counts as another.
-    // A call that gives no source or status line, as the defaults a holder that gave none goes back
-    // to, keeps the ones the button has, since a copy button has neither of its own.
-    const set = (next: CopyOptions) => {
+    // Options with no source or status line, as the `{}` a holder that gave none goes back to, keep
+    // the ones the button has, since a copy button has neither of its own.
+    const set = (next: Partial<CopyOptions>) => {
         ({ source = source, status = status } = next);
         if (!copiedFrom) return;
         try {
@@ -1186,8 +1188,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let inFrame: Element | null | undefined;
     const insideOf = (frame: Element | null) => {
         const inner = (frame as HTMLIFrameElement | null)?.contentDocument;
-        let held = inner?.activeElement;
-        while (held?.shadowRoot?.activeElement) held = held.shadowRoot.activeElement;
+        const held = activeIn(inner);
         return held === inner?.body ? undefined : held;
     };
     const wait = () => {
@@ -1596,10 +1597,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         off(down, locked() || (known && value <= least()));
         off(up, locked() || (known && value >= most()));
         // A read-only value is shown alone, with no buttons to change it, but a button that has
-        // focus stays, marked off, until focus leaves it, so focus is never dropped.
+        // focus stays, marked off, until focus leaves it, so focus is never dropped. Only an
+        // attached stepper gets here, since its listeners, its watch and its place in the form come
+        // off as it is taken down, which hides the buttons itself.
         const fixed = input.readOnly && !input.disabled;
-        for (const button of [down, up])
-            button.hidden = attached() && fixed ? activeOf() !== button : !attached();
+        for (const button of [down, up]) button.hidden = fixed && activeOf() !== button;
     };
     let setInvalid = false;
     /**
@@ -1982,8 +1984,8 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * dialog staying open. Its listeners are on the dialog, so a dialog taken from the page takes them
  * with it. Taken down by its `signal`, an open dialog closes, focus goes back to what opened it
  * where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
- * still where the browser handed it as the dialog closed, its listeners and the closedby its `stay`
- * set come off, and the function that opens it does nothing.
+ * still where the browser handed it as the dialog closed, its listeners come off, the page's own
+ * closedby is put back, and the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1993,6 +1995,8 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     if (already) return already;
     const down = teardown(options?.signal, options);
     const { signal } = down;
+    // The page's own closedby, which the dialog holds while attached and puts back as it is let go.
+    const own = dialog.getAttribute('closedby');
     let settings: DialogOptions = {};
     const set = (next: DialogOptions) => {
         settings = next;
@@ -2068,8 +2072,14 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     // after its listener is off. It goes back by the same rule as that event, read before the close
     // moves it, so focus the page set in the abort's task stays. That event is stopped where it
     // lands, so an attach made since never takes it for a closing of its own and sends focus to its
-    // returnTo.
+    // returnTo. The listener that stops it takes no signal, since it is added once the attach's
+    // signal has aborted, and a close event always follows to take it off, from the close just after
+    // it or from one the page made that is still on its way.
     down.add(() => {
+        // Put back where it still holds what the dialog set, so a closedby the page set since,
+        // while the dialog was not attached to stay, stays. Put back first, so a page that attaches
+        // the dialog again as focus goes back reads its own and keeps what that attach sets.
+        if (settings.stay || !dialog.hasAttribute('closedby')) restore(dialog, 'closedby', own);
         if (dialog.open || opener) {
             const back = handsBack();
             dialog.addEventListener('close', (event) => event.stopImmediatePropagation(), {
@@ -2079,7 +2089,6 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
             onClose(back);
         }
         restoring.delete(dialog);
-        if (settings.stay) dialog.removeAttribute('closedby');
     });
     down.set = set;
     return keep(attachedDialogs, dialog, down, open);
@@ -2110,13 +2119,16 @@ const openers = new Set<HTMLButtonElement>();
 const openersOf = (id: string): HTMLButtonElement[] =>
     [...openers]
         .filter((button) => button.isConnected && panelIdOf(button) === id)
-        // 2 marks the other button as coming before this one.
-        .sort((one, other) => (one.compareDocumentPosition(other) & 2 ? 1 : -1));
+        .sort((one, other) =>
+            one.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1
+        );
 
 /**
  * Where the visitor's place last was, the path of the last focus that moved or of their last
  * press, from what it reached up, so a panel it was in still counts after the page draws away or
  * turns off the button pressed. A press by a page's script is not the visitor's and is not kept.
+ * It is kept once the last button is let go, since a page that draws its only button again lets
+ * the old one go before the new one is attached, and the place in the panel has to outlive that.
  */
 let lastPath: readonly EventTarget[] = [];
 /** Whether that last place was a press, as a link followed is, rather than focus that moved. */
@@ -2200,8 +2212,8 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  */
 const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
-    const openers = openersOf(id);
-    for (const button of openers) button.setAttribute('aria-expanded', String(open));
+    const buttons = openersOf(id);
+    for (const button of buttons) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
@@ -2211,7 +2223,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (open || !held) return;
     handBack(
         jumpFrom(panel),
-        ...[by, ...openers].filter((button) => !isOff(button)),
+        ...[by, ...buttons].filter((button) => !isOff(button)),
         // Looked for only once the place a link went to and every button has refused focus, since
         // it reads every element of the page that takes focus.
         () =>
@@ -3156,11 +3168,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         const { marked, described } = marksOf(field, control);
         const before = [...new Set([...marked, ...described])].map(
             (one) =>
-                [
-                    one,
-                    one.getAttribute('aria-invalid'),
-                    one.getAttribute('aria-describedby'),
-                ] as const
+                [one, one.getAttribute('aria-invalid'), idsOf(one, 'aria-describedby')] as const
         );
         const { error, takeAway } = errorFor(field, control, words);
         for (const one of marked) one.setAttribute('aria-invalid', 'true');
@@ -3178,7 +3186,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             for (const [one, invalid, describedBy] of before) {
                 if (marked.includes(one) && one.getAttribute('aria-invalid') === 'true')
                     restore(one, 'aria-invalid', invalid);
-                const had = (describedBy ?? '').split(/\s+/).includes(error.id);
+                const had = describedBy.includes(error.id);
                 const rest = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
                 if (!had) restore(one, 'aria-describedby', rest.length > 0 ? rest.join(' ') : null);
             }
