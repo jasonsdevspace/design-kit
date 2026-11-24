@@ -3163,34 +3163,37 @@ a form's reset set is followed. The field still takes a typed value. A stepper i
 where the browser's constraints say its field is, so its error and its form's refusal agree. A value
 outside the limits, between steps, such as 2.5 with a step of 1, or that is no number, or none at
 all in a field that is `required`, shows the stepper's own error, which waits hidden in the markup,
-once the value is changed, and the status line says it. A blank in a field that is not required
-passes, shows no error, and its form saves, so a stepper whose blank has no meaning takes
-`required`, as the example here does. The `required` attribute is what makes a blank wrong, not the
-mark in the label, which only says the field is required, so a stepper marked required takes
-`required` too where a blank must be refused. The error's words are the markup's, which `rangeError`
-sets on `StepperField`, never `data-error-*` or a form's `errorWords`, which do not reach an
-attached stepper. They are shown for a blank required field and for letters as well as a value past
-the limits or between steps, so they are written as an instruction. An attached stepper owns its
-error for every failure it holds, at a submit and a reset as at a change, so a required one drawn
-blank and submitted untouched shows its own error, and its form draws no error on it, never marks
-it, and in React hands `invalid` nothing for it. Letters typed into a blank field leave its value
-blank and may fire no `change`, so the stepper shows nothing for them until a submit, where it shows
-its own error. A value typed past the range in a field that already shows an error of the page's
-shows both, the page's until the page clears it. As its error clears, a stepper in a form the kit
-checks is marked `aria-invalid="false"`, as every field not in error is there, and one outside such
-a form loses the mark. An error that shows follows `required` and `step` as a script changes them,
-as it does its limits. A refusal the page sets of its own with `setCustomValidity` is left to the
-page, and a stepper that fails it and its range at once shows its range error alone, with the page's
-words at the next submit once the value is in range, since one error shows at a time and a value the
-field cannot hold comes first. A value drawn outside the limits or between steps shows the error as
-the stepper is attached, and again when a form's reset brings it back, with nothing said, so a page
-that draws that state writes no code of its own for it. A field drawn blank shows none, and a
-required one none until it is changed, so a stepper attached again, as on a remount, shows the error
-for a value past its limits but not for a field left blank. A field that is disabled or read only
-shows none, since no one can put it right, and where the page draws its own error in the field, the
-page's error is the one shown as the page loads. The error is cleared as soon as the value is right
-again, and the attach function adds and takes away only its own error, so an error or a hint the
-page draws keeps its place. A page that draws the field again, as React does when the page's own
+once the value is changed, and the status line says it after the field's name, as a refused form
+names a field, such as "Bid: Error: Enter a whole number from 0 to 10.", since focus has moved on by
+then. A press says the value alone. A blank in a field that is not required passes, shows no error,
+and its form saves, so a stepper whose blank has no meaning takes `required`, as the example here
+does. The `required` attribute is what makes a blank wrong, not the mark in the label, which only
+says the field is required, so a stepper marked required takes `required` too where a blank must be
+refused. The error's words are the markup's, which `rangeError` sets on `StepperField`, never
+`data-error-*` or a form's `errorWords`, which do not reach an attached stepper. They are shown for
+a blank required field and for letters as well as a value past the limits or between steps, so they
+are written as an instruction, and need not name the field, which the status line names before them.
+An attached stepper owns its error for every failure it holds, at a submit and a reset as at a
+change, so a required one drawn blank and submitted untouched shows its own error, and its form
+draws no error on it, never marks it, and in React hands `invalid` nothing for it. Letters typed
+into a blank field leave its value blank and fire no `change`, so the stepper shows its error for
+them and says it as focus leaves the field, while a blank that focus only passes through stays quiet
+until it is changed. A value typed past the range in a field that already shows an error of the
+page's shows both, the page's until the page clears it. As its error clears, a stepper in a form the
+kit checks is marked `aria-invalid="false"`, as every field not in error is there, and one outside
+such a form loses the mark. An error that shows follows `required` and `step` as a script changes
+them, as it does its limits. A refusal the page sets of its own with `setCustomValidity` is left to
+the page, and a stepper that fails it and its range at once shows its range error alone, with the
+page's words at the next submit once the value is in range, since one error shows at a time and a
+value the field cannot hold comes first. A value drawn outside the limits or between steps shows the
+error as the stepper is attached, and again when a form's reset brings it back, with nothing said,
+so a page that draws that state writes no code of its own for it. A field drawn blank shows none,
+and a required one none until it is changed, so a stepper attached again, as on a remount, shows the
+error for a value past its limits but not for a field left blank. A field that is disabled or read
+only shows none, since no one can put it right, and where the page draws its own error in the field,
+the page's error is the one shown as the page loads. The error is cleared as soon as the value is
+right again, and the attach function adds and takes away only its own error, so an error or a hint
+the page draws keeps its place. A page that draws the field again, as React does when the page's own
 error comes or goes, rewrites the field's description and its invalid mark, and the attach function
 puts its shown error back in both at once. It takes the stepper or its field, attaches each stepper
 once whichever it is given, and returns what takes it down again.
