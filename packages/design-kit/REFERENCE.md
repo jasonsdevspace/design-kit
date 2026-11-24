@@ -3983,8 +3983,9 @@ taken from the page takes them with it. Taken down by its `signal`, as [Taking a
 down](#taking-a-control-down) has it, an open dialog closes, with focus handed back to what opened
 it where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
 still where the browser handed it as the dialog closed, the page's own `closedby` is put back, and
-the function that opens it does nothing. A `closedby` the page sets while the dialog is attached
-without `stay` stays as the page set it.
+the function that opens it does nothing. At the takedown, a `closedby` the page set while the
+dialog was attached without `stay` stays as the page set it, while one that options given since
+took away gives way to the page's own.
 
 On a page with an app's frame, or one that ends in a tab bar, a dialog is written inside the frame,
 or before or after it as its sibling, so it takes the frame's sizes at every width, a phone's target
