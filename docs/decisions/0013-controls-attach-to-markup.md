@@ -240,11 +240,11 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachForm` alone       | The first budget for an entry | 8,632 bytes | 637 bytes       | 9.25 KB    |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
-took every function from 21,661 bytes to 21,750 and `attachForm` alone from 8,669 to 8,697, and
-left the module imported bare and `attachTable` alone as they were. The words are no longer, but a
-bundler puts an imported module's code ahead of the module that imports it, beyond gzip's window
-from the form code they share text with, and both budgets keep more room than the median function,
-so neither is set again.
+took every function from 21,661 bytes to 21,750 and `attachForm` alone from 8,669 to 8,697, and left
+the module imported bare and `attachTable` alone as they were. The words themselves did not grow,
+but a bundler puts an imported module's code ahead of the module that imports it, beyond gzip's
+window from the form code they share text with, and both budgets keep more room than the median
+function, so neither is set again.
 
 Each table stays the ledger, a row for each budget set and what set it. Since 0.9.4 the rule lowers
 a budget as well as raising one. Where a release, measured as the audit was, leaves more room under

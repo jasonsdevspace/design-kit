@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type Checked, KIT_WORDS, limitWords, wallOf, whenWords } from './words.js';
+import {
+    type Checked,
+    KIT_WORDS,
+    limitWords as limitWordsOf,
+    wallOf,
+    whenWords as whenWordsOf,
+} from './words.js';
 
 /*
  * The kit's words for a failure in plain Node. A field is a stand-in that answers only what the
@@ -53,6 +59,14 @@ const field = ({
     }) as unknown as Checked;
 
 const CHOICE = 'input[type="checkbox"], input[type="radio"]';
+
+/**
+ * Words with the narrow no-break space a newer ICU puts before AM and PM read as a plain space, so
+ * the times compare the same whichever ICU the Node in use carries.
+ */
+const plain = (words: string) => words.replaceAll('\u202f', ' ');
+const limitWords = (control: Checked, name: 'min' | 'max') => plain(limitWordsOf(control, name));
+const whenWords = (control: Checked, limit: string) => plain(whenWordsOf(control, limit));
 
 /** A field's words for a value below its least and above its most. */
 const limits = (control: Checked) => [limitWords(control, 'min'), limitWords(control, 'max')];
