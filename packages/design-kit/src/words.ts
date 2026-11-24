@@ -22,13 +22,15 @@ const formatWords = (control: Checked) =>
     hinted(control) ? 'Enter it in the format the hint shows.' : 'Enter it in the right format.';
 
 /**
- * A number attribute as the browser reads it, a valid floating-point number that stays finite, as
- * every engine reads one, or NaN, so a space, a plus sign or hex digits Number would take do not.
+ * A number attribute as written, where the browser reads it as a valid floating-point number that
+ * stays finite, as every engine does, else empty, so a space, a plus sign or hex digits Number
+ * would take leave it out. The step words and the range words both write it, so they agree.
  */
-const numberOf = (control: Checked, name: string): number => {
+const numberText = (control: Checked, name: string): string => {
     const text = limitOf(control, name);
-    const read = /^-?(\d+(\.\d+)?|\.\d+)(e[+-]?\d+)?$/i.test(text) ? Number(text) : NaN;
-    return Number.isFinite(read) ? read : NaN;
+    return /^-?(\d+(\.\d+)?|\.\d+)(e[+-]?\d+)?$/i.test(text) && Number.isFinite(Number(text))
+        ? text
+        : '';
 };
 
 /**
@@ -41,15 +43,14 @@ const stepWords = (control: Checked): string => {
     if (control.type === 'datetime-local')
         return 'Enter a date and time on one of the steps allowed.';
     if (DATED.has(control.type)) return 'Enter a date on one of the steps allowed.';
-    const given = numberOf(control, 'step');
-    const step = given > 0 ? given : 1;
-    const min = numberOf(control, 'min');
-    const base = Number.isNaN(min) ? numberOf(control, 'value') : min;
-    const from = Number.isNaN(base) ? 0 : base;
-    if (step === 1 && Number.isInteger(from)) return 'Enter a whole number.';
-    return from === 0
+    const given = numberText(control, 'step');
+    const step = Number(given) > 0 ? given : '1';
+    // Empty where neither parses, which reads as a base of 0.
+    const base = numberText(control, 'min') || numberText(control, 'value');
+    if (Number(step) === 1 && Number.isInteger(Number(base))) return 'Enter a whole number.';
+    return Number(base) === 0
         ? `Enter a multiple of ${step}.`
-        : `Enter ${from}, or ${from} plus a multiple of ${step}.`;
+        : `Enter ${base}, or ${base} plus a multiple of ${step}.`;
 };
 
 /** The language nearest a field, past each shadow root it sits in, else the document's. */
@@ -142,7 +143,7 @@ export const limitWords = (control: Checked, name: 'min' | 'max'): string => {
     const limit = limitOf(control, name);
     const least = name === 'min';
     if (control.type !== 'time' && !DATED.has(control.type))
-        return `Enter ${limit} or ${least ? 'more' : 'less'}.`;
+        return `Enter ${numberText(control, name)} or ${least ? 'more' : 'less'}.`;
     const [from, to] = [limitOf(control, 'min'), limitOf(control, 'max')];
     if (control.type === 'time' && secondsOf(to) < secondsOf(from))
         return `Enter a time between ${whenWords(control, from)} and ${whenWords(control, to)} the next day.`;

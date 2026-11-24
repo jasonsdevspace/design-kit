@@ -351,8 +351,8 @@ describe("the kit's words for each failure", () => {
         expect(step({ min: '0x1', step: '5' })).toBe('Enter a multiple of 5.');
         expect(step({ min: 'Infinity', step: '5' })).toBe('Enter a multiple of 5.');
         // Forms every engine takes.
-        expect(step({ min: '.5', step: '5' })).toBe('Enter 0.5, or 0.5 plus a multiple of 5.');
-        expect(step({ min: '1e0', step: '5' })).toBe('Enter 1, or 1 plus a multiple of 5.');
+        expect(step({ min: '.5', step: '5' })).toBe('Enter .5, or .5 plus a multiple of 5.');
+        expect(step({ min: '1e0', step: '5' })).toBe('Enter 1e0, or 1e0 plus a multiple of 5.');
     });
 
     it('read any step equal to 1 as whole numbers, and a step that does not parse as 1', () => {
@@ -360,11 +360,23 @@ describe("the kit's words for each failure", () => {
             KIT_WORDS.stepMismatch(field({ type: 'number', attributes }));
         expect(step({ step: '1.0' })).toBe('Enter a whole number.');
         expect(step({ min: '3', step: '01' })).toBe('Enter a whole number.');
-        expect(step({ step: '05' })).toBe('Enter a multiple of 5.');
+        expect(step({ step: '05' })).toBe('Enter a multiple of 05.');
+        // A step of 1 off a base that is not a whole number counts from that base.
+        expect(step({ min: '0.5', step: '1.0' })).toBe('Enter 0.5, or 0.5 plus a multiple of 1.0.');
         // A step that does not parse, or is not above 0, is the default step of 1.
         expect(step({ step: 'abc' })).toBe('Enter a whole number.');
         expect(step({ step: '0' })).toBe('Enter a whole number.');
         expect(step({ step: '-2' })).toBe('Enter a whole number.');
+    });
+
+    it('write a step and its base as the attributes write them, as the range words do', () => {
+        const tiny = field({ type: 'number', attributes: { step: '0.0000001' } });
+        expect(KIT_WORDS.stepMismatch(tiny)).toBe('Enter a multiple of 0.0000001.');
+        const half = field({ type: 'number', attributes: { min: '1.50', step: '0.25' } });
+        expect(KIT_WORDS.stepMismatch(half)).toBe('Enter 1.50, or 1.50 plus a multiple of 0.25.');
+        expect(KIT_WORDS.rangeUnderflow(half)).toBe('Enter 1.50 or more.');
+        const based = field({ type: 'number', attributes: { step: '5', value: '2.0' } });
+        expect(KIT_WORDS.stepMismatch(based)).toBe('Enter 2.0, or 2.0 plus a multiple of 5.');
     });
 
     it("give a custom error the field's own message", () => {
