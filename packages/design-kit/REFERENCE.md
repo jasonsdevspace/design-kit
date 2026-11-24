@@ -3194,8 +3194,11 @@ that shows an error of the page's, shows no error for the letters, and focus tha
 value, as when the window is switched, reports nothing. A value typed past the range in a field that
 already shows an error of the page's shows both, the page's until the page clears it. As its error
 clears, a stepper in a form the kit checks is marked `aria-invalid="false"`, as every field not in
-error is there, and one outside such a form loses the mark. An error that shows follows `required`
-and `step` as a script changes them, as it does its limits. A refusal the page sets of its own with
+error is there, and one outside such a form loses the mark. A stepper taken down once its field has
+left the page has every form the kit checks that held the field let go of it and takes its mark
+away, so a stepper drawn again and again in one form leaves no field held, while a field still in
+the page keeps its mark until its form is let go. An error that shows follows `required` and `step`
+as a script changes them, as it does its limits. A refusal the page sets of its own with
 `setCustomValidity` is left to the page, and a stepper that fails it and its range at once shows its
 range error alone, with the page's words at the next submit once the value is in range, since one
 error shows at a time and a value the field cannot hold comes first. A value drawn outside the
