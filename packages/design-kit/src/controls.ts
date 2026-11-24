@@ -1741,11 +1741,25 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     input.addEventListener('input', onInput, { signal });
     input.addEventListener('change', onChange, { signal });
     // Letters typed into a blank value leave it blank, so no change fires as focus leaves, and the
-    // letters are reported then. A blank that focus only passes through stays quiet.
+    // letters are reported then. A blank that focus only passes through stays quiet, as does a
+    // field no one can change or one showing the page's own error. A press inside the field, read
+    // by its active button whether or not the button takes focus, as Safari's does not, is left to
+    // the press, since an error drawn above would move the button from under the pointer. Tab to
+    // the stepper's own button still reports, since no press follows it. Focus that stays on the
+    // value, as a switch of window leaves it, reports nothing.
     input.addEventListener(
         'blur',
         () => {
-            if (range?.hidden && input.validity.badInput) onChange();
+            if (
+                range?.hidden &&
+                input.validity.badInput &&
+                !locked() &&
+                !pageError() &&
+                !field.querySelector(':active') &&
+                activeOf() !== input &&
+                document.hasFocus()
+            )
+                onChange();
         },
         { signal }
     );
@@ -2947,14 +2961,25 @@ const namedText = (
 const errorWords = (field: Element): string =>
     namedText(field, 'aria-describedby', (part) => part.matches('.dk-field-error'));
 
-/** A field's name, from its set's legend or its control's label, to say before an error. */
+/** An element's words without those it hides from a screen reader, such as a required mark. */
+const shownText = (element: Element | null | undefined): string | undefined => {
+    if (!element) return undefined;
+    const copy = element.cloneNode(true) as Element;
+    for (const hidden of copy.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+    return copy.textContent;
+};
+
+/**
+ * A field's name, from its set's legend or its control's label, to say before an error, without
+ * the words the legend or label hides from a screen reader.
+ */
 const fieldName = (field: Element): string => {
     const named =
-        field.querySelector(':scope > legend')?.textContent ??
+        shownText(field.querySelector(':scope > legend')) ??
         (field instanceof HTMLInputElement ||
         field instanceof HTMLSelectElement ||
         field instanceof HTMLTextAreaElement
-            ? field.labels?.[0]?.textContent
+            ? shownText(field.labels?.[0])
             : null) ??
         field.getAttribute('aria-label') ??
         '';

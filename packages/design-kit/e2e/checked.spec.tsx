@@ -198,6 +198,16 @@ test('names a field no one can reach, and leaves focus where it is', async ({ pa
     await expect(page.getByRole('button', { name: 'Send' })).toBeFocused();
 });
 
+test('names a field without the mark its label hides from a screen reader', async ({ page }) => {
+    await openWith(
+        page,
+        `<form><label for="n">Name <span class="dk-field-mark" aria-hidden="true">(required)</span></label><input id="n" required>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect.poll(() => heard(page)).toEqual(['Name: Error: Enter a value.']);
+});
+
 test('lets a field marked off pass, since no one could put it right', async ({ page }) => {
     await openWith(
         page,

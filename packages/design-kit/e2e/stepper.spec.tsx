@@ -24,14 +24,16 @@ import { doubled, textSize } from './text-size.js';
  * and saying the value on its status line, the buttons off at the limits with focus kept and on a
  * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
  * limits, or none where one is required, reported as a field's error once changed and said after
- * the field's name, letters typed into a blank stepper reported as focus leaves it, a blank focus
- * passes through left quiet, and the error cleared once right while a page's own error keeps its
- * place, a value drawn past the limits shown as an error once attached or brought back by a reset
- * with nothing said, but not on a field no one can change, for a refusal the page sets or beside
- * the page's own error, a phone's keyboard with a minus only where it is needed, the value in
- * figures of one width so the field keeps its width, every figure shown under the wider spacing a
- * reader may set, the label beside it on one line at a phone's narrowest width, a stepper that fits
- * a phone at twice the text size, alone and inside its field in a page's own row, the larger target
+ * the field's name, a mark the label hides left out of that name, letters typed into a blank
+ * stepper reported as focus leaves it, but not as focus stays, on a locked field or beside the
+ * page's own error, nor before a press on its own button that then lands, a blank focus passes
+ * through left quiet, and the error cleared once right while a page's own error keeps its place, a
+ * value drawn past the limits shown as an error once attached or brought back by a reset with
+ * nothing said, but not on a field no one can change, for a refusal the page sets or beside the
+ * page's own error, a phone's keyboard with a minus only where it is needed, the value in figures
+ * of one width so the field keeps its width, every figure shown under the wider spacing a reader
+ * may set, the label beside it on one line at a phone's narrowest width, a stepper that fits a
+ * phone at twice the text size, alone and inside its field in a page's own row, the larger target
  * when asked, a read-only value starting where a read-only field's words start and standing at the
  * field's height, or at the larger target when tall, centered at an inline stepper's row's end, and
  * kept in place with a button holding focus, hidden pieces kept hidden by sheets read without
@@ -350,6 +352,86 @@ test('names its field before the error it says as focus leaves a wrong value, an
     await players.fill('5');
     await press(page.getByRole('button', { name: 'Raise the number of players' }), browserName);
     await expect(line(page, 'players')).toHaveText('6');
+});
+
+test('takes a press on its own button straight after letters, with no error drawn in between', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await bid(page).focus();
+    await bid(page).pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    // Every moment the error shows is kept, since an error drawn above the field as the press
+    // starts moves the button out from under the pointer before it is released.
+    await page.locator('#bid-range').evaluate((range: HTMLElement) => {
+        const shown: boolean[] = [];
+        (window as unknown as { shown: boolean[] }).shown = shown;
+        new MutationObserver(() => {
+            if (!range.hidden) shown.push(true);
+        }).observe(range, { attributeFilter: ['hidden'] });
+    });
+    const at = await box(raise(page), 'the raise button');
+    await page.mouse.move(at.x + at.width / 2, at.y + at.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(bid(page)).toHaveValue(/^\d+$/);
+    expect(await page.evaluate(() => (window as unknown as { shown: boolean[] }).shown)).toEqual(
+        []
+    );
+});
+
+test("leaves a mark the label hides out of the field's name it says", async ({ page }) => {
+    await servePage(page, {
+        title: 'Round 3',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Round 3</h1>
+                <StepperField id="bid" label="Bid" mark="required" min={0} max={10} />
+            </main>
+        ),
+        script: ATTACH,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const marked = page.getByRole('spinbutton', { name: 'Bid' });
+    await marked.fill('99');
+    await marked.press('Tab');
+    await expect(line(page, 'bid')).toHaveText('Bid: Error: Enter a whole number from 0 to 10.');
+});
+
+test('says nothing for letters as focus stays, or as the field is locked or shows an error of its own', async ({
+    page,
+    browserName,
+}) => {
+    await stillClock(page.clock);
+    await open(page);
+    await record(page, 'bid');
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await bid(page).focus();
+    await bid(page).pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    // A blur with focus still on the value, as a switch of window gives, reports nothing.
+    await bid(page).dispatchEvent('blur');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#bid-range')).toBeHidden();
+    // Made read only while holding letters, the field shows no error as focus leaves it.
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await page.keyboard.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#bid-range')).toBeHidden();
+    // A field that shows an error of the page's own is not given a second one.
+    const hand = page.getByRole('spinbutton', { name: 'Cards in hand' });
+    await hand.fill('');
+    await hand.press('Tab');
+    await hand.focus();
+    await hand.pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    await hand.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#hand-range')).toBeHidden();
+    expect(await said(page)).toEqual([]);
 });
 
 test('clears an error for a value between steps, and marks its buttons again, as a script changes the step', async ({
