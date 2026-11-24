@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { leaksOf, listenersOn, openCounted } from './leaks.js';
 import { framesIn } from './page.js';
-import { BODY, KEPT, script } from './teardown-pieces.js';
+import { BODY, DRAW_FRAME, KEPT, script } from './teardown-pieces.js';
 
 /*
  * The teardown contract of records 22 and 23, in Chromium, WebKit and Firefox, over every piece in
@@ -804,6 +804,34 @@ test.describe('the toast', () => {
         await page.evaluate(`kit.attachToast($('.dk-toast'))('Round 4 saved.')`);
         await page.clock.runFor(300);
         await expect(toastLine(page)).toHaveText('Round 4 saved.');
+    });
+
+    test("takes a toast the page attached in a frame down, its listener for F8 off the frame's document and focus back in the frame", async ({
+        page,
+    }) => {
+        await opened(page);
+        await page.evaluate(DRAW_FRAME);
+        const onFrame = () =>
+            page.evaluate<number>('frame.contentWindow.leaks.on([frame.contentDocument])');
+        const before = await onFrame();
+        const inner = page.frameLocator('iframe').locator('#inner');
+        await inner.focus();
+        await page.evaluate(`(() => {
+            window.framed = new AbortController();
+            window.showIn = kit.attachToast(frameToast, { signal: framed.signal });
+            showIn('Round 2 saved.');
+        })()`);
+        const attached = await onFrame();
+        await page.evaluate(
+            `showIn('Round 3 saved.', { label: 'Undo', onAction: () => undefined })`
+        );
+        expect(await onFrame()).toBe(attached + 1);
+        await page.frameLocator('iframe').locator('.dk-toast-close').focus();
+        await page.evaluate('framed.abort()');
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(inner).toBeFocused();
+        // Every listener the toast added to the frame's document comes off, F8's among them.
+        await expect.poll(onFrame).toBe(before);
     });
 
     test('takes the mark off its frame as its signal aborts, and keeps it through an abort and an attach in one task', async ({

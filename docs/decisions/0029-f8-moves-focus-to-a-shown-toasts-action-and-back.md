@@ -91,6 +91,26 @@ waits for that walk.
   whose message with an action came first since it last had none takes the key from the page, and
   the toast that holds focus sends it back.
 
+## Amendment for 0.9.4: a toast inside a frame
+
+A page can attach its toast to an element inside a frame of its own origin that it drives. The toast
+read focus from the page's document and listened for F8 there, where focus anywhere in the frame
+reads as the frame and the frame's keys never arrive. So F8 pressed in the frame reached nothing,
+and a dismiss handed focus back to the frame rather than to the control in it.
+
+**A. The page's listener follows focus into the frame.** Rejected, since the page would add a
+listener to every frame focus enters, and still read focus as the frame.
+
+**B. The toast reads focus from, and listens on, the document it sits in.** Its F8 listener and the
+listeners that follow focus are added to the element's own document, and the focus helpers it calls
+read focus in the document of the place they try, so a control inside the frame is focused and found
+as one on the page is.
+
+Option B. A toast on the page reads the page's document, as before, so nothing changes for it. The
+listeners the controls' shared module adds as it loads, which note a visitor's presses for a focus
+request, stay on the page's document, so a press in the frame is not counted there. The bullet above
+on focus inside a frame still holds for a toast on the page around it.
+
 ## How it is tested
 
 The paths are in `packages/design-kit`.
@@ -109,6 +129,11 @@ The paths are in `packages/design-kit`.
   with an action is shown, one however many such messages come, and none once a message with no
   action replaces it or the toast is dismissed. Its table, shared with `e2e/teardown.spec.tsx`, uses
   the toast with an action, so its takedown is found to take the listener off.
+- For a toast the page attaches inside a frame of its own origin, `e2e/toast.spec.tsx` finds F8 in
+  the frame reaching the action and sending focus back to the control in the frame, and Escape
+  handing focus back there. `e2e/teardown.spec.tsx` finds the takedown taking the frame's listener
+  for F8 off and focus back in the frame, and `e2e/leaks.spec.tsx` finds the page and the frame back
+  where they started.
 - `scripts/controls.test.ts` holds the controls to their budget.
 
 ## Sources

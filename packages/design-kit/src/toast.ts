@@ -1,5 +1,5 @@
 import { isOff } from './find.js';
-import { activeIn, activeOf, focusedNow, handBack, holds, homeOf, mayHandBack } from './focus.js';
+import { activeIn, focusedNow, handBack, holds, homeOf, mayHandBack } from './focus.js';
 import { claimLine, hush, releaseLine, say } from './line.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
@@ -191,8 +191,10 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * record 29 has it, and pressed with focus in the toast sends it back by the same list, the toast
  * still shown. A press the page has handled, one that converts text in an input method, one with
  * no action shown, and one with focus in another toast, which hears it itself, are left alone, and
- * the key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while it is
- * shown, and the document hears the key only while a message with an action is shown.
+ * the key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while
+ * it is shown, and the document hears the key only while a message with an action is shown. A
+ * toast the page attaches inside a frame of its own origin reads focus, and hears the key, in that
+ * frame's document, so F8 and the handback work there as they do on the page.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
@@ -228,6 +230,10 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const { signal } = down;
+    // The document the toast sits in, a frame's where the page attaches it inside one, where focus
+    // is read and the keys are heard, since the page sees focus anywhere in a frame as the frame.
+    const doc = element.ownerDocument;
+    const activeNow = () => activeIn(doc) ?? null;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
     // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
     const given = [actionButton, close].filter((button) => !button.hasAttribute('tabindex'));
@@ -278,7 +284,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const giveBack = () => {
         if (
             handBack(cameFrom, arrivedAt, homeOf(element)) &&
-            activeOf() === arrivedAt &&
+            activeNow() === arrivedAt &&
             inFrame &&
             !isOff(inFrame)
         )
@@ -305,11 +311,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             !element.isConnected
         )
             return;
-        const before = focusedNow();
+        const before = focusedNow(doc);
         if (holds(element, before)) giveBack();
         else if (before?.closest('.dk-toast')) return;
         else actionButton.focus();
-        if (focusedNow() !== before) event.preventDefault();
+        if (focusedNow(doc) !== before) event.preventDefault();
     };
     const dismiss = () => {
         window.clearTimeout(timer);
@@ -336,7 +342,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         marked = undefined;
         if (hadFocus) {
             giveBack();
-            const now = activeOf();
+            const now = activeNow();
             if (holds(element, now)) (now as HTMLElement).blur();
         }
         inFrame = undefined;
@@ -344,7 +350,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         actionButton.textContent = '';
         actionButton.hidden = true;
         actionButton.removeAttribute('aria-keyshortcuts');
-        document.removeEventListener('keydown', onKey);
+        doc.removeEventListener('keydown', onKey);
         close.hidden = true;
         watch.disconnect();
         window.removeEventListener('resize', remeasure);
@@ -352,7 +358,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
-        const active = focusedNow();
+        const active = focusedNow(doc);
         if (!holds(element, active)) {
             arrivedAt = active ?? undefined;
             inFrame = insideOf(active);
@@ -361,7 +367,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
         // Focus on an action that this message does not have moves to the close button.
-        if (!action && activeOf() === actionButton) close.focus();
+        if (!action && activeNow() === actionButton) close.focus();
         onAction = action?.onAction;
         actionButton.textContent = action?.label ?? '';
         actionButton.hidden = !action;
@@ -369,10 +375,10 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // listener again, and taken off by a message with none.
         if (action) {
             actionButton.setAttribute('aria-keyshortcuts', 'F8');
-            document.addEventListener('keydown', onKey, { signal });
+            doc.addEventListener('keydown', onKey, { signal });
         } else {
             actionButton.removeAttribute('aria-keyshortcuts');
-            document.removeEventListener('keydown', onKey);
+            doc.removeEventListener('keydown', onKey);
         }
         close.hidden = false;
         element.classList.add('dk-toast-shown');
@@ -458,7 +464,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // is kept apart for the handback.
             queueMicrotask(() => {
                 if (!element.isConnected) leftWith ||= focused;
-                focused = element.isConnected && holds(element, activeOf());
+                focused = element.isConnected && holds(element, activeNow());
                 wait();
             });
         },
@@ -471,8 +477,8 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             focused = leftWith = false;
     };
     for (const type of ['focusin', 'pointerdown'])
-        document.addEventListener(type, forget, { capture: true, signal });
-    document.addEventListener(
+        doc.addEventListener(type, forget, { capture: true, signal });
+    doc.addEventListener(
         'focusout',
         (event) => {
             lost = event.composedPath()[0] as Element;
