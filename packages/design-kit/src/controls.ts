@@ -2045,6 +2045,10 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     // signal has aborted, and a close event always follows to take it off, from the close just after
     // it or from one the page made that is still on its way.
     down.add(() => {
+        // Put back where it still holds what the dialog set, so a closedby the page set since,
+        // while the dialog was not attached to stay, stays. Put back first, so a page that attaches
+        // the dialog again as focus goes back reads its own and keeps what that attach sets.
+        if (settings.stay || !dialog.hasAttribute('closedby')) restore(dialog, 'closedby', own);
         if (dialog.open || opener) {
             const back = handsBack();
             dialog.addEventListener('close', (event) => event.stopImmediatePropagation(), {
@@ -2054,9 +2058,6 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
             onClose(back);
         }
         restoring.delete(dialog);
-        // Put back where it still holds what the dialog set, so a closedby the page set since,
-        // while the dialog was not attached to stay, stays.
-        if (settings.stay || !dialog.hasAttribute('closedby')) restore(dialog, 'closedby', own);
     });
     down.set = set;
     return keep(attachedDialogs, dialog, down, open);
