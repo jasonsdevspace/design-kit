@@ -1,11 +1,10 @@
+import type { AttachOptions } from './controls.js';
+
 /*
  * How an attach takes itself down, kept in one place so each attach keeps record 22's contract,
  * and record 23's holders, the same way rather than with flags of its own. No entry of the package
  * exports this module, so a page never reaches it.
  */
-
-/** What every attach takes, the signal that holds its control. */
-type AttachOptions = { readonly signal?: AbortSignal | undefined };
 
 /**
  * What an attach takes down when it is let go. Its listeners take `signal`, so they come off
@@ -37,8 +36,11 @@ export type Teardown<Options = AttachOptions> = {
      * options apply.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
-    /** What applies a holder's options to the control, given by the attach before `keep`. */
-    set?: ((options: Options) => void) | undefined;
+    /**
+     * What applies a holder's options to the control, given by the attach before `keep`. It is
+     * handed `{}` where no holder left gave options, so each key may be missing.
+     */
+    set?: ((options: Partial<Options>) => void) | undefined;
 };
 
 /** A control kept by its element: what its attach returned, and its teardown. */
@@ -115,7 +117,7 @@ export const teardown = <Options = AttachOptions>(
                 // them.
                 const next = [...holders].findLast(([, given]) => given);
                 applied = next?.[0];
-                down.set?.((next ? next[1] : {}) as Options);
+                down.set?.(next?.[1] ?? {});
             }
         });
     };
@@ -156,9 +158,9 @@ export const teardown = <Options = AttachOptions>(
  * handed back as it is though its markup has since lost a part, and gives `idle`, what it returns
  * under a signal already aborted, which is returned for such a signal with nothing joined.
  */
-export const join = <Element extends object, Handle, Options>(
-    registry: WeakMap<Element, Kept<Handle, Options>>,
-    element: Element,
+export const join = <Key extends object, Handle, Options>(
+    registry: WeakMap<Key, Kept<Handle, Options>>,
+    element: Key,
     options?: Options & AttachOptions,
     idle?: Handle
 ): Handle | undefined => {
@@ -175,9 +177,9 @@ export const join = <Element extends object, Handle, Options>(
  * Keeps a control by its element until its teardown runs, and returns its handle. An attach whose
  * options can change gives the teardown its `set` first.
  */
-export const keep = <Element extends object, Handle, Options>(
-    registry: WeakMap<Element, Kept<Handle, Options>>,
-    element: Element,
+export const keep = <Key extends object, Handle, Options>(
+    registry: WeakMap<Key, Kept<Handle, Options>>,
+    element: Key,
     down: Teardown<Options>,
     handle: Handle
 ): Handle => {

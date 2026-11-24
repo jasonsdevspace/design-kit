@@ -192,12 +192,13 @@ export const say = (status: HTMLElement, message: Spoken, keep = false, polite =
 
 /**
  * Takes a piece's own message off a page's line before it would leave, freeing it for the next, or
- * out of the wait polite words keep there.
+ * out of the wait polite words keep there. No message, as a piece that has said none hands over,
+ * is never the line's, since what a line says is never null.
  */
 export const unsay = (status: HTMLElement, message: Spoken | null) => {
     const line = lineOf(status);
     if (line.words === message) line.words = null;
-    if (message === null || line.current?.message !== message) return;
+    if (line.current?.message !== message) return;
     window.clearTimeout(line.timer);
     leave(status);
 };
