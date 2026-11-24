@@ -186,8 +186,11 @@ const byId = (near: Node | null | undefined, id: string): Element | null =>
  * What has focus, followed into each shadow root that holds it, as a request reads where focus was
  * when it was asked for.
  */
-export const activeOf = (): Element | null => {
-    let active = document.activeElement;
+export const activeOf = (): Element | null => activeIn(document) ?? null;
+
+/** What has focus in the document or shadow root given, followed into each shadow root. */
+const activeIn = (root: DocumentOrShadowRoot | null | undefined): Element | null | undefined => {
+    let active = root?.activeElement;
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
     return active;
 };
@@ -1185,8 +1188,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let inFrame: Element | null | undefined;
     const insideOf = (frame: Element | null) => {
         const inner = (frame as HTMLIFrameElement | null)?.contentDocument;
-        let held = inner?.activeElement;
-        while (held?.shadowRoot?.activeElement) held = held.shadowRoot.activeElement;
+        const held = activeIn(inner);
         return held === inner?.body ? undefined : held;
     };
     const wait = () => {
