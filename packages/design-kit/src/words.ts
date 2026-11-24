@@ -21,19 +21,36 @@ const hinted = (control: Element): boolean =>
 const formatWords = (control: Checked) =>
     hinted(control) ? 'Enter it in the format the hint shows.' : 'Enter it in the right format.';
 
-/** Words for a value off a field's steps, counted from its least where it has one. */
+/**
+ * A number attribute as written, where the browser reads it as a valid floating-point number that
+ * stays finite, as every engine does, else empty, so a space, a plus sign or hex digits Number
+ * would take leave it out. The step words and the range words both write it, so they agree.
+ */
+const numberText = (control: Checked, name: string): string => {
+    const text = limitOf(control, name);
+    return /^-?(\d+(\.\d+)?|\.\d+)(e[+-]?\d+)?$/i.test(text) && Number.isFinite(Number(text))
+        ? text
+        : '';
+};
+
+/**
+ * Words for a value off a field's steps, counted from the browser's step base: its least where it
+ * parses, else its value attribute where that parses, else 0. A step that does not parse, or is not
+ * above 0, is the default step of 1.
+ */
 const stepWords = (control: Checked): string => {
     if (control.type === 'time') return 'Enter a time on one of the steps allowed.';
     if (control.type === 'datetime-local')
         return 'Enter a date and time on one of the steps allowed.';
     if (DATED.has(control.type)) return 'Enter a date on one of the steps allowed.';
-    const least = limitOf(control, 'min');
-    const step = limitOf(control, 'step') || '1';
-    if (step === '1' && (least === '' || Number.isInteger(Number(least))))
-        return 'Enter a whole number.';
-    return least !== '' && Number(least) !== 0
-        ? `Enter ${least}, or ${least} plus a multiple of ${step}.`
-        : `Enter a multiple of ${step}.`;
+    const given = numberText(control, 'step');
+    const step = Number(given) > 0 ? given : '1';
+    // Empty where neither parses, which reads as a base of 0.
+    const base = numberText(control, 'min') || numberText(control, 'value');
+    if (Number(step) === 1 && Number.isInteger(Number(base))) return 'Enter a whole number.';
+    return Number(base) === 0
+        ? `Enter a multiple of ${step}.`
+        : `Enter ${base}, or ${base} plus a multiple of ${step}.`;
 };
 
 /** The language nearest a field, past each shadow root it sits in, else the document's. */
@@ -50,14 +67,23 @@ const langOf = (control: Element): string => {
 /**
  * A dated limit's part in the nearest English language around the field, else in US English, since
  * the kit's words are English, read in UTC on both sides so the wall time written is the one shown.
+ * It keeps the Gregorian calendar and Latin digits the field takes, whatever calendar or digits the
+ * language tag picks, and writes a year to four digits as the field does, so a month in year 1
+ * never reads as a day.
  */
 const formatIn = (control: Checked, options: Intl.DateTimeFormatOptions, when: Date): string => {
     const lang = langOf(control);
-    const zoned = { ...options, timeZone: 'UTC' };
+    const zoned = { ...options, timeZone: 'UTC', calendar: 'gregory', numberingSystem: 'latn' };
+    const year = String(when.getUTCFullYear()).padStart(4, '0');
+    const format = (tag: string) =>
+        new Intl.DateTimeFormat(tag, zoned)
+            .formatToParts(when)
+            .map((part) => (part.type === 'year' ? year : part.value))
+            .join('');
     try {
-        return new Intl.DateTimeFormat(/^en(-|$)/i.test(lang) ? lang : 'en-US', zoned).format(when);
+        return format(/^en(-|$)/i.test(lang) ? lang : 'en-US');
     } catch {
-        return new Intl.DateTimeFormat('en-US', zoned).format(when);
+        return format('en-US');
     }
 };
 
@@ -117,7 +143,7 @@ export const limitWords = (control: Checked, name: 'min' | 'max'): string => {
     const limit = limitOf(control, name);
     const least = name === 'min';
     if (control.type !== 'time' && !DATED.has(control.type))
-        return `Enter ${limit} or ${least ? 'more' : 'less'}.`;
+        return `Enter ${numberText(control, name)} or ${least ? 'more' : 'less'}.`;
     const [from, to] = [limitOf(control, 'min'), limitOf(control, 'max')];
     if (control.type === 'time' && secondsOf(to) < secondsOf(from))
         return `Enter a time between ${whenWords(control, from)} and ${whenWords(control, to)} the next day.`;

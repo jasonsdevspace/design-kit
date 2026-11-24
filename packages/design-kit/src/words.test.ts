@@ -142,15 +142,40 @@ describe("a dated field's limit", () => {
         expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
     });
 
+    it('names a limit in the Gregorian calendar and Latin digits the field takes', () => {
+        const under = (lang: string, type: string, max: string) =>
+            limitWords(field({ type, attributes: { max }, lang }), 'max');
+        // A calendar the language tag picks, which the field does not take.
+        expect(under('en-u-ca-buddhist', 'date', '2026-11-22')).toBe(
+            'Enter November 22, 2026 or earlier.'
+        );
+        expect(under('en-US-u-ca-islamic', 'week', '2026-W48')).toBe(
+            'Enter the week of November 23, 2026 or earlier.'
+        );
+        // Digits the language tag picks, which the field does not take either.
+        expect(under('en-u-nu-arab', 'time', '17:30')).toBe('Enter 5:30 PM or earlier.');
+        expect(under('en-u-nu-arab', 'datetime-local', '2026-11-22T17:30')).toBe(
+            'Enter November 22, 2026 at 5:30 PM or earlier.'
+        );
+        // The language's own words and order still apply.
+        expect(under('en-GB-u-ca-japanese-nu-thai', 'date', '2026-11-22')).toBe(
+            'Enter 22 November 2026 or earlier.'
+        );
+    });
+
     it('reads a limit in a spring-forward gap as the wall time written', () => {
         vi.stubEnv('TZ', 'America/New_York');
         const when = field({ type: 'datetime-local', attributes: { min: '2026-03-08T02:30' } });
         expect(limitWords(when, 'min')).toBe('Enter March 8, 2026 at 2:30 AM or later.');
     });
 
-    it('keeps a year under 100 as written, and shows a year past any date as written', () => {
+    it('writes a year under 1000 in full, and shows a year past any date as written', () => {
         expect(limitWords(field({ type: 'date', attributes: { min: '0050-01-01' } }), 'min')).toBe(
-            'Enter January 1, 50 or later.'
+            'Enter January 1, 0050 or later.'
+        );
+        // A month in a year from 1 to 31, which would otherwise read as a day of the month.
+        expect(limitWords(field({ type: 'month', attributes: { min: '0001-01' } }), 'min')).toBe(
+            'Enter January 0001 or later.'
         );
         const far = field({ type: 'datetime-local', attributes: { max: '275760-09-13T12:00' } });
         expect(limitWords(far, 'max')).toBe('Enter 275760-09-13T12:00 or earlier.');
@@ -196,9 +221,13 @@ describe('a dated value as words', () => {
         expect(wallOf([2026, 1], true, 0).toISOString()).toBe('2025-12-29T00:00:00.000Z');
     });
 
-    it('keeps a year under a hundred as written, not one in the 1900s', () => {
-        expect(whenWords(field({ type: 'date' }), '0099-12-31')).toBe('December 31, 99');
-        expect(whenWords(field({ type: 'month' }), '0001-01')).toBe('January 1');
+    it('writes a year under 1000 in full as the field does, not one in the 1900s', () => {
+        expect(whenWords(field({ type: 'date' }), '0099-12-31')).toBe('December 31, 0099');
+        expect(whenWords(field({ type: 'month' }), '0001-01')).toBe('January 0001');
+        expect(whenWords(field({ type: 'month', lang: 'en-GB' }), '0031-12')).toBe('December 0031');
+        expect(whenWords(field({ type: 'week' }), '0050-W01')).toBe('the week of January 3, 0050');
+        expect(whenWords(field({ type: 'date' }), '0999-12-31')).toBe('December 31, 0999');
+        expect(whenWords(field({ type: 'date' }), '1000-01-01')).toBe('January 1, 1000');
         expect(wallOf([50, 1, 1], false, 0).getUTCFullYear()).toBe(50);
         expect(wallOf([0, 1, 1], false, 0).getUTCFullYear()).toBe(0);
     });
@@ -288,8 +317,66 @@ describe("the kit's words for each failure", () => {
         expect(step('number', { min: '1', step: '5' })).toBe('Enter 1, or 1 plus a multiple of 5.');
         expect(step('number', { min: '0.5' })).toBe('Enter 0.5, or 0.5 plus a multiple of 1.');
         expect(step('time')).toBe('Enter a time on one of the steps allowed.');
+        expect(step('week', { min: '2026-W01', step: '2' })).toBe(
+            'Enter a date on one of the steps allowed.'
+        );
         expect(step('datetime-local')).toBe('Enter a date and time on one of the steps allowed.');
         expect(step('month')).toBe('Enter a date on one of the steps allowed.');
+    });
+
+    it('count steps from the value attribute where min is missing or does not parse, as the browser does', () => {
+        const step = (attributes: Record<string, string>) =>
+            KIT_WORDS.stepMismatch(field({ type: 'number', attributes }));
+        expect(step({ step: '5', value: '2' })).toBe('Enter 2, or 2 plus a multiple of 5.');
+        expect(step({ min: 'abc', step: '5', value: '2' })).toBe(
+            'Enter 2, or 2 plus a multiple of 5.'
+        );
+        expect(step({ value: '0.5' })).toBe('Enter 0.5, or 0.5 plus a multiple of 1.');
+        // A min that parses comes before the value attribute.
+        expect(step({ min: '1', step: '5', value: '2' })).toBe(
+            'Enter 1, or 1 plus a multiple of 5.'
+        );
+        // Neither parses, so steps count from 0.
+        expect(step({ min: 'abc', step: '5', value: 'xyz' })).toBe('Enter a multiple of 5.');
+    });
+
+    it('leave out a min that does not parse as the browser reads a number', () => {
+        const step = (attributes: Record<string, string>) =>
+            KIT_WORDS.stepMismatch(field({ type: 'number', attributes }));
+        expect(step({ min: 'abc' })).toBe('Enter a whole number.');
+        expect(step({ min: 'abc', step: '5' })).toBe('Enter a multiple of 5.');
+        // Forms every engine refuses, though Number reads them.
+        expect(step({ min: ' 1', step: '5' })).toBe('Enter a multiple of 5.');
+        expect(step({ min: '+1', step: '5' })).toBe('Enter a multiple of 5.');
+        expect(step({ min: '0x1', step: '5' })).toBe('Enter a multiple of 5.');
+        expect(step({ min: 'Infinity', step: '5' })).toBe('Enter a multiple of 5.');
+        // Forms every engine takes.
+        expect(step({ min: '.5', step: '5' })).toBe('Enter .5, or .5 plus a multiple of 5.');
+        expect(step({ min: '1e0', step: '5' })).toBe('Enter 1e0, or 1e0 plus a multiple of 5.');
+    });
+
+    it('read any step equal to 1 as whole numbers, and a step that does not parse as 1', () => {
+        const step = (attributes: Record<string, string>) =>
+            KIT_WORDS.stepMismatch(field({ type: 'number', attributes }));
+        expect(step({ step: '1.0' })).toBe('Enter a whole number.');
+        expect(step({ min: '3', step: '01' })).toBe('Enter a whole number.');
+        expect(step({ step: '05' })).toBe('Enter a multiple of 05.');
+        // A step of 1 off a base that is not a whole number counts from that base.
+        expect(step({ min: '0.5', step: '1.0' })).toBe('Enter 0.5, or 0.5 plus a multiple of 1.0.');
+        // A step that does not parse, or is not above 0, is the default step of 1.
+        expect(step({ step: 'abc' })).toBe('Enter a whole number.');
+        expect(step({ step: '0' })).toBe('Enter a whole number.');
+        expect(step({ step: '-2' })).toBe('Enter a whole number.');
+    });
+
+    it('write a step and its base as the attributes write them, as the range words do', () => {
+        const tiny = field({ type: 'number', attributes: { step: '0.0000001' } });
+        expect(KIT_WORDS.stepMismatch(tiny)).toBe('Enter a multiple of 0.0000001.');
+        const half = field({ type: 'number', attributes: { min: '1.50', step: '0.25' } });
+        expect(KIT_WORDS.stepMismatch(half)).toBe('Enter 1.50, or 1.50 plus a multiple of 0.25.');
+        expect(KIT_WORDS.rangeUnderflow(half)).toBe('Enter 1.50 or more.');
+        const based = field({ type: 'number', attributes: { step: '5', value: '2.0' } });
+        expect(KIT_WORDS.stepMismatch(based)).toBe('Enter 2.0, or 2.0 plus a multiple of 5.');
     });
 
     it("give a custom error the field's own message", () => {
