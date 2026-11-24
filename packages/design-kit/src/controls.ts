@@ -3136,11 +3136,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
         const { marked, described } = marksOf(field, control);
         const before = [...new Set([...marked, ...described])].map(
             (one) =>
-                [
-                    one,
-                    one.getAttribute('aria-invalid'),
-                    one.getAttribute('aria-describedby'),
-                ] as const
+                [one, one.getAttribute('aria-invalid'), idsOf(one, 'aria-describedby')] as const
         );
         const { error, takeAway } = errorFor(field, control, words);
         for (const one of marked) one.setAttribute('aria-invalid', 'true');
@@ -3158,7 +3154,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
             for (const [one, invalid, describedBy] of before) {
                 if (marked.includes(one) && one.getAttribute('aria-invalid') === 'true')
                     restore(one, 'aria-invalid', invalid);
-                const had = (describedBy ?? '').split(/\s+/).includes(error.id);
+                const had = describedBy.includes(error.id);
                 const rest = idsOf(one, 'aria-describedby').filter((id) => id !== error.id);
                 if (!had) restore(one, 'aria-describedby', rest.length > 0 ? rest.join(' ') : null);
             }
