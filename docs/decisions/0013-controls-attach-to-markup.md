@@ -214,6 +214,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | Limit and step words as the field reads them, with too little room left                  | 22,260 bytes   | 649 bytes       | 22.5 KB    |
 | 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,498 bytes   | 735 bytes       | 22.75 KB   |
 | 0.9.4   | Focus read through frames by one view, with too little room left                         | 23,164 bytes   | 667 bytes       | 23.5 KB    |
+| 0.9.4   | The pieces and the hooks reading focus inside a frame, with too little room left         | 23,426 bytes   | 678 bytes       | 23.75 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
@@ -252,7 +253,7 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes | 637 bytes       | 9.25 KB    |
 | 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
 | 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 667 bytes       | 9.75 KB    |
-| 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,340 bytes | 674 bytes       | 10 KB      |
+| 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes | 678 bytes       | 10 KB      |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left
@@ -319,8 +320,9 @@ ceiling, since the rule above sets the budget.
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
 
 - `src/controls.test.ts` imports the module in plain Node and finds no export but its functions,
-  and finds the React modules reaching the controls only through `controls.js`, so a page holds one
-  copy of the state.
+  and finds the React modules reaching the controls only through `controls.js`, and the hooks
+  taking where focus was from `request.js`, the module `controls.js` gathers for the focus requests,
+  so a page holds one copy of the state.
 - `scripts/chunks.test.ts` builds pages together over the package laid out as npm ships it and finds
   each page's chunks without another's piece: the form beside the table, the busy button beside the
   toast and a focus request beside the dialog. It finds the shared state and its listeners kept on a

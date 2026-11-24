@@ -35,6 +35,8 @@ type Given = {
     readonly matches?: readonly string[];
     /** The root the field lives in, the document where it is not given. */
     readonly root?: unknown;
+    /** The document the field sits in, a frame's, the page's where it is not given. */
+    readonly doc?: unknown;
     readonly validationMessage?: string;
     readonly fieldset?: unknown;
 };
@@ -47,6 +49,7 @@ const field = ({
     lang = 'en-US',
     matches = [],
     root = {},
+    doc,
     validationMessage = '',
     fieldset = null,
 }: Given = {}): Checked =>
@@ -54,9 +57,9 @@ const field = ({
         type,
         localName,
         validationMessage,
-        // The document the field sits in, the page's as each test sets it.
+        // The document the field sits in, the page's as each test sets it where none is given.
         get ownerDocument() {
-            return document;
+            return doc ?? document;
         },
         getAttribute: (name: string) => attributes[name] ?? null,
         closest: (selector: string) => {
@@ -163,6 +166,41 @@ describe("a dated field's limit", () => {
             root: new Shadow(host),
         });
         expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
+    });
+
+    it(
+        'stops at a document whose named properties hold a host, as a form named host gives it',
+        {
+            timeout: 1000,
+        },
+        () => {
+            vi.stubGlobal('document', { documentElement: { lang: 'en-GB' } });
+            // A form named host, and two of them as a collection, each among the document's named
+            // properties, where reading the document as a shadow root would climb forever or throw.
+            for (const host of [{ closest: () => null }, [{}, {}]]) {
+                const inside = field({
+                    type: 'date',
+                    attributes: { min: '2026-11-22' },
+                    lang: null,
+                    root: { nodeType: 9, host },
+                });
+                expect(limitWords(inside, 'min')).toBe('Enter 22 November 2026 or later.');
+            }
+        }
+    );
+
+    it("takes a frame's own language, else the page's, where no element around the field names one", () => {
+        const inFrame = (lang: string) =>
+            field({
+                type: 'date',
+                attributes: { min: '2026-11-22' },
+                lang: null,
+                doc: { documentElement: { lang } },
+            });
+        vi.stubGlobal('document', { documentElement: { lang: 'fr' } });
+        expect(limitWords(inFrame('en-GB'), 'min')).toBe('Enter 22 November 2026 or later.');
+        vi.stubGlobal('document', { documentElement: { lang: 'en-GB' } });
+        expect(limitWords(inFrame(''), 'min')).toBe('Enter 22 November 2026 or later.');
     });
 
     it('names a limit in the Gregorian calendar and Latin digits the field takes', () => {

@@ -704,6 +704,36 @@ test.describe('in React', () => {
         await expect(page.locator('#game')).toBeFocused();
     });
 
+    for (const asking of ['a request after the draw', "a view's arrival"] as const)
+        test(`leaves focus where a visitor moved it between two controls of a frame, after ${asking} asked from the first`, async ({
+            page,
+        }) => {
+            await stillClock(page.clock);
+            await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+            const inner = page.frameLocator('iframe[title="Moves"]');
+            await expect(inner.locator('#frame-b')).toBeAttached();
+            await inner.locator('#frame-a').focus();
+            await page.evaluate((how) => {
+                const asks = window as unknown as {
+                    askFromFrame: () => void;
+                    nextFrameRound: () => void;
+                };
+                if (how === 'a request after the draw') asks.askFromFrame();
+                else asks.nextFrameRound();
+            }, asking);
+            // The render and its effects run on React's own scheduler, which the still clock
+            // leaves alone, while the frame the request waits for is held.
+            await expect(page.locator('#frame-round')).toHaveText(
+                asking === "a view's arrival" ? 'Frame round 2' : 'Frame round 1'
+            );
+            await page.evaluate(() => new Promise((done) => queueMicrotask(() => done(null))));
+            await inner.locator('#frame-b').focus();
+            await page.clock.runFor(100);
+            await expect(page.locator('#frame-target')).not.toBeFocused();
+            await expect(page.locator('#frame-round')).not.toBeFocused();
+            await expect(inner.locator('#frame-b')).toBeFocused();
+        });
+
     test('adds no listener however often a view is drawn before any press', async ({ page }) => {
         await openCounted(page, {
             clock: false,
@@ -814,4 +844,48 @@ test('leaves focus where a visitor moved it between two controls of a frame, as 
     await settled(page);
     await expect(page.locator('#target')).not.toBeFocused();
     await expect(page.frameLocator('iframe').locator('#other')).toBeFocused();
+});
+
+test("finds a request's id on the page where it is given a control in a frame as where focus was", async ({
+    page,
+}) => {
+    await openWithFrame(page);
+    await page.evaluate(() => {
+        const inner = document.querySelector('iframe')?.contentDocument?.querySelector('#inner');
+        (window as unknown as Mover).moveFocus('save-error', { from: inner ?? null });
+    });
+    await expect(page.locator('#save-error')).toBeFocused();
+    await expect(page.frameLocator('iframe').locator('#save-error')).not.toBeFocused();
+});
+
+test('lands a request asked from inside a frame that loads another page before the request lands', async ({
+    page,
+}) => {
+    // The frame the request waits for is held until the frame has loaded its new page.
+    await stillClock(page.clock);
+    await openWithFrame(page);
+    await page.evaluate(async () => {
+        const frame = document.querySelector('iframe');
+        if (!frame) return;
+        (window as unknown as Mover).moveFocus('target');
+        const loaded = new Promise((done) => {
+            frame.addEventListener('load', done, { once: true });
+        });
+        frame.srcdoc = '<p>The frame loaded again.</p>';
+        await loaded;
+    });
+    await page.clock.runFor(100);
+    await expect(page.locator('#target')).toBeFocused();
+});
+
+test('lands a request asked from inside a frame the page hides before the request lands', async ({
+    page,
+}) => {
+    await openWithFrame(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('target');
+        const frame = document.querySelector('iframe');
+        if (frame) frame.hidden = true;
+    });
+    await expect(page.locator('#target')).toBeFocused();
 });

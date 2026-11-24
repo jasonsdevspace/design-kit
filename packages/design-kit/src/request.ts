@@ -1,8 +1,6 @@
 import { byId, isOff } from './find.js';
 import {
-    activeOf,
     deepActive,
-    docOf,
     focusFirst,
     type FocusTarget,
     homeOf,
@@ -44,17 +42,25 @@ const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
 const STALE = 10_000;
 
 /**
- * When a request was asked, how many times the page had gone out of sight or come back by then, or
- * NaN, which matches no count, where the page was out of sight as it was asked, and where focus
- * was: the element as the deep reader gives it, which the request compares through `seen` for its
- * document, and the page's view of it, in whose root an id and the home are looked for.
+ * Where focus was as a request is asked, both taken from one read at that moment: the element as
+ * the deep reader gives it, or the one a page gives as `from`, and the page's view of it through
+ * `seen`, which is the frame where focus was inside one. A request compares the element in its own
+ * document while that document has a window, else the page's view in the page, and looks an id and
+ * its home up from the page's view.
  */
-type Asked = {
-    readonly at: number;
-    readonly sight: number;
-    readonly from: Element | null;
-    readonly near: Element | null;
+export type FocusWas = { readonly from: Element | null; readonly page: Element | null };
+
+/** Where focus is as a request is asked, or where the page says it was, as a request keeps it. */
+export const focusWas = (given?: Element | null): FocusWas => {
+    const from = given === undefined ? deepActive() : given;
+    return { from, page: seen(from, document) };
 };
+
+/**
+ * When a request was asked, how many times the page had gone out of sight or come back by then, or
+ * NaN, which matches no count, where the page was out of sight as it was asked, and where focus was.
+ */
+type Asked = FocusWas & { readonly at: number; readonly sight: number };
 
 /**
  * The moment a request is asked, from where focus is or from the place a page gives. One asked out
@@ -62,10 +68,9 @@ type Asked = {
  * counts the return.
  */
 const askedNow = (given: Element | null | undefined): Asked => ({
+    ...focusWas(given),
     at: performance.now(),
     sight: document.hidden ? NaN : sightChanges,
-    from: given === undefined ? deepActive() : given,
-    near: given === undefined ? activeOf() : given,
 });
 
 /** Whether a request may still land, in sight and unchanged since it was asked, and in time. */
@@ -73,19 +78,29 @@ const live = (asked: Asked) =>
     !document.hidden && sightChanges === asked.sight && performance.now() - asked.at <= STALE;
 
 /**
- * Whether focus, as the request's view gives it, is still free for the request: nowhere, on a blank
- * body around the request's document, the page's around a frame, as the page's own body is, where
- * it was when the request was asked, or where the kit has handed it back since.
+ * Whether focus, as the request's view gives it, is still free for the request: nowhere, where it
+ * was when the request was asked, or where the kit has handed it back since. A body no one can type
+ * in that the view reads as itself, which is only one around the request's document, the page's
+ * around a frame, counts as free as the page's own body does, since Chromium drops focus there from
+ * a frame the page hides while a request asked inside it waits.
  */
 const isFree = (
     now: Element | null,
     view: (element: Element | null) => Element | null,
-    asked: Asked
+    was: Element | null,
+    at: number
 ): boolean =>
-    !now ||
-    isBlank(now) ||
-    now === view(asked.from) ||
-    (now === view(handed.to) && handed.at >= asked.at);
+    !now || isBlank(now) || now === view(was) || (now === view(handed.to) && handed.at >= at);
+
+/**
+ * What a request compares focus with, in the document it sits in, as a piece in that document sees
+ * focus: where focus was, while its document is still the one its window shows, else the page's
+ * view of it, compared in the page's document, for a frame that left the page or loaded another
+ * page since. The window is asked for its document, since Firefox still gives the window of a
+ * document its frame has left.
+ */
+const comparedOf = ({ from, page }: FocusWas): Element | null =>
+    from && from.ownerDocument.defaultView?.document === from.ownerDocument ? from : page;
 
 /**
  * Focuses a request's target or a fallback, where focus is still where it was, or where the kit has
@@ -93,10 +108,9 @@ const isFree = (
  */
 const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined, asked: Asked) => {
     if (!live(asked)) return;
-    const { from, near } = asked;
-    // Every place is compared as a piece in the document focus was in sees it, both sides alike,
-    // the page's where focus was on the page or that document has left it.
-    const doc = docOf(from ?? document.body);
+    const { from, page } = asked;
+    const was = comparedOf(asked);
+    const doc = was?.ownerDocument ?? document;
     const now = seenNow(doc);
     const view = (element: Element | null) => seen(element, doc);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
@@ -105,7 +119,8 @@ const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined
     // not yet handled, since the browser put it there as the dialog closed. A request that lands
     // takes that place from the dialog, so its close event leaves focus where the request put it.
     const restored = [...restoring].filter(([dialog, to]) => view(to) === now && !dialog.open);
-    if (!isFree(now, view, asked) && !restored[0]) return;
+    if (!isFree(now, view, was, asked.at) && !restored[0]) return;
+    const near = page ?? from;
     const place = placeOf(target, near);
     if (
         focusFirst(
@@ -127,8 +142,9 @@ const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined
  * off, focus goes to the first fallback that takes it, and then to the app frame's body or the
  * page's main content, by the walk a closing panel hands focus back by, so it does not fall to the
  * page. Focus a visitor has moved since the request is left where they put it: focus is free only
- * while it is where it was when asked, on the page's body, or where the kit has handed it back
- * since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down, or on
+ * while it is where it was when asked, inside a frame of the page's own origin too, on the page's
+ * body, on the page's body around a frame the page hides while a request asked inside it waits, or
+ * where the kit has handed it back since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down, or on
  * what the browser hands it to as a dialog closes, until the dialog's close is handled. A request
  * made while the page is out of sight, or before it goes, is dropped, so focus does not jump when
  * the visitor comes back, and so is one whose frame comes more than ten seconds late, while one a
@@ -221,7 +237,7 @@ export const focusOnArrival = (
             // A view asked since the page went out of sight or came back lands without the others.
             const asking = asked.filter((view) => live(view.asked));
             const places = asking.flatMap((view) => {
-                const place = placeOf(view.heading, view.asked.near);
+                const place = placeOf(view.heading, view.asked.page ?? view.asked.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
             places.sort((one, other) =>

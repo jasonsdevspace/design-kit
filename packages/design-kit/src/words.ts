@@ -69,15 +69,18 @@ const stepWords = (control: Checked): string => {
         : `Enter ${base}, or ${base} plus a multiple of ${step}.`;
 };
 
-/** The language nearest a field, past each shadow root it sits in, else the document's. */
+/**
+ * The language nearest a field, past each shadow root it sits in, else its own document's, else
+ * the page's, so a frame of the page's own origin with no language of its own reads as the page.
+ */
 const langOf = (control: Element): string => {
     for (let at: Element | null = control; at;) {
         const named = at.closest('[lang]');
         if (named) return named.getAttribute('lang') ?? '';
         const root = rootOf(at);
-        at = 'host' in root ? root.host : null;
+        at = root.nodeType === 11 ? (root as ShadowRoot).host : null;
     }
-    return control.ownerDocument.documentElement.lang;
+    return control.ownerDocument.documentElement.lang || document.documentElement.lang;
 };
 
 /**

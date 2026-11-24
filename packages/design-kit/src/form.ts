@@ -361,7 +361,10 @@ const joinForm = (form: HTMLElement, checker: Checker): (() => void) => {
     // bubble, which fades, in place of the kit's errors, so the form takes noValidate from script
     // and the kit checks the same constraints on submit. A page without script keeps the browser's
     // check.
-    const own = form.localName === 'form' ? (form as HTMLFormElement) : form.closest('form');
+    const own =
+        isHtml(form) && form.localName === 'form'
+            ? (form as HTMLFormElement)
+            : form.closest('form');
     const checked = own ? (checkedForms.get(own) ?? checkForm(own)) : null;
     if (own) own.noValidate = true;
     // A field not in error says so, so a browser does not read an empty required field as invalid
@@ -535,7 +538,7 @@ export const attachForm = (form: HTMLElement, options?: FormOptions): Refuse => 
     const refuse: Refuse = (asked) =>
         down.signal.aborted ? () => undefined : refuseIn(form, true, asked?.from);
     // A button marked formnovalidate submits unchecked, as with the browser's own check, and clears
-    // what the kit drew, which no longer stands.
+    // what the kit drew, which stands no more.
     const check = (event: SubmitEvent, whole: HTMLFormElement) => {
         const { submitter } = event;
         const failures = submitter?.hasAttribute('formnovalidate')

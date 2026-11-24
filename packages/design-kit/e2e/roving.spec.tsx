@@ -147,9 +147,8 @@ test('hands focus to the cell in the place of one taken out, and lets the group 
     await expect(page.locator('#r4')).not.toHaveAttribute('tabindex');
 });
 
-test('hands focus to the cell in the place of one taken out, in a group inside a frame the page attached', async ({
-    page,
-}) => {
+/** A page with the grid drawn inside a frame of its own origin, attached from the page. */
+const openInFrame = async (page: Page, { editable }: { readonly editable: boolean }) => {
     await servePage(page, {
         title: 'Roving',
         body: '<main><iframe title="Cards" srcdoc="<!doctype html><title>Cards</title>"></iframe></main>',
@@ -157,21 +156,36 @@ test('hands focus to the cell in the place of one taken out, in a group inside a
 const frame = document.querySelector('iframe');
 if (frame.contentDocument?.title !== 'Cards')
     await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
-frame.contentDocument.body.innerHTML = ${JSON.stringify(GRID)};
-attachRoving(frame.contentDocument.querySelector('#grid'));
+const inner = frame.contentDocument;
+inner.body.innerHTML = ${JSON.stringify(GRID)};
+// A body a visitor can type in, around a grid that is not part of what they type.
+if (${String(editable)}) {
+    inner.body.contentEditable = 'true';
+    inner.querySelector('#grid').contentEditable = 'false';
+}
+attachRoving(inner.querySelector('#grid'));
 window.ready = true;`,
     });
     await page.waitForFunction(() => 'ready' in window);
-    const inner = page.frameLocator('iframe');
-    await inner.locator('#n2').focus();
-    await page.keyboard.press('ArrowRight');
-    await expect(inner.locator('#n3')).toBeFocused();
-    await inner.locator('#n3').evaluate((cell) => {
-        cell.remove();
+    return page.frameLocator('iframe');
+};
+
+for (const editable of [false, true])
+    test(`moves by the arrows and hands focus to the cell in the place of one taken out, in a grid inside a frame${editable ? ' whose body can be typed in' : ''}`, async ({
+        page,
+    }) => {
+        const inner = await openInFrame(page, { editable });
+        await expect(inner.locator('#grid > [tabindex="0"]')).toHaveId('n1');
+        await inner.locator('#n2').focus();
+        await page.keyboard.press('ArrowRight');
+        await expect(inner.locator('#n3')).toBeFocused();
+        await expect(inner.locator('#grid > [tabindex="0"]')).toHaveId('n3');
+        await inner.locator('#n3').evaluate((cell) => {
+            cell.remove();
+        });
+        await expect(inner.locator('#n4')).toBeFocused();
+        await expect(inner.locator('#grid > [tabindex="0"]')).toHaveId('n4');
     });
-    await expect(inner.locator('#n4')).toBeFocused();
-    await expect(inner.locator('#grid > [tabindex="0"]')).toHaveId('n4');
-});
 
 test('passes over a cell disabled or out of sight, which is never the stop', async ({ page }) => {
     await open(page);

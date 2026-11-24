@@ -131,11 +131,11 @@ focus anywhere in the frame reads as the frame, and the panels listened for pres
 Escape on the page's document, which never hears the frame's. So a dialog in the frame handed focus
 back to the frame rather than the control in it that opened it, or to nothing, a panel's button in
 the frame did nothing, a stepper hid the button that had focus as its value turned read only and
-handed nothing back as it was taken down, and a group of cells kept no cell where the one with focus
-was taken out. A focus request compared focus as the page sees it, so a visitor's move between two
-controls of a frame read as no move and the request took focus from them. The form and the group
-also told the frame's controls by the page's own classes, which a frame's are not, so a form in the
-frame let a submit through with nothing checked.
+handed nothing back as it was taken down, and a group of cells found none of the frame's cells, so
+it gave the group no stop and its arrows moved nothing. A focus request compared focus as the page
+sees it, so a visitor's move between two controls of a frame read as no move and the request took
+focus from them. The form and the group also told the frame's controls by the page's own classes,
+which a frame's are not, so a form in the frame let a submit through with nothing checked.
 
 **A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
 since the page would add listeners to every frame focus enters, and still read focus as the frame.
@@ -161,17 +161,19 @@ own origin that has it, an object showing a document among them, to the control 
 the frame's body where nothing is, and a frame of another origin reads as the frame. A frame's
 record is read only while focus is in the frame, so a control it last focused is never taken for
 focus. What the kit stores, the focus it notes it handed back, what had focus as a dialog opened and
-where focus was as a request was asked, is that element as it is, except that a blank body is kept as `seen` reads it for the piece's own
-document. Every comparison reads both sides through `seen`, for one document, and nowhere means
-`seen` reads null for the asker's: a piece asks for its own document and a focus request for the
-document where focus was as it was asked. Through `seen`, a body no one can type in is nothing in that document, an element of the
-document or of one around it is itself, and an element of any other frame, one the document holds or
-one beside it, reads as the frame that holds it at the document's level, so focus a visitor put in
-another frame's blank space, or on the page around a frame, stays theirs. An editor's body, editable
-or in design mode, counts as focus wherever it is. The walk that hands focus back counts focus
-fallen to any blank body as no move of the page's. `activeOf` stays as 0.9.3 had it, followed into
-shadow roots only, and stays public, so a page that passes `from` itself and a request's id read the
-page's view.
+where focus was as a request was asked, is that element as it is, except that a blank body is kept
+as `seen` reads it for the piece's own document. Every comparison reads both sides through `seen`,
+for one document, and nowhere means `seen` reads null for the asker's: a piece asks for its own
+document and a focus request for the document where focus was as it was asked. Through `seen`, a
+body no one can type in is nothing in that document, an element of the document or of one around it
+is itself, and an element of any other frame, one the document holds or one beside it, reads as the
+frame that holds it at the document's level, so focus a visitor put in another frame's blank space,
+or on the page around a frame, stays theirs. An editor's body, editable or in design mode, counts as
+focus wherever it is. The walk that hands focus back counts focus fallen to any blank body as no
+move of the page's. `activeOf` stays as 0.9.3 had it, followed into shadow roots only, and stays
+public for a page that passes `from` itself, while no part of the kit calls it. A request finds its
+id and the home it falls back to from the page's view of where focus was, the frame where focus was
+in one.
 
 Option D. The dialog finds its opener, an element or an event of the frame's or the page's, from the
 deep reader, and hands focus back to an opener in the frame or on the page alike. What had focus as
@@ -189,23 +191,27 @@ started are kept for each document, so a panel of the page and one of a frame th
 apart. The stepper and a group of cells read focus through `seen` for the document they sit in, the
 page's where it has no window, so a stepper keeps a button with focus shown as its value turns read
 only and hands focus to its value or itself in the frame as it is taken down, and a group hands
-focus on where focus fell to the frame's body. The form and the group tell a control by its name and
-an element by its node type rather than by the page's classes.
+focus on where focus fell to the frame's body. The form, the group and a table's frame tell a
+control by its name and an element by its node type rather than by the page's classes. Each stays in
+the document it was attached in, so a page that moves one into another takes it down and attaches it
+again.
 
-A focus request keeps where focus was as the deep reader gives it, as the dialog and the toast keep a
-place, and asks for the document that element sits in, the page's where focus was on the page, none
-was given or that document has lost its window, as a frame that left the page has. So a move between
-two controls of a frame counts as the visitor's and the request drops. One rule stands around that
-view: a body no one can type in that `seen` reads as itself, which is only one of a document around
-the request's, the page's around the frame, counts as free for the request, as the page's own body
-always has, so focus that fell from the frame to the page as its control went still lets the request
-land. The pieces keep that body as elsewhere, so a visitor's click on the page around a frame still
-stays theirs as a piece in the frame closes. The id the request asks for and the home it falls back
-to are still looked for from the page's view of where focus was, as `activeOf` gives it, so a
-request asked with focus in a frame finds its id on the page as before. Each stays in the document it was attached in, so a page that moves one into another takes it
-down and attaches it again. The listeners the controls' shared module adds as it loads, which note a
-visitor's presses for a focus request, stay on the page's document, and neither the dialog nor the
-panels read them.
+A focus request reads focus once, as it is asked, and keeps two views of that one read: the element
+as the deep reader gives it, or the one a page passes as `from`, as the dialog and the toast keep a
+place, and the page's view of it through `seen`, the frame where that element sits in one. It
+compares the element in the document it sits in while that document is still the one its frame
+shows, so a move between two controls of a frame counts as the visitor's and the request drops.
+Where the frame has left the page or loaded another page since, it compares the page's view in the
+page's document, as 0.9.3 compared every request. The window is asked for its document, since
+Firefox still gives the window of a document its frame has left. One rule stands around that view: a
+body no one can type in that `seen` reads as itself, which is only one of a document around the
+request's, the page's around the frame, counts as free for the request, as the page's own body
+always has, since Chromium drops focus to the page's body from a frame the page hides while a
+request asked inside it waits. The pieces keep that body as elsewhere, so a visitor's click on the
+page around a frame still stays theirs as a piece in the frame closes. The React hooks take where
+focus was from the request's module as they ask, so they read no focus of their own. The listeners
+the controls' shared module adds as it loads, which note a visitor's presses for a focus request,
+stay on the page's document, and neither the dialog nor the panels read them.
 
 ## How it is tested
 
@@ -266,11 +272,24 @@ The path is in `packages/design-kit`.
 - For a stepper, a form, a group of cells and a focus request inside a frame,
   `e2e/stepper-takedown.spec.tsx`, in Chromium, WebKit and Firefox, finds a stepper's focused button
   kept shown as its value turns read only and focus handed to its value or its box in the frame as
-  it is taken down. `e2e/form.spec.tsx` finds a refused submit in the frame moving focus to the field
-  in error, and `e2e/roving.spec.tsx` focus handed on to the next cell in the frame where the one
-  with focus is taken out. `e2e/focus.spec.tsx` finds a request asked from one control of a frame
-  leaving focus on another of that frame that the visitor moved to. `src/words.test.ts` finds a
-  field's language read past a shadow root of a frame's, which the page's own class does not name.
+  it is taken down. `e2e/form.spec.tsx`, in the three engines, finds a refused submit in the frame
+  moving focus to the field in error, the kit's error drawn in the frame and describing the field,
+  and the page's status line saying the refusal. `e2e/roving.spec.tsx`, in Chromium and WebKit,
+  finds a grid in the frame taking its one stop and moving by its arrows, and focus handed on to the
+  next cell where the one with focus is taken out, in a frame whose body can be typed in too.
+  `e2e/table.spec.ts`, in the three engines, finds a link in a table inside the frame brought out
+  from under its pinned column as the keyboard reaches it.
+- `e2e/focus.spec.tsx`, in the three engines, finds a request asked from one control of a frame
+  leaving focus on another of that frame that the visitor moved to, asked through `moveFocus`,
+  through `useFocusAfterDraw` and as a view's arrival through `useArrivalFocus`, a request given a
+  control in a frame as `from` finding its id on the page, a request asked from inside a frame that
+  loads another page before the request lands still landing, and a request asked from inside a
+  frame the page hides landing where Chromium drops focus to the page's body.
+- `src/words.test.ts` finds a field's language read past a shadow root of a frame's, which the
+  page's own class does not name, a document whose named properties hold a host taken for no shadow
+  root, and a frame with no language of its own read in the page's.
+- `scripts/controls.test.ts` finds the shallow reader, `activeOf`, called by no module but the one
+  that defines it.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.

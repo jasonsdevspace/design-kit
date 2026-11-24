@@ -15,7 +15,6 @@ import {
 } from 'react';
 
 import {
-    activeOf,
     attachBusy,
     attachForm,
     attachProgress,
@@ -33,6 +32,7 @@ import {
     type RovingOptions,
     type Say,
 } from './controls.js';
+import { focusWas } from './request.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over a function from `./controls`, as record 20 has
@@ -335,13 +335,14 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
-            const from = options?.from === undefined ? activeOf() : options.from;
-            // The root focus was in, read as the request is asked, since a late request is made
-            // with no place focus was, which is where `moveFocus` would look for an id.
-            const root = from?.getRootNode();
+            const { from, page } = focusWas(options?.from);
+            // The root focus was in as the page sees it, read as the request is asked, since a late
+            // request is made with no place focus was, which is where `moveFocus` would look for an
+            // id. A shadow root is told by its node type, so one of a frame's counts too.
+            const root = (page ?? from)?.getRootNode();
             const within = (place: FocusTarget): FocusTarget =>
-                typeof place === 'string' && root instanceof ShadowRoot
-                    ? () => root.getElementById(place)
+                typeof place === 'string' && root?.nodeType === 11
+                    ? () => (root as ShadowRoot).getElementById(place)
                     : place;
             // No signal tied to the component goes with the request, since the unmount that makes
             // a request still waiting would abort it too, so it is called off only by what
@@ -400,14 +401,14 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     const seen = useRef<{ readonly key: ArrivalKey; readonly first: boolean } | null>(null);
     // Where focus was as the change began, read as the view draws, before anything in it can take
     // focus, so a field the view focuses itself is not taken for the visitor's own place. Read
-    // into each shadow root that holds it, as the request compares it when it lands, so a press
-    // inside one is not taken for focus the visitor moved.
+    // into each shadow root and each frame of the page's own origin that holds it, as the request
+    // compares it when it lands, so a press inside one is not taken for focus the visitor moved.
     const from = useRef<Element | null>(null);
     if (
         (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
-        from.current = activeOf();
+        from.current = focusWas().from;
     // Asks once for each key, since the effect runs again only when the key changes: as the view
     // first draws, by whether a press brought it, and as its key changes, whatever the last input,
     // since the page changes it on a press. The request is called off as the effect is cleaned up,
@@ -483,7 +484,7 @@ export const useFormRefusal = <Form extends HTMLElement>(
     const refuseThrough = useCallback(
         (pick: () => Refuse | undefined): Refuse =>
             (asked) => {
-                const from = asked?.from === undefined ? activeOf() : asked.from;
+                const { from } = focusWas(asked?.from);
                 return afterCommit(() => pick()?.({ from }) ?? (() => undefined));
             },
         [afterCommit]

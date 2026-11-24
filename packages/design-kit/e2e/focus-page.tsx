@@ -24,6 +24,8 @@ type Page = {
     hideOwner?: () => void;
     showOwner?: () => void;
     askHidden?: () => void;
+    askFromFrame?: () => void;
+    nextFrameRound?: () => void;
 };
 const page = window as unknown as Page;
 
@@ -44,8 +46,8 @@ const page = window as unknown as Page;
  * that field's ref as a press draws it, rows removed after an await, from a timer and in a
  * transition, requests asked in a transition held back by a part that never loads, whose owner an
  * urgent update then unmounts or an `Activity` hides, a request asked as an `Activity` hides its
- * owner in the same press, one asked while it hides it, and one made in a commit whose owner the
- * next commit takes away.
+ * owner in the same press, one asked while it hides it, one made in a commit whose owner the next
+ * commit takes away, and a request and a view's arrival asked with focus on a control in a frame.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -848,6 +850,36 @@ const Brisks = () => {
     );
 };
 
+// A request and a round's heading asked for with focus on a control in a frame of the page's own
+// origin, as the test asks them, before the visitor moves on to the frame's other control.
+const FrameAsks = () => {
+    const focusNext = useFocusAfterDraw();
+    const [round, setRound] = useState(1);
+    const heading = useArrivalFocus<HTMLHeadingElement>(round);
+    useEffect(() => {
+        page.askFromFrame = () => {
+            focusNext('frame-target');
+        };
+        page.nextFrameRound = () => {
+            setRound((now) => now + 1);
+        };
+    }, [focusNext]);
+    return (
+        <section>
+            <iframe
+                title="Moves"
+                srcDoc='<button type="button" id="frame-a">A</button><button type="button" id="frame-b">B</button>'
+            />
+            <button id="frame-target" type="button">
+                Target outside the frame
+            </button>
+            <h2 id="frame-round" ref={heading}>
+                Frame round {round}
+            </h2>
+        </section>
+    );
+};
+
 const root = document.getElementById('root');
 if (root)
     createRoot(root).render(
@@ -881,5 +913,6 @@ if (root)
             <Opener />
             <Owners />
             <Brisks />
+            <FrameAsks />
         </main>
     );

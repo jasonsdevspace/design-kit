@@ -421,7 +421,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
     // the stepper's own button still reports, since no press follows it. Focus that stays on the
     // value, as a switch of window leaves it, reports nothing. The page's document tells that
     // switch, since it has focus wherever focus is in its frames, where a frame's own would lose it
-    // as the visitor moves on to the page.
+    // as the visitor moves on to the page, which would read as a switch.
     input.addEventListener(
         'blur',
         () => {

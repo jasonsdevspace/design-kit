@@ -229,7 +229,11 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
         if (gone) {
             const next = inPlaceOf(gone, before, cells) ?? null;
             last = next;
-            const fell = seenNow(docOf(group)) === null;
+            // Focus fell where the group's document reads nothing, or its body that a visitor can
+            // type in, which is where focus goes from a cell taken out of an editable page.
+            const doc = docOf(group);
+            const at = seenNow(doc);
+            const fell = at === null || at === doc.body;
             if (holding === gone && fell && next) next.focus();
         }
         before = cells;

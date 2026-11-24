@@ -1953,9 +1953,10 @@ is taken down, and taking it down, by the function it returns or by its `signal`
 control down](#taking-a-control-down) has it, hides it again. A switch attached after every switch
 was taken down shows, and draws, the choice saved meanwhile, or the one the page holds where the
 browser would not save it. Every switch on a page shows one choice, each with radios named for its
-own id. After the switch the component draws a line inside `noscript`, "With scripts on, a Theme
-switch sits here.", which only a visitor without script sees, and which a page words for itself or
-turns off with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
+own id. The theme is the page's, so a switch belongs on the page and not inside a frame it drives.
+After the switch the component draws a line inside `noscript`, "With scripts on, a Theme switch sits
+here.", which only a visitor without script sees, and which a page words for itself or turns off
+with an empty `noscript`. A page that writes the switch by hand adds the line as it likes.
 
 ```tsx
 import { attachThemeSwitch } from '@jasonsdevspace/design-kit/controls';
@@ -2203,9 +2204,11 @@ moveFocus('remove-ben', { fallbacks: ['players-heading'] });
 #### When a request lands
 
 Focus a visitor has moved since the request is left where they put it: focus is free only while it
-is where it was when asked, or on the page's body, as it is once the control that had it is removed,
-or on the body of a frame focus was in, or where the kit has handed it back since, as a toast, a dialog or a panel does as it closes and a
-stepper as it is taken down, or on what the browser hands it to as a dialog closes, until the
+is where it was when asked, inside a frame of the page's own origin too, or on the page's body, as
+it is once the control that had it is removed, or on the body of a frame focus was in, or on the
+page's body where Chromium drops focus from a frame the page hides while a request asked inside it
+waits, or where the kit has handed it back since, as a toast, a dialog or a panel does as it closes
+and a stepper as it is taken down, or on what the browser hands it to as a dialog closes, until the
 dialog's close is handled.
 
 A request made while the page is out of sight, or before it goes, is dropped, so focus does not jump
@@ -2223,13 +2226,17 @@ a shadow root finds its own control, never an element of the page around it that
 the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
 element's root. A panel and its button are found from the document the button sits in, which the
 panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
-root that holds it, for a page that asks later and passes `from` itself. Focus inside a frame reads
-as the frame there, as the page sees it, so a request asked with focus in a frame looks its id up on
-the page. A request keeps where focus was inside a frame of the page's own origin as well, and
-compares where focus is as the document it was in sees it: a move between two controls of that frame
-counts as the visitor's, a body no one can type in, of that document or of the page around it,
-counts as free, and focus elsewhere counts as moved, so focus a visitor put in another frame's blank
-space or an editor's body stays theirs.
+root that holds it, for a page that asks later and passes `from` itself.
+
+A request keeps where focus was inside a frame of the page's own origin as well, and compares where
+focus is as the document it was in sees it, while that document is still the one its frame shows: a
+move between two controls of that frame counts as the visitor's, a body no one can type in, of that
+document or of the page around it, counts as free, and focus elsewhere counts as moved, so focus a
+visitor put in another frame's blank space or an editor's body stays theirs. Where the frame has
+left the page or loaded another page since, the request compares as the page sees it, with focus in
+the frame read as the frame. A request's id and the home it falls back to are looked for from the
+page's view of where focus was, the frame where focus was in one, whether the page passes `from` or
+not, so a request asked with focus in a frame finds its id on the page.
 
 #### Moving focus in React
 
@@ -2820,11 +2827,11 @@ attachTable(document.querySelector('.dk-table-scroll'));
 A table whose cells hold a link or a button attaches each frame with `attachTable(element)` once its
 markup is on the page, passing the frame or anything in it. What the keyboard reaches then comes
 fully into view, clear of a pinned column, where Chromium and Safari would leave one that is partly
-in view cut by the frame's edge. Focus a pointer brings is left to the browser. A frame added later
-is attached on its own. The function `attachTable(element, { signal })` returns takes it down, and
-so does its `signal`, as [Taking a control down](#taking-a-control-down) has it. Without script the
-frame keeps a target's room at its end, so a link with no more than that showing still comes into
-view.
+in view cut by the frame's edge, in a table the page attaches inside a frame of its own origin too.
+Focus a pointer brings is left to the browser. A frame added later is attached on its own. The
+function `attachTable(element, { signal })` returns takes it down, and so does its `signal`, as
+[Taking a control down](#taking-a-control-down) has it. Without script the frame keeps a target's
+room at its end, so a link with no more than that showing still comes into view.
 
 A column's header is `th scope="col"`, the cell that names a row is `th scope="row"`, and every cell
 of a numeric column, its header included, is `.dk-table-number`. A table is never stacked into cards
@@ -3273,7 +3280,8 @@ browser shows focus. Where the box refuses focus too, the tabindex it was given 
 and focus goes on to the app frame's body or the page's main content, as it does from a toast, a
 dialog or a panel. A stepper the page attaches inside a frame of its own origin that it drives reads
 focus there as it does on the page, so a button that has focus as its value turns read only stays
-until focus leaves it, and a takedown hands focus to the value or the box in the frame.
+until focus leaves it, and a takedown hands focus to the value or the box in the frame, and where
+both refuse it, to the frame's own app frame body or main content.
 
 A page that says something of its own after each press, such as how many tricks are still to enter,
 gives `attachStepper` its words as `words`, a function of the value read as the message is put on
@@ -3661,13 +3669,14 @@ or below as the grid is drawn, so it holds at any count of columns, left and rig
 reading direction, and an arrow held with Alt, Control or Command is left to the browser. A cell
 marked off keeps its place, a cell that is disabled or out of sight is passed over and never the
 stop, and where the cell that had focus is taken out, focus goes to the next cell still there, or
-the one before, in a grid the page attaches inside a frame of its own origin too. A grid attached
-while it is drawn at no size, as in a closed `details` or under
-`hidden`, places its stop as it comes into sight, and a cell a page's rule hides as it resizes the
-grid hands the stop on. A grid with the group's role, as above, or none takes the toolbar's while
-attached, so a screen reader says the arrows move within it, and keeps its `aria-label`, which a
-toolbar needs. Taken down, as [Taking a control down](#taking-a-control-down) has it, each cell
-takes back its own tabindex and the grid its own role.
+the one before, on a page whose body a visitor can type in too. A grid the page attaches inside a frame of its own origin
+keeps its one stop, its arrows and that hand on in the frame as on the page. A grid attached while
+it is drawn at no size, as in a closed `details` or under `hidden`, places its stop as it comes into
+sight, and a cell a page's rule hides as it resizes the grid hands the stop on. A grid with the
+group's role, as above, or none takes the toolbar's while attached, so a screen reader says the
+arrows move within it, and keeps its `aria-label`, which a toolbar needs. Taken down, as [Taking a
+control down](#taking-a-control-down) has it, each cell takes back its own tabindex and the grid its
+own role.
 
 The page sets how many columns it wants in `--dk-button-grid-columns`, in its own sheet, three
 unless it does:

@@ -1,4 +1,4 @@
-import { activeOf, holds } from './focus.js';
+import { docOf, holds, seenNow } from './focus.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 import { THEME_CHOICES, THEME_KEY, type ThemeChoice } from './theme.js';
 
@@ -193,7 +193,7 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     let pressedHere = false;
     /** Closes the choices where they are, and keeps focus on the switch if it was in them. */
     const closeHere = () => {
-        const held = holds(group, activeOf());
+        const held = holds(group, seenNow(docOf(group)));
         close(false);
         if (held) button?.focus({ preventScroll: true });
     };

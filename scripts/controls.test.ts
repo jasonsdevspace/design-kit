@@ -41,9 +41,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * once a stepper holding its error back while a press outside it is down did, and again once a
  * limit kept to the field's calendar and digits, a year written in full and steps counted from the
  * browser's step base did, and again once F8 reaching a toast's action did, and again once a dialog
- * and a panel reading focus through frames by one view did.
+ * and a panel reading focus through frames by one view did, and again once the stepper, the form,
+ * the grid, the table and the React hooks reading focus inside a frame did.
  */
-const BUDGET = 23.5 * 1024;
+const BUDGET = 23.75 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
@@ -110,7 +111,9 @@ describe('the controls', () => {
  * to hand focus back to, and a focus request, which keeps where focus was as it was asked so a move
  * inside a frame counts, call the deep reader or the place it gives by name, and every other module
  * reaches the deep read only through the one view, as `seenNow`, `isFocused` and `mayHandBack`
- * give it. The reader the controls had before it is gone.
+ * give it, or through where a request keeps focus was, as the React hooks take it. `activeOf`, the
+ * shallow read a page may call, is called by no module but the one that defines it, so no piece
+ * reads focus as the page alone sees it. The reader the controls had before it is gone.
  */
 describe("the controls' reads of focus", () => {
     const sources = fileURLToPath(new URL('../packages/design-kit/src', import.meta.url));
@@ -122,6 +125,13 @@ describe("the controls' reads of focus", () => {
             (name) => name !== 'focus.ts' && /\b(?:deepActive|placeNow)\(/.test(textOf(name))
         );
         expect(callers.sort()).toEqual(['dialog.ts', 'request.ts', 'toast.ts']);
+    });
+
+    it('call the shallow reader only in the focus module', () => {
+        const callers = files.filter(
+            (name) => name !== 'focus.ts' && /\bactiveOf\(/.test(textOf(name))
+        );
+        expect(callers).toEqual([]);
     });
 
     it('have no reader of focus named focusedNow', () => {
