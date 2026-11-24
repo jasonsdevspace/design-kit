@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Toast } from '../src/react.js';
-import { frames, servePage, stillClock, tabKey } from './page.js';
+import { frames, hearing, servePage, stillClock, tabKey } from './page.js';
 
 /*
  * The controls inside an open shadow root, as a widget drawn into a host page draws them: a refused
@@ -34,11 +34,7 @@ root.innerHTML = \`<form><label for="name">Name</label><input id="name" required
 <p class="line" role="status"></p>
 <main id="home" tabindex="-1"><h2 id="title" tabindex="-1">Your list</h2><button type="button" id="go">Go</button></main>\`;
 const line = root.querySelector('.line');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-attachForm(root.querySelector('form'), { status: line });
+${hearing('.line', { root: 'root' })}attachForm(root.querySelector('form'), { status: line });
 attachProgress(root.querySelector('#bar'), { status: line });
 window.root = root;
 window.moveFocus = moveFocus;

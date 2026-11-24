@@ -9,6 +9,7 @@ import {
     colorOf,
     forceColors,
     frames,
+    hearing,
     lengthOf,
     servePage,
     sideways,
@@ -43,11 +44,7 @@ const SCRIPT = `import { attachProgress, attachStatus } from './controls.js';
 const bar = document.querySelector('#import');
 const words = document.querySelector('#import-words');
 const line = document.querySelector('.screen-status');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent && line.textContent !== window.heard.at(-1)) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-window.move = (done) => {
+${hearing('.screen-status')}window.move = (done) => {
     bar.value = done;
     words.textContent = done + ' of 40';
 };
@@ -308,11 +305,7 @@ test('names a bar by its own label, and says hundredths where it has no words', 
             '<p class="screen-status" role="status"></p></main>',
         script: `import { attachProgress } from './controls.js';
 const line = document.querySelector('.screen-status');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-attachProgress(document.querySelector('progress'), { status: line });
+${hearing('.screen-status')}attachProgress(document.querySelector('progress'), { status: line });
 window.ready = true;`,
     });
     await page.waitForFunction(() => 'ready' in window);
@@ -328,7 +321,7 @@ test.describe('in React', () => {
 
     test.beforeAll(async () => {
         test.setTimeout(120_000);
-        app = await bundle('progress-page.tsx');
+        app = hearing('#root > p[role="status"]') + (await bundle('progress-page.tsx'));
     });
 
     test('says each quarter and the done words through useProgress', async ({ page }) => {

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, InputField, StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { box, forceColors, servePage, stillClock, style } from './page.js';
+import { box, forceColors, hearing, servePage, stillClock, style } from './page.js';
 
 /*
  * A busy button, as `Button` draws it with `busy` and `attachBusy` makes it work: marked off at
@@ -38,11 +38,7 @@ const SCRIPT = `import { attachBusy } from './controls.js';
 const button = document.querySelector('#save');
 const line = document.querySelector('.screen-status');
 window.saves = 0;
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-document.querySelector('#rule').addEventListener('submit', (event) => {
+${hearing('.screen-status')}document.querySelector('#rule').addEventListener('submit', (event) => {
     event.preventDefault();
     window.saves += 1;
     button.setAttribute('data-busy', 'Saving the rule.');
@@ -415,7 +411,7 @@ test.describe('in React', () => {
     let app = '';
     test.beforeAll(async () => {
         test.setTimeout(120_000);
-        app = await bundle('busy-page.tsx');
+        app = hearing('#root > p[role="status"]') + (await bundle('busy-page.tsx'));
     });
 
     test('saves once for a double press, and says it is saving only while it is', async ({

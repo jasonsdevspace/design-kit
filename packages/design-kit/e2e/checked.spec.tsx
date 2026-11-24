@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StatusLine, StepperField } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { servePage, stillClock } from './page.js';
+import { hearing, servePage, stillClock } from './page.js';
 import { doubled } from './text-size.js';
 
 /*
@@ -37,11 +37,7 @@ const BODY = renderToStaticMarkup(
 const SCRIPT = `import { attachForm } from './controls.js';
 const form = document.querySelector('#join');
 const line = document.querySelector('.screen-status');
-window.heard = [];
-window.submits = 0;
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
+${hearing('.screen-status')}window.submits = 0;
 form.addEventListener('submit', (event) => {
     event.preventDefault();
     window.submits += 1;
@@ -145,11 +141,7 @@ const openWith = async (page: Page, form: string, attach = 'form', css = '') => 
         body: `<main><h1>Join</h1>${form}<p class="dk-visually-hidden screen-status" role="status"></p></main>`,
         script: `import { attachForm } from './controls.js';
 const line = document.querySelector('.screen-status');
-window.heard = [];
-window.submits = 0;
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
+${hearing('.screen-status')}window.submits = 0;
 document.querySelector('form').addEventListener('submit', (event) => {
     event.preventDefault();
     window.submits += 1;
@@ -2072,11 +2064,7 @@ const form = document.querySelector('form');
 const field = document.querySelector('#n');
 const error = document.querySelector('#n-error');
 const line = document.querySelector('.screen-status');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-// The page's own reset listener, added first, takes its errors and marks away at once.
+${hearing('.screen-status')}// The page's own reset listener, added first, takes its errors and marks away at once.
 form.addEventListener('reset', () => {
     error.hidden = true;
     field.setAttribute('aria-invalid', 'false');
