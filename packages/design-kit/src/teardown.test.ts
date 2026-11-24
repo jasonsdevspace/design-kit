@@ -192,7 +192,7 @@ describe('a teardown with several holders', () => {
         const older = new AbortController();
         const bare = new AbortController();
         const down = teardown<Options>(older.signal, { name: 'first' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         // A newer holder that gives no options, as a hook of another kind through a merged ref.
         down.hold(bare.signal);
@@ -204,7 +204,7 @@ describe('a teardown with several holders', () => {
     it("keeps a page's own options given without a signal as a hook sharing the element goes", async () => {
         type Options = { readonly name: string };
         const down = teardown<Options>(undefined, { name: 'page' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         const hook = new AbortController();
         down.hold(hook.signal, { name: 'hook' });
@@ -276,7 +276,7 @@ describe('a teardown with several holders', () => {
         type Options = { readonly name: string };
         const older = new AbortController();
         const down = teardown<Options>(older.signal, { name: 'older' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         let newer = new AbortController();
         down.hold(newer.signal, { name: 'newer' });
@@ -332,7 +332,7 @@ describe('a teardown with several holders', () => {
         const middle = new AbortController();
         const newest = new AbortController();
         const down = teardown<Options>(oldest.signal, { name: 'oldest' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         down.hold(middle.signal, { name: 'middle' });
         down.hold(newest.signal, { name: 'newest' });
@@ -364,7 +364,7 @@ describe('a teardown with several holders', () => {
         const middle = new AbortController();
         const bare = new AbortController();
         const down = teardown<Options>(oldest.signal, { name: 'oldest' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         down.hold(middle.signal, { name: 'middle' });
         down.hold(bare.signal);
@@ -420,7 +420,7 @@ describe('a teardown with several holders', () => {
         const older = new AbortController();
         const newer = new AbortController();
         const down = teardown<Options>(older.signal, { name: 'older' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         down.hold(newer.signal, { name: 'newer' });
         // The older holder calls again with only its signal, which gives no options.
@@ -435,7 +435,7 @@ describe('a teardown with several holders', () => {
         const older = new AbortController();
         const newer = new AbortController();
         const down = teardown<Options>(older.signal, { name: 'older' });
-        const applied: string[] = [];
+        const applied: (string | undefined)[] = [];
         down.set = (options) => applied.push(options.name);
         down.hold(newer.signal, { name: 'newer' });
         newer.abort();
