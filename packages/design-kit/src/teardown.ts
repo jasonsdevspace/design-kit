@@ -1,11 +1,10 @@
+import type { AttachOptions } from './controls.js';
+
 /*
  * How an attach takes itself down, kept in one place so each attach keeps record 22's contract,
  * and record 23's holders, the same way rather than with flags of its own. No entry of the package
  * exports this module, so a page never reaches it.
  */
-
-/** What every attach takes, the signal that holds its control. */
-type AttachOptions = { readonly signal?: AbortSignal | undefined };
 
 /**
  * What an attach takes down when it is let go. Its listeners take `signal`, so they come off
