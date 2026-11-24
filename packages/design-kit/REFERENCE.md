@@ -3374,10 +3374,10 @@ laptops' among them, it is Fn and F8, and on a Chromebook Search and the top-row
 Without F8 the action is still last in the Tab order and stays until dismissed. A page needs nothing
 to give the key to its toast, and the toast listens for it on the document only while a message with
 an action is shown. Focus inside a frame sends its keys to the frame, so F8 there does not reach the
-toast. A toast the page attaches inside a frame of its own origin reads focus and hears F8 in that
-frame's document, so F8 and a dismiss work there as they do on the page. A page whose visitors
-should learn the key names it where its keyboard help lives, or in the message's words, which the
-status line reads.
+toast. A toast the page attaches inside a frame of its own origin works in that frame's document as
+it does on the page, and stays in the document it was attached in, so a page that moves it into
+another takes it down and attaches it again. A page whose visitors should learn the key names it
+where its keyboard help lives, or in the message's words, which the status line reads.
 
 Focus leaves the toast where nothing on that list takes it, so it falls to the page's body in every
 engine rather than staying on the toast's hidden button. The toast takes off its shown state before

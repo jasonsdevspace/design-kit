@@ -1045,6 +1045,34 @@ test("hands focus back on a dismiss inside a frame of the page's own origin that
     await expect(inner).toBeFocused();
 });
 
+test('hands focus back inside a frame to a button the page made and moved into the frame', async ({
+    page,
+}) => {
+    await open(page, { body: TOAST_FRAMED, attach: false });
+    await attachInFrame(page);
+    const frame = page.frameLocator('iframe');
+    // Made by the page's document and moved into the frame, so it keeps the page's prototype.
+    await page.evaluate(() => {
+        const moved = document.createElement('button');
+        moved.type = 'button';
+        moved.id = 'moved';
+        moved.textContent = 'Moved';
+        document.querySelector('iframe')?.contentDocument?.body.prepend(moved);
+    });
+    const moved = frame.locator('#moved');
+    await moved.focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(moved).toBeFocused();
+});
+
 test('leaves focus on a frame whose control is marked off as it dismisses', async ({ page }) => {
     const errors = errorsOf(page);
     const inner = await intoToastFromFrame(page);

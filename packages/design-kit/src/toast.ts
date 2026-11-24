@@ -1,5 +1,5 @@
 import { isOff } from './find.js';
-import { activeIn, focusedNow, handBack, holds, homeOf, mayHandBack } from './focus.js';
+import { activeIn, focusedNow, handBackIn, holds, homeOf, mayHandBack } from './focus.js';
 import { claimLine, hush, releaseLine, say } from './line.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
@@ -99,7 +99,10 @@ const measureToast = (
     if (frame && !floatsIn(frame, rows, target)) {
         element.dataset['row'] = '';
         delete frame.dataset['toastRows'];
-        window.scrollBy(0, (dock?.getBoundingClientRect().top ?? 0) - before);
+        element.ownerDocument.defaultView?.scrollBy(
+            0,
+            (dock?.getBoundingClientRect().top ?? 0) - before
+        );
     }
     return frame;
 };
@@ -193,8 +196,10 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * no action shown, and one with focus in another toast, which hears it itself, are left alone, and
  * the key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while
  * it is shown, and the document hears the key only while a message with an action is shown. A
- * toast the page attaches inside a frame of its own origin reads focus, and hears the key, in that
- * frame's document, so F8 and the handback work there as they do on the page.
+ * toast the page attaches inside a frame of its own origin reads focus, hears the key and hands
+ * focus back in that frame's document, and listens to that frame's window for its size and scrolls
+ * it, so F8 and the handback work there as they do on the page. A toast stays in the document it
+ * was attached in, so a page that moves it into another takes it down and attaches it again.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
@@ -283,7 +288,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     // the app's frame or the page's main content, as the toast leaves or on F8 in it.
     const giveBack = () => {
         if (
-            handBack(cameFrom, arrivedAt, homeOf(element)) &&
+            handBackIn(doc, cameFrom, arrivedAt, homeOf(element, doc)) &&
             activeNow() === arrivedAt &&
             inFrame &&
             !isOff(inFrame)
@@ -321,7 +326,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         window.clearTimeout(timer);
         // Focus goes back by the rule every piece hands it back by, the toast having had it as it
         // left where focus was in it as it was taken from the page.
-        const hadFocus = mayHandBack(element, !element.isConnected && (focused || leftWith));
+        const hadFocus = mayHandBack(element, !element.isConnected && (focused || leftWith), doc);
         shown = 0;
         focused = false;
         leftWith = false;
@@ -353,7 +358,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         doc.removeEventListener('keydown', onKey);
         close.hidden = true;
         watch.disconnect();
-        window.removeEventListener('resize', remeasure);
+        doc.defaultView?.removeEventListener('resize', remeasure);
         hush(status);
     };
     const show: ShowToast = (words, action) => {
@@ -386,7 +391,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         remeasure();
         watch.observe(element);
         // Added once however many messages are shown, as the DOM ignores the same listener again.
-        window.addEventListener('resize', remeasure, { signal });
+        doc.defaultView?.addEventListener('resize', remeasure, { signal });
         // Only where focus was outside the toast as the message came, since focus in it needs no
         // room.
         if (arrivedAt === active) clearOf(element, arrivedAt, inFrame);

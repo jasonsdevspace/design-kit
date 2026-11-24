@@ -176,7 +176,10 @@ test('leaves nothing in the page or its frame once a toast the page attached in 
     await page.evaluate(`showIn('Round 3 saved.', { label: 'Undo', onAction: () => undefined })`);
     await page.clock.runFor(150);
     expect((await inFrame()).documentListeners).toBe(attached.documentListeners + 1);
+    // It listens to the frame's window for its size, and to nothing more of the page's.
+    expect(attached.windowListeners).toBe(frameBefore.windowListeners + 1);
     expect((await leaksOf(page)).documentListeners).toBe(before.documentListeners);
+    expect((await leaksOf(page)).windowListeners).toBe(before.windowListeners);
     await page.evaluate('framed.abort()');
     await expectBack(page, frameBefore, { what: 'the frame', read: inFrame });
     await expectBack(page, before, { what: 'the page' });
