@@ -125,7 +125,8 @@ Option C.
   on the order each engine fires focus events in, costs about 96 more bytes, and no consumer draws a
   frame. Firefox does not focus a frame of another origin while a key is being pressed, so a dismiss
   by keyboard there goes on down the list. A frame inside that frame is not followed, so focus goes
-  back to the inner frame itself. The toast keeps the control inside a frame of the page's own
+  back to the inner frame itself, until record 29's amendment for 0.9.4 reads focus from the page
+  down and follows it. The toast keeps the control inside a frame of the page's own
   origin clear of itself as a message shows, read as the handback reads it and with no listener on
   the frame's document, measuring it where the frame places it, past the frame's border and padding,
   scaled across and down as the frame is drawn and cut to what the frame shows inside its

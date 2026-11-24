@@ -217,6 +217,29 @@ test('leaves nothing in the page or its frame once a dialog and a panel the page
     await expectBack(page, before, { what: 'the page, later' });
 });
 
+test("takes the panels' listeners off a frame's document once the frame leaves the page without a takedown", async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(DRAW_FRAME);
+    // The frame's counters and document, kept to read once the frame is gone.
+    await page.evaluate(`(() => {
+        window.frameLeaks = frame.contentWindow.leaks;
+        window.frameDocument = frame.contentDocument;
+    })()`);
+    const onFrame = (): Promise<number> => page.evaluate('frameLeaks.on([frameDocument])');
+    const before = await onFrame();
+    await page.evaluate('kit.attachPanel(frameTips)');
+    expect(await onFrame()).toBeGreaterThan(before);
+    // The frame leaves the page with its button still attached, and a button attached next on the
+    // page lets the frame's go.
+    await page.evaluate(`(() => {
+        frame.remove();
+        kit.attachPanel($('#rules-button'));
+    })()`);
+    expect(await onFrame()).toBe(before);
+});
+
 for (const name of KEPT) {
     test(`keeps ${name} joined ${OVER} without growing, and leaves nothing once taken down`, async ({
         page,

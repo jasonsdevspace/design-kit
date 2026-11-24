@@ -1,5 +1,5 @@
 import { isOff } from './find.js';
-import { activeIn, focusedNow, handBackIn, holds, homeOf, mayHandBack } from './focus.js';
+import { activeOf, focusedNow, handBack, holds, homeOf, mayHandBack } from './focus.js';
 import { claimLine, hush, releaseLine, say } from './line.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
@@ -119,22 +119,22 @@ const measureToast = (
  * document and the page. One the toast leaves alone, beside it or above it, or one taller than the
  * room above the toast, such as the body of the app's frame, stays where it is.
  */
-const clearOf = (element: HTMLElement, active: Element, inner: Element | null | undefined) => {
-    const control = inner ?? active;
+const clearOf = (element: HTMLElement, control: Element, via: readonly Element[]) => {
     const card = element.getBoundingClientRect();
     const rise = Number(
         /^\S+ (-?[\d.]+)px/.exec(String(getComputedStyle(element).translate))?.[1] ?? 0
     );
     let { top, right, bottom, left, height } = control.getBoundingClientRect();
-    if (inner) {
-        const frame = active as HTMLElement;
+    // Placed out through each frame it sits inside, the innermost first, into the toast's view.
+    let inner = control.ownerDocument;
+    for (const frame of via as HTMLElement[]) {
         const place = frame.getBoundingClientRect();
-        const edges = getComputedStyle(frame);
+        const edges = (frame.ownerDocument.defaultView ?? window).getComputedStyle(frame);
         const across = place.width / frame.offsetWidth;
         const down = place.height / frame.offsetHeight;
         const x = place.left + (frame.clientLeft + parseFloat(edges.paddingLeft)) * across;
         const y = place.top + (frame.clientTop + parseFloat(edges.paddingTop)) * down;
-        const view = inner.ownerDocument.scrollingElement ?? inner.ownerDocument.documentElement;
+        const view = inner.scrollingElement ?? inner.documentElement;
         [top, right, bottom, left, height] = [
             y + Math.max(top, 0) * down,
             x + Math.min(right, view.clientWidth) * across,
@@ -142,6 +142,7 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
             x + Math.max(left, 0) * across,
             height * down,
         ];
+        inner = frame.ownerDocument;
     }
     if (
         bottom > Math.max(top, card.top - rise) &&
@@ -151,6 +152,30 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
         height < card.top - rise
     )
         control.scrollIntoView({ block: 'nearest' });
+};
+
+/**
+ * The frames a control sits inside, from its own document out to the one given, the innermost
+ * first, read through each document's window while it has one.
+ */
+const framesOf = (control: Element | null, doc: Document): Element[] => {
+    const via: Element[] = [];
+    for (let at = control?.ownerDocument; at && at !== doc;) {
+        const frame = at.defaultView?.frameElement;
+        if (!frame) break;
+        via.push(frame);
+        at = frame.ownerDocument;
+    }
+    return via;
+};
+
+/**
+ * Where focus is, as the control and the frames around it out to the document given, focus on a
+ * frame's body counting as on the frame and focus on that document's body as nowhere.
+ */
+const placeOf = (active: Element | null, doc: Document): [Element | undefined, Element[]] => {
+    const via = framesOf(active, doc);
+    return [(active === active?.ownerDocument.body ? via.shift() : active) ?? undefined, via];
 };
 
 /**
@@ -167,9 +192,10 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  * message shows, the control that has focus is scrolled clear of the toast where the toast,
  * measured where it comes to rest, would cover it across as well as down. With focus inside a frame
  * of the page's own origin, that is the control that has focus there, read as the message comes and
- * measured where the frame places it, past the frame's border and padding, scaled across and down
- * as the frame is drawn and cut to what the frame shows inside its scrollbars, so a tall frame does
- * not hide it. A frame of another origin, or one where only its body has focus, is measured whole.
+ * measured where each frame around it places it, past the frame's border and padding, scaled across
+ * and down as the frame is drawn and cut to what the frame shows inside its scrollbars, so a tall
+ * frame does not hide it. A frame of another origin, or one where only its body has focus, is
+ * measured whole.
  *
  * A toast leaves when its close button, its action or Escape with focus in it dismisses it, or the
  * next message replaces it. One with an action stays until then, since a timer would take the
@@ -192,27 +218,27 @@ const clearOf = (element: HTMLElement, active: Element, inner: Element | null | 
  *
  * F8 with no modifier, and not held, moves focus to a shown action from anywhere on the page, as
  * record 29 has it, and pressed with focus in the toast sends it back by the same list, the toast
- * still shown. A press the page has handled, one that converts text in an input method, one with
- * no action shown, and one with focus in another toast, which hears it itself, are left alone, and
- * the key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while
- * it is shown, and the document hears the key only while a message with an action is shown. A
- * toast the page attaches inside a frame of its own origin reads focus, hears the key and hands
- * focus back in that frame's document, and listens to that frame's window for its size and scrolls
- * it, so F8 and the handback work there as they do on the page. A toast stays in the document it
- * was attached in, so a page that moves it into another takes it down and attaches it again.
+ * still shown. A press the page has handled, one that converts text in an input method, one with no
+ * action shown, and one with focus in another toast, which hears it itself, are left alone, and the
+ * key keeps its default wherever no focus moved. The action carries `aria-keyshortcuts` while it is
+ * shown, and the document hears the key only while a message with an action is shown. A toast the
+ * page attaches inside a frame of its own origin hears the key in that frame's document, and
+ * listens to that frame's window for its size and scrolls it, so F8 and the handback work there as
+ * they do on the page. A toast stays in the document it was attached in, so a page that moves it
+ * into another takes it down and attaches it again.
  *
  * Focus leaves the toast where nothing on the list takes it, so it falls to the page's body rather
  * than staying on the toast's hidden button. The toast takes off its shown state before it hands
  * focus back, so the room the sheet keeps under a shown toast does not scroll the control focus
  * goes to. Where a page's own listener moves focus elsewhere as the toast hands it back, the toast
- * goes no further down the list and that focus stays. A page sees focus inside a frame only as the
- * frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where its
- * handback focuses a frame of the page's own origin, it goes on to the control that had focus there
- * as the latest message came, read as the message came, and stays on the frame where that control
- * is gone, marked off, on a page the frame has since replaced, and on a frame of another origin. A
- * frame inside that frame is not followed, so focus goes back to the inner frame itself. Firefox
- * does not focus a frame of another origin while a key is being pressed, so a dismiss by keyboard
- * there goes on down the list.
+ * goes no further down the list and that focus stays. Focus is read from the page down, into each
+ * frame of the page's own origin that has it, so the control that had focus inside a frame as the
+ * latest message came, inside a frame within it too, is where focus goes back, and focus that comes
+ * into the toast from inside a frame counts as coming from nowhere. Focus goes to each frame around
+ * that control instead, the innermost first, where it is gone, marked off or on a page the frame
+ * has since replaced, and to the frame itself for a frame of another origin. Firefox does not focus
+ * a frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on
+ * down the list.
  */
 export const attachToast = (element: HTMLElement, options?: AttachOptions): ShowToast => {
     const idle: ShowToast = () => () => undefined;
@@ -235,10 +261,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
     const { signal } = down;
-    // The document the toast sits in, a frame's where the page attaches it inside one, where focus
-    // is read and the keys are heard, since the page sees focus anywhere in a frame as the frame.
+    // The document the toast sits in, a frame's where the page attaches it inside one, where the
+    // keys are heard.
     const doc = element.ownerDocument;
-    const activeNow = () => activeIn(doc) ?? null;
     // Safari focuses a pressed button only where it has a tabindex, so a press of either button
     // leaves focus in the toast and it goes back as the toast hides. A page's own is kept.
     const given = [actionButton, close].filter((button) => !button.hasAttribute('tabindex'));
@@ -268,32 +293,22 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     let cameFrom: Element | undefined;
     let arrivedAt: Element | undefined;
     let lost: Element | undefined;
-    // The control that had focus inside a frame of the page's own origin as the latest message
-    // came, read then, inside an open shadow root too, since the page sees focus inside a frame
-    // only as the frame and the frame's document drops its focus to its body once focus leaves.
-    let inFrame: Element | null | undefined;
-    const insideOf = (frame: Element | null) => {
-        const inner = (frame as HTMLIFrameElement | null)?.contentDocument;
-        const held = activeIn(inner);
-        return held === inner?.body ? undefined : held;
-    };
+    // The frames that control sits inside, from its own document out to the toast's, the innermost
+    // first, read as the message came, since a frame that loads its page again leaves the control's
+    // old document with no window to find them by.
+    let via: Element[] = [];
     const wait = () => {
         window.clearTimeout(timer);
         if (shown && !onAction && !hovered && !focused) {
             timer = window.setTimeout(dismiss, TOAST_FOR);
         }
     };
-    // Focus goes back to the control it came in from, then to where it was as the message came, on
-    // to the control inside it where that is a frame of the page's own origin, then to the body of
-    // the app's frame or the page's main content, as the toast leaves or on F8 in it.
+    // Focus goes back to the control it came in from, then to where it was as the message came,
+    // passed over inside a frame where it is marked off, then to each frame around it, the
+    // innermost first, then to the body of the app's frame or the page's main content, as the toast
+    // leaves or on F8 in it.
     const giveBack = () => {
-        if (
-            handBackIn(doc, cameFrom, arrivedAt, homeOf(element, doc)) &&
-            activeNow() === arrivedAt &&
-            inFrame &&
-            !isOff(inFrame)
-        )
-            (inFrame as HTMLElement).focus();
+        handBack(cameFrom, via[0] && isOff(arrivedAt) ? null : arrivedAt, ...via, homeOf(element));
     };
     // F8 with no modifier, and not held, moves focus to a shown action from anywhere on the page,
     // and from in the toast back by the walk a dismiss hands it back by, with the toast still
@@ -316,17 +331,17 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             !element.isConnected
         )
             return;
-        const before = focusedNow(doc);
+        const before = focusedNow();
         if (holds(element, before)) giveBack();
         else if (before?.closest('.dk-toast')) return;
         else actionButton.focus();
-        if (focusedNow(doc) !== before) event.preventDefault();
+        if (focusedNow() !== before) event.preventDefault();
     };
     const dismiss = () => {
         window.clearTimeout(timer);
         // Focus goes back by the rule every piece hands it back by, the toast having had it as it
         // left where focus was in it as it was taken from the page.
-        const hadFocus = mayHandBack(element, !element.isConnected && (focused || leftWith), doc);
+        const hadFocus = mayHandBack(element, !element.isConnected && (focused || leftWith));
         shown = 0;
         focused = false;
         leftWith = false;
@@ -347,10 +362,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         marked = undefined;
         if (hadFocus) {
             giveBack();
-            const now = activeNow();
+            const now = activeOf();
             if (holds(element, now)) (now as HTMLElement).blur();
         }
-        inFrame = undefined;
         message.textContent = '';
         actionButton.textContent = '';
         actionButton.hidden = true;
@@ -363,16 +377,14 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
-        const active = focusedNow(doc);
-        if (!holds(element, active)) {
-            arrivedAt = active ?? undefined;
-            inFrame = insideOf(active);
-        }
+        const active = activeOf();
+        const outside = !holds(element, active);
+        if (outside) [arrivedAt, via] = placeOf(active, doc);
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
         // Focus on an action that this message does not have moves to the close button.
-        if (!action && activeNow() === actionButton) close.focus();
+        if (!action && activeOf() === actionButton) close.focus();
         onAction = action?.onAction;
         actionButton.textContent = action?.label ?? '';
         actionButton.hidden = !action;
@@ -394,7 +406,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         doc.defaultView?.addEventListener('resize', remeasure, { signal });
         // Only where focus was outside the toast as the message came, since focus in it needs no
         // room.
-        if (arrivedAt === active) clearOf(element, arrivedAt, inFrame);
+        if (outside && arrivedAt) clearOf(element, arrivedAt, via);
         wait();
         return () => {
             if (shown === id) dismiss();
@@ -469,7 +481,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // is kept apart for the handback.
             queueMicrotask(() => {
                 if (!element.isConnected) leftWith ||= focused;
-                focused = element.isConnected && holds(element, activeNow());
+                focused = element.isConnected && holds(element, activeOf());
                 wait();
             });
         },

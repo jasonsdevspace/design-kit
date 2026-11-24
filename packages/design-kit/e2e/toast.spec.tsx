@@ -1045,6 +1045,52 @@ test("hands focus back on a dismiss inside a frame of the page's own origin that
     await expect(inner).toBeFocused();
 });
 
+test('leaves focus on the page where a visitor moved it, as the page dismisses a toast it attached inside a frame', async ({
+    page,
+}) => {
+    await open(page, { body: TOAST_FRAMED, attach: false });
+    await attachInFrame(page);
+    const frame = page.frameLocator('iframe');
+    await frame.locator('#inner').focus();
+    await page.evaluate(() => {
+        const kit = window as unknown as { show: Kit['show']; dismiss: () => void };
+        kit.dismiss = kit.show('Round 3 saved.', { label: 'Undo', onAction: () => undefined });
+    });
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    // The visitor moves on to the page, and the page dismisses the message.
+    await page.locator('#save').focus();
+    await page.evaluate(() => {
+        (window as unknown as { dismiss: () => void }).dismiss();
+    });
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('hands focus back to the control inside a frame inside a frame that had it as the message came', async ({
+    page,
+}) => {
+    await open(page, { body: framed() });
+    // A frame drawn inside the page's frame, holding a button of its own.
+    await page.evaluate(async () => {
+        const outer = document.querySelector('iframe')?.contentDocument;
+        if (!outer) throw new Error('no frame');
+        const nested = outer.createElement('iframe');
+        nested.title = 'Scores';
+        nested.srcdoc = '<button type=button id=deep>Deep</button>';
+        const loaded = new Promise((done) => nested.addEventListener('load', done, { once: true }));
+        outer.body.append(nested);
+        await loaded;
+    });
+    const deep = page.frameLocator('iframe').frameLocator('iframe').locator('#deep');
+    await deep.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(deep).toBeFocused();
+});
+
 test('hands focus back inside a frame to a button the page made and moved into the frame', async ({
     page,
 }) => {

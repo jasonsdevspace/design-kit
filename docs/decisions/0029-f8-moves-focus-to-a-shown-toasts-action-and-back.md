@@ -101,21 +101,30 @@ and a dismiss handed focus back to the frame rather than to the control in it.
 **A. The page's listener follows focus into the frame.** Rejected, since the page would add a
 listener to every frame focus enters, and still read focus as the frame.
 
-**B. The toast reads focus from, and listens on, the document it sits in.** Its F8 listener and the
+**B. The toast reads focus in, and listens on, the document it sits in.** Its F8 listener and the
 listeners that follow focus are added to the element's own document, and it passes that document to
-the focus helpers it calls, so a control inside the frame is focused and found as one on the page
-is, one the page made and moved into the frame among them. It listens to that document's window for
-its size and scrolls that window as it takes its row above the dock.
+the focus helpers it calls. Rejected once record 19's amendment for 0.9.4 measured the same reader
+on the dialog and the panels: a frame's own record of focus reads as nothing once a visitor moves on
+to the page, so a piece in the frame took focus a visitor put on the page for focus fallen to
+nowhere, and the page's own controls could not be judged from inside the frame.
 
-Option B. Only the toast changes. A toast on the page reads the page's document, as before, and the
-dialog, the panels, the stepper and a focus request call the same helpers with none, so they read
-the page's document as before. A toast stays in the document it was attached in, so a page that
-moves it into another takes it down and attaches it again. The focus the kit notes it handed back is
-the page's view of it, the frame, so a focus request in the page compares what the page sees. Record
-19's amendment for 0.9.4 moved the dialog and the panels onto the document they sit in too. The
-listeners the controls' shared module adds as it loads, which note a visitor's presses for a focus
-request, stay on the page's document, so a press in the frame is not counted there. The bullet above
-on focus inside a frame still holds for a toast on the page around it.
+**C. The toast reads the one view of focus, from the page down.** It listens for F8 on the element's
+own document and to that document's window for its size, and scrolls that window as it takes its row
+above the dock, while focus is read as every piece reads it, followed from the page into each frame
+of the page's own origin that has it.
+
+Option C. As a message comes, the toast keeps the control that has focus, inside a frame and a frame
+within it too, and the frames around it out to its own document, the innermost first, read then
+since a frame that loads its page again leaves the control's old document with no window to find
+them by. Its walk goes to that control, passed over inside a frame where it is marked off, then to
+each of those frames, so focus stays on the frame where the control is gone, marked off or on a page
+the frame has replaced, and a frame of another origin, which shows nothing inside, is handed focus
+itself. It measures the control out through each frame to keep it clear. The focus the kit notes it
+handed back is the control in the frame, so a focus request in the page compares the same view. A
+toast stays in the document it was attached in, so a page that moves it into another takes it down
+and attaches it again. The listeners the controls' shared module adds as it loads, which note a
+visitor's presses for a focus request, stay on the page's document, so a press in the frame is not
+counted there.
 
 ## How it is tested
 
@@ -129,8 +138,8 @@ The paths are in `packages/design-kit`.
   a dismiss moving nothing and keeping its default, as does an F8 that converts text in an input
   method. F8 in the toast goes on down the walk where the control focus came from is gone, to the
   main content, stays where nothing takes focus, follows a frame of the page's own origin on to its
-  control as a dismiss does, and with two toasts shown is heard by the one that holds focus. It finds
-  `aria-keyshortcuts` on the action while it is shown and gone after.
+  control as a dismiss does, and with two toasts shown is heard by the one that holds focus. It
+  finds `aria-keyshortcuts` on the action while it is shown and gone after.
 - `e2e/leaks.spec.tsx`, in the same engines, counts a listener on the document only while a message
   with an action is shown, one however many such messages come, and none once a message with no
   action replaces it or the toast is dismissed. Its table, shared with `e2e/teardown.spec.tsx`, uses
@@ -141,6 +150,11 @@ The paths are in `packages/design-kit`.
   `e2e/teardown.spec.tsx` finds the takedown taking the frame's listener for F8 off and focus back
   in the frame, and `e2e/leaks.spec.tsx` finds the toast listening to the frame's document and
   window and to nothing more of the page's, and the page and the frame back where they started.
+- For a toast on the page, `e2e/toast.spec.tsx` finds focus handed back to the control inside a
+  frame of the page's own origin and inside a frame within that frame, and to the frame itself where
+  that control is gone, marked off or on a page the frame has since replaced, by the frames the
+  toast read as the message came. For a toast the page attaches inside a frame, it finds focus left
+  on the page where a visitor moved it as the page dismisses the message.
 - `scripts/controls.test.ts` holds the controls to their budget.
 
 ## Sources

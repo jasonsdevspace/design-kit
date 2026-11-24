@@ -660,26 +660,38 @@ test('stacks its actions inside it on a 320px phone at twice the text size', asy
 });
 
 /**
- * A page with a frame of its own origin that holds a dialog and the button that opens it, drawn
- * with the kit's sheet, which the page attaches from outside the frame. The page also makes a
- * button and moves it into the frame, so it keeps the page's prototype, and wires it to open the
- * same dialog.
+ * A page with a frame of its own origin that holds a dialog, with a Close in its corner, and the
+ * button that opens it, drawn with the kit's sheet, which the page attaches from outside the frame
+ * with a place of the page's own for focus to go where nothing else takes it. The page also makes a
+ * button and moves it into the frame, so it keeps the page's prototype, and has buttons of its own,
+ * one that opens the dialog and one a visitor moves to while it is open.
  */
-const FRAMED = `<main><h1>Round 3</h1><iframe title="Round" srcdoc="${`<link rel=stylesheet href=/kit.css>
+const FRAMED = `<main><h1>Round 3</h1>
+<p><button type="button" class="dk-button" id="from-page">End from the page</button>
+<button type="button" class="dk-button" id="elsewhere">Scores</button>
+<button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
+<iframe title="Round" srcdoc="${`<link rel=stylesheet href=/kit.css>
 <button type=button class=dk-button id=inner>End the game</button>
 <dialog class=dk-dialog id=end-game aria-labelledby=end-game-title>
 <h2 class=dk-dialog-title id=end-game-title>End the game now?</h2>
+<form class=dk-close method=dialog><button type=submit class="dk-button dk-button-text dk-button-quiet" value=close><span aria-hidden=true>×</span><span class=dk-visually-hidden>Close</span></button></form>
+<p>The scores so far are kept.</p>
 <form method=dialog class=dk-dialog-actions><button type=submit class=dk-button>Keep playing</button></form>
 </dialog>`
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')}"></iframe></main>`;
 
+/*
+ * The page's script. The page's own opener opens the dialog as `how` says: from the event, from
+ * the button itself, or with nothing, where the dialog reads what had focus.
+ */
 const ATTACH_FRAMED = `import { attachDialog } from './controls.js';
 const frame = document.querySelector('iframe');
 const dialogIn = () => frame.contentDocument?.querySelector('dialog');
 if (!dialogIn() || frame.contentDocument.readyState !== 'complete')
     await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
-const open = attachDialog(dialogIn());
+const open = attachDialog(dialogIn(), { returnTo: () => document.querySelector('#fallback') });
+window.framedDialog = dialogIn();
 const inner = frame.contentDocument;
 const moved = document.createElement('button');
 moved.type = 'button';
@@ -693,7 +705,27 @@ for (const opener of [inner.querySelector('#inner'), moved]) {
     opener.addEventListener('mousedown', (event) => event.preventDefault());
     opener.addEventListener('click', open);
 }
+window.how = 'event';
+const fromPage = document.querySelector('#from-page');
+fromPage.addEventListener('click', (event) =>
+    window.how === 'none' ? open() : open(window.how === 'button' ? fromPage : event)
+);
 window.ready = true;`;
+
+/** Opens the page whose frame holds the dialog, attached from the page. */
+const openFramed = async (page: Page): Promise<void> => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: FRAMED,
+        script: ATTACH_FRAMED,
+        css: 'iframe { inline-size: 360px; block-size: 480px; }',
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+const framedDialog = (page: Page): Locator =>
+    page.frameLocator('iframe').getByRole('dialog', { name: 'End the game now?' });
 
 for (const [what, id] of [
     ['a button in the frame', '#inner'],
@@ -702,21 +734,16 @@ for (const [what, id] of [
     test(`hands focus back to ${what} that opened it, attached inside a frame from the page`, async ({
         page,
     }) => {
-        await page.setViewportSize({ width: 390, height: 700 });
-        await servePage(page, {
-            title: 'Round 3',
-            body: FRAMED,
-            script: ATTACH_FRAMED,
-            css: 'iframe { inline-size: 360px; block-size: 480px; }',
-        });
-        await page.waitForFunction(() => 'ready' in window);
+        await openFramed(page);
         const frame = page.frameLocator('iframe');
         const opener = frame.locator(id);
-        const dialog = frame.getByRole('dialog', { name: 'End the game now?' });
-        // By an answer.
+        const dialog = framedDialog(page);
+        // By an answer, focus having moved off the Close in its corner to the answer as it opened.
         await opener.click();
         await expect(dialog).toBeVisible();
-        await frame.getByRole('button', { name: 'Keep playing' }).click();
+        const answer = frame.getByRole('button', { name: 'Keep playing' });
+        await expect(answer).toBeFocused();
+        await answer.click();
         await expect(dialog).toBeHidden();
         await expect(page.locator('iframe')).toBeFocused();
         await expect(opener).toBeFocused();
@@ -727,5 +754,61 @@ for (const [what, id] of [
         await expect(dialog).toBeHidden();
         await expect(page.locator('iframe')).toBeFocused();
         await expect(opener).toBeFocused();
+        // By the Close in its corner.
+        await opener.click();
+        await expect(dialog).toBeVisible();
+        await frame.getByRole('button', { name: 'Close' }).click();
+        await expect(dialog).toBeHidden();
+        await expect(opener).toBeFocused();
     });
 }
+
+for (const key of ['Enter', ' '] as const) {
+    test(`hands focus back to the button in the frame that opened it by ${key === ' ' ? 'Space' : key}, attached inside a frame from the page`, async ({
+        page,
+    }) => {
+        await openFramed(page);
+        const opener = page.frameLocator('iframe').locator('#inner');
+        await opener.focus();
+        await page.keyboard.press(key);
+        await expect(framedDialog(page)).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(framedDialog(page)).toBeHidden();
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(opener).toBeFocused();
+    });
+}
+
+for (const how of ['event', 'button', 'none'] as const) {
+    test(`hands focus back to the page's own button that opened a dialog inside a frame, handed ${how === 'none' ? 'nothing' : `the ${how}`}`, async ({
+        page,
+    }) => {
+        await openFramed(page);
+        await page.evaluate((given) => {
+            (window as unknown as { how: string }).how = given;
+        }, how);
+        const opener = page.locator('#from-page');
+        await opener.focus();
+        await page.keyboard.press('Enter');
+        await expect(framedDialog(page)).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(framedDialog(page)).toBeHidden();
+        await expect(opener).toBeFocused();
+    });
+}
+
+test('leaves focus on the page where a visitor moved it, as the page closes a dialog inside a frame', async ({
+    page,
+}) => {
+    await openFramed(page);
+    await page.frameLocator('iframe').locator('#inner').click();
+    await expect(framedDialog(page)).toBeVisible();
+    // The frame's dialog makes only the frame inert, so the visitor reaches the page around it.
+    const elsewhere = page.locator('#elsewhere');
+    await elsewhere.focus();
+    await page.evaluate(() => {
+        (window as unknown as { framedDialog: HTMLDialogElement }).framedDialog.close();
+    });
+    await expect(framedDialog(page)).toBeHidden();
+    await expect(elsewhere).toBeFocused();
+});

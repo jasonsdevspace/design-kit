@@ -1,26 +1,31 @@
-import { rootOf } from './find.js';
+import { isElement, rootOf } from './find.js';
 import { handed } from './state.js';
 import type { AttachOptions } from './teardown.js';
 
 /*
- * How the controls move focus and hand it back: what has focus, through shadow roots, the walk that
+ * How the controls move focus and hand it back: what has focus, read from the page down through
+ * shadow roots and frames of the page's own origin, the walk that
  * focuses the first place that takes it, and the one rule by which a piece closing or leaving hands
  * focus back. No entry of the package names this module, so a page imports it only through
  * `./controls`.
  */
 
+/** Whether an element is a document's body, which stands in where nothing has focus. */
+const isBody = (element: Element | null): boolean => element?.ownerDocument.body === element;
+
 /**
- * What has focus in the document given, the page's own unless a piece names the one it sits in,
- * or null where nothing does and the document's body stands in for it.
+ * What has focus, read as `activeOf` reads it, or null where nothing does and a body stands in for
+ * it, the page's or that of a frame focus is in.
  */
-export const focusedNow = (doc: Document = document): Element | null => {
-    const active = activeIn(doc) ?? null;
-    return active === doc.body ? null : active;
+export const focusedNow = (): Element | null => {
+    const active = activeOf();
+    return isBody(active) ? null : active;
 };
 
 /**
- * Whether a node is the place or inside it, through the shadow trees it holds and the slots a node
- * is drawn in, so a control slotted into a piece drawn inside a shadow root counts as in it.
+ * Whether a node is the place or inside it, through the shadow trees it holds, the slots a node is
+ * drawn in and the frames of the page's own origin it holds, so a control slotted into a piece
+ * drawn inside a shadow root counts as in it, and so does focus inside a frame the piece holds.
  */
 export const holds = (place: Element, node: Node | null): boolean => {
     let inside = node;
@@ -29,6 +34,7 @@ export const holds = (place: Element, node: Node | null): boolean => {
             (inside as Partial<Element>).assignedSlot ??
             inside.parentNode ??
             (inside as Partial<ShadowRoot>).host ??
+            (inside as Partial<Document>).defaultView?.frameElement ??
             null;
     return !!inside;
 };
@@ -39,28 +45,25 @@ type Place = Element | null | undefined | (() => readonly Element[]);
 /**
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
- * that takes focus or refused it, so the walk goes on. Focus is read in the document given, the
- * page's own unless a piece names the one it sits in. An HTML or SVG element of the page's own
- * window or of that document's is tried, so one the page made and moved into a frame counts.
+ * that takes focus or refused it, so the walk goes on. An element that can be focused is tried,
+ * told by its own `focus` rather than by a window's classes, so one of a frame's and one the page
+ * made and moved into a frame both count, and one whose document has lost its window, as a frame's
+ * that loaded its page again, is passed over. A frame that takes focus with nothing focused inside
+ * it counts as taken.
  */
-const tryFocus = (place: Element | null | undefined, doc: Document): boolean | undefined => {
-    const view = doc.defaultView ?? window;
+const tryFocus = (place: Element | null | undefined): boolean | undefined => {
     if (
-        !(
-            place instanceof HTMLElement ||
-            place instanceof SVGElement ||
-            place instanceof view.HTMLElement ||
-            place instanceof view.SVGElement
-        ) ||
+        !place?.ownerDocument.defaultView ||
+        typeof (place as Partial<HTMLElement>).focus !== 'function' ||
         !place.isConnected ||
-        place === doc.body
+        isBody(place)
     )
         return undefined;
-    const before = focusedNow(doc);
-    place.focus({ preventScroll: place.matches('.dk-app-body') });
-    const now = focusedNow(doc);
+    const before = activeOf();
+    (place as HTMLElement).focus({ preventScroll: place.matches('.dk-app-body') });
+    const now = activeOf();
     if (holds(place, now) && (now !== before || place === before)) return true;
-    return now && now !== before ? false : undefined;
+    return now && !isBody(now) && now !== before ? false : undefined;
 };
 
 /**
@@ -77,17 +80,12 @@ const tryFocus = (place: Element | null | undefined, doc: Document): boolean | u
  * only once every place before it has refused focus, so places that cost a search of the page are
  * looked for only where they are needed, in the same walk.
  */
-export const focusFirst = (...places: readonly Place[]): boolean => focusFirstIn(document, places);
-
-/** Focuses the first of the places given that takes focus, as `focusFirst` does, in `doc`. */
-const focusFirstIn = (doc: Document, places: readonly Place[]): boolean => {
+export const focusFirst = (...places: readonly Place[]): boolean => {
     for (const given of places)
         // An element is never called, though an object or an embed is a function to some
         // browsers.
-        for (const place of typeof given === 'function' && !(given instanceof Element)
-            ? given()
-            : [given]) {
-            const took = tryFocus(place, doc);
+        for (const place of typeof given === 'function' && !isElement(given) ? given() : [given]) {
+            const took = tryFocus(place);
             if (took !== undefined) return took;
         }
     return false;
@@ -97,12 +95,12 @@ const focusFirstIn = (doc: Document, places: readonly Place[]): boolean => {
  * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
  * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
  * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. Focus
- * is read in the document given, the page's own unless a piece names the one it sits in. The
- * toast, the dialog and the panels hand focus back by this one rule. The stepper does not use it,
- * and hands focus back only where focus is on one of the buttons it hides.
+ * is read from the page down, so focus inside a frame counts as in a piece in that frame and as
+ * nowhere else. The toast, the dialog and the panels hand focus back by this one rule. The stepper
+ * does not use it, and hands focus back only where focus is on one of the buttons it hides.
  */
-export const mayHandBack = (piece: Element, had: boolean, doc: Document = document): boolean => {
-    const active = focusedNow(doc);
+export const mayHandBack = (piece: Element, had: boolean): boolean => {
+    const active = focusedNow();
     return active ? holds(piece, active) : had;
 };
 
@@ -112,15 +110,8 @@ export const mayHandBack = (piece: Element, had: boolean, doc: Document = docume
  * A walk that focuses nothing keeps nothing, so focus a page moved during it stays the page's.
  * Returns whether it focused a place.
  */
-export const handBack = (...places: readonly Place[]): boolean => handBackIn(document, ...places);
-
-/**
- * Hands focus back as `handBack` does, in the document given, as the toast, the dialog and the
- * panels do in the one they sit in. What it keeps is the page's own view of focus, so a request
- * asked in the page compares it with what the page sees.
- */
-export const handBackIn = (doc: Document, ...places: readonly Place[]): boolean => {
-    if (!focusFirstIn(doc, places)) return false;
+export const handBack = (...places: readonly Place[]): boolean => {
+    if (!focusFirst(...places)) return false;
     handed.to = activeOf();
     handed.at = performance.now();
     return true;
@@ -131,17 +122,13 @@ export type FocusTarget = Element | string | (() => Element | null) | null | und
 
 /**
  * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
- * for in the shadow root the element sits in, then in the document given, the page's own unless a
- * piece names the one it sits in.
+ * for in the shadow root the element sits in, then in the document it sits in, the page's or a
+ * frame's.
  */
-export const homeOf = (element: Element, doc: Document = document): Element | null => {
-    const root = rootOf(element);
-    return (
-        element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-        (root === document ? doc : root).querySelector('main') ??
-        doc.querySelector('main')
-    );
-};
+export const homeOf = (element: Element): Element | null =>
+    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
+    rootOf(element).querySelector('main') ??
+    element.ownerDocument.querySelector('main');
 
 /**
  * How focus is moved after a change, and the signal that calls the request off. A request asked as
@@ -159,16 +146,23 @@ export type MoveFocusOptions = AttachOptions & {
 };
 
 /**
- * What has focus, followed into each shadow root that holds it, as a request reads where focus was
- * when it was asked for.
+ * What has focus, read from the page down: followed into each shadow root that holds it, and into
+ * each frame of the page's own origin that has it, to the control focused inside the frame or to
+ * the frame's body where nothing is. A frame of another origin shows nothing inside, so focus there
+ * reads as the frame. A frame's own record is read only while focus is in the frame, so a control
+ * it last focused is never taken for focus once a visitor has moved on. A request reads where focus
+ * was when it was asked for by it.
  */
-export const activeOf = (): Element | null => activeIn(document) ?? null;
-
-/** What has focus in the document or shadow root given, followed into each shadow root. */
-export const activeIn = (
-    root: DocumentOrShadowRoot | null | undefined
-): Element | null | undefined => {
-    let active = root?.activeElement;
-    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+export const activeOf = (): Element | null => {
+    let active = document.activeElement;
+    for (
+        let next;
+        (next =
+            active?.shadowRoot?.activeElement ??
+            (active?.localName === 'iframe'
+                ? (active as HTMLIFrameElement).contentDocument?.activeElement
+                : null));
+    )
+        active = next;
     return active;
 };

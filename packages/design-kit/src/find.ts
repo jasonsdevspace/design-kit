@@ -6,10 +6,15 @@
  * it.
  */
 
-/** The root a node lives in: a shadow root where it sits in one, else the document. */
+/**
+ * The root a node lives in: a shadow root where it sits in one, else the document it sits in, the
+ * page's or a frame's, told apart without the page's own `ShadowRoot`, which a frame's is not.
+ */
 export const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
     const root = node?.getRootNode();
-    return root instanceof ShadowRoot ? root : document;
+    return root?.nodeType === 11 && 'host' in root
+        ? (root as ShadowRoot)
+        : (node?.ownerDocument ?? document);
 };
 
 /**

@@ -1314,6 +1314,22 @@ test.describe('a panel', () => {
         await expect(page.locator('#round-tips')).toBeVisible();
     });
 
+    test('leaves focus on the page where a visitor moved it, as the page closes a panel it attached in a frame', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        await page.evaluate(`window.framedTips = kit.attachPanel(frameTips)`);
+        const inFrame = page.frameLocator('iframe');
+        await inFrame.locator('#tips-button').click();
+        await inFrame.locator('#deal').focus();
+        // The page has no panel of its own attached, so the visitor's last place stays in the frame.
+        await page.locator('#start').focus();
+        await page.evaluate('framedTips.set(false)');
+        await expect(inFrame.locator('#round-tips')).toBeHidden();
+        await expect(page.locator('#start')).toBeFocused();
+    });
+
     test("takes a panel the page attached in a frame down, the panels' listeners off the frame's document", async ({
         page,
     }) => {
@@ -1631,6 +1647,25 @@ test.describe('the dialog', () => {
         await expect(page.locator('iframe')).toBeFocused();
         await expect(inner).toBeFocused();
         await expect.poll(onDialog).toBe(before);
+    });
+
+    test('leaves focus on the page where a visitor moved it, as a dialog the page attached in a frame is taken down', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        const inFrame = page.frameLocator('iframe');
+        await page.evaluate(`(() => {
+            window.framed = new AbortController();
+            const open = kit.attachDialog(frameDialog, { signal: framed.signal });
+            open(frame.contentDocument.querySelector('#inner'));
+        })()`);
+        await expect(inFrame.locator('#end-game')).toHaveAttribute('open');
+        // The frame's dialog makes only the frame inert, so the visitor reaches the page around it.
+        await page.locator('#start').focus();
+        await page.evaluate('framed.abort()');
+        await expect(inFrame.locator('#end-game')).not.toHaveAttribute('open');
+        await expect(page.locator('#start')).toBeFocused();
     });
 
     test('opens nothing and sets no closedby given a signal already aborted', async ({ page }) => {
