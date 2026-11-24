@@ -202,8 +202,8 @@ let arriving: {
 
 /**
  * Moves focus to a view's heading as it is first drawn, as `moveFocus` does, where the visitor's
- * last input was a press on a button or a link, or a submit, in the last five seconds that no view
- * has taken focus for, on the page or inside a frame of its own origin, and returns what calls it
+ * last input, on the page or inside a frame of its own origin, was a press on a button or a link,
+ * or a submit, in the last five seconds that no view has taken focus for, and returns what calls it
  * off. A view drawn as the page first draws takes nothing, nor one drawn after a key that moves or
  * types, such as Tab or an arrow along a row of tabs, after a press on nothing, on a control that
  * is off or in a row of tabs, or long after the press, as one a poll brings. Views first drawn for

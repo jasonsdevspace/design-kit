@@ -45,21 +45,22 @@ Option C. `ThemeSwitch`, `CopyButton` and `CopyStatus` draw the markup, and `att
 `chooseTheme` saves and draws a choice from anywhere on the page. The markup is hidden until it is
 attached, so a visitor without script meets no control that does nothing. Nothing runs when the
 module is imported but listeners for keys, clicks and submits, in a page, on its document and since
-0.9.4 on that of each frame of its own origin, as record 19 has it, which note whether the visitor's
-last input was a press for `focusOnArrival`, so the press that brings a page's first view is heard,
-and since 0.9.4 one for the page going out of sight or coming back, which drops a focus request made
-while the page is out of sight or before it goes. Since 0.9.4 the controls ship in parts:
-`dist/controls.js`, the file `./controls` resolves to, gathers an internal module for each piece,
-and the state two pieces share, the presses, the focus the kit hands back and the checked forms,
-sits in `dist/state.js`, the one module that adds listeners as it loads, so every part on a page
-reads one copy. The focus handback, the focus requests, the lookups and the marks are modules the
-parts share, and no piece's module imports another piece's, so a site that loads a piece on one page
-sends its module to that page alone, which a single module kept whole in the chunk every page shares
-could not. The package marks `dist/controls.js` and `dist/state.js` as having side effects in its
-`sideEffects`, so a bundler keeps the listeners wherever a page imports the controls, even bare, and
-the listeners wait for a document, so the module loads in Node. The functions set no style. The
-choices a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the
-key the theme script reads, and the theme script itself does not change, so its hash holds.
+0.9.4 on that of each frame of its own origin, with one on each of those documents for a frame's
+load, as record 19 has it, which note whether the visitor's last input was a press for
+`focusOnArrival`, so the press that brings a page's first view is heard, and since 0.9.4 one for the
+page going out of sight or coming back, which drops a focus request made while the page is out of
+sight or before it goes. Since 0.9.4 the controls ship in parts: `dist/controls.js`, the file
+`./controls` resolves to, gathers an internal module for each piece, and the state two pieces share,
+the presses, the focus the kit hands back and the checked forms, sits in `dist/state.js`, the one
+module that adds listeners as it loads, so every part on a page reads one copy. The focus handback,
+the focus requests, the lookups and the marks are modules the parts share, and no piece's module
+imports another piece's, so a site that loads a piece on one page sends its module to that page
+alone, which a single module kept whole in the chunk every page shares could not. The package marks
+`dist/controls.js` and `dist/state.js` as having side effects in its `sideEffects`, so a bundler
+keeps the listeners wherever a page imports the controls, even bare, and the listeners wait for a
+document, so the module loads in Node. The functions set no style. The choices a switch saves,
+`system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the theme script
+reads, and the theme script itself does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -255,7 +256,8 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
 | 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 667 bytes       | 9.75 KB    |
 | 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes | 678 bytes       | 10 KB      |
-| 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,157 bytes | 678 bytes       | 3 KB       |
+| 0.9.4   | The module imported bare | Presses in a frame, with too little room left   | 868 bytes   | 680 bytes       | 1.75 KB    |
+| 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,163 bytes | 680 bytes       | 3 KB       |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

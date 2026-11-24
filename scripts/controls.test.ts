@@ -55,11 +55,12 @@ const BUDGET = 23.75 * 1024;
  * quarter of a kilobyte. Set so in 0.9.4, and for `attachForm` alone again once a limit kept to the
  * field's calendar and digits, a year written in full and steps counted from the browser's step base
  * left too little room for another, again once one view of focus that a focus request compares
- * through did, and again once a form inside a frame the page drives did, and for `attachTable` alone
- * again once the presses and keys heard inside a frame of the page's own origin did.
+ * through did, and again once a form inside a frame the page drives did, and for the module imported
+ * bare and `attachTable` alone again once the presses and keys heard inside a frame of the page's
+ * own origin did.
  */
 const ENTRY_BUDGETS = [
-    ['the module imported bare', [], 1.5 * 1024],
+    ['the module imported bare', [], 1.75 * 1024],
     ['attachTable alone', ['attachTable'], 3 * 1024],
     ['attachForm alone', ['attachForm'], 10 * 1024],
 ] as const;

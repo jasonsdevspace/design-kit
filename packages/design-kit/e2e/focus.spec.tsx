@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
 import { leaksOf, listenersOn, openCounted } from './leaks.js';
-import { frames, servePage, stillClock, tabKey } from './page.js';
+import { frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
 
 /*
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
@@ -13,15 +13,16 @@ import { frames, servePage, stillClock, tabKey } from './page.js';
  * dropped, one asked while the page was out of sight, or before it went, dropped, a view that joins
  * views asked before the page went out of sight landed, and a view's heading focused when its key
  * changes but never as the page first draws. A press inside a frame of the page's own origin, one
- * added inside a frame or loaded again among them, brings focus to the view it opens, a key inside
- * one leaves no press of the page's standing, and a frame's document is heard once. A request still
- * waiting as its component unmounts lands, from a row removed at once, after an await, from a timer
- * or in a transition, from a transition an urgent update overtook, on its fallback where the
- * transition draws its target, and from a component an `Activity` hides, unless the visitor moved
- * focus first. One made in a commit before its component goes lands, one asked from a ref as its
- * component first draws lands, one whose target an `Activity` hides with its component is held
- * until it shows, one asked after an await by a component that has gone lands, and one asked once
- * the visitor is on the next screen leaves focus there, whatever place it names.
+ * added inside a frame, loaded again, still loading or written by the page among them, or inside an
+ * object, brings focus to the view it opens, a key inside one leaves no press of the page's
+ * standing, a keydown with no key counts for nothing, and a frame's document is heard once. A
+ * request still waiting as its component unmounts lands, from a row removed at once, after an
+ * await, from a timer or in a transition, from a transition an urgent update overtook, on its
+ * fallback where the transition draws its target, and from a component an `Activity` hides, unless
+ * the visitor moved focus first. One made in a commit before its component goes lands, one asked
+ * from a ref as its component first draws lands, one whose target an `Activity` hides with its
+ * component is held until it shows, one asked after an await by a component that has gone lands,
+ * and one asked once the visitor is on the next screen leaves focus there, whatever place it names.
  *
  * A browser run headless cannot be sent out of sight, nor made to order its frames and its
  * visibility events as a real one does in each engine, so the tests that need the page out of sight
@@ -902,8 +903,9 @@ const openWithArrival = async (page: Page) => {
         title: 'Focus',
         body:
             '<button type="button" id="bring">Bring the scores</button>' +
+            '<button type="button" id="bring-only">Bring the scores here</button>' +
             '<h2 id="scores" tabindex="-1" hidden>Scores</h2>' +
-            '<iframe title="Notes" srcdoc="<button type=button id=first>First</button><button type=button id=second>Second</button>"></iframe>',
+            '<iframe title="Notes" srcdoc="<button type=button id=first>First</button><button type=button id=second>Second</button><input id=note aria-label=Note>"></iframe>',
         script: `import { focusOnArrival } from './controls.js';
 const frame = document.querySelector('iframe');
 if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('#second'))
@@ -922,6 +924,7 @@ document.querySelector('#bring').addEventListener('click', () => {
     bring();
 });
 inner.querySelector('#first').addEventListener('click', bring);
+document.querySelector('#bring-only').addEventListener('click', bring);
 window.bring = bring;
 window.ready = true;`,
     });
@@ -1013,3 +1016,122 @@ window.ready = true;`,
     expect(await inFrame()).toBe(heard);
     expect((await leaksOf(page)).documentListeners).toBe(page0.documentListeners);
 });
+
+test('leaves focus in a field of a frame the visitor clicked and typed in after a press on the page, as the view it brought arrives', async ({
+    page,
+}) => {
+    await openWithArrival(page);
+    await page.locator('#bring-only').click();
+    const inner = page.frameLocator('iframe');
+    await inner.locator('#note').click();
+    await page.keyboard.type('A');
+    await page.clock.runFor(1100);
+    await expect(page.locator('#scores')).toBeVisible();
+    await page.clock.runFor(100);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(inner.locator('#note')).toBeFocused();
+});
+
+test('takes a keydown with no key, as autofill sends, for no input and throws nothing', async ({
+    page,
+}) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await openWithArrival(page);
+    await page.locator('#bring-only').click();
+    await page.evaluate(() => {
+        const inner = document.querySelector('iframe')?.contentDocument;
+        for (const target of [document.body, inner?.querySelector('#note')])
+            target?.dispatchEvent(new Event('keydown', { bubbles: true }));
+    });
+    await page.clock.runFor(1100);
+    await expect(page.locator('#scores')).toBeVisible();
+    await page.clock.runFor(100);
+    await expect(page.locator('#scores')).toBeFocused();
+    expect(errors).toEqual([]);
+});
+
+/** The page a frame or an object shows, with a control and a picture the server holds back. */
+const NOTES = '<!doctype html><title>Notes</title><button type="button" id="later">Later</button>';
+
+for (const how of [
+    'a frame of the page still loading',
+    'an object in the page',
+    'a frame the page writes',
+] as const)
+    test(`focuses a view's heading as it arrives, brought by a press inside ${how}`, async ({
+        page,
+        browserName,
+    }) => {
+        test.skip(
+            how === 'an object in the page' && browserName === 'firefox',
+            "Firefox shows no page a test's route serves in an object."
+        );
+        await stillClock(page.clock);
+        const slow = how === 'a frame of the page still loading';
+        const holder = how === 'an object in the page' ? 'object' : 'iframe';
+        const shown =
+            how === 'an object in the page'
+                ? '<object data="/notes.html" type="text/html" title="Notes"></object>'
+                : slow
+                  ? '<iframe title="Notes" src="/notes.html"></iframe>'
+                  : '';
+        // The frame's page and its picture are the page's routes, which come before the context's.
+        await page.route('**/held.png', () => undefined);
+        await page.route('**/notes.html', (route) =>
+            route.fulfill({
+                contentType: 'text/html',
+                body: slow ? `${NOTES}<img src="/held.png" alt="">` : NOTES,
+            })
+        );
+        await servePage(page.context(), {
+            title: 'Focus',
+            body: `<h2 id="scores" tabindex="-1" hidden>Scores</h2>${shown}`,
+            script: `import { focusOnArrival } from './controls.js';
+window.bring = () => {
+    setTimeout(() => {
+        document.querySelector('#scores').hidden = false;
+        focusOnArrival('scores');
+    }, 1000);
+};
+if (${String(how === 'a frame the page writes')}) {
+    const frame = document.createElement('iframe');
+    frame.title = 'Notes';
+    document.body.append(frame);
+    const inner = frame.contentDocument;
+    inner.open();
+    inner.write(${JSON.stringify(NOTES)});
+    inner.close();
+}
+window.ready = true;`,
+        });
+        // The picture never comes, so a frame showing it is still loading as the visitor presses.
+        await page.goto(`${ORIGIN}/`, { waitUntil: 'commit' });
+        await page.waitForFunction(() => 'ready' in window);
+        await expect
+            .poll(() =>
+                page.evaluate(
+                    (selector) =>
+                        Boolean(
+                            document
+                                .querySelector<HTMLIFrameElement>(selector)
+                                ?.contentDocument?.querySelector('#later')
+                        ),
+                    holder
+                )
+            )
+            .toBe(true);
+        const loading = await page.evaluate((selector) => {
+            const inner = document.querySelector<HTMLIFrameElement>(selector)?.contentDocument;
+            const later = inner?.querySelector<HTMLElement>('#later');
+            later?.addEventListener('click', (window as unknown as { bring: () => void }).bring);
+            later?.focus();
+            return inner?.readyState !== 'complete';
+        }, holder);
+        expect(loading).toBe(slow);
+        await page.keyboard.press('Enter');
+        await page.clock.runFor(1100);
+        await expect(page.locator('#scores')).toBeVisible();
+        await page.clock.runFor(100);
+        await expect(page.locator('#scores')).toBeFocused();
+    });
