@@ -409,7 +409,7 @@ test.describe('the landing page', () => {
         // The version reads as npm writes it, and its link opens that version.
         expect(version.shown).toContain(pinned);
         expect(version.href).toMatch(new RegExp(`/v/${pinned.replaceAll('.', '\\.')}$`));
-        const command = `npm install @jasonsdevspace/design-kit@${pinned}`;
+        const command = `npm install --save-exact @jasonsdevspace/design-kit@${pinned}`;
         const block = page.getByRole('region', { name: 'The install command' });
         await expect(block).toHaveText(command);
         // The keyboard reaches the command and then the button that copies it, as they are drawn.

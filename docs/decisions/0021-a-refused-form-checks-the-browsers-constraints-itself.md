@@ -3,10 +3,11 @@
 **Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, in 0.9.3 for record 22's
 teardown, which gives a form back its own `noValidate` once the last attach in it is taken down, and
 in 0.9.4 for a stepper's own error, for one owner of a stepper's error, for a stepper's error for
-letters, shown as focus leaves it and its words naming its field, for a stepper's error held back
-while a press outside it is down, for a form that lets go of a stepper whose field has left the
-page, for a second list of failures with the words each field shows, and for a dated limit and a
-step named as the field reads them
+letters, shown as focus leaves its field, for the words a stepper says of its error as focus leaves
+it, which start with its field's name, for a stepper's error held back while a press outside it is
+down, for a form that lets go of a stepper whose field has left the page, for a second list of
+failures with the words each field shows, and for a dated limit and a step named as the field reads
+them
 
 ## Context
 

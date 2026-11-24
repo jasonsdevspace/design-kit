@@ -134,7 +134,9 @@ const breakable = (words: string): (string | HTMLElement)[] =>
         .split('@')
         .flatMap((part, at) => (at === 0 ? [part] : ['@', document.createElement('wbr'), part]));
 
-/** The words a screen reader starts an error with, so it is told from the hint by more than color. */
+/**
+ * The words a screen reader starts an error with, so it is told from the hint by more than color.
+ */
 const errorStart = () => {
     const said = document.createElement('span');
     said.className = 'dk-visually-hidden';
@@ -240,8 +242,8 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
         for (const timer of timers) window.clearTimeout(timer);
         own.noValidate = was;
         unmark(checked.marks);
-        // The marks are let go of, so a stepper that outlives this check leaves alone a mark a later
-        // one sets.
+        // The marks are let go of, so a stepper that outlives this check leaves alone a mark a
+        // later one sets.
         checked.marks.clear();
         checkedForms.delete(own);
     });

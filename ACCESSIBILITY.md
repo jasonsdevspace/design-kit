@@ -137,6 +137,11 @@ is its CSS transformer, as the package README shows.
 - The room kept for a toast is measured as it shows and while it stays, up to five rows, so a toast
   whose message runs past five rows can leave what the keyboard reaches partly under it. The
   reference asks for a short sentence.
+- F8 moves focus from anywhere on the page to a shown toast's action and back, but the kit tells a
+  visitor of the key only through the action's `aria-keyshortcuts`, which NVDA and JAWS in Chromium
+  and Firefox are documented to announce once focus is on the action. Nothing elsewhere on the page
+  says the key exists, and a sighted keyboard or magnifier user gets no hint of it from the kit, so
+  a page that wants the key known says so itself.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.
