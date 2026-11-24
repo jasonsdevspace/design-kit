@@ -7,10 +7,11 @@ by record 22 in 0.9.3, under which every attach takes a signal that takes its pi
 23 in 0.9.3, under which each signal that attaches an element holds its control, by record 27 in
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
 function writes on the frame, in 0.9.4 for the listener the module adds for the page going out of
-sight or coming back, in 0.9.4 for a missing part told at the first attach whatever its signal, and
-in 0.9.4 for the controls shipped in parts a page's bundler can split. Its budgets were set again in
-0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4, as its tables give, and in 0.9.4 for the
-budgets of three entries of the controls and a rule that lowers a budget
+sight or coming back, in 0.9.4 for markup missing a part, which throws at the first attach even
+under a signal already aborted, and in 0.9.4 for the controls shipped in parts a page's bundler can
+split. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4, as
+its tables give, and in 0.9.4 for the budgets of three entries of the controls and a rule that
+lowers a budget
 
 ## Context
 

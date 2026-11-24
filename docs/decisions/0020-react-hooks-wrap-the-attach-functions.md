@@ -5,7 +5,8 @@ a view's arrival, in 0.9.1 for the hooks whose request reads what the page draws
 that return their cleanup and the focus requests around an unmount, by record 23 in 0.9.3, under
 which the hooks take their part down at once and the kit keeps the control, and in 0.9.4 for a form
 React still draws, which refuses only through `useFormRefusal`, while an attached stepper in it
-keeps its own error and the observer that puts it back, the one exception to one owner
+keeps its own error and the observer that puts it back, the one exception to one owner for each node
+and attribute of a field
 
 ## Context
 
@@ -170,14 +171,16 @@ not put back a hint React inserts without moving React's nodes, and following Re
 its error would leave a value the browser still refuses with no error shown.
 
 An attached stepper keeps an observer of its own, the one exception to one owner for each node and
-attribute of a field. It watches its value's `aria-describedby`, `aria-invalid` and limits, and
-where React writes the description or the mark again from its props, it puts its shown range error
-back into them, or its range in words after the page's description. That is safe where an observer
-for the form was not. It writes only those two attributes on the value, after React has written
-them, and never inserts, moves or removes a node. The range error and the range in words are the
-stepper's own markup, which React draws once, so the kit writes only the error's `hidden`, which
-React never writes again since that prop does not change, and the words of a span React leaves
-empty. And the stepper's error follows its value's `validity` rather than an error React draws, so a
+attribute of a field. It watches its value's `aria-describedby` and `aria-invalid`, its limits, and
+whether it is required, read only or disabled. Where React writes the description or the mark again
+from its props, the stepper puts its shown range error back into them, or its range in words after
+the page's description, and it follows new limits in its words and its buttons. That is safe where
+an observer for the form was not. On the value it writes only those two attributes, after React has
+written them, and it never inserts, moves or removes a node React draws. The range error, the range
+in words and the buttons are the stepper's own markup, which React draws once. The kit writes the
+`hidden` of the error and of the buttons, which React never writes again since those props do not
+change, the buttons' `aria-disabled`, which React never writes, and the words of a span React leaves
+empty. The stepper's error follows its value's `validity` rather than an error React draws, so a
 value the browser refuses keeps its error.
 
 `hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
@@ -256,5 +259,8 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   said once on the screen's status line. `packages/site/e2e/site.spec.ts` refuses the site's form,
   drawn by the React components to static HTML and attached from plain script, and finds both
   fields marked invalid, focus on its first field and that field's name said on the status line.
+- `e2e/checked.spec.tsx` runs each case of a stepper in a refused form both through `attachForm` and
+  in a form React draws again through `useFormRefusal`, and finds the stepper's own error the one
+  error, drawn, described, marked invalid and said once.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.

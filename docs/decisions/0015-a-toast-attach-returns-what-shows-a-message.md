@@ -4,8 +4,8 @@
 the panel's, `attachPanel`, in 0.8.5 for the tabindex on a toast's buttons, in 0.9.0 for words that
 settle and polite words, in 0.9.2 for a line let go of as `StatusProvider` unmounts, in 0.9.3 for a
 `signal` on `attachStatus` and `attachToast`, by record 23 in 0.9.3, under which the line and the
-toast are taken down once every signal that holds them has aborted, by record 27 in 0.9.4, for
-the mark a shown toast writes on its app's frame, by record 13 in 0.9.4, under which the toast's
+toast are taken down once every signal that holds them has aborted, by record 27 in 0.9.4, for the
+mark a shown toast writes on its app's frame, by record 13 in 0.9.4, under which the toast's
 behavior is a part of its own behind the controls entry, and by record 29 in 0.9.4, for the listener
 for F8 a toast keeps on its document while a message with an action shows
 
@@ -64,18 +64,18 @@ stays. A toast taken from the page forgets it had focus once the visitor moves f
 presses while it is off the page, so it never hands focus back over the visitor's own move. What
 dismisses a message never dismisses a later one.
 
-The toast listens on its own elements, and on its document and its window for focus, the window's
-size and, while a message with an action shows, F8, as records 23 and 29 have it. A page that takes
-a toast away while the page stays gives `attachToast` a `signal`, as record 22 has every attach
-take, and it is taken down once every signal holding it has aborted, as record 23 has it. That
-dismisses the message as its Close does, so focus in the toast, which would drop to the page's body
-as its buttons hide, goes back where a dismiss sends it, and the mark on its frame comes off with
-the message. It takes off the toast's listeners, its observer and its timer, takes away a tabindex
-the attach added that the page has not changed since and lets its line go, and the function the
-attach returned, and what that returned, do nothing after. Its behavior ships behind the controls
-entry beside the switch's and the copy button's, rather than in an entry of its own, as its rules
-ship in the components sheet, and the controls' budget rose from 3 KB to 5 KB for it. Since 0.9.4 it
-is a part of its own behind that entry, as record 13 has it.
+The toast listens on its own elements, on its document for focus, presses and, while a message with
+an action shows, F8, and on its window for its size while a message shows, as records 23 and 29 have
+it. A page that takes a toast away while the page stays gives `attachToast` a `signal`, as record 22
+has every attach take, and it is taken down once every signal holding it has aborted, as record 23
+has it. That dismisses the message as its Close does, so focus in the toast, which would drop to the
+page's body as its buttons hide, goes back where a dismiss sends it, and the mark on its frame comes
+off with the message. It takes off the toast's listeners, its observer and its timer, takes away a
+tabindex the attach added that the page has not changed since and lets its line go, and the function
+the attach returned, and what that returned, do nothing after. Its behavior ships behind the
+controls entry beside the switch's and the copy button's, as its rules ship in the components sheet,
+in a module of its own that a page's bundler sends only where the page imports `attachToast`, as
+record 13 has it. The controls' budget rose from 3 KB to 5 KB for it.
 
 ## The status line
 

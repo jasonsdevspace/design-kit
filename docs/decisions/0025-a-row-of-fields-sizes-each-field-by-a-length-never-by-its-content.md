@@ -1,16 +1,16 @@
 # 25. A row of fields sizes each field by a length, never by its content
 
-**Status:** accepted in 0.9.4, amended in the same release for the step a wrapped row's lines stand
-apart in a column of pieces
+**Status:** accepted in 0.9.4, amended in the same release for a wrapped row in a column of pieces,
+whose lines stand that column's step apart
 
 ## Context
 
 A page that set fields side by side, such as a stepper's field beside a player's name, wrote a flex
 row of its own, and a row that could not wrap squeezed the text field at a large text size until its
 label broke inside a word. The kit adds `dk-fields`, a row that wraps, so the question is how the
-row sizes each field. The first way weighed sizes a stepper's field from its stepper, with
+row sizes each field. Option A below sizes a stepper's field from its stepper, with
 `flex: 0 1 auto`, while each text field starts from 7rem. A field sized by its content has four
-faults, and each needs a rule of its own to mend:
+faults, each of which needs a rule of its own:
 
 - A long label or a range error shown widens the stepper's field, and pushes the text field beside
   it onto the next line, so a rule has to contain the field's words.
@@ -18,13 +18,13 @@ faults, and each needs a rule of its own to mend:
   button runs past the field into the one beside it, so a fallback has to give every field in the
   row a least width from its parts.
 - That fallback reaches into a field's own parts, which the rules of a field, a stepper and a choice
-  field already own, and changes cases it was not written for, a legend that shrinks to nothing and
-  an inline stepper that can no longer narrow its buttons among them.
+  field already own, and changes what those rules draw, shrinking a legend to nothing and keeping an
+  inline stepper from narrowing its buttons.
 - An inline stepper and a set of choices need rules of their own to keep their layout in a row
   their content sizes.
 
 Each of those rules has to be measured in three engines, with and without `:has()`, against every
-kind of field, and each one mended opens the case the next one mends.
+kind of field, and each one opens a case the next has to mend.
 
 ## Research
 

@@ -88,10 +88,10 @@ costs, and the test behind it.
     once, while the kit keeps the control through a ref made afresh, setting its options again only
     when one changes, and making a focus request once the page's change is drawn or as its component
     unmounts, a form React still draws refused only through `useFormRefusal`, with an attached
-    stepper's observer the one exception to one owner, the markup components held free of effects by
-    the lint, and why leaving pages to attach in an effect, behavior written in React, three ways of
-    telling a stale focus request apart, and a mark on every React field and an observer that
-    repairs React's markup were turned down.
+    stepper's own observer as the one exception to one owner for each node and attribute, the markup
+    components held free of effects by the lint, and why leaving pages to attach in an effect,
+    behavior written in React, three ways of telling a stale focus request apart, and a mark on
+    every React field and an observer that repairs React's markup were turned down.
 21. [A refused form checks the browser's constraints
     itself](0021-a-refused-form-checks-the-browsers-constraints-itself.md):
     the browser's constraints as the truth and the kit's errors in place of its bubble, `noValidate`

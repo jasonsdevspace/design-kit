@@ -55,8 +55,8 @@ choice the portfolio does, so it holds across jasonsdevspace.com.
 npm install --save-exact @jasonsdevspace/design-kit
 ```
 
-It saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes, so a page
-moves to a new version once it has read them.
+Before 1.0.0 a patch can carry Upgrading notes, so the install pins one exact version and a site
+moves to a new one once those notes are read.
 
 A page loads the sheets, tokens first, through a bundler that resolves package exports, such as
 Vite. A Vite build takes the theme script from the plugin, which puts it inline where the page's
@@ -217,7 +217,7 @@ follow by area.
 | A grid and a tab row are one Tab stop moved by the arrows                                                   | `packages/design-kit/e2e/roving.spec.tsx`      |
 | A busy button saves once however often it is pressed                                                        | `packages/design-kit/e2e/busy.spec.tsx`        |
 | Each hook attaches a swapped element and sets nothing again on a redraw                                     | `packages/design-kit/e2e/hooks.spec.tsx`       |
-| A piece taken down leaves no listener, observer, timer or frame running                                     | `packages/design-kit/e2e/leaks.spec.tsx`       |
+| A piece taken down leaves no listener, observer, timer or animation frame running                           | `packages/design-kit/e2e/leaks.spec.tsx`       |
 
 </details>
 
@@ -287,10 +287,10 @@ follow by area.
   test to 13.25 KB, and the theme script goes inline in the page's head. A page that attaches a
   control loads the controls too, which a test holds, as a bundler sends every function, to 22.75 KB
   gzipped without their comments, and the theme script to 1 KB of its own. The controls ship in
-  parts, so a bundler sends a page only what it imports, and tests hold the module imported bare to
-  1.5 KB, `attachTable` alone to 2.75 KB and `attachForm` alone to 9.5 KB. The package npm publishes
-  is 132 KB packed, the sheets and modules a page loads together with the README, the types and the
-  tokens in the design tokens format, which it never does. [The
+  parts, so a bundler sends a page only what it imports, and tests hold the entry imported with no
+  names to 1.5 KB, `attachTable` alone to 2.75 KB and `attachForm` alone to 9.5 KB. The package npm
+  publishes is 132 KB packed, the sheets and modules a page loads together with the README, the
+  types and the tokens in the design tokens format, which it never does. [The
   record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
   comments, and from 0.6.0 what each piece of the sheets and each function of the controls costs.
 - **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
@@ -379,8 +379,7 @@ options rejected, what the choice costs, and the test behind it.
 20. [The kit's React hooks wrap its attach functions](docs/decisions/0020-react-hooks-wrap-the-attach-functions.md).
     A React page attaches a form, a busy button, progress or a group of cells, and moves focus, with
     one hook over the same function a page without React calls, and draws the status line with
-    `StatusProvider`, at the cost of `./react` importing
-    `./controls`.
+    `StatusProvider`, at the cost of `./react` importing `./controls`.
 21. [A refused form checks the browser's constraints itself](docs/decisions/0021-a-refused-form-checks-the-browsers-constraints-itself.md).
     A form's native constraints are kept and its errors drawn in the kit's look and words, never the
     browser's bubble, at the cost of a page's own checks running only once the constraints pass.

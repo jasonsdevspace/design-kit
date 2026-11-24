@@ -65,8 +65,8 @@ specificity.
 npm install --save-exact @jasonsdevspace/design-kit
 ```
 
-It saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes, so a page
-moves to a new version once it has read them.
+Before 1.0.0 a patch can carry Upgrading notes, so the install pins one exact version and a site
+moves to a new one once those notes are read.
 
 Load the sheets in this order, tokens first, through a bundler that resolves package exports, such
 as Vite.

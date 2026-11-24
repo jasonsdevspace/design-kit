@@ -2,11 +2,11 @@
 
 **Status:** accepted, amended in 0.9.1 for what a refusal and a reset say, in 0.9.3 for record 22's
 teardown, which gives a form back its own `noValidate` once the last attach in it is taken down, and
-in 0.9.4 for a stepper's own error, for one owner of a stepper's error, for a stepper's letters
-shown as focus leaves it and its words naming its field, for a stepper's error held back while a
-press outside it is down, for a stepper whose field has left the page let go of by its form, for a
-second list of failures with the words each field shows, and for a dated limit and a step named as
-the field reads them
+in 0.9.4 for a stepper's own error, for one owner of a stepper's error, for a stepper's error for
+letters, shown as focus leaves it and its words naming its field, for a stepper's error held back
+while a press outside it is down, for a form that lets go of a stepper whose field has left the
+page, for a second list of failures with the words each field shows, and for a dated limit and a
+step named as the field reads them
 
 ## Context
 
@@ -94,11 +94,11 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   the kit's. The browser's own words are never used, since they follow its language rather than the
   page's. The kit's words are English, so a page in another language gives its own, on the field or
   as `errorWords`. A dated limit in the kit's words is named as a visitor reads it, in the order of
-  the nearest English `lang` around the field, else of US English, and always in the Gregorian
-  calendar, Latin digits and a year of four digits, as the field writes its value, whatever calendar
-  or digits a language tag picks, so the limit shown is one the field takes. A step's words count
-  from the browser's step base. A pattern cannot be put in words from the pattern, so the reference
-  asks a field with one to give its own.
+  the nearest `lang` around the field where that language is English, else of US English. It always
+  takes the Gregorian calendar, Latin digits and a year of four digits, as the field writes its
+  value, whatever calendar or digits a language tag picks, so the limit shown is one the field
+  takes. A step's words count from the browser's step base. A pattern cannot be put in words from
+  the pattern, so the reference asks a field with one to give its own.
 - **In plain markup the kit draws the error** as its field draws one: after the hint, above the
   control or under a set's legend, starting with a word a screen reader reads, described after the
   hint, and marked as the kit's set of choices marks one, a set of radios on its fieldset and a set
