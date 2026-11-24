@@ -8,6 +8,7 @@ import {
     box,
     colorOf,
     forceColors,
+    hearing,
     lengthOf,
     servePage,
     sideways,
@@ -139,7 +140,7 @@ test.describe('the saved games', () => {
 
     test.beforeAll(async () => {
         test.setTimeout(120_000);
-        app = await bundle('empty-page.tsx');
+        app = hearing('#root > p[role="status"]') + (await bundle('empty-page.tsx'));
     });
 
     const open = async (page: Page) => {

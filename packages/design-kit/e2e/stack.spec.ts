@@ -3,7 +3,7 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { stacks } from '../examples/examples.js';
-import { box, forceColors, KIT, lengthOf, sideways, style, writePage } from './page.js';
+import { box, forceColors, KIT, lengthOf, sideways, style, withoutHas, writePage } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
 import { doubled } from './text-size.js';
 
@@ -270,10 +270,9 @@ for (const has of [true, false]) {
             `<div class="dk-callout dk-callout-danger" id="${id}"><div class="dk-callout-body">` +
             '<p>Enter a name.</p></div></div>';
         await page.setViewportSize({ width: 1280, height: 900 });
-        // Without :has(), a selector naming it is left unknown, as an older browser reads it.
         await page.setContent(
             '<!doctype html><html lang="en"><head><title>Fields</title>' +
-                `<style>${has ? KIT : KIT.replaceAll(':has(', ':-dk-unknown(')}</style></head><body>` +
+                `<style>${KIT}</style></head><body>` +
                 '<main class="dk-page"><div class="dk-stack" id="stack">' +
                 callout('before') +
                 field('first') +
@@ -294,6 +293,8 @@ for (const has of [true, false]) {
                 callout('in-dialog') +
                 '</dialog></main></body></html>'
         );
+        // Without :has(), a selector naming it is left unknown, as an older browser reads it.
+        if (!has) await withoutHas(page);
         const measure = await lengthOf(page, 'var(--dk-measure)');
         const stack = await box(page.locator('#stack'));
         expect(stack.width).toBeGreaterThan(measure);

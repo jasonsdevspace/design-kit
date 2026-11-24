@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CopyButton, CopyStatus, StatusLine, ThemeSwitch } from '../src/react.js';
 import { THEME_KEY, themeScript } from '../src/theme.js';
 import { themeScriptHash } from '../src/vite.js';
-import { frames, ORIGIN, servePage, stillClock, tabKey, themeOf } from './page.js';
+import { frames, hearing, ORIGIN, servePage, stillClock, tabKey, themeOf } from './page.js';
 
 /*
  * The theme switch and the copy button as a page attaches them, served from an origin of its own
@@ -892,10 +892,7 @@ test("says a screen's messages on its own status line, the same words twice, wit
         `import { attachStatus } from './controls.js';
 document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(SCREEN_LINE)});
 const line = document.querySelector('.screen-line');
-const said = [];
-new MutationObserver(() => { said.push(line.textContent); }).observe(line, { childList: true, characterData: true, subtree: true });
-window.heard = said;
-window.attach = () => { window.say = attachStatus(line); };`
+${hearing('.screen-line', { empties: true })}window.attach = () => { window.say = attachStatus(line); };`
     );
     try {
         await opened.waitForFunction(() => 'attach' in window);

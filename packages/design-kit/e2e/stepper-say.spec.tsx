@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { StatusLine, StepperField } from '../src/react.js';
-import { servePage, stillClock } from './page.js';
+import { hearing, servePage, stillClock } from './page.js';
 
 /*
  * A stepper speaking through a page's own `say`, as React's `useStatus` hands one, and a stepper
@@ -24,11 +24,7 @@ const BODY = renderToStaticMarkup(
 const SCRIPT = `import { attachStatus, attachStepper } from './controls.js';
 const stepper = document.querySelector('.dk-stepper');
 const line = document.querySelector('.screen-status');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-const say = attachStatus(line);
+${hearing('.screen-status')}const say = attachStatus(line);
 attachStepper(stepper, { say });
 window.attachStepper = attachStepper;
 window.stepper = stepper;

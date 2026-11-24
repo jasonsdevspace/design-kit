@@ -3,7 +3,7 @@ import type { CSSProperties, ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ChoiceField, InputField, StepperField } from '../src/react.js';
-import { frames, KIT, pixels, servePage, sideways, style } from './page.js';
+import { pixels, servePage, sideways, style, withoutHas } from './page.js';
 import { cutOff, SPACED, tooShort } from './spacing.js';
 import { doubled } from './text-size.js';
 
@@ -173,27 +173,6 @@ const boxes = (page: Page) =>
                 );
             })
         );
-
-/**
- * The kit's sheets as a browser without :has() reads them, a selector naming it left unknown,
- * which drops a rule it is in outside a forgiving list.
- */
-const withoutHas = async (page: Page): Promise<void> => {
-    await page.evaluate(
-        async ([kit, unknown]) => {
-            const link = document.querySelector('link[href="/kit.css"]');
-            if (!link) throw new Error('expected the kit sheet linked as /kit.css');
-            const served = await (await fetch('/kit.css')).text();
-            if (!served.startsWith(kit))
-                throw new Error('expected the served sheet to open with the kit');
-            const swapped = document.createElement('style');
-            swapped.textContent = unknown + served.slice(kit.length);
-            link.replaceWith(swapped);
-        },
-        [KIT, KIT.replaceAll(':has(', ':-dk-unknown(')] as const
-    );
-    await frames(page);
-};
 
 for (const width of [320, 390]) {
     test(`draws the same boxes without :has() at ${String(width)} wide`, async ({ page }) => {

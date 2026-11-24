@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
-import { servePage, stillClock } from './page.js';
+import { hearing, servePage, stillClock } from './page.js';
 
 /*
  * A status line said on at once or once its words stop changing, by `attachStatus` and through
@@ -18,12 +18,7 @@ const LINE = '<p id="line" class="dk-visually-hidden" role="status"></p>';
 
 const VANILLA = `import { attachStatus } from './controls.js';
 const say = attachStatus(document.querySelector('#line'));
-window.heard = [];
-new MutationObserver(() => {
-    const text = document.querySelector('#line').textContent;
-    if (text) window.heard.push(text);
-}).observe(document.querySelector('#line'), { childList: true, characterData: true, subtree: true });
-window.say = say;
+${hearing('#line')}window.say = say;
 window.ready = true;`;
 
 type Heard = { heard: string[]; say: (words: string, options?: { settle?: number }) => void };
@@ -60,11 +55,7 @@ test('says words at once, and words that settle only once they stop changing', a
 const RELEASING = `import { attachStatus } from './controls.js';
 import { releaseLine } from './line.js';
 const line = document.querySelector('#line');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-window.say = attachStatus(line);
+${hearing('#line')}window.say = attachStatus(line);
 window.letGo = () => releaseLine(line);
 window.attachAgain = () => attachStatus(line);
 window.ready = true;`;
@@ -139,11 +130,7 @@ test('keeps a line let go of silent for a piece given it, until the page attache
 import { releaseLine } from './line.js';
 const line = document.querySelector('#line');
 const button = document.querySelector('#save');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-attachStatus(line);
+${hearing('#line')}attachStatus(line);
 attachBusy(button, { status: line });
 window.busy = () => button.setAttribute('data-busy', 'Saving the round.');
 window.done = () => button.removeAttribute('data-busy');
@@ -229,7 +216,7 @@ type Drawn = { functions: Set<unknown>; heard: string[]; late?: () => void };
 let app = '';
 test.beforeAll(async () => {
     test.setTimeout(120_000);
-    app = await bundle('status-page.tsx');
+    app = hearing('#outer > p[role="status"]') + (await bundle('status-page.tsx'));
 });
 
 const draw = async (page: import('@playwright/test').Page) => {
