@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ChoiceField, InputField, StatusLine } from '../src/react.js';
 import { bundle } from './bundle.js';
-import { servePage, stillClock } from './page.js';
+import { hear, hearing, servePage, stillClock } from './page.js';
 
 /*
  * A refused submit by `attachForm` and React's `useFormRefusal`: focus on the first field in error,
@@ -51,11 +51,7 @@ const FORM = renderToStaticMarkup(
 const SCRIPT = `import { attachForm } from './controls.js';
 const form = document.querySelector('#rule');
 const line = document.querySelector('.screen-status');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-window.markWrong = (id, words) => {
+${hearing('.screen-status')}window.markWrong = (id, words) => {
     const holder = document.getElementById(id);
     const error = document.createElement('p');
     error.className = 'dk-field-error';
@@ -474,16 +470,8 @@ test.describe('in React', () => {
         await servePage(page, { title: 'Form', body: '<div id="root"></div>', script: app });
         // Every set of words the screen's status line is given, by a watch on the line itself, so
         // the same words said again are kept again.
-        await page.evaluate(() => {
-            const heard: string[] = [];
-            (window as unknown as { heard: string[] }).heard = heard;
-            const line = document.querySelector('#root p[role="status"]');
-            if (!line) throw new Error('expected the status line drawn');
-            new MutationObserver(() => {
-                const words = line.textContent.trim();
-                if (words !== '') heard.push(words);
-            }).observe(line, { childList: true, characterData: true, subtree: true });
-        });
+        await expect(page.locator('#root p[role="status"]')).toHaveCount(1);
+        await page.evaluate(hear, { line: '#root p[role="status"]' });
         const heard = () => page.evaluate(() => (window as unknown as { heard: string[] }).heard);
         const seat = page.getByRole('textbox', { name: 'Seat' });
         const error = page.locator('[id="seat-error"]');

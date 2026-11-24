@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page, type Response, test } from '@playwright/test';
 
+import { hear } from '../../design-kit/e2e/hear.js';
 import { HELD } from '../../design-kit/examples/held.js';
 import { colorOf, contrast, declaredIn } from '../../design-kit/examples/palette.js';
 import { CHROME, LAYOUTS } from '../../design-kit/examples/pieces.js';
@@ -1376,15 +1377,7 @@ test.describe('the controls page, with the pieces the script attaches', () => {
     }) => {
         // Whatever any stepper's status line says from the start, so words said and gone before
         // the line is read are still caught.
-        await page.addInitScript(() => {
-            const said: string[] = [];
-            Object.assign(window, { stepperWords: said });
-            new MutationObserver(() => {
-                for (const line of document.querySelectorAll('.dk-stepper-status')) {
-                    if (line.textContent) said.push(line.textContent);
-                }
-            }).observe(document, { childList: true, characterData: true, subtree: true });
-        });
+        await page.addInitScript(hear, { line: '.dk-stepper-status', into: 'stepperWords' });
         await page.goto('/design-kit/controls/');
         // A read-only stepper shows its value alone, its buttons hidden while it is read only.
         const steppers = page.locator('.site-copy .dk-stepper:not(:has([readonly]))');
@@ -2701,21 +2694,12 @@ test.describe('the code of each state', () => {
         await page.getByRole('button', { name: 'Copy Markup, An action' }).click();
         await expect(page.locator(STATUS)).toHaveText('Copied.');
         // Emptied first, so a screen reader hears the same words again.
-        const heard = page.evaluate(
-            () =>
-                new Promise<string[]>((resolve) => {
-                    const status = document.querySelector('main > [role="status"]');
-                    const seen: string[] = [];
-                    if (!status) return resolve(seen);
-                    new MutationObserver(() => {
-                        seen.push(status.textContent);
-                        if (status.textContent !== '') resolve(seen);
-                    }).observe(status, { childList: true, characterData: true, subtree: true });
-                })
-        );
+        await page.evaluate(hear, { line: STATUS, empties: true });
         await page.getByRole('tab', { name: 'React' }).first().click();
         await page.getByRole('button', { name: 'Copy React, An action' }).click();
-        expect(await heard).toEqual(['', 'Copied.']);
+        await expect
+            .poll(() => page.evaluate(() => (window as unknown as { heard: string[] }).heard))
+            .toEqual(['', 'Copied.']);
     });
 
     test('selects the block where the browser has no clipboard, and says how to copy it', async ({

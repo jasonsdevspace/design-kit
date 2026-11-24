@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Button, Progress, StatusLine, StepperField } from '../src/react.js';
-import { servePage, stillClock } from './page.js';
+import { hearing, servePage, stillClock } from './page.js';
 
 /*
  * One status line shared by the pieces that speak on it, a busy button, a stepper and progress, as a
@@ -26,11 +26,7 @@ const SCRIPT = `import { attachBusy, attachProgress, attachStatus, attachStepper
 const line = document.querySelector('.screen-status');
 const bar = document.querySelector('#import');
 const button = document.querySelector('#start');
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent && line.textContent !== window.heard.at(-1)) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-window.move = (done) => {
+${hearing('.screen-status')}window.move = (done) => {
     bar.value = done;
     document.querySelector('#import-words').textContent = done + ' of 40';
 };

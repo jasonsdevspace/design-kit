@@ -5,6 +5,8 @@ import ts from 'typescript';
 
 import { contrast as ratio } from '../examples/palette.js';
 
+export { hear, type Hearing, hearing } from './hear.js';
+
 /*
  * What every spec that draws the kit in a browser needs: the sheets as the source has them, a page
  * written into the browser with them, and the reads of what the browser drew. One copy, so a width
@@ -428,3 +430,72 @@ export const settle = (locator: Locator): Promise<unknown> =>
     locator.evaluate((element) =>
         Promise.all(element.getAnimations().map((animation) => animation.finished))
     );
+
+/**
+ * Presses a button as a visitor does: by pointer, or in WebKit, where Safari gives a pressed button
+ * no focus, by Enter on it, so a test of where focus stays tests the piece and not the browser.
+ */
+export const press = async (button: Locator, browserName: string): Promise<void> => {
+    if (browserName === 'webkit') {
+        await button.focus();
+        await button.press('Enter');
+    } else {
+        await button.click();
+    }
+};
+
+/** The kit's sheets as a browser without :has() reads them, a selector naming it left unknown. */
+export const KIT_WITHOUT_HAS = KIT.replaceAll(':has(', ':-dk-unknown(');
+
+/**
+ * Swaps the kit's sheets on the page for the same sheets as a browser without :has() reads them,
+ * which drops a rule naming it outside a forgiving list. The kit is found linked as /kit.css, as
+ * `servePage` serves it, or opening a style element, as `writePage` writes it, and only the kit's
+ * part is swapped, so the page's own rules after it stay. It fails where the page holds the kit
+ * some other way, or where the swap leaves a rule naming :has() in the kit's part, so a test
+ * without :has() never runs on the sheets it meant to take away.
+ */
+export const withoutHas = async (page: Page): Promise<void> => {
+    await page.evaluate(
+        async ([kit, unknown]) => {
+            /** The style rules naming :has() in a sheet, at any depth of nesting. */
+            const naming = (rules: CSSRuleList): number =>
+                [...rules].reduce(
+                    (sum, rule) =>
+                        sum +
+                        (rule instanceof CSSStyleRule && rule.selectorText.includes(':has(')
+                            ? 1
+                            : 0) +
+                        ('cssRules' in rule ? naming(rule.cssRules as CSSRuleList) : 0),
+                    0
+                );
+            const parsed = (text: string): CSSStyleSheet => {
+                const sheet = new CSSStyleSheet();
+                sheet.replaceSync(text);
+                return sheet;
+            };
+            const link = document.querySelector('link[href="/kit.css"]');
+            const written = [...document.querySelectorAll('style')].find((style) =>
+                style.textContent.startsWith(kit)
+            );
+            const holder = link ?? written;
+            if (!holder) throw new Error('expected the kit linked as /kit.css or in a style');
+            const held = link ? await (await fetch('/kit.css')).text() : holder.textContent;
+            if (!held.startsWith(kit)) throw new Error('expected the sheet to open with the kit');
+            const own = held.slice(kit.length);
+            if (naming(parsed(kit).cssRules) === 0)
+                throw new Error('expected the kit to name :has(), so the swap takes a rule away');
+            const swapped = document.createElement('style');
+            swapped.textContent = unknown + own;
+            holder.replaceWith(swapped);
+            if (!swapped.sheet) throw new Error('expected the swapped sheet read');
+            const left = naming(swapped.sheet.cssRules) - naming(parsed(own).cssRules);
+            if (left !== 0 || holder.isConnected)
+                throw new Error(
+                    `expected no rule of the kit's naming :has(), found ${String(left)}`
+                );
+        },
+        [KIT, KIT_WITHOUT_HAS] as const
+    );
+    await frames(page);
+};

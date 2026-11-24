@@ -6,17 +6,16 @@ import { StatusProvider, useStatus } from '../src/react.js';
 /*
  * The page status.spec.tsx draws with React: a part that speaks in its first effect, a counter whose
  * words settle, a provider inside another, as a dialog's would be, and a button that takes the
- * outer provider away, for a call made after it has gone.
+ * outer provider away, for a call made after it has gone. The spec hears the outer line through
+ * `hearing`.
  */
 
 type Page = {
     functions: Set<unknown>;
-    heard: string[];
     late?: () => void;
 };
 const page = window as unknown as Page;
 page.functions = new Set();
-page.heard = [];
 
 const Early = () => {
     const say = useStatus();
@@ -82,9 +81,3 @@ const App = () => {
 
 const root = document.getElementById('root');
 if (root) createRoot(root).render(<App />);
-// Every set of words put on the outer line, in order.
-new MutationObserver(() => {
-    const line = document.querySelector('#outer > p[role="status"]');
-    const words = line?.textContent ?? '';
-    if (words !== '' && words !== page.heard.at(-1)) page.heard.push(words);
-}).observe(document.body, { childList: true, characterData: true, subtree: true });

@@ -9,6 +9,7 @@ import {
     contrast,
     forceColors,
     frames,
+    hear,
     servePage,
     settle,
     sideways,
@@ -865,15 +866,8 @@ test('holds the wait while the toast is hovered or has focus, and starts it agai
 
 test('replaces one message with the next, and says the same words again', async ({ page }) => {
     await open(page, { clock: true });
-    await page.evaluate(() => {
-        const heard: string[] = [];
-        (window as unknown as { heard: string[] }).heard = heard;
-        const line = document.querySelector('[role="status"]');
-        if (!line) return;
-        new MutationObserver(() => {
-            if (line.textContent) heard.push(line.textContent);
-        }).observe(line, { childList: true, characterData: true, subtree: true });
-    });
+    await expect(page.getByRole('status')).toHaveCount(1);
+    await page.evaluate(hear, { line: '[role="status"]' });
     for (const [words, action] of [
         ['Round 3 saved.', 'Undo'],
         ['Round 4 saved.', 'Undo'],
