@@ -1,11 +1,13 @@
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import * as controls from '../packages/design-kit/src/controls.js';
 import { themeScript } from '../packages/design-kit/src/theme.js';
-import { sentOf } from './parts.mjs';
+import { bundledOf, packagedOf, sentOf } from './parts.mjs';
 
 /*
  * The controls as a page's bundler sends them: every function, without comments and gzipped, small
@@ -37,16 +39,52 @@ import { sentOf } from './parts.mjs';
  */
 const BUDGET = 21.75 * 1024;
 
+/*
+ * What a page that imports one function pays, beside the whole, on three sentinels: the module
+ * imported bare, which sends the listeners it adds as it loads, and the smallest and the largest
+ * attach, each alone. Each is measured as the package record measures a function alone, from the
+ * package laid out as npm ships it, and set by the rule of record 13 for that entry: its size with
+ * room for one more function of the usual size, the median a function adds to every other, rounded
+ * up to the next quarter of a kilobyte. Set so in 0.9.4.
+ */
+const ENTRY_BUDGETS = [
+    ['the module imported bare', [], 1.5 * 1024],
+    ['attachTable alone', ['attachTable'], 2.75 * 1024],
+    ['attachForm alone', ['attachForm'], 9.25 * 1024],
+] as const;
+
 /* The theme script with room to grow, since a page sends it whole on every visit. */
 const SCRIPT_BUDGET = 1024;
 
+const source = fileURLToPath(new URL('../packages/design-kit/src/controls.ts', import.meta.url));
+
 describe('the controls', () => {
-    it(`stay within ${String(BUDGET / 1024)} KB gzipped as a bundler sends every function, without comments`, async () => {
-        const sent = await sentOf(
-            fileURLToPath(new URL('../packages/design-kit/src/controls.ts', import.meta.url)),
-            Object.keys(controls)
+    let packaged = '';
+    beforeAll(async () => {
+        packaged = await packagedOf(
+            fileURLToPath(new URL('../packages/design-kit', import.meta.url))
         );
+    });
+    afterAll(() => {
+        rmSync(packaged, { recursive: true, force: true });
+    });
+
+    it(`stay within ${String(BUDGET / 1024)} KB gzipped as a bundler sends every function, without comments`, async () => {
+        const sent = await sentOf(source, Object.keys(controls));
         expect(sent).toBeLessThanOrEqual(BUDGET);
+    }, 60_000);
+
+    it.each(ENTRY_BUDGETS)(
+        'send %s within its budget',
+        async (_, names, budget) => {
+            const sent = await sentOf(join(packaged, 'dist', 'controls.js'), names);
+            expect(sent).toBeLessThanOrEqual(budget);
+        },
+        60_000
+    );
+
+    it('carry nothing of the theme script into a page bundle', async () => {
+        expect(await bundledOf(source, Object.keys(controls))).not.toContain('JSON.stringify');
     }, 60_000);
 
     it(`keep the theme script a page puts inline within ${String(SCRIPT_BUDGET / 1024)} KB gzipped`, () => {

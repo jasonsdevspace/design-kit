@@ -15,7 +15,15 @@
  * it adds to a page that imports every other. A function a page could drop costs nothing alone
  * past what it needs, since the module runs nothing when it is imported.
  */
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+    copyFileSync,
+    mkdirSync,
+    mkdtempSync,
+    readdirSync,
+    readFileSync,
+    rmSync,
+    writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
@@ -155,13 +163,13 @@ export const piecesOf = (sheets) => {
 };
 
 /**
- * What a page's bundler sends for the functions named from the module given, without comments and
- * gzipped, the way the controls' budget and the package record both measure it.
+ * The code a page's bundler sends for the functions named from the module given, without comments
+ * and blank lines, as the controls' budget and the package record both measure it.
  *
  * @param {string} module
  * @param {readonly string[]} names
  */
-export const sentOf = async (module, names) => {
+export const bundledOf = async (module, names) => {
     const { build } = await import('vite');
     const entries = mkdtempSync(join(tmpdir(), 'design-kit-sent-'));
     try {
@@ -185,10 +193,47 @@ export const sentOf = async (module, names) => {
         const stripped = ts.transpileModule(code, {
             compilerOptions: { removeComments: true, target: ts.ScriptTarget.ESNext },
         }).outputText;
-        return gzipSync(stripped.replace(/^[ \t]*\n/gm, '')).length;
+        return stripped.replace(/^[ \t]*\n/gm, '');
     } finally {
         rmSync(entries, { recursive: true, force: true });
     }
+};
+
+/**
+ * What a page's bundler sends for the functions named from the module given, without comments and
+ * gzipped, the way the controls' budget and the package record both measure it.
+ *
+ * @param {string} module
+ * @param {readonly string[]} names
+ */
+export const sentOf = async (module, names) => gzipSync(await bundledOf(module, names)).length;
+
+/**
+ * The package's modules laid out as npm ships them, compiled from the sources in the package
+ * folder given into a `dist` folder beside its manifest, in a folder of its own that the caller
+ * removes. A bundler reads the manifest's `sideEffects` there as it does in a page's install, so
+ * a page that imports the controls bare is measured with the listeners the module adds as it
+ * loads, which a bundler drops from the sources the manifest does not name.
+ *
+ * @param {string} folder
+ * @returns {Promise<string>} the folder the package is laid out in
+ */
+export const packagedOf = async (folder) => {
+    const { default: ts } = await import('typescript');
+    const { config } = ts.readConfigFile(join(folder, 'tsconfig.build.json'), ts.sys.readFile);
+    const { options } = ts.parseJsonConfigFileContent(config, ts.sys, folder);
+    const into = mkdtempSync(join(tmpdir(), 'design-kit-packaged-'));
+    mkdirSync(join(into, 'dist'));
+    copyFileSync(join(folder, 'package.json'), join(into, 'package.json'));
+    const sources = join(folder, 'src');
+    for (const file of readdirSync(sources).filter((name) => /^[^.]+\.ts$/.test(name))) {
+        const { outputText } = ts.transpileModule(readFileSync(join(sources, file), 'utf8'), {
+            compilerOptions: { ...options, declaration: false },
+            fileName: file,
+        });
+        writeFileSync(join(into, 'dist', file.replace(/\.ts$/, '.js')), outputText);
+    }
+    return into;
 };
 
 /**

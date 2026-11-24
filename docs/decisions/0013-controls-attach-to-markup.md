@@ -8,7 +8,8 @@ by record 22 in 0.9.3, under which every attach takes a signal that takes its pi
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
 function writes on the frame, and in 0.9.4 for the listener the module adds for the page going out
 of sight or coming back. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0,
-0.9.3 and 0.9.4, as its tables give
+0.9.3 and 0.9.4, as its tables give, and in 0.9.4 three entries of the controls were given budgets
+of their own and the rule was let lower a budget
 
 ## Context
 
@@ -217,6 +218,28 @@ were the status line, the toast, the form, the panels and the rest, and the one 
 focus back, shared by the toast, the dialog and the panels, came with a focus request asked before a
 handback still landing and a toast that forgets focus a visitor moved while it is off the page.
 
+Since 0.9.4 three entries of the controls carry budgets of their own beside the whole, since the
+whole is what a page that imports every function sends, which no page does, and a page pays for
+the functions it imports. They are the module imported bare, which sends the listeners it adds as
+it loads, and the smallest attach and the largest, `attachTable` and `attachForm`, each alone. Each
+is measured as the package record measures a function alone, from the package laid out as npm ships
+it, where a bundler reads the manifest's `sideEffects` and keeps the module's listeners on a bare
+import, and is set and set again by the rule above as the whole is: its size with room for one more
+function of the usual size, rounded up to the next quarter of a kilobyte. The median function is
+what each adds to every other, measured by leaving it out, the upper of the middle two where the
+count is even.
+
+| Release | Entry                    | Sent alone  | Median function | Budget set |
+| ------- | ------------------------ | ----------- | --------------- | ---------- |
+| 0.9.4   | The module imported bare | 706 bytes   | 637 bytes       | 1.5 KB     |
+| 0.9.4   | `attachTable` alone      | 2,016 bytes | 637 bytes       | 2.75 KB    |
+| 0.9.4   | `attachForm` alone       | 8,632 bytes | 637 bytes       | 9.25 KB    |
+
+The rule stays the ledger, each row a budget set and why, and since 0.9.4 it lowers a budget as well
+as raising one: where a release measured whole leaves more room under a budget than two pieces or
+functions of the usual size, the budget may be set again by the rule, lower, with a row that names
+what returned the bytes.
+
 ## The sheets beside other systems
 
 When the sheets' budget was raised to 11.5 KB, other systems' stylesheets were measured beside them
@@ -261,8 +284,10 @@ The paths are in `packages/design-kit`, and those of the budgets in the reposito
 
 - `src/controls.test.ts` imports the module in plain Node and finds no export but its functions.
 - `scripts/controls.test.ts` holds what a page's bundler sends for every function, without comments,
-  to the controls' budget, and the theme script to its own. `scripts/sheets.test.ts` holds the three
-  sheets to theirs, and `scripts/parts.test.ts` the measure the record takes of each part.
+  to the controls' budget, the module imported bare, `attachTable` alone and `attachForm` alone to
+  theirs, and the theme script to its own, and finds nothing of the theme script in what a bundler
+  sends of the controls. `scripts/sheets.test.ts` holds the three sheets to theirs, and
+  `scripts/parts.test.ts` the measure the record takes of each part.
 - `e2e/attach.spec.tsx` serves the components' markup and the module from an origin of its own under
   a policy that allows scripts only from it or by the theme script's hash and styles only from it.
   It finds both controls hidden with no script, the switch's line for a visitor without script in
