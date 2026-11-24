@@ -21,19 +21,35 @@ const hinted = (control: Element): boolean =>
 const formatWords = (control: Checked) =>
     hinted(control) ? 'Enter it in the format the hint shows.' : 'Enter it in the right format.';
 
-/** Words for a value off a field's steps, counted from its least where it has one. */
+/**
+ * A number attribute as the browser reads it, a valid floating-point number that stays finite, as
+ * every engine reads one, or NaN, so a space, a plus sign or hex digits Number would take do not.
+ */
+const numberOf = (control: Checked, name: string): number => {
+    const text = limitOf(control, name);
+    const read = /^-?(\d+(\.\d+)?|\.\d+)(e[+-]?\d+)?$/i.test(text) ? Number(text) : NaN;
+    return Number.isFinite(read) ? read : NaN;
+};
+
+/**
+ * Words for a value off a field's steps, counted from the browser's step base: its least where it
+ * parses, else its value attribute where that parses, else 0. A step that does not parse, or is not
+ * above 0, is the default step of 1.
+ */
 const stepWords = (control: Checked): string => {
     if (control.type === 'time') return 'Enter a time on one of the steps allowed.';
     if (control.type === 'datetime-local')
         return 'Enter a date and time on one of the steps allowed.';
     if (DATED.has(control.type)) return 'Enter a date on one of the steps allowed.';
-    const least = limitOf(control, 'min');
-    const step = limitOf(control, 'step') || '1';
-    if (step === '1' && (least === '' || Number.isInteger(Number(least))))
-        return 'Enter a whole number.';
-    return least !== '' && Number(least) !== 0
-        ? `Enter ${least}, or ${least} plus a multiple of ${step}.`
-        : `Enter a multiple of ${step}.`;
+    const given = numberOf(control, 'step');
+    const step = given > 0 ? given : 1;
+    const min = numberOf(control, 'min');
+    const base = Number.isNaN(min) ? numberOf(control, 'value') : min;
+    const from = Number.isNaN(base) ? 0 : base;
+    if (step === 1 && Number.isInteger(from)) return 'Enter a whole number.';
+    return from === 0
+        ? `Enter a multiple of ${step}.`
+        : `Enter ${from}, or ${from} plus a multiple of ${step}.`;
 };
 
 /** The language nearest a field, past each shadow root it sits in, else the document's. */
@@ -50,14 +66,23 @@ const langOf = (control: Element): string => {
 /**
  * A dated limit's part in the nearest English language around the field, else in US English, since
  * the kit's words are English, read in UTC on both sides so the wall time written is the one shown.
+ * It keeps the Gregorian calendar and Latin digits the field takes, whatever calendar or digits the
+ * language tag picks, and writes a year to four digits as the field does, so a month in year 1
+ * never reads as a day.
  */
 const formatIn = (control: Checked, options: Intl.DateTimeFormatOptions, when: Date): string => {
     const lang = langOf(control);
-    const zoned = { ...options, timeZone: 'UTC' };
+    const zoned = { ...options, timeZone: 'UTC', calendar: 'gregory', numberingSystem: 'latn' };
+    const year = String(when.getUTCFullYear()).padStart(4, '0');
+    const format = (tag: string) =>
+        new Intl.DateTimeFormat(tag, zoned)
+            .formatToParts(when)
+            .map((part) => (part.type === 'year' ? year : part.value))
+            .join('');
     try {
-        return new Intl.DateTimeFormat(/^en(-|$)/i.test(lang) ? lang : 'en-US', zoned).format(when);
+        return format(/^en(-|$)/i.test(lang) ? lang : 'en-US');
     } catch {
-        return new Intl.DateTimeFormat('en-US', zoned).format(when);
+        return format('en-US');
     }
 };
 
