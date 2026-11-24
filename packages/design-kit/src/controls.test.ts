@@ -20,6 +20,19 @@ describe('the controls', () => {
         for (const value of Object.values(controls)) expect(typeof value).toBe('function');
     });
 
+    it('reach the React modules only through the entry, so a page holds one copy of the state', async () => {
+        const { readFileSync } = await import('node:fs');
+        const imported = ['./react.tsx', './hooks.tsx'].flatMap((file) =>
+            [
+                ...readFileSync(new URL(file, import.meta.url), 'utf8').matchAll(
+                    /^(?:import|export)\b[^;]*?['"](\.\/[\w-]+\.js)['"]/gms
+                ),
+            ].map(([, path]) => path)
+        );
+        expect(imported).toContain('./controls.js');
+        expect(new Set(imported)).toEqual(new Set(['./controls.js', './hooks.js', './theme.js']));
+    });
+
     it('returns the function a status line was first attached with when it is attached again', async () => {
         const { attachStatus } = await import('./controls.js');
         // Attaching touches nothing on the line until a message is said, so any object stands in.
@@ -104,9 +117,16 @@ describe('the controls', () => {
     );
 
     it('throws only errors whose words a case above holds to a signal already aborted', async () => {
-        const { readFileSync } = await import('node:fs');
-        const source = readFileSync(new URL('./controls.ts', import.meta.url), 'utf8');
-        // The module's code without its comments, which speak of what throws.
+        const { readdirSync, readFileSync } = await import('node:fs');
+        const read = (file: string) => readFileSync(new URL(file, import.meta.url), 'utf8');
+        // Every module of the source but the build's plugin, so an internal module the entry does
+        // not name, as the marks, is read too, by the pattern the package's layout reads them by.
+        const parts = readdirSync(new URL('./', import.meta.url))
+            .filter((file) => /^[^.]+\.ts$/.test(file) && file !== 'vite.ts')
+            .map((file) => `./${file}`);
+        expect(parts).toEqual(expect.arrayContaining(['./stepper.ts', './marks.ts']));
+        const source = parts.map(read).join('\n');
+        // The modules' code without their comments, which speak of what throws.
         const code = source
             .split('\n')
             .filter((line) => !/^\s*(\/\/|\/?\*)/.test(line))

@@ -1,4 +1,4 @@
-import type { Say, SayOptions } from './controls.js';
+import type { Say, SayOptions } from './status.js';
 
 /*
  * The status line's state and its speech: what each line the kit speaks on is saying and waiting to

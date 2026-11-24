@@ -56,7 +56,8 @@
     ],
     "sideEffects": [
         "*.css",
-        "./dist/controls.js"
+        "./dist/controls.js",
+        "./dist/state.js"
     ],
     "engines": {
         "node": ">=22.12"

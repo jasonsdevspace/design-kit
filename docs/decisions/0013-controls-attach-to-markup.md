@@ -6,10 +6,10 @@ controls through a kit hook, in 0.9.0 for the listener the module adds to the do
 by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down, by record
 23 in 0.9.3, under which each signal that attaches an element holds its control, by record 27 in
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
-function writes on the frame, and in 0.9.4 for the listener the module adds for the page going out
-of sight or coming back. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0,
-0.9.3 and 0.9.4, as its tables give, and in 0.9.4 for the budgets of three entries of the controls
-and a rule that lowers a budget
+function writes on the frame, in 0.9.4 for the listener the module adds for the page going out of
+sight or coming back, and in 0.9.4 for the controls shipped in parts a page's bundler can split. Its
+budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4, as its tables
+give, and in 0.9.4 for the budgets of three entries of the controls and a rule that lowers a budget
 
 ## Context
 
@@ -45,12 +45,18 @@ attached, so a visitor without script meets no control that does nothing. Nothin
 module is imported but listeners on the document for keys, clicks and submits, in a page, which note
 whether the visitor's last input was a press for `focusOnArrival`, so the press that brings a page's
 first view is heard, and since 0.9.4 one for the page going out of sight or coming back, which drops
-a focus request made while the page is out of sight or before it goes. The package marks
-`dist/controls.js`, the file `./controls` resolves to, as having side effects in its `sideEffects`,
-so a bundler keeps the module and its listeners wherever a page imports it, even bare, and the
-listeners wait for a document, so the module loads in Node. The functions set no style. The choices
-a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the key the
-theme script reads, and the theme script itself does not change, so its hash holds.
+a focus request made while the page is out of sight or before it goes. Since 0.9.4 the controls ship
+in parts: `dist/controls.js`, the file `./controls` resolves to, gathers an internal module for each
+piece, and the state two pieces share, the presses, the focus the kit hands back and the checked
+forms, sits in `dist/state.js`, the one module that adds listeners as it loads, so every part on a
+page reads one copy. The focus handback, the focus requests, the lookups and the marks are modules
+the parts share, and no piece's module imports another piece's, so a site that loads a piece on one
+page sends its module to that page alone, which a single module kept whole in the chunk every page
+shares could not. The package marks `dist/controls.js` and `dist/state.js` as having side effects in
+its `sideEffects`, so a bundler keeps the listeners wherever a page imports the controls, even bare,
+and the listeners wait for a document, so the module loads in Node. The functions set no style. The
+choices a switch saves, `system` and the two themes, are `THEME_CHOICES` in `./theme`, beside the
+key the theme script reads, and the theme script itself does not change, so its hash holds.
 
 Since 0.4.0 the switch's markup is its name, a button for the collapsed form, and a div around the
 radios that carries the group's role and is named and described by the name and the note, and the
@@ -250,6 +256,14 @@ but a bundler puts an imported module's code ahead of the module that imports it
 window from the form code they share text with, and both budgets keep more room than the median
 function, so neither is set again.
 
+In 0.9.4 the controls moved into a module for each piece behind the same entry, with their shared
+state in one module, which took every function from 22,519 bytes to 22,435, the module imported bare
+from 706 to 729, `attachTable` alone from 2,012 to 2,036 and `attachForm` alone from 8,879 to 8,871,
+with a median function of 666 bytes where it was 741, measured after F8 reached a toast's action. No
+code changed, but each module a page reaches adds its own imports, and a function a page leaves out
+takes the imports of the module it alone reaches with it. Every budget keeps more room than that
+median, so none is set again.
+
 Each table stays the ledger, a row for each budget set and what set it. Since 0.9.4 the rule lowers
 a budget as well as raising one. Where a release, measured as the audit was, leaves more room under
 a budget, the budget less the size, than twice the median piece or function taken in the same
@@ -299,7 +313,14 @@ ceiling, since the rule above sets the budget.
 
 The paths are in `packages/design-kit`, and those of the budgets in the repository's `scripts`.
 
-- `src/controls.test.ts` imports the module in plain Node and finds no export but its functions.
+- `src/controls.test.ts` imports the module in plain Node and finds no export but its functions,
+  and finds the React modules reaching the controls only through `controls.js`, so a page holds one
+  copy of the state.
+- `scripts/chunks.test.ts` builds pages together over the package laid out as npm ships it and finds
+  each page's chunks without another's piece: the form beside the table, the busy button beside the
+  toast and a focus request beside the dialog. It finds the shared state and its listeners kept on a
+  bare import, nothing sent for any other internal module imported bare, and the modules importing
+  in one direction, from the parts to the modules they share, with no cycle.
 - `scripts/controls.test.ts` holds what a page's bundler sends for every function, without comments,
   to the controls' budget, the module imported bare, `attachTable` alone and `attachForm` alone to
   theirs, and the theme script to its own, and finds nothing of the theme script in a bundle of the
