@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { InputField, StatusLine, StepperField } from '../src/react.js';
@@ -836,7 +836,39 @@ type Bid = {
     readonly detachable?: boolean;
     /** In the React form, whose page clears its errors on a reset. */
     readonly clears?: boolean;
+    /** With a Save button below the bid, which an error drawn above the button moves. */
+    readonly below?: boolean;
+    /** With a Save button after the form, tied to it by `form`, below the bid. */
+    readonly outside?: boolean;
+    /** With an Add button below the bid that submits nothing. */
+    readonly plain?: boolean;
+    /** With a link below the bid. */
+    readonly link?: boolean;
 };
+
+/** The ways of drawing the bid that the React page reads from its root's `data-bid`. */
+const DRAWN_AS = [
+    'required',
+    'blank',
+    'summary',
+    'reset',
+    'high',
+    'taken',
+    'clears',
+    'below',
+    'outside',
+    'plain',
+    'link',
+] as const;
+
+/** What a test draws below the bid in the form: a Save button, an Add button or a link. */
+const Below = ({ drawn }: { readonly drawn: Bid }) => (
+    <>
+        {drawn.below ? <button type="submit">Save</button> : null}
+        {drawn.plain ? <button type="button">Add</button> : null}
+        {drawn.link ? <a href="#more">More</a> : null}
+    </>
+);
 
 /** The bid in a form attached with `attachForm`, on a clock that stands still. */
 const openBid = async (page: Page, drawn: Bid = {}) => {
@@ -847,7 +879,7 @@ const openBid = async (page: Page, drawn: Bid = {}) => {
         body: renderToStaticMarkup(
             <main>
                 <h1>Bid</h1>
-                <form noValidate={unchecked}>
+                <form id="bid-form" noValidate={unchecked}>
                     <InputField id="name" name="name" label="Name" required />
                     {/* Above the bid, so an error drawn as focus leaves the bid never moves it. */}
                     <button type="submit">Send</button>
@@ -863,9 +895,15 @@ const openBid = async (page: Page, drawn: Bid = {}) => {
                             error={drawn.taken ? 'That bid is taken.' : undefined}
                         />
                     </div>
+                    <Below drawn={drawn} />
                     {drawn.reset ? <button type="reset">Clear</button> : null}
                     <p id="count">0</p>
                 </form>
+                {drawn.outside ? (
+                    <button type="submit" form="bid-form">
+                        Save
+                    </button>
+                ) : null}
                 <StatusLine className="screen-status" />
                 <StatusLine className="second-status" />
             </main>
@@ -1273,6 +1311,47 @@ test('takes away the mark a stepper outside any attached form set as its error c
  * error shows at a submit that error is the one error, said once by the refusal, in a form the kit
  * draws its errors in and in one React draws.
  */
+test('keeps the click of a button below a stepper in no form typed past its range', async ({
+    page,
+}) => {
+    await stillClock(page.clock);
+    await servePage(page, {
+        title: 'Bid',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Bid</h1>
+                <StepperField id="bid" name="bid" label="Bid" min={0} max={10} defaultValue={5} />
+                <button type="button">Add</button>
+            </main>
+        ),
+        script: `import { attachStepper } from './controls.js';
+attachStepper(document.querySelector('.dk-stepper'));
+const add = document.querySelector('main > button');
+let clicks = 0;
+add.addEventListener('click', () => {
+    clicks += 1;
+    add.dataset.clicks = String(clicks);
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('99');
+    const add = page.getByRole('button', { name: 'Add' });
+    const box = await add.boundingBox();
+    if (!box) throw new Error('the page has no Add');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(add).toHaveAttribute('data-clicks', '1');
+    await expect
+        .poll(async () => {
+            await page.clock.runFor(100);
+            return (await bidErrors(page)).drawn;
+        })
+        .toEqual([RANGE]);
+});
+
 for (const way of ['attachForm', 'useFormRefusal'] as const) {
     test.describe(`a stepper in a form refused through ${way}`, () => {
         let app = '';
@@ -1286,15 +1365,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
         const openWay = async (page: Page, drawn: Bid = {}, name = 'Ana') => {
             if (way === 'attachForm') await openBid(page, drawn);
             else {
-                const how = [
-                    drawn.required && 'required',
-                    drawn.blank && 'blank',
-                    drawn.summary && 'summary',
-                    drawn.reset && 'reset',
-                    drawn.high && 'high',
-                    drawn.taken && 'taken',
-                    drawn.clears && 'clears',
-                ].filter(Boolean);
+                const how = DRAWN_AS.filter((as) => drawn[as]);
                 await stillClock(page.clock);
                 await servePage(page, {
                     title: 'Join',
@@ -1334,6 +1405,147 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await bidOf(page).fill('99');
             await bidOf(page).press('Enter');
             await refused(page);
+        });
+
+        /** The line a stepper's own words show on: its own, or the page's in React, through `say`. */
+        const ownLine = way === 'attachForm' ? 'stepper' : 'page';
+
+        /** Presses a control with the pointer, and lets go on it or dragged off the form. */
+        const pressOn = async (page: Page, target: Locator, off = false) => {
+            const box = await target.boundingBox();
+            if (!box) throw new Error('the control is not drawn');
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Dragged off the form before it is let go, to the page's far corner, so no click
+            // follows.
+            if (off) {
+                const size = page.viewportSize();
+                if (!size) throw new Error('the page has no size');
+                const [x, y] = [size.width - 1, size.height - 1];
+                const outside = await page.evaluate(
+                    ([atX, atY]) => !document.elementFromPoint(atX, atY)?.closest('form'),
+                    [x, y] as const
+                );
+                expect(outside).toBe(true);
+                await page.mouse.move(x, y, { steps: 4 });
+            }
+            await page.mouse.up();
+        };
+
+        const saveOf = (page: Page) => page.getByRole('button', { name: 'Save' });
+
+        /** Presses Save, below the bid, with the pointer, and lets go on it or dragged off. */
+        const pressSave = (page: Page, off = false) => pressOn(page, saveOf(page), off);
+
+        /** The bid's error drawn once the clock has stepped past the press, and said once. */
+        const shownAfter = async (page: Page) => {
+            await expect
+                .poll(async () => {
+                    await page.clock.runFor(100);
+                    return bidErrors(page);
+                })
+                .toEqual({ drawn: [RANGE], described: [RANGE] });
+            expect(await saidAfterWait(page)).toEqual([`${ownLine}: Bid: ${RANGE}`]);
+        };
+
+        test('refuses on the one press of a button below a stepper typed past its range, pressed and let go by a pointer', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await pressSave(page);
+            await refused(page);
+        });
+
+        test('shows the error of a stepper typed past its range at once as Tab leaves it, above a button', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
+            expect(await saidAfterWait(page)).toEqual([`${ownLine}: Bid: ${RANGE}`]);
+        });
+
+        test('shows the error of a stepper typed past its range once a press below it is dragged off and let go', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await pressSave(page, true);
+            await shownAfter(page);
+            await expect(page.locator('#count')).toHaveText('0');
+        });
+
+        test('refuses on the one press of a Save button outside the form, tied to it and below a stepper typed past its range', async ({
+            page,
+        }) => {
+            await openWay(page, { outside: true });
+            await bidOf(page).fill('99');
+            await pressSave(page);
+            await refused(page);
+        });
+
+        test('keeps the click of a button below a stepper typed past its range that submits nothing, and shows the error after it', async ({
+            page,
+        }) => {
+            await openWay(page, { plain: true });
+            const add = page.getByRole('button', { name: 'Add' });
+            await add.evaluate((button) => {
+                button.addEventListener('click', () => {
+                    button.dataset['clicks'] = String(Number(button.dataset['clicks'] ?? 0) + 1);
+                });
+            });
+            await bidOf(page).fill('99');
+            await pressOn(page, add);
+            await shownAfter(page);
+            await expect(add).toHaveAttribute('data-clicks', '1');
+        });
+
+        test('shows the error of a stepper typed past its range once a press on a link below it turns into a drag', async ({
+            page,
+        }) => {
+            await openWay(page, { link: true });
+            await bidOf(page).fill('99');
+            await pressOn(page, page.getByRole('link', { name: 'More' }), true);
+            await shownAfter(page);
+            await expect(page.locator('#count')).toHaveText('0');
+        });
+
+        test('takes away the error of a stepper put right before a press on Save below it, and saves on that press', async ({
+            page,
+        }) => {
+            await openWay(page, { below: true });
+            await bidOf(page).fill('99');
+            await bidOf(page).press('Tab');
+            expect((await bidErrors(page)).drawn).toEqual([RANGE]);
+            await bidOf(page).fill('5');
+            const box = await saveOf(page).boundingBox();
+            if (!box) throw new Error('the page has no Save');
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.down();
+            // Cleared as the value is typed right, before the press, so nothing waits for it.
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await page.mouse.up();
+            await page.clock.runFor(500);
+            await expect(page.locator('#count')).toHaveText('1');
+            expect(await bidErrors(page)).toEqual({ drawn: [], described: [] });
+            await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'false');
+        });
+
+        test.describe('by touch', () => {
+            test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+            // Pinned in the engines of the phones the kit is walked on, Chrome's and Safari's.
+            test.skip(({ browserName }) => browserName === 'firefox', 'touch is pinned elsewhere');
+
+            test('refuses on the one tap of a button below a stepper typed past its range', async ({
+                page,
+            }) => {
+                await openWay(page, { below: true });
+                await bidOf(page).fill('99');
+                await saveOf(page).tap();
+                await refused(page);
+            });
         });
 
         test('says one message for a stepper typed past its range and submitted by a press on the button', async ({

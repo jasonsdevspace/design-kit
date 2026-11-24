@@ -110,41 +110,57 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   from under the pointer. Reading where focus went was turned down, since Tab from the value lands
   on the stepper's own button, and letters left that way would go unreported. Letters in a field
   that is disabled or read only, or that shows an error of the page's, show no error, and focus that
-  stays on the value, as a switch of window leaves it, reports nothing. A press on a control below
-  the field, which the error drawn above moves too, is left to #662. The form never draws on an
-  attached stepper and never marks it. At a submit the form tells each stepper that fails to show
-  its error, and then refuses, so the stepper's error is the one error, in plain markup and in
-  React, and its failure is left out of the failures `invalid` is handed first. React owns the
-  page's error nodes, as record 20 has it, so the stepper's failure stays away from the page
-  entirely. A stepper in which the page shows an error of its own leaves that failure to the form,
-  as any field's, so the page is handed it and its words are never shown beside the stepper's. A
-  stepper whose error clears puts its mark back to `aria-invalid="false"` where the kit checks its
-  form, read as the error clears, as the form marks every field not in error, and takes it away
-  elsewhere. Taken down once its field has left the page, it has every checked form the field stood
-  in let go of it and takes its mark away, whoever set it, so a stepper drawn again and again in one
-  form, as one keyed by a round, leaves none of its fields held. A field still in the page keeps its
-  mark until its form is let go, as every field does, so a stepper taken down and attached again, as
-  a page's effect that runs again does, keeps its mark, and one taken down before its form loses it
-  with the form. Letting go of the field at every takedown was turned down, since a stepper attached
-  again would lose its mark while the form still checks every other field, and letting go of the
-  field without taking its mark away left a stepper taken down before its form with its mark once
-  both are down. A second list, `invalid(failures, shown)`, holds every failure in the form's order
-  with the words its field shows, the form's words for a failure in the first list and the stepper's
-  own error's words for one left out of it, so a summary built from it lists the stepper. Handing
-  the stepper's failure in the first list with a mark that it is drawn already was turned down,
-  since every page that draws all its failures would have to filter them. As the form refuses, it
-  has each stepper that fails take its own waiting words back, so the refusal is the one message.
-  Other ways were turned down. A form that kept its verdict for its steppers to read made two owners
-  of one error. So did a form that owned the error after a submit, which the stepper took away on a
-  change through an undo it was handed: in React the page owns its error nodes, which an undo of the
-  kit's cannot take away, and `aria-invalid` would have two writers. Writing the form's words into
-  the stepper's range error was turned down too, since React owns that element's children, and
-  record 20's `NotFoundError` follows a write into them. A submit listener of the stepper's on the
-  document heard every submit, so it took back words no refusal would say, and it kept a removed
-  stepper alive. The kit puts back what it changed once the field passes on a later checked submit,
-  or the form is reset, and only what still holds the kit's change. **In React the failures go to
-  `invalid`,** which the hook asks for, since the markup belongs to the page's state, and the hook
-  refuses after the render that draws them.
+  stays on the value, as a switch of window leaves it, reports nothing. A press on a control
+  anywhere outside the stepper, as a Save button below it, one tied to the form from outside it, or
+  a button beside a stepper in no form, holds back the error of a change or of letters until the
+  press ends, read by the pressed element being active in the document, which every engine marks
+  before the value's change and blur, for a mouse and for touch, since the error drawn above would
+  move the control from under the pointer and its click, and the submit it makes, would be lost. The
+  stepper checks again on a short timer until nothing outside it is active, so its click and a
+  refusal it brings have run by then, and a refusal that settled the stepper meanwhile leaves
+  nothing more for it to draw or say. A release the form would not hear, as one dragged off the
+  form, still ends the wait, and so does a press that turns into a drag, by a dragstart listener on
+  the document held only for the wait, since Firefox leaves a dragged link active after the drop. No
+  timeout ends the wait sooner, so a visitor who lets go slowly keeps the click, as WCAG 2.5.2 asks.
+  A listener on the form for the click or the release was turned down, since a press dragged off and
+  let go outside the form reaches no listener there. The stepper's submit listener on the document
+  was turned down below because it heard every submit and kept a removed stepper alive, while the
+  query of what is active is no listener and hears nothing, and the dragstart listener is taken away
+  as the wait ends and with the stepper. Reading where focus went was turned down too, since Safari
+  gives a pressed button no focus. The form never draws on an attached stepper and never marks it.
+  At a submit the form tells each stepper that fails to show its error, and then refuses, so the
+  stepper's error is the one error, in plain markup and in React, and its failure is left out of the
+  failures `invalid` is handed first. React owns the page's error nodes, as record 20 has it, so the
+  stepper's failure stays away from the page entirely. A stepper in which the page shows an error of
+  its own leaves that failure to the form, as any field's, so the page is handed it and its words
+  are never shown beside the stepper's. A stepper whose error clears puts its mark back to
+  `aria-invalid="false"` where the kit checks its form, read as the error clears, as the form marks
+  every field not in error, and takes it away elsewhere. Taken down once its field has left the
+  page, it has every checked form the field stood in let go of it and takes its mark away, whoever
+  set it, so a stepper drawn again and again in one form, as one keyed by a round, leaves none of
+  its fields held. A field still in the page keeps its mark until its form is let go, as every field
+  does, so a stepper taken down and attached again, as a page's effect that runs again does, keeps
+  its mark, and one taken down before its form loses it with the form. Letting go of the field at
+  every takedown was turned down, since a stepper attached again would lose its mark while the form
+  still checks every other field, and letting go of the field without taking its mark away left a
+  stepper taken down before its form with its mark once both are down. A second list,
+  `invalid(failures, shown)`, holds every failure in the form's order with the words its field
+  shows, the form's words for a failure in the first list and the stepper's own error's words for
+  one left out of it, so a summary built from it lists the stepper. Handing the stepper's failure in
+  the first list with a mark that it is drawn already was turned down, since every page that draws
+  all its failures would have to filter them. As the form refuses, it has each stepper that fails
+  take its own waiting words back, so the refusal is the one message. Other ways were turned down. A
+  form that kept its verdict for its steppers to read made two owners of one error. So did a form
+  that owned the error after a submit, which the stepper took away on a change through an undo it
+  was handed: in React the page owns its error nodes, which an undo of the kit's cannot take away,
+  and `aria-invalid` would have two writers. Writing the form's words into the stepper's range error
+  was turned down too, since React owns that element's children, and record 20's `NotFoundError`
+  follows a write into them. A submit listener of the stepper's on the document heard every submit,
+  so it took back words no refusal would say, and it kept a removed stepper alive. The kit puts back
+  what it changed once the field passes on a later checked submit, or the form is reset, and only
+  what still holds the kit's change. **In React the failures go to `invalid`,** which the hook asks
+  for, since the markup belongs to the page's state, and the hook refuses after the render that
+  draws them.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
   words, and the first field's name and error where focus was already on the summary, which a screen
@@ -221,9 +237,14 @@ The paths are in `packages/design-kit`.
   puts it back, gives fields with no id errors of their own, checks the whole form where a part is
   attached and a field tied to it from outside, takes errors away on a reset, leaves a stepper's
   range error as the one error, drawn, described and said once for a value typed past its range and
-  submitted by Enter or a press on the button, in plain markup and in React, shows a stepper's error
-  for letters left by Tab and says it once after the field's name, names a field without the mark
-  its label hides, shows one error and says one message where the form is submitted right after the
+  submitted by Enter or a press on the button, in plain markup and in React, refuses on the one
+  press of a Save button below a stepper typed past its range, pressed and let go by a pointer, and
+  on one tap of it in Chromium and WebKit, and on one press of a Save button outside the form tied
+  to it, keeps the click of a button below that submits nothing and of one beside a stepper in no
+  form, shows the error once a press on a link below turns into a drag, takes away an error put
+  right before a press on Save and saves, in plain markup and in React, shows a stepper's error for
+  letters left by Tab and says it once after the field's name, names a field without the mark its
+  label hides, shows one error and says one message where the form is submitted right after the
   letters, by Enter or a press on the button, in plain markup and in React, saves a stepper left
   blank that is not required, gives a required one drawn blank and never touched its own error, past
   the page's words, with the page handed nothing for it, shows one error once a value past its range
