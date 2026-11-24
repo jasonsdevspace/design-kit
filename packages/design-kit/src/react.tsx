@@ -610,11 +610,12 @@ export type SelectFieldProps = FieldParts &
     FieldAction &
     Omit<ComponentPropsWithRef<'select'>, 'style' | 'id' | 'aria-invalid'> & {
         /**
-         * Read only, a value to read but not change: drawn as a read-only field with the chosen
-         * option's words, and sent by a hidden field, since a select has no read-only state. With
-         * no select drawn, its `disabled`, `form`, `title` and `autoFocus` go to the field, and its
-         * other props and its `ref` are left unused. It is read only for the page, rather than for
-         * a moment, since turning it on or off draws a new control in place of the last.
+         * Read only, a value to read but not change: drawn as `ValueField` draws a value, with the
+         * chosen option's words, and sent by a hidden field, since a select has no read-only state.
+         * With no select drawn, its `disabled`, `form`, `title` and `autoFocus` go to the value, and
+         * its other props and its `ref` are left unused, and Enter in it does not submit the form.
+         * It is read only for the page, rather than for a moment, since turning it on or off draws
+         * a new control in place of the last.
          */
         readonly readOnly?: boolean | undefined;
     };
@@ -678,15 +679,17 @@ export const SelectField = (props: SelectFieldProps) => {
     const { native, field } = useControl(props);
     const { className, children, action, readOnly, name, value, defaultValue, ...rest } = native;
     if (readOnly === true) {
-        // A select has no read-only state, so its chosen option is drawn as a read-only field, and
-        // a hidden field carries each value, so the form still sends them, or none where disabled.
+        // A select has no read-only state, so its chosen option's words are drawn as a value, which
+        // wraps where they are long, and a hidden field carries each value, so the form still sends
+        // them, or none where disabled.
         const chosen = chosenOf(children, value ?? defaultValue);
         const { disabled, form, title, autoFocus } = rest;
         return (
             <Field parts={props} field={field}>
                 <WithAction action={action}>
-                    <input
-                        className={spaced('dk-input', className)}
+                    <textarea
+                        className={spaced('dk-textarea dk-value', className)}
+                        rows={1}
                         readOnly
                         value={chosen.words}
                         disabled={disabled}
@@ -748,6 +751,39 @@ export const TextareaField = (props: TextareaFieldProps) => {
                 {...rest}
                 {...field.wired}
             />
+        </Field>
+    );
+};
+
+export type ValueFieldProps = FieldParts &
+    FieldAction &
+    Omit<
+        ComponentPropsWithRef<'textarea'>,
+        'style' | 'id' | 'aria-invalid' | 'children' | 'rows' | 'cols' | 'readOnly'
+    >;
+
+/**
+ * A value of words a visitor reads but cannot change, with its label, hint and error: a read-only
+ * textarea the kit sizes to its value, so words that run past its width wrap and show whole, where
+ * a read-only input of one line cuts them off. It is read only for the page, and Enter in it does
+ * not submit the form. Where a browser cannot size it, it is one row tall and a long value scrolls
+ * inside it. The textarea takes every other prop given, its `ref` among them, which holds the
+ * textarea drawn for a page that moves focus to it, and its text is `defaultValue` or `value`.
+ */
+export const ValueField = (props: ValueFieldProps) => {
+    const { native, field } = useControl(props);
+    const { className, action, ...rest } = native;
+    return (
+        <Field parts={props} field={field}>
+            <WithAction action={action}>
+                <textarea
+                    className={spaced('dk-textarea dk-value', className)}
+                    rows={1}
+                    readOnly
+                    {...rest}
+                    {...field.wired}
+                />
+            </WithAction>
         </Field>
     );
 };

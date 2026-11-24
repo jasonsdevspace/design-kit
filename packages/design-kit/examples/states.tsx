@@ -331,21 +331,47 @@ export const CONTROLS: readonly Control[] = [
                 name: 'Values to read but not change',
                 attribute: 'readonly',
                 react: `<>
-    <TextareaField id="round" label="Round" defaultValue="Round 3 of 10" readOnly />
+    <div className="dk-field">
+        <label className="dk-field-label" htmlFor="round" id="round-label">
+            Round
+        </label>
+        <textarea
+            className="dk-textarea dk-value"
+            rows={1}
+            readOnly
+            id="round"
+            defaultValue="Round 3 of 10"
+        />
+    </div>
+    <InputField id="score" label="Score" defaultValue="42" readOnly />
     <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
         <option value="flip-7">Flip 7</option>
         <option value="wizard">Wizard</option>
     </SelectField>
     <StepperField id="cards" label="Cards each" min={1} max={10} defaultValue={3} readOnly />
 </>`,
-                draw: ({ TextareaField, SelectField, StepperField }, id) => (
+                draw: ({ InputField, SelectField, StepperField }, id) => (
                     <>
-                        <TextareaField
-                            id={id('round')}
-                            label="Round"
-                            defaultValue="Round 3 of 10"
-                            readOnly
-                        />
+                        {/* The value written as the markup ValueField draws, which the version
+                            the site pins may not have, and the game's option short, which that
+                            version's read-only select draws on one line. */}
+                        <div className="dk-field">
+                            <label
+                                className="dk-field-label"
+                                htmlFor={id('round')}
+                                id={`${id('round')}-label`}
+                            >
+                                Round
+                            </label>
+                            <textarea
+                                className="dk-textarea dk-value"
+                                rows={1}
+                                readOnly
+                                id={id('round')}
+                                defaultValue="Round 3 of 10"
+                            />
+                        </div>
+                        <InputField id={id('score')} label="Score" defaultValue="42" readOnly />
                         <SelectField
                             id={id('game')}
                             name={id('game')}

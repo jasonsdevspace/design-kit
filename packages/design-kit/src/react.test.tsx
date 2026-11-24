@@ -23,6 +23,7 @@ import {
     ThemeSwitch,
     useFormRefusal,
     useStatus,
+    ValueField,
 } from './react.js';
 
 /*
@@ -601,6 +602,44 @@ describe('the field', () => {
         const wrong = createRef<HTMLInputElement>();
         // @ts-expect-error A textarea field's ref is the textarea drawn, not the input of another.
         expect(renderToStaticMarkup(<TextareaField label="Note" ref={wrong} />)).toBeTruthy();
+    });
+
+    it('draws a value as a read-only textarea of one row, wired the same way, its ref the textarea', () => {
+        const round = createRef<HTMLTextAreaElement>();
+        expect(
+            renderToStaticMarkup(
+                <ValueField
+                    id="round"
+                    label="Round"
+                    hint="Saved"
+                    defaultValue="Round 3"
+                    ref={round}
+                />
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="round" id="round-label">Round</label>' +
+                '<p class="dk-field-hint" id="round-hint">Saved</p>' +
+                '<textarea class="dk-textarea dk-value" rows="1" readOnly="" id="round"' +
+                ' aria-describedby="round-hint">Round 3</textarea></div>'
+        );
+        const wrong = createRef<HTMLInputElement>();
+        // @ts-expect-error A value's ref is the textarea drawn, not the input of another.
+        expect(renderToStaticMarkup(<ValueField label="Round" ref={wrong} />)).toBeTruthy();
+    });
+
+    it("draws a read-only select's chosen words as a value, with a hidden field for its value", () => {
+        expect(
+            renderToStaticMarkup(
+                <SelectField id="game" name="game" label="Game" defaultValue="w" readOnly>
+                    <option value="f">Flip 7</option>
+                    <option value="w">Wizard</option>
+                </SelectField>
+            )
+        ).toBe(
+            '<div class="dk-field"><label class="dk-field-label" for="game" id="game-label">Game</label>' +
+                '<textarea class="dk-textarea dk-value" rows="1" readOnly="" id="game">Wizard</textarea>' +
+                '<input type="hidden" name="game" value="w"/></div>'
+        );
     });
 
     it('draws a native select with its options, wired the same way', () => {
