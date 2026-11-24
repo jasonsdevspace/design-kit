@@ -2178,8 +2178,8 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  */
 const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = document.getElementById(id);
-    const openers = openersOf(id);
-    for (const button of openers) button.setAttribute('aria-expanded', String(open));
+    const buttons = openersOf(id);
+    for (const button of buttons) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
@@ -2189,7 +2189,7 @@ const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
     if (open || !held) return;
     handBack(
         jumpFrom(panel),
-        ...[by, ...openers].filter((button) => !isOff(button)),
+        ...[by, ...buttons].filter((button) => !isOff(button)),
         // Looked for only once the place a link went to and every button has refused focus, since
         // it reads every element of the page that takes focus.
         () =>
