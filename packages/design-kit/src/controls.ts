@@ -1951,8 +1951,8 @@ const openerOf = (from: DialogOpener | undefined): Element | null => {
  * dialog staying open. Its listeners are on the dialog, so a dialog taken from the page takes them
  * with it. Taken down by its `signal`, an open dialog closes, focus goes back to what opened it
  * where focus is in the dialog, inside a shadow tree within it too, has fallen to the body or is
- * still where the browser handed it as the dialog closed, its listeners and the closedby its `stay`
- * set come off, and the function that opens it does nothing.
+ * still where the browser handed it as the dialog closed, its listeners come off, the page's own
+ * closedby is put back, and the function that opens it does nothing.
  */
 export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions): OpenDialog => {
     // A signal already aborted does nothing, so even new options for a dialog already attached are
@@ -1962,6 +1962,8 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     if (already) return already;
     const down = teardown(options?.signal, options);
     const { signal } = down;
+    // The page's own closedby, which the dialog holds while attached and puts back as it is let go.
+    const own = dialog.getAttribute('closedby');
     let settings: DialogOptions = {};
     const set = (next: DialogOptions) => {
         settings = next;
@@ -2037,7 +2039,9 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     // after its listener is off. It goes back by the same rule as that event, read before the close
     // moves it, so focus the page set in the abort's task stays. That event is stopped where it
     // lands, so an attach made since never takes it for a closing of its own and sends focus to its
-    // returnTo.
+    // returnTo. The listener that stops it takes no signal, since it is added once the attach's
+    // signal has aborted, and a close event always follows to take it off, from the close just after
+    // it or from one the page made that is still on its way.
     down.add(() => {
         if (dialog.open || opener) {
             const back = handsBack();
@@ -2048,7 +2052,9 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
             onClose(back);
         }
         restoring.delete(dialog);
-        if (settings.stay) dialog.removeAttribute('closedby');
+        // Put back where it still holds what the dialog set, so a closedby the page set since,
+        // while the dialog was not attached to stay, stays.
+        if (settings.stay || !dialog.hasAttribute('closedby')) restore(dialog, 'closedby', own);
     });
     down.set = set;
     return keep(attachedDialogs, dialog, down, open);

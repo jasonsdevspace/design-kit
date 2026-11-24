@@ -1686,6 +1686,34 @@ test.describe('the dialog', () => {
         await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'closerequest');
     });
 
+    test("puts back the page's own closedby as a dialog attached to stay is taken down", async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#end-game').setAttribute('closedby', 'closerequest');
+            window.controller = new AbortController();
+            kit.attachDialog($('#end-game'), withSignal(controller.signal, { stay: true }));
+        })()`);
+        await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'none');
+        await page.evaluate('controller.abort()');
+        await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'closerequest');
+    });
+
+    test("puts back the page's own closedby as a dialog attached without stay is taken down", async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(`(() => {
+            $('#end-game').setAttribute('closedby', 'any');
+            window.controller = new AbortController();
+            kit.attachDialog($('#end-game'), withSignal(controller.signal));
+        })()`);
+        await expect(page.locator('#end-game')).not.toHaveAttribute('closedby');
+        await page.evaluate('controller.abort()');
+        await expect(page.locator('#end-game')).toHaveAttribute('closedby', 'any');
+    });
+
     test('keeps a dialog staying where a later attach gives it only a signal', async ({ page }) => {
         await opened(page, { clock: false });
         await page.evaluate(`(() => {
