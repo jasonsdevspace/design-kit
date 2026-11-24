@@ -37,9 +37,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * for 0.9.4 once a dated field's limit in words left too little room for another, and again once a
  * toast marking its frame did, and again once a stepper quiet as its form refuses it did, and again
  * once a focus request dropped for a page out of sight rather than after a second did, and again
- * once a stepper's letters shown as focus leaves it and its words naming its field did.
+ * once a stepper's letters shown as focus leaves it and its words naming its field did, and again
+ * once a stepper holding its error back while a press outside it is down did.
  */
-const BUDGET = 22 * 1024;
+const BUDGET = 22.25 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
