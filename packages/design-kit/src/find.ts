@@ -51,6 +51,14 @@ export const fieldOf = (marked: Element): Element => {
     return set && holdsOneSet(set) ? set : marked;
 };
 
+/**
+ * Whether a node or an event's target is an element, of the page's own window or of a frame's,
+ * which an element of a frame the page drives is, so a check by the page's own `Element` would
+ * refuse it.
+ */
+export const isElement = (node: unknown): node is Element =>
+    (node as Partial<Node> | null | undefined)?.nodeType === 1;
+
 /** Whether a control is marked off, kept in the tab order to say why rather than to act. */
 export const isOff = (control: Element | undefined): boolean =>
     control?.getAttribute('aria-disabled') === 'true';

@@ -1661,3 +1661,66 @@ test("closes the panel around an off button with Escape, where the button's own 
     await page.keyboard.press('Escape');
     await expect(panel(page)).toBeHidden();
 });
+
+/**
+ * A page with a frame of its own origin that holds the tips' button and its panel, drawn with the
+ * kit's sheet, which the page attaches from outside the frame. The page also makes a button for the
+ * same panel and moves it into the frame, so it keeps the page's prototype, and attaches it too.
+ */
+const FRAMED = `<main><h1>Round 3</h1><iframe title="Round" srcdoc="${`<link rel=stylesheet href=/kit.css>
+<main class=dk-page tabindex=-1><p><button type=button class=dk-button id=tips-button aria-expanded=false aria-controls=round-tips>Tips</button></p>
+${TIPS}</main>`
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')}"></iframe></main>`;
+
+const ATTACH_FRAMED = `import { attachPanel } from './controls.js';
+const frame = document.querySelector('iframe');
+const buttonIn = () => frame.contentDocument?.querySelector('#tips-button');
+if (!buttonIn() || frame.contentDocument.readyState !== 'complete')
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+const moved = document.createElement('button');
+moved.type = 'button';
+moved.className = 'dk-button';
+moved.id = 'moved';
+moved.textContent = 'More tips';
+moved.setAttribute('aria-expanded', 'false');
+moved.setAttribute('aria-controls', 'round-tips');
+buttonIn().after(moved);
+attachPanel(buttonIn());
+attachPanel(moved);
+window.ready = true;`;
+
+for (const [what, id] of [
+    ['its button in the frame', '#tips-button'],
+    ['a button the page made and moved into the frame', '#moved'],
+] as const) {
+    test(`hands focus back to ${what}, attached inside a frame from the page`, async ({ page }) => {
+        await page.setViewportSize({ width: 390, height: 700 });
+        await servePage(page, {
+            title: 'Round 3',
+            body: FRAMED,
+            script: ATTACH_FRAMED,
+            css: 'iframe { inline-size: 360px; block-size: 480px; }',
+        });
+        await page.waitForFunction(() => 'ready' in window);
+        const frame = page.frameLocator('iframe');
+        const opener = frame.locator(id);
+        const tips = frame.locator('#round-tips');
+        // By its Close.
+        await opener.click();
+        await expect(tips).toBeVisible();
+        await expect(opener).toHaveAttribute('aria-expanded', 'true');
+        await tips.locator('.dk-close button').click();
+        await expect(tips).toBeHidden();
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(opener).toBeFocused();
+        // By Escape, with focus in the panel.
+        await opener.click();
+        await expect(tips).toBeVisible();
+        await tips.locator('#deal').focus();
+        await page.keyboard.press('Escape');
+        await expect(tips).toBeHidden();
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(opener).toBeFocused();
+    });
+}

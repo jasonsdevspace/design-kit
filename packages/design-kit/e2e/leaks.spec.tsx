@@ -188,6 +188,35 @@ test('leaves nothing in the page or its frame once a toast the page attached in 
     await expectBack(page, before, { what: 'the page, later' });
 });
 
+test('leaves nothing in the page or its frame once a dialog and a panel the page attached in the frame are taken down', async ({
+    page,
+}) => {
+    await opened(page);
+    await page.evaluate(DRAW_FRAME);
+    const inFrame = (): Promise<Counts> => page.evaluate('frame.contentWindow.leaks.counts()');
+    const before = await leaksOf(page);
+    const frameBefore = await inFrame();
+    await page.evaluate(`(() => {
+        window.framed = new AbortController();
+        const open = kit.attachDialog(frameDialog, { signal: framed.signal });
+        kit.attachPanel(frameTips, { signal: framed.signal }).set(true);
+        open(frame.contentDocument.querySelector('#inner'));
+    })()`);
+    // The panels listen on the frame's document and the dialog on its own element, and neither
+    // adds anything to the page's document or window.
+    const attached = await inFrame();
+    expect(attached.documentListeners).toBeGreaterThan(frameBefore.documentListeners);
+    expect(attached.elementListeners).toBeGreaterThan(frameBefore.elementListeners);
+    expect((await leaksOf(page)).documentListeners).toBe(before.documentListeners);
+    expect((await leaksOf(page)).windowListeners).toBe(before.windowListeners);
+    await page.evaluate('framed.abort()');
+    await expectBack(page, frameBefore, { what: 'the frame', read: inFrame });
+    await expectBack(page, before, { what: 'the page' });
+    await page.clock.runFor(10_000);
+    await expectBack(page, frameBefore, { what: 'the frame, later', read: inFrame });
+    await expectBack(page, before, { what: 'the page, later' });
+});
+
 for (const name of KEPT) {
     test(`keeps ${name} joined ${OVER} without growing, and leaves nothing once taken down`, async ({
         page,

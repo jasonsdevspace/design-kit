@@ -326,18 +326,25 @@ export type Piece = {
 };
 
 /**
- * Draws a frame of the page's own origin after the page's content, holding a button and a copy of
- * the page's toast, and once it has loaded keeps the frame as `frame` and its toast as
- * `frameToast`, for a test that attaches the toast from the page. The frame's own counters, loaded
- * into it as into the page, count what the toast adds to the frame's document and elements.
+ * Draws a frame of the page's own origin after the page's content, holding a button and copies of
+ * the page's toast, dialog, tips' button and tips' panel, and once it has loaded keeps the frame as
+ * `frame`, its toast as `frameToast`, its dialog as `frameDialog` and its tips' button as
+ * `frameTips`, for a test that attaches them from the page. The frame's own counters, loaded into
+ * it as into the page, count what a piece adds to the frame's document and elements.
  */
 export const DRAW_FRAME = `(async () => {
     const frame = document.createElement('iframe');
     frame.title = 'Notes';
-    frame.srcdoc = '<button type="button" id="inner">Inside</button>' + $('.dk-toast').outerHTML;
+    frame.srcdoc =
+        '<button type="button" id="inner">Inside</button>' +
+        ['.dk-toast', '#end-game', '#tips-button', '#round-tips']
+            .map((part) => $(part).outerHTML)
+            .join('');
     const loaded = new Promise((done) => frame.addEventListener('load', done, { once: true }));
     document.body.append(frame);
     await loaded;
     window.frame = frame;
     window.frameToast = frame.contentDocument.querySelector('.dk-toast');
+    window.frameDialog = frame.contentDocument.querySelector('#end-game');
+    window.frameTips = frame.contentDocument.querySelector('#tips-button');
 })()`;

@@ -1,12 +1,12 @@
-import { FOCUSABLE, isOff } from './find.js';
-import { handBack, homeOf, mayHandBack } from './focus.js';
+import { FOCUSABLE, isElement, isOff } from './find.js';
+import { handBackIn, homeOf, mayHandBack } from './focus.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
 /*
  * The panels a button opens and closes, with the buttons attached, the visitor's last place, and
- * the listeners on the document every panel shares, added with the first button attached and taken
- * off with the last. No entry of the package names this module, so a page imports it only through
- * `./controls`.
+ * the listeners on each document every panel in it shares, added with the first button attached in
+ * it and taken off with the last. No entry of the package names this module, so a page imports it
+ * only through `./controls`.
  */
 
 /** Opens or closes a panel attached by its button, from the page's own code. */
@@ -25,15 +25,19 @@ const panelIdOf = (button: Element): string =>
     (button.getAttribute('aria-controls') ?? '').trim().split(/\s+/)[0] ?? '';
 
 /**
- * Every attached button not let go, kept apart from the page so one in a shadow root is found too,
- * and so the panels' listeners come off once it is empty.
+ * Every attached button not let go, with the document it was attached in, kept apart from the page
+ * so one in a shadow root is found too, and so a document's listeners come off once no button
+ * attached in it is held.
  */
-const openers = new Set<HTMLButtonElement>();
+const openers = new Map<HTMLButtonElement, Document>();
 
-/** Every attached button in the page that names the panel, in the page's order. */
-const openersOf = (id: string): HTMLButtonElement[] =>
-    [...openers]
-        .filter((button) => button.isConnected && panelIdOf(button) === id)
+/** Every attached button in the document given that names the panel, in the document's order. */
+const openersOf = (id: string, doc: Document): HTMLButtonElement[] =>
+    [...openers.keys()]
+        .filter(
+            (button) =>
+                button.isConnected && button.ownerDocument === doc && panelIdOf(button) === id
+        )
         .sort((one, other) =>
             one.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1
         );
@@ -79,11 +83,12 @@ type SVGLink = SVGElement & { readonly href: SVGAnimatedString };
  * tabindex of -1 where it takes no focus, so focus can follow.
  */
 const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
+    const doc = panel.ownerDocument;
     const pressed = lastWasPress
         ? lastPath.find(
               (node): node is HTMLAnchorElement | SVGLink =>
-                  (node instanceof HTMLAnchorElement ||
-                      (node instanceof SVGElement && node.localName === 'a')) &&
+                  isElement(node) &&
+                  node.localName === 'a' &&
                   panel.contains(node) &&
                   // An SVG link's target is an object, so the attribute is read for both kinds of
                   // link.
@@ -91,22 +96,24 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
                   !node.hasAttribute('download')
           )
         : undefined;
-    // An SVG link's address is read through an HTML link, which resolves it as the browser does.
+    // An SVG link's address is an object, read through an HTML link, which resolves it as the
+    // browser does.
     const link =
-        pressed instanceof SVGElement
-            ? Object.assign(document.createElement('a'), { href: pressed.href.baseVal })
-            : pressed;
+        typeof pressed?.href === 'object'
+            ? Object.assign(doc.createElement('a'), { href: pressed.href.baseVal })
+            : (pressed as HTMLAnchorElement | undefined);
     let id = link?.hash.slice(1) ?? '';
     try {
         id = decodeURIComponent(id);
     } catch {
         // A fragment that is not encoded as a whole is looked for as written.
     }
+    const { location } = doc;
     const jump: HTMLElement | SVGElement | null =
         link?.origin === location.origin &&
         link.pathname === location.pathname &&
         link.search === location.search
-            ? document.getElementById(id)
+            ? doc.getElementById(id)
             : null;
     if (!jump || panel.contains(jump)) return null;
     if (jump.tabIndex < 0 && !jump.hasAttribute('tabindex')) jump.tabIndex = -1;
@@ -125,29 +132,30 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  * else the first attached button that names it and takes focus, else the first thing after the
  * panel the keyboard reaches by Tab, else the body of the app's frame or the page's main content.
  */
-const showPanel = (id: string, open: boolean, by?: HTMLButtonElement): void => {
-    const panel = document.getElementById(id);
-    const buttons = openersOf(id);
+const showPanel = (doc: Document, id: string, open: boolean, by?: HTMLButtonElement): void => {
+    const panel = doc.getElementById(id);
+    const buttons = openersOf(id, doc);
     for (const button of buttons) button.setAttribute('aria-expanded', String(open));
     if (open && by) lastOpener.set(id, by);
     if (!open) lastOpener.delete(id);
     if (!panel) return;
     takeFocus(panel);
-    const held = mayHandBack(panel, lastPath.includes(panel));
+    const held = mayHandBack(panel, lastPath.includes(panel), doc);
     panel.hidden = !open;
     if (open || !held) return;
-    handBack(
+    handBackIn(
+        doc,
         jumpFrom(panel),
         ...[by, ...buttons].filter((button) => !isOff(button)),
         // Looked for only once the place a link went to and every button has refused focus, since
         // it reads every element of the page that takes focus.
         () =>
-            [...document.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
+            [...doc.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
                 (next) =>
                     next.tabIndex >= 0 &&
                     panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
             ),
-        homeOf(panel)
+        homeOf(panel, doc)
     );
 };
 
@@ -163,18 +171,25 @@ const onPanelPress = (event: Event): void => {
         lastPath = event.composedPath();
         lastWasPress = true;
     }
-    const target = event.target instanceof Element ? event.target : null;
-    const button = target?.closest('button');
+    // The document that heard the press, the page's or a frame's, which holds the panel.
+    const doc = event.currentTarget as Document;
+    const button = isElement(event.target) ? event.target.closest('button') : null;
     if (!button) return;
     if (attachedPanels.has(button)) {
         if (!isOff(button))
-            showPanel(panelIdOf(button), button.getAttribute('aria-expanded') !== 'true', button);
+            showPanel(
+                doc,
+                panelIdOf(button),
+                button.getAttribute('aria-expanded') !== 'true',
+                button
+            );
         return;
     }
     const panel = button.closest('.dk-close')?.parentElement;
     const id = panel?.id;
-    if (!id || document.getElementById(id) !== panel) return;
-    if (lastOpener.has(id) || openersOf(id).length) showPanel(id, false, lastOpener.get(id));
+    if (!id || doc.getElementById(id) !== panel) return;
+    if (lastOpener.has(id) || openersOf(id, doc).length)
+        showPanel(doc, id, false, lastOpener.get(id));
 };
 
 /** Where focus moves, kept always, so an older place never outlives what followed it. */
@@ -186,19 +201,19 @@ const onPanelFocus = (event: Event): void => {
 /** As a press begins, each open panel it lands in takes focus, a panel drawn again among them. */
 const onPanelDown = (event: Event): void => {
     for (let place = event.target as Element | null; place; place = place.parentElement)
-        if (lastOpener.has(place.id) && place instanceof HTMLElement) takeFocus(place);
+        if (lastOpener.has(place.id)) takeFocus(place as HTMLElement);
 };
 
 /** A field where Escape means something of its own: a search with words, or a list that opens. */
 const ownsEscape = (target: Element): boolean =>
-    (target instanceof HTMLInputElement && target.type === 'search' && target.value !== '') ||
+    (target.matches('input[type="search"]') && (target as HTMLInputElement).value !== '') ||
     target.matches(
         '[aria-expanded="true"]:is([role="combobox"], [aria-haspopup]:not([aria-haspopup="false"]))'
     );
 
 /** An open dialog or an open popover, which takes its own Escape. */
 const isOpenOver = (place: Element): boolean =>
-    (place instanceof HTMLDialogElement && place.open) ||
+    place.matches('dialog[open]') ||
     (place.hasAttribute('popover') && place.matches(':popover-open'));
 
 /**
@@ -220,12 +235,13 @@ const onPanelKey = (event: KeyboardEvent): void => {
     // The elements from the one the key was pressed in, inside a page's own component where the
     // component's shadow root is open, though the event's target names only the component's host.
     // Read only for an Escape, so every other key the page hears costs nothing here.
-    const path = event.composedPath().filter((node) => node instanceof Element);
+    const path = event.composedPath().filter(isElement);
     // A field, a combobox or a menu button keeps its Escape, from the element the key was pressed
     // in out to that host, so a component that marks its host as a combobox keeps it too.
-    if (!(target instanceof Element) || path.slice(0, path.indexOf(target) + 1).some(ownsEscape))
-        return;
-    const own = target instanceof HTMLButtonElement && attachedPanels.has(target);
+    if (!isElement(target) || path.slice(0, path.indexOf(target) + 1).some(ownsEscape)) return;
+    const own = attachedPanels.has(target as HTMLButtonElement);
+    // The document that heard the key, the page's or a frame's, which holds the panel.
+    const doc = event.currentTarget as Document;
     for (const place of path) {
         // An open dialog or popover inside the panel takes its own Escape.
         if (isOpenOver(place)) return;
@@ -234,11 +250,20 @@ const onPanelKey = (event: KeyboardEvent): void => {
         const id = place === target && own ? (isOff(target) ? '' : panelIdOf(place)) : place.id;
         // Only the document holds a panel, as showPanel finds it by id there, so an element of a
         // component's shadow tree that shares a panel's id closes nothing.
-        if (!lastOpener.has(id) || place.getRootNode() !== document) continue;
+        if (!lastOpener.has(id) || place.getRootNode() !== doc) continue;
         event.preventDefault();
-        showPanel(id, false, lastOpener.get(id));
+        showPanel(doc, id, false, lastOpener.get(id));
         return;
     }
+};
+
+/** Adds the listeners every panel in a document shares to it, or takes them off. */
+const listen = (doc: Document, on: boolean): void => {
+    const how = on ? 'addEventListener' : 'removeEventListener';
+    doc[how]('focusin', onPanelFocus, true);
+    doc[how]('click', onPanelPress, true);
+    doc[how]('pointerdown', onPanelDown, true);
+    doc[how]('keydown', onPanelKey as EventListener);
 };
 
 /**
@@ -252,9 +277,11 @@ const onPanelKey = (event: KeyboardEvent): void => {
  * goes to the button that opened it where focus is in the panel, inside a shadow tree within it
  * too, or where nothing has focus and the visitor's last place was in it, as record 19 has it. The
  * panel is found at each press, so one drawn again keeps working, and a button drawn again works
- * once it is attached. Listeners on the document hear the presses, the focus and the Escape of
- * every panel, and come off once every button is taken down. A panel's id must be the only one on
- * the page. Attached again, a button returns what it returned first.
+ * once it is attached. Listeners on the document the button sits in as it is attached, a frame's
+ * where the page attaches it inside one, hear the presses, the focus and the Escape of every panel
+ * in it, and come off once every button attached in it is taken down, and focus is read and handed
+ * back in that document. A panel's id must be the only one on the page. Attached again, a button
+ * returns what it returned first.
  *
  * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
  * nothing, though a button with no aria-controls throws under it as under any other. A button taken
@@ -277,10 +304,13 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     if (!panelIdOf(opener)) throw new Error("a panel's button needs aria-controls");
     if (options?.signal?.aborted) return idle;
     const down = teardown(options?.signal);
+    // The document the button sits in as it is attached, a frame's where the page attaches it
+    // inside one, which holds its panel and hears its presses, focus and keys.
+    const doc = opener.ownerDocument;
     const control: PanelControl = {
         set: (open) => {
             const id = panelIdOf(opener);
-            if (!down.signal.aborted) showPanel(id, open, lastOpener.get(id) ?? opener);
+            if (!down.signal.aborted) showPanel(doc, id, open, lastOpener.get(id) ?? opener);
         },
         detach: down.stop,
     };
@@ -293,28 +323,23 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
         // and its Close, which close a panel only while it has one, close it alike.
         for (const [id, button] of lastOpener) {
             if (button !== opener) continue;
-            const next = openersOf(id)[0];
+            const next = openersOf(id, doc)[0];
             if (next) lastOpener.set(id, next);
             else lastOpener.delete(id);
         }
-        if (openers.size) return;
-        document.removeEventListener('focusin', onPanelFocus, true);
-        document.removeEventListener('click', onPanelPress, true);
-        document.removeEventListener('pointerdown', onPanelDown, true);
-        document.removeEventListener('keydown', onPanelKey);
+        if ([...openers.values()].includes(doc)) return;
+        listen(doc, false);
         // An open panel stays started, so its button drawn again finds it open rather than
-        // starting it as the new markup says.
+        // starting it as the new markup says, and so does one a button held in another document
+        // names.
+        const named = [...openers.keys()].map(panelIdOf);
         for (const id of startedPanels)
-            if (document.getElementById(id)?.hidden !== false) startedPanels.delete(id);
+            if (doc.getElementById(id)?.hidden !== false && !named.includes(id))
+                startedPanels.delete(id);
     });
     keep(attachedPanels, opener, down, control);
-    if (!openers.size) {
-        document.addEventListener('focusin', onPanelFocus, true);
-        document.addEventListener('click', onPanelPress, true);
-        document.addEventListener('pointerdown', onPanelDown, true);
-        document.addEventListener('keydown', onPanelKey);
-    }
-    openers.add(opener);
+    if (![...openers.values()].includes(doc)) listen(doc, true);
+    openers.set(opener, doc);
     // Safari focuses a pressed button only where it has a tabindex, so the kit gives one where the
     // page set none, and keeps any the page set, such as a toolbar's that moves among its buttons.
     if (!opener.hasAttribute('tabindex')) opener.tabIndex = 0;
@@ -322,7 +347,7 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     // again among them, only marks itself as the panel is, so it neither moves the panel nor
     // takes the place of the button that opened it.
     const id = panelIdOf(opener);
-    const panel = document.getElementById(id);
+    const panel = doc.getElementById(id);
     if (startedPanels.has(id) && panel) {
         opener.setAttribute('aria-expanded', String(!panel.hidden));
         // An open panel no attached button named is the kit's again, so Escape closes it as its

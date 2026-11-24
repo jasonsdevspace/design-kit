@@ -2,8 +2,9 @@
 
 **Status:** accepted, amended in 0.9.0 for `moveFocus`, which falls back by the same walk, in 0.9.3
 for a button let go while its panel is open, and by record 23 in 0.9.3, under which the toast and a
-dialog taken down by its signal hand focus back by this rule, and by record 29 in 0.9.4, under
-which F8 moves focus to a shown toast's action and back
+dialog taken down by its signal hand focus back by this rule, by record 29 in 0.9.4, under which
+F8 moves focus to a shown toast's action and back, and in 0.9.4 for a dialog and a panel the page
+attaches inside a frame
 
 ## Context
 
@@ -121,6 +122,35 @@ it and the drop-in rule has the kit do it.
 - TalkBack and VoiceOver on iOS are walked on a device before a release that changes this, since a
   focusable panel may be read as one stop, which no browser test shows.
 
+## Amendment for 0.9.4: a dialog and a panel inside a frame
+
+A page can attach its dialog or a panel's button to an element inside a frame of its own origin
+that it drives. Both read focus from the page's document, where focus anywhere in the frame reads as
+the frame, and the panels listened for presses, focus and Escape on the page's document, which never
+hears the frame's. So a dialog in the frame handed focus back to the frame rather than the control
+in it that opened it, or to nothing, and a panel's button in the frame did nothing. Record 29's
+amendment had the toast read focus in its own document and left the dialog and the panels on the
+page's.
+
+**A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
+since the page would add listeners to every frame focus enters, and still read focus as the frame.
+
+**B. The dialog and the panels read focus from, and listen on, the document they sit in.** The
+dialog reads its own element's document, and finds its opener there, from an element or an event of
+the frame's as of the page's. A panel's button keeps the document it was attached in, and the
+listeners every panel shares are added to each document that holds an attached button and taken off
+with the last button in it. A panel is found by its id in that document, and its buttons are those
+attached in it. Each passes its document to the focus helpers it calls, as the toast does.
+
+Option B. A dialog and a panel on the page read the page's document, as before. Each stays in the
+document it was attached in, so a page that moves one into another takes it down and attaches it
+again. What the browser hands focus back to as a dialog closes is kept in the frame's view, so the
+dialog compares it there, while a focus request in the page compares the page's own view, the frame,
+and never takes focus the browser put back in the frame for free. The listeners the controls' shared
+module adds as it loads, which note a visitor's presses for a focus request, stay on the page's
+document, and neither the dialog nor the panels read them. The stepper and a focus request still
+read focus from the page's document.
+
 ## How it is tested
 
 The path is in `packages/design-kit`.
@@ -143,6 +173,14 @@ The path is in `packages/design-kit`.
   the button let go marked collapsed, by Escape once its button is drawn again, the only one among
   them too, hands it to a button in a shadow root, and closes it by neither once no attached button
   names it.
+- For a dialog and a panel the page attaches inside a frame of its own origin, `e2e/dialog.spec.ts`
+  finds focus handed back to the button in the frame that opened the dialog as an answer or Escape
+  closes it, and `e2e/panel.spec.ts` to the button in the frame as the Close or Escape closes the
+  panel, each to a button the page made and moved into the frame too. `e2e/teardown.spec.tsx` finds
+  a takedown handing focus back to the dialog's opener in the frame and taking the dialog's
+  listeners off, and the panels' listeners coming off the frame's document, and
+  `e2e/leaks.spec.tsx` finds both listening in the frame and adding nothing to the page's document
+  or window, and the page and the frame back where they started.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.

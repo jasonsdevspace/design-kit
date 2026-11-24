@@ -40,9 +40,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * once a stepper's letters shown as focus leaves it and its words naming its field did, and again
  * once a stepper holding its error back while a press outside it is down did, and again once a
  * limit kept to the field's calendar and digits, a year written in full and steps counted from the
- * browser's step base did, and again once F8 reaching a toast's action did.
+ * browser's step base did, and again once F8 reaching a toast's action did, and again once a dialog
+ * and a panel reading focus in the document they sit in did.
  */
-const BUDGET = 22.75 * 1024;
+const BUDGET = 23 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module

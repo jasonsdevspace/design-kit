@@ -10,7 +10,7 @@ import type { AttachOptions } from './teardown.js';
  */
 
 /**
- * What has focus in the document given, the page's own unless the toast names the one it sits in,
+ * What has focus in the document given, the page's own unless a piece names the one it sits in,
  * or null where nothing does and the document's body stands in for it.
  */
 export const focusedNow = (doc: Document = document): Element | null => {
@@ -40,7 +40,7 @@ type Place = Element | null | undefined | (() => readonly Element[]);
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
  * that takes focus or refused it, so the walk goes on. Focus is read in the document given, the
- * page's own unless the toast names the one it sits in. An HTML or SVG element of the page's own
+ * page's own unless a piece names the one it sits in. An HTML or SVG element of the page's own
  * window or of that document's is tried, so one the page made and moved into a frame counts.
  */
 const tryFocus = (place: Element | null | undefined, doc: Document): boolean | undefined => {
@@ -97,7 +97,7 @@ const focusFirstIn = (doc: Document, places: readonly Place[]): boolean => {
  * Whether a piece closing or leaving may hand focus back: where focus is in it, inside a shadow
  * tree within it or on a control slotted into it too, or where focus is on the body or nowhere and
  * the piece had focus as it left, so focus a visitor or the page has put anywhere else stays. Focus
- * is read in the document given, the page's own unless the toast names the one it sits in. The
+ * is read in the document given, the page's own unless a piece names the one it sits in. The
  * toast, the dialog and the panels hand focus back by this one rule. The stepper does not use it,
  * and hands focus back only where focus is on one of the buttons it hides.
  */
@@ -115,9 +115,9 @@ export const mayHandBack = (piece: Element, had: boolean, doc: Document = docume
 export const handBack = (...places: readonly Place[]): boolean => handBackIn(document, ...places);
 
 /**
- * Hands focus back as `handBack` does, in the document given, as the toast does in the one it sits
- * in. What it keeps is the page's own view of focus, so a request asked in the page compares it
- * with what the page sees.
+ * Hands focus back as `handBack` does, in the document given, as the toast, the dialog and the
+ * panels do in the one they sit in. What it keeps is the page's own view of focus, so a request
+ * asked in the page compares it with what the page sees.
  */
 export const handBackIn = (doc: Document, ...places: readonly Place[]): boolean => {
     if (!focusFirstIn(doc, places)) return false;
@@ -131,8 +131,8 @@ export type FocusTarget = Element | string | (() => Element | null) | null | und
 
 /**
  * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
- * for in the shadow root the element sits in, then in the document given, the page's own unless the
- * toast names the one it sits in.
+ * for in the shadow root the element sits in, then in the document given, the page's own unless a
+ * piece names the one it sits in.
  */
 export const homeOf = (element: Element, doc: Document = document): Element | null => {
     const root = rootOf(element);

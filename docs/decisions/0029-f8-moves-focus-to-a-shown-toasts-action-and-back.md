@@ -110,11 +110,12 @@ its size and scrolls that window as it takes its row above the dock.
 Option B. Only the toast changes. A toast on the page reads the page's document, as before, and the
 dialog, the panels, the stepper and a focus request call the same helpers with none, so they read
 the page's document as before. A toast stays in the document it was attached in, so a page that
-moves it into another takes it down and attaches it again. The focus the kit notes it handed back
-is the page's view of it, the frame, so a focus request in the page compares what the page sees.
-The listeners the controls' shared module adds as it loads, which note a visitor's presses for a
-focus request, stay on the page's document, so a press in the frame is not counted there. The
-bullet above on focus inside a frame still holds for a toast on the page around it.
+moves it into another takes it down and attaches it again. The focus the kit notes it handed back is
+the page's view of it, the frame, so a focus request in the page compares what the page sees. Record
+19's amendment for 0.9.4 moved the dialog and the panels onto the document they sit in too. The
+listeners the controls' shared module adds as it loads, which note a visitor's presses for a focus
+request, stay on the page's document, so a press in the frame is not counted there. The bullet above
+on focus inside a frame still holds for a toast on the page around it.
 
 ## How it is tested
 

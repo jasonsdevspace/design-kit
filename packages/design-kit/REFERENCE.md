@@ -4161,7 +4161,9 @@ on what had focus as the dialog opened counts as the browser's handing it back. 
 an earlier task, such as before an awaited save, lands only where its frame comes after the dialog
 closes, so a page that awaits before closing asks again just before it closes. It also closes the
 dialog on a tap on the scrim around it, one that starts and ends there so a drag out of the dialog
-closes nothing.
+closes nothing. A dialog the page attaches inside a frame of its own origin that it drives works in
+that frame's document as it does on the page, and stays in the document it was attached in, so a
+page that moves it into another takes it down and attaches it again.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
@@ -4299,17 +4301,20 @@ them, marks itself as the panel is and leaves the panel alone. A press of a butt
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
 returns the same, and one with no `aria-controls` is refused with an error that says so. The button
 and the panel are found at each press, so a panel drawn again keeps working, and listeners on the
-page serve every panel, taken off once every button is taken down. Escape with focus in a panel or
-on its button closes the innermost such panel and marks the press handled, so a dialog around the
-panel stays open. It leaves alone an Escape the page has already handled, one that ends typing in a
-script such as Japanese, one on a panel's button that is off, one in an open dialog or an open
-popover inside the panel, and one on a search with words in it or on a combobox or a button whose
-list or menu is open. Those checks read where the key was pressed, inside a page's own component
-where the component's shadow root is open, and the component's host among them, so a component that
-marks its host as an open combobox keeps its Escape. Inside a closed shadow root the panel sees only
-the host. An element inside a component's shadow tree that shares a panel's id closes nothing, since
-only the page's own elements name a panel. A panel's id must be the only one on the page, so a page
-that shows markup its visitors wrote prefixes or strips the ids in it.
+document serve every panel in it, taken off once every button in it is taken down. Escape with focus
+in a panel or on its button closes the innermost such panel and marks the press handled, so a dialog
+around the panel stays open. It leaves alone an Escape the page has already handled, one that ends
+typing in a script such as Japanese, one on a panel's button that is off, one in an open dialog or
+an open popover inside the panel, and one on a search with words in it or on a combobox or a button
+whose list or menu is open. Those checks read where the key was pressed, inside a page's own
+component where the component's shadow root is open, and the component's host among them, so a
+component that marks its host as an open combobox keeps its Escape. Inside a closed shadow root the
+panel sees only the host. An element inside a component's shadow tree that shares a panel's id
+closes nothing, since only the page's own elements name a panel. A panel's id must be the only one
+on the page, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A
+panel whose button the page attaches inside a frame of its own origin that it drives works in that
+frame's document as it does on the page, and the button stays in the document it was attached in, so
+a page that moves it into another takes it down and attaches it again.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
 as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches
