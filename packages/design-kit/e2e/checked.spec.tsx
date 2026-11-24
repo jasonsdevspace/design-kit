@@ -198,6 +198,16 @@ test('names a field no one can reach, and leaves focus where it is', async ({ pa
     await expect(page.getByRole('button', { name: 'Send' })).toBeFocused();
 });
 
+test('names a field without the mark its label hides from a screen reader', async ({ page }) => {
+    await openWith(
+        page,
+        `<form><label for="n">Name <span class="dk-field-mark" aria-hidden="true">(required)</span></label><input id="n" required>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect.poll(() => heard(page)).toEqual(['Name: Error: Enter a value.']);
+});
+
 test('lets a field marked off pass, since no one could put it right', async ({ page }) => {
     await openWith(
         page,
@@ -950,7 +960,7 @@ for (const [drawn, where] of [
         await page.keyboard.press('Enter');
         // No refusal follows to say it, so the stepper's own words are the ones heard.
         await expect(page.locator('#count')).toHaveText('1');
-        expect(await saidAfterWait(page)).toEqual([`stepper: ${RANGE}`]);
+        expect(await saidAfterWait(page)).toEqual([`stepper: Bid: ${RANGE}`]);
         expect((await bidErrors(page)).drawn).toEqual([RANGE]);
     });
 
@@ -1166,7 +1176,7 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await bidOf(page).fill('99');
             await bidOf(page).press('Tab');
             // Focus has left the value, so the stepper says its error then, and it is heard.
-            const own = way === 'attachForm' ? `stepper: ${RANGE}` : `page: ${RANGE}`;
+            const own = way === 'attachForm' ? `stepper: Bid: ${RANGE}` : `page: Bid: ${RANGE}`;
             expect(await saidAfterWait(page)).toEqual([own]);
             await forget(page);
             await send(page).focus();
@@ -1212,19 +1222,35 @@ for (const way of ['attachForm', 'useFormRefusal'] as const) {
             await refused(page);
         });
 
-        test('refuses a stepper holding a letter, with one error said once', async ({ page }) => {
+        for (const by of ['Enter', 'a press on the button'] as const)
+            test(`shows one error for a stepper holding a letter submitted by ${by} right after it is typed, and says it once`, async ({
+                page,
+            }) => {
+                await openWay(page);
+                await bidOf(page).fill('');
+                await bidOf(page).blur();
+                await bidOf(page).pressSequentially('e');
+                // A press moves focus off the letters first, which shows the stepper's error, and
+                // the refusal straight after takes back its words, so the refusal is said alone.
+                if (by === 'Enter') await bidOf(page).press('Enter');
+                else await send(page).click();
+                await refused(page);
+            });
+
+        test('says the error for letters left by Tab, then the refusal alone', async ({ page }) => {
             await openWay(page);
             await bidOf(page).fill('');
+            await bidOf(page).blur();
             await bidOf(page).pressSequentially('e');
-            await bidOf(page).press('Enter');
-            const said = await saidOf(page);
-            expect(said).toHaveLength(1);
-            expect(said[0]).toMatch(/^page: Bid: Error: /);
-            const errors = await bidErrors(page);
-            expect(errors.drawn).toHaveLength(1);
-            expect(errors.described).toEqual(errors.drawn);
+            await bidOf(page).press('Tab');
+            const own = way === 'attachForm' ? `stepper: Bid: ${RANGE}` : `page: Bid: ${RANGE}`;
+            expect(await saidAfterWait(page)).toEqual([own]);
+            expect(await bidErrors(page)).toEqual({ drawn: [RANGE], described: [RANGE] });
             await expect(bidOf(page)).toHaveAttribute('aria-invalid', 'true');
-            await expect(page.locator('#count')).toHaveText('0');
+            await forget(page);
+            await send(page).focus();
+            await send(page).press('Enter');
+            await refused(page);
         });
 
         test("refuses a required stepper drawn blank and never touched with its own error, past the page's words", async ({

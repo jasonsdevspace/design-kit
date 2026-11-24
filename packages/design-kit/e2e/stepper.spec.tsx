@@ -23,21 +23,24 @@ import { doubled, textSize } from './text-size.js';
  * often, and in whichever order, the stepper was attached, firing the events a typed value fires
  * and saying the value on its status line, the buttons off at the limits with focus kept and on a
  * disabled or read-only field, a value a form's reset sets followed, a typed value outside the
- * limits, or none where one is required, reported as a field's error once changed and said, and
- * cleared once right while a page's own error keeps its place, a value drawn past the limits shown
- * as an error once attached or brought back by a reset with nothing said, but not on a field no one
- * can change, for a refusal the page sets or beside the page's own error, a phone's keyboard with a
- * minus only where it is needed, the value in figures of one width so the field keeps its width,
- * every figure shown under the wider spacing a reader may set, the label beside it on one line at a
- * phone's narrowest width, a stepper that fits a phone at twice the text size, alone and inside its
- * field in a page's own row, the larger target when asked, a read-only value starting where a
- * read-only field's words start and standing at the field's height, or at the larger target when
- * tall, centered at an inline stepper's row's end, and kept in place with a button holding focus,
- * hidden pieces kept hidden by sheets read without :has(), an inline stepper's error above it and
- * its hint below it, a field's control at its own height beside a taller field in a page's own row,
- * an inline stepper's label level with its neighbor's there, focus handed to a read-only value or
- * to the stepper itself and kept there as it is taken down with a button focused, the keyboard, and
- * no audit findings in either theme.
+ * limits, or none where one is required, reported as a field's error once changed and said after
+ * the field's name, a mark the label hides left out of that name, letters typed into a blank
+ * stepper reported as focus leaves it, but not as focus stays, on a locked field or beside the
+ * page's own error, nor before a press on its own button that then lands, a blank focus passes
+ * through left quiet, and the error cleared once right while a page's own error keeps its place, a
+ * value drawn past the limits shown as an error once attached or brought back by a reset with
+ * nothing said, but not on a field no one can change, for a refusal the page sets or beside the
+ * page's own error, a phone's keyboard with a minus only where it is needed, the value in figures
+ * of one width so the field keeps its width, every figure shown under the wider spacing a reader
+ * may set, the label beside it on one line at a phone's narrowest width, a stepper that fits a
+ * phone at twice the text size, alone and inside its field in a page's own row, the larger target
+ * when asked, a read-only value starting where a read-only field's words start and standing at the
+ * field's height, or at the larger target when tall, centered at an inline stepper's row's end, and
+ * kept in place with a button holding focus, hidden pieces kept hidden by sheets read without
+ * :has(), an inline stepper's error above it and its hint below it, a field's control at its own
+ * height beside a taller field in a page's own row, an inline stepper's label level with its
+ * neighbor's there, focus handed to a read-only value or to the stepper itself and kept there as it
+ * is taken down with a button focused, the keyboard, and no audit findings in either theme.
  */
 
 const FIELDS = renderToStaticMarkup(
@@ -258,8 +261,8 @@ test('reports a typed value outside the limits, or none where one is required, a
     await expect(error).toHaveText(said);
     await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');
     await expect(bid(page)).toHaveAccessibleDescription(said);
-    // Focus has moved on, so the status line says the error too.
-    await expect(line(page, 'bid')).toHaveText(said);
+    // Focus has moved on, so the status line says the error too, after the field's name.
+    await expect(line(page, 'bid')).toHaveText(`Ana's bid: ${said}`);
     // The error sits above the field, as every field's does.
     expect((await box(error, 'the error')).y).toBeLessThan((await box(bid(page), 'the value')).y);
     await bid(page).fill('6');
@@ -289,6 +292,146 @@ test('reports a typed value outside the limits, or none where one is required, a
     });
     await expect(error).toBeHidden();
     await expect(bid(page)).not.toHaveAttribute('aria-invalid');
+});
+
+test('shows its error and says it once as focus leaves letters typed into a blank stepper', async ({
+    page,
+    browserName,
+}) => {
+    await stillClock(page.clock);
+    await open(page);
+    await record(page, 'bid');
+    // Emptied and left, so the blank is the value the browser holds as settled.
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    // Letters leave the value blank, so the browser fires no change as focus leaves. Firefox takes
+    // any letters, where Chromium and Safari take only those a number may hold.
+    await bid(page).focus();
+    await bid(page).pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    await bid(page).press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    const words = 'Error: Enter a whole number from 0 to 10.';
+    await expect(page.locator('#bid-range')).toBeVisible();
+    await expect(bid(page)).toHaveAttribute('aria-invalid', 'true');
+    await expect(bid(page)).toHaveAccessibleDescription(words);
+    // Focus that comes back and leaves again with nothing changed says nothing more.
+    await page.keyboard.press('Shift+Tab');
+    await expect(bid(page)).toBeFocused();
+    await page.keyboard.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    expect(await said(page)).toEqual([`Ana's bid: ${words}`]);
+    // A blank required field that focus only passes through stays quiet until it is changed.
+    const players = page.getByRole('spinbutton', { name: 'Players' });
+    await players.evaluate((input: HTMLInputElement) => {
+        input.required = true;
+        input.value = '';
+    });
+    await players.focus();
+    await players.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#players-range')).toBeHidden();
+    await expect(players).not.toHaveAttribute('aria-invalid');
+});
+
+test('names its field before the error it says as focus leaves a wrong value, and a press says the value alone', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    const players = page.getByRole('spinbutton', { name: 'Players' });
+    await players.fill('99');
+    await players.press('Tab');
+    const words = 'Error: Enter a whole number from 2 to 8.';
+    // Named by its label, as a refused form names a field, and not by the subject its buttons use.
+    await expect(line(page, 'players')).toHaveText(`Players: ${words}`);
+    // The error drawn and the description keep the error alone, since the label names the field.
+    await expect(page.locator('#players-range')).toHaveText(words);
+    await expect(players).toHaveAccessibleDescription(`From two to eight ${words}`);
+    // A press, with focus kept on its button, says the value alone.
+    await players.fill('5');
+    await press(page.getByRole('button', { name: 'Raise the number of players' }), browserName);
+    await expect(line(page, 'players')).toHaveText('6');
+});
+
+test('takes a press on its own button straight after letters, with no error drawn in between', async ({
+    page,
+    browserName,
+}) => {
+    await open(page);
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await bid(page).focus();
+    await bid(page).pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    // Every moment the error shows is kept, since an error drawn above the field as the press
+    // starts moves the button out from under the pointer before it is released.
+    await page.locator('#bid-range').evaluate((range: HTMLElement) => {
+        const shown: boolean[] = [];
+        (window as unknown as { shown: boolean[] }).shown = shown;
+        new MutationObserver(() => {
+            if (!range.hidden) shown.push(true);
+        }).observe(range, { attributeFilter: ['hidden'] });
+    });
+    const at = await box(raise(page), 'the raise button');
+    await page.mouse.move(at.x + at.width / 2, at.y + at.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(bid(page)).toHaveValue(/^\d+$/);
+    expect(await page.evaluate(() => (window as unknown as { shown: boolean[] }).shown)).toEqual(
+        []
+    );
+});
+
+test("leaves a mark the label hides out of the field's name it says", async ({ page }) => {
+    await servePage(page, {
+        title: 'Round 3',
+        body: renderToStaticMarkup(
+            <main>
+                <h1>Round 3</h1>
+                <StepperField id="bid" label="Bid" mark="required" min={0} max={10} />
+            </main>
+        ),
+        script: ATTACH,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const marked = page.getByRole('spinbutton', { name: 'Bid' });
+    await marked.fill('99');
+    await marked.press('Tab');
+    await expect(line(page, 'bid')).toHaveText('Bid: Error: Enter a whole number from 0 to 10.');
+});
+
+test('says nothing for letters as focus stays, or as the field is locked or shows an error of its own', async ({
+    page,
+    browserName,
+}) => {
+    await stillClock(page.clock);
+    await open(page);
+    await record(page, 'bid');
+    await bid(page).fill('');
+    await bid(page).press('Tab');
+    await bid(page).focus();
+    await bid(page).pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    // A blur with focus still on the value, as a switch of window gives, reports nothing.
+    await bid(page).dispatchEvent('blur');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#bid-range')).toBeHidden();
+    // Made read only while holding letters, the field shows no error as focus leaves it.
+    await bid(page).evaluate((input: HTMLInputElement) => {
+        input.readOnly = true;
+    });
+    await page.keyboard.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#bid-range')).toBeHidden();
+    // A field that shows an error of the page's own is not given a second one.
+    const hand = page.getByRole('spinbutton', { name: 'Cards in hand' });
+    await hand.fill('');
+    await hand.press('Tab');
+    await hand.focus();
+    await hand.pressSequentially(browserName === 'firefox' ? 'abc' : 'e');
+    await hand.press('Tab');
+    await page.clock.runFor(PAST_THE_WAIT);
+    await expect(page.locator('#hand-range')).toBeHidden();
+    expect(await said(page)).toEqual([]);
 });
 
 test('clears an error for a value between steps, and marks its buttons again, as a script changes the step', async ({
