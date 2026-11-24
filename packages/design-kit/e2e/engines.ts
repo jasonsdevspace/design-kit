@@ -52,6 +52,7 @@ export const WEBKIT: Engine = {
 /** What Firefox draws or does its own way, and what every engine does its own way. */
 export const FIREFOX: Engine = {
     clock: "The still clock the specs share, which each engine's page runs.",
+    history: 'The words a browser keeps from a form sent, which Firefox lists over the page.',
     busy: "A busy button's dots, a gradient each engine draws and places on its own.",
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
     'stepper-say': 'A stepper attached again from a focusout handler, an event each engine fires.',
