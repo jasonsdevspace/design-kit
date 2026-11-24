@@ -359,3 +359,70 @@ test('fills its field with a value, and leaves a button its place beside or unde
         expect.soft(rows[0]?.under, at).toBe(large);
     }
 });
+
+test("keeps a read-only select's line level with a button whose words take two lines", async ({
+    page,
+}) => {
+    await writePage(page, {
+        title: 'Read only',
+        // The button held narrow, so its words take two lines beside the value.
+        css: '#act-value + .dk-button { max-width: 6rem; }',
+        body: `<main class="dk-page"><form>${renderToStaticMarkup(
+            <SelectField
+                id="act-value"
+                name="act"
+                label="Game"
+                defaultValue="wizard"
+                readOnly
+                action={
+                    <button type="button" className="dk-button">
+                        Change game
+                    </button>
+                }
+            >
+                <option value="wizard">Wizard</option>
+            </SelectField>
+        )}</form></main>`,
+    });
+    const value = await page.locator('#act-value').evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const drawn = getComputedStyle(element);
+        return (
+            box.top +
+            Number.parseFloat(drawn.borderTopWidth) +
+            Number.parseFloat(drawn.paddingTop) +
+            Number.parseFloat(drawn.lineHeight) / 2
+        );
+    });
+    const words = await page.locator('#act-value + .dk-button').evaluate((button) => {
+        const range = document.createRange();
+        range.selectNodeContents(button);
+        const lines = [...range.getClientRects()].filter(({ height }) => height > 0);
+        const tops = new Set(lines.map(({ top }) => Math.round(top)));
+        const top = Math.min(...lines.map((line) => line.top));
+        const bottom = Math.max(...lines.map((line) => line.bottom));
+        return { lines: tops.size, middle: (top + bottom) / 2 };
+    });
+    expect(words.lines, 'the button draws its words on two lines').toBe(2);
+    expect(Math.abs(value - words.middle)).toBeLessThanOrEqual(2);
+});
+
+test('submits nothing for Enter in a read-only select', async ({ page }) => {
+    await writePage(page, {
+        title: 'Read only',
+        body: `<main class="dk-page"><form id="sent">${renderToStaticMarkup(
+            <SelectField id="game" name="game" label="Game" defaultValue="wizard" readOnly>
+                <option value="wizard">Wizard</option>
+            </SelectField>
+        )}<div class="dk-actions"><button class="dk-button">Save</button></div></form></main>`,
+    });
+    await page.locator('#sent').evaluate((form) => {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            form.dataset['submitted'] = 'yes';
+        });
+    });
+    await page.locator('#game').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#sent')).not.toHaveAttribute('data-submitted');
+});

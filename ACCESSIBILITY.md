@@ -118,10 +118,10 @@ is its CSS transformer, as the package README shows.
   size and the wider spacing even a short phrase can run past its edge and be cut off, by an amount
   that depends on the typeface. A value of words is a `ValueField`, a read-only textarea the kit
   sizes to its value, so it wraps and shows whole. A screen reader may call it a text area or a
-  field of many lines where it calls the other a text field.
+  field of many lines where it calls a read-only text field a text field.
 - In Firefox before 152 and Safari before 26.2, which cannot size a field to its content, a
-  `ValueField` and a read-only select are one field tall, and a long value scrolls inside it and
-  can be dragged taller by the browser's handle.
+  `ValueField` and a read-only select are one field tall, and a long value scrolls inside it, and
+  on a desktop browser it can be dragged taller by its handle.
 - In Firefox 120, which lacks `:has()`, a callout written before the first field with no form runs
   the column's width.
 - In Firefox 120, which lacks `:has()`, a stepper's field with its label above, in a page's own row,

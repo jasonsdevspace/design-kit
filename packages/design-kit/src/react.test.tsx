@@ -622,6 +622,11 @@ describe('the field', () => {
                 '<textarea class="dk-textarea dk-value" rows="1" readOnly="" id="round"' +
                 ' aria-describedby="round-hint">Round 3</textarea></div>'
         );
+        // A caller that passes rows or readOnly past the types still gets one read-only row.
+        const loose = { rows: 4, readOnly: false } as object;
+        expect(renderToStaticMarkup(<ValueField id="v" label="Round" {...loose} />)).toContain(
+            '<textarea class="dk-textarea dk-value" rows="1" readOnly="" id="v">'
+        );
         const wrong = createRef<HTMLInputElement>();
         // @ts-expect-error A value's ref is the textarea drawn, not the input of another.
         expect(renderToStaticMarkup(<ValueField label="Round" ref={wrong} />)).toBeTruthy();

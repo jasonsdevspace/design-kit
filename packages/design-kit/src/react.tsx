@@ -613,9 +613,9 @@ export type SelectFieldProps = FieldParts &
          * Read only, a value to read but not change: drawn as `ValueField` draws a value, with the
          * chosen option's words, and sent by a hidden field, since a select has no read-only state.
          * With no select drawn, its `disabled`, `form`, `title` and `autoFocus` go to the value, and
-         * its other props and its `ref` are left unused, and Enter in it does not submit the form.
-         * It is read only for the page, rather than for a moment, since turning it on or off draws
-         * a new control in place of the last.
+         * its other props and its `ref` are left unused. Enter in it does not submit the form. It
+         * is read only for the page, rather than for a moment, since turning it on or off draws a
+         * new control in place of the last.
          */
         readonly readOnly?: boolean | undefined;
     };
@@ -766,8 +766,8 @@ export type ValueFieldProps = FieldParts &
  * A value of words a visitor reads but cannot change, with its label, hint and error: a read-only
  * textarea the kit sizes to its value, so words that run past its width wrap and show whole, where
  * a read-only input of one line cuts them off. It is read only for the page, and Enter in it does
- * not submit the form. Where a browser cannot size it, it is one row tall and a long value scrolls
- * inside it. The textarea takes every other prop given, its `ref` among them, which holds the
+ * not submit the form. Where a browser cannot size it, it is one field tall and a long value
+ * scrolls inside it. The textarea takes every other prop given, its `ref` among them, which holds the
  * textarea drawn for a page that moves focus to it, and its text is `defaultValue` or `value`.
  */
 export const ValueField = (props: ValueFieldProps) => {
@@ -778,9 +778,9 @@ export const ValueField = (props: ValueFieldProps) => {
             <WithAction action={action}>
                 <textarea
                     className={spaced('dk-textarea dk-value', className)}
+                    {...rest}
                     rows={1}
                     readOnly
-                    {...rest}
                     {...field.wired}
                 />
             </WithAction>

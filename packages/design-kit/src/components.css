@@ -893,6 +893,14 @@
         min-width: 0;
     }
 
+    /*
+     * A value stands at its own height in the middle of the row, so its line stays level with the
+     * button's words where they take two lines, as an input's centered line does.
+     */
+    :where(.dk-field-action > .dk-value) {
+        align-self: center;
+    }
+
     /* The button keeps its words' width, and wraps them where even its own row is too narrow. */
     :where(.dk-field-action > .dk-button) {
         flex: 0 1 auto;
@@ -962,7 +970,6 @@
      * cannot size it, its one row is a field's height and a long value scrolls inside it.
      */
     :where(.dk-textarea.dk-value) {
-        inline-size: 100%;
         padding-block: max(var(--dk-space-1), (var(--dk-field-height) - 1lh) / 2 - 1px);
     }
 

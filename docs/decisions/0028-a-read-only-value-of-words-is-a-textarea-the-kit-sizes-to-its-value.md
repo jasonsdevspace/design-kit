@@ -29,8 +29,8 @@ must leave the second where it stands, its height and its place in the page unch
   know which of its values may run long does not work without the page's care.
 - **C. A selector keyed on `[readonly]` that sizes every read-only textarea to its value.**
   Rejected, since a note held read only while it saves is a textarea with `readonly` too. A note of
-  three rows holding a line of words dropped from 90 to 36 pixels tall as it turned, and back as the
-  save ended, so everything under it moved twice.
+  three rows holding a line of words, at 1280 wide and the usual text size, dropped from 90 to 36
+  pixels tall as it turned, and back as the save ended, so everything under it moved twice.
 - **D. A selector keyed on `[rows='1']`.** Rejected, since `rows` already says how tall a textarea
   is, and a page that writes a one-row note to grow by its own script would find the kit sizing it
   too.
@@ -51,8 +51,8 @@ with an action keeps its row.
 - The sheets grow by about a hundred bytes, which left less room under their budget than one more
   piece of the usual size, so record 13's rule set it again, as its table gives.
 - Firefox before 152 and Safari before 26.2 cannot size a field to its content. There a value is
-  one field tall, and a long one scrolls inside it and can be dragged taller by the browser's
-  handle. The accessibility notes say so.
+  one field tall, and a long value scrolls inside it, and on a desktop browser it can be dragged
+  taller by its handle. The accessibility notes say so.
 - A read-only select draws a textarea in place of an input, so Enter in it does not submit its form
   as Enter in a field of one line does, and a page's own rule for its `dk-input` does not reach it.
   The change file says so under Upgrading.
@@ -79,6 +79,14 @@ Firefox, each of which sizes the value by `field-sizing` in the versions the tes
    value is as tall as a read-only field.
 
 The same spec fills a value's field, keeps a button's place beside a read-only select and under it
-on a narrow screen as beside a read-only input, and draws the read-only look, its error edge and
-its forced colors on a value and on a field alike. `e2e/stepper.spec.tsx` lines a read-only
+on a narrow screen as beside a read-only input, keeps the select's line level with a button whose
+words take two lines, finds Enter in a read-only select submits nothing, and draws the read-only
+look, its error edge and its forced colors on a value and on a field alike. `e2e/stepper.spec.tsx` lines a read-only
 stepper's figures up with a read-only field's words and a value's.
+
+## Sources
+
+- W3C, [Understanding Success Criterion 1.4.12: Text
+  Spacing](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html), read 2026-11-24.
+- MDN, [field-sizing](https://developer.mozilla.org/en-US/docs/Web/CSS/field-sizing), read
+  2026-11-24, whose compatibility data gives Chrome 123, Firefox 152 and Safari 26.2, on iOS too.
