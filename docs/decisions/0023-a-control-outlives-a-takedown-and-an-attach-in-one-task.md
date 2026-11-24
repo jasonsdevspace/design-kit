@@ -349,20 +349,20 @@ The paths are in `packages/design-kit`.
   hooks share through a merged ref observed once, a form passed from one hook's ref to another's in
   one commit keeping its errors and refusing through the hook it went to, and either of two form
   hooks on one form dropped leaving the other's check and refusal.
-- `e2e/stepper.spec.tsx` focuses a button of a read-only, an editable and a disabled stepper by the
-  keyboard, takes each down by its signal and by its detach, and finds focus off the body and off an
-  editable value, on the read-only value and on the group named by its label, without a required
-  field's hidden mark, both buttons hidden and the focus ring drawn. It finds the box's attributes
-  as drawn, but for the tabindex given once and kept, through a takedown, an attach after it, a
-  takedown again and an abort and an attach in one task, and finds an attribute the page gives the
-  box kept. It finds older markup with no role given a tabindex and focused, a tabindex of 0 kept, a
-  box that refuses focus left as drawn and focus sent on to the main content, focus a page listener
-  moves as the value is tried staying, the group's name kept as a script changes the value, and a
-  stepper attached again left out of the tab order with no ring for a pointer. It finds the buttons
-  kept where the page attaches the stepper afresh as focus comes to it, focus kept on the button
-  where the page attaches it again in the task its signal aborts, focus the page moves in that task
-  staying, and a focus request asked in that task landing. `e2e/leaks.spec.tsx` takes the stepper
-  down with a button focused.
+- `e2e/stepper-takedown.spec.tsx` focuses a button of a read-only, an editable and a disabled
+  stepper by the keyboard, takes each down by its signal and by its detach, and finds focus off the
+  body and off an editable value, on the read-only value and on the group named by its label,
+  without a required field's hidden mark, both buttons hidden and the focus ring drawn. It finds the
+  box's attributes as drawn, but for the tabindex given once and kept, through a takedown, an attach
+  after it, a takedown again and an abort and an attach in one task, and finds an attribute the page
+  gives the box kept. It finds older markup with no role given a tabindex and focused, a tabindex of
+  0 kept, a box that refuses focus left as drawn and focus sent on to the main content, focus a page
+  listener moves as the value is tried staying, the group's name kept as a script changes the value,
+  and a stepper attached again left out of the tab order with no ring for a pointer. It finds the
+  buttons kept where the page attaches the stepper afresh as focus comes to it, focus kept on the
+  button where the page attaches it again in the task its signal aborts, focus the page moves in
+  that task staying, and a focus request asked in that task landing. `e2e/leaks.spec.tsx` takes the
+  stepper down with a button focused.
 - `e2e/leaks.spec.tsx` joins every piece but a focus request twice with a new signal and finds
   nothing growing as it is joined and nothing left once it is taken down, listeners on signals
   included.

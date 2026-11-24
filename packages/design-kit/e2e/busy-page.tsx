@@ -6,7 +6,7 @@ import { Button, StatusProvider, useBusy } from '../src/react.js';
 /*
  * The page busy.spec.tsx draws with React: a save that takes a second, its button busy while it
  * runs, with a count of the saves made, and a save that ends just after the wait, past --dk-wait
- * but before its words could be put on the line, with every set of words the line says kept.
+ * but before its words could be put on the line. The spec hears the line through `hearing`.
  */
 
 const SaveButton = ({ label, words, takes }: { label: string; words: string; takes: number }) => {
@@ -43,10 +43,3 @@ if (root)
             </main>
         </StatusProvider>
     );
-const page = window as unknown as { heard: string[] };
-page.heard = [];
-new MutationObserver(() => {
-    const line = document.querySelector('#root > p[role="status"]');
-    const words = line?.textContent ?? '';
-    if (words !== '' && words !== page.heard.at(-1)) page.heard.push(words);
-}).observe(document.body, { childList: true, characterData: true, subtree: true });

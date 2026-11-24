@@ -10,6 +10,7 @@ import {
     themeSwitch,
 } from '../examples/examples.js';
 import { InputField, StatusLine, Toast } from '../src/react.js';
+import { hearing } from './page.js';
 
 /*
  * Every piece record 22's teardown contract holds, in one page that teardown.spec.tsx and
@@ -96,11 +97,7 @@ Object.defineProperty(navigator, 'clipboard', {
 window.release = () => answer();
 const line = $('.screen-status');
 window.line = line;
-window.heard = [];
-new MutationObserver(() => {
-    if (line.textContent) window.heard.push(line.textContent);
-}).observe(line, { childList: true, characterData: true, subtree: true });
-const screen = (signal) => kit.attachStatus(line, { signal });
+${hearing('.screen-status')}const screen = (signal) => kit.attachStatus(line, { signal });
 const group = $('.dk-theme-switch');
 const form = $('#join');
 const steps = $('.dk-stepper');
