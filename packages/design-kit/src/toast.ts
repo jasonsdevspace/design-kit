@@ -1,5 +1,5 @@
 import { isOff } from './find.js';
-import { activeOf, focusedNow, handBack, holds, homeOf, mayHandBack } from './focus.js';
+import { deepActive, handBack, holds, homeOf, mayHandBack, placeNow } from './focus.js';
 import { claimLine, hush, releaseLine, say } from './line.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
@@ -324,11 +324,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             !element.isConnected
         )
             return;
-        const before = focusedNow(doc);
+        const before = deepActive();
         if (holds(element, before)) giveBack();
         else if (before?.closest('.dk-toast')) return;
         else actionButton.focus();
-        if (focusedNow(doc) !== before) event.preventDefault();
+        if (deepActive() !== before) event.preventDefault();
     };
     const dismiss = () => {
         window.clearTimeout(timer);
@@ -355,7 +355,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         marked = undefined;
         if (hadFocus) {
             giveBack();
-            const now = activeOf();
+            const now = deepActive();
             if (holds(element, now)) (now as HTMLElement).blur();
         }
         via = [];
@@ -372,7 +372,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
         // Read as the toast's document sees it, so a blank body in another frame is that frame.
-        const active = focusedNow(doc);
+        const active = placeNow(doc);
         let reached = false;
         if (!holds(element, active))
             [arrivedAt, via, reached] = [active ?? undefined, ...framesOf(active, doc)];
@@ -380,7 +380,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
         // Focus on an action that this message does not have moves to the close button.
-        if (!action && activeOf() === actionButton) close.focus();
+        if (!action && deepActive() === actionButton) close.focus();
         onAction = action?.onAction;
         actionButton.textContent = action?.label ?? '';
         actionButton.hidden = !action;
@@ -478,7 +478,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // is kept apart for the handback.
             queueMicrotask(() => {
                 if (!element.isConnected) leftWith ||= focused;
-                focused = element.isConnected && holds(element, activeOf());
+                focused = element.isConnected && holds(element, deepActive());
                 wait();
             });
         },

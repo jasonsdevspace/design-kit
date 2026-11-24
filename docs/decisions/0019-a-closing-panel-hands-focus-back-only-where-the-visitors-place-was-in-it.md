@@ -140,31 +140,45 @@ against the rule above that focus a visitor put elsewhere stays, and a dialog in
 from a button of the page's judged its hand back in the frame and passed that button over. Guarding
 each case would compute the next option backward.
 
-**C. Focus is read from the page down.** What has focus is followed from the page's document into
-each shadow root that holds it and into each frame of the page's own origin that has it, to the
-control focused inside or to the frame's body where nothing is, and a frame of another origin reads
-as the frame. A frame's record is read only while focus is in the frame, so a control it last
-focused is never taken for focus. Focus inside a frame counts as inside a piece that holds the
-frame, and a body no one can type in counts as nothing only in the document of the piece asking, the
-page's for a focus request asked with nothing, while one in any other document reads as its frame,
-as the page read a frame before, so focus a visitor put in another frame's blank space stays theirs.
-An editor's body, editable or in design mode, counts as focus wherever it is. Every piece, the
-stepper and a focus request read this one view, and the focus the kit notes it handed back is the
-control in the frame.
+**C. The public `activeOf` reads from the page down, and every read uses it.** Rejected once built.
+Focus followed into frames is right for a piece that keeps a place to hand back to, but a focus
+request's `from` came from it too, so a request asked with focus in a frame looked its id up in the
+frame, and values stored through the deep reader were compared through a view that took any blank
+body for nothing in the asker's document, so a request dropped where a frame left the page and a
+walk ended where focus fell to the page's body. A public function that reads deep could not be taken
+back once a release shipped it.
 
-Option C. The dialog finds its opener, an element or an event of the frame's or the page's, from
-this view, and hands focus back to an opener in the frame or on the page alike. What had focus as it
-opened is kept from the same view, a blank body counting as nothing, and focus on it as the dialog
-closes counts as the browser's handback: the engines measured differ there, Chromium leaving focus
-on the frame's body, WebKit on the closed dialog's control and Firefox on the page's opener, and
-none puts it on the frame's earlier control. A dialog in a frame makes only that frame inert, so a
-page that needs the whole view held opens the dialog on the page. A panel's button keeps the
-document it was attached in, the listeners every panel shares are added to each document that holds
-an attached button and taken off with the last button in it or once that document has lost its
-window, and the panel's id, its buttons, the button that opened it and whether it has started are
-kept for each document, so a panel of the page and one of a frame that share an id stay apart. Each
-stays in the document it was attached in, so a page that moves one into another takes it down and
-attaches it again. The listeners the controls' shared module adds as it loads, which note a
+**D. Focus is kept as it is and compared and judged through one view.** One private reader follows
+focus from the page's document into each shadow root that holds it and into each frame of the page's
+own origin that has it, an object showing a document among them, to the control focused inside or to
+the frame's body where nothing is, and a frame of another origin reads as the frame. A frame's
+record is read only while focus is in the frame, so a control it last focused is never taken for
+focus. What the kit stores, the focus it notes it handed back and what had focus as a dialog opened,
+is that element as it is, except that a blank body is kept as `seen` reads it for the piece's own
+document. Every comparison reads both sides through `seen`, for one document, and nowhere means
+`seen` reads null for the asker's: a piece asks for its own document and a focus request asks as the
+page. Through `seen`, a body no one can type in is nothing in that document, an element of the
+document or of one around it is itself, and an element of any other frame, one the document holds or
+one beside it, reads as the frame that holds it at the document's level, so focus a visitor put in
+another frame's blank space, or on the page around a frame, stays theirs. An editor's body, editable
+or in design mode, counts as focus wherever it is. The walk that hands focus back counts focus
+fallen to any blank body as no move of the page's. `activeOf` stays as 0.9.3 had it, followed into
+shadow roots only, so a request's `from`, its id and the stepper read the page's view.
+
+Option D. The dialog finds its opener, an element or an event of the frame's or the page's, from the
+deep reader, and hands focus back to an opener in the frame or on the page alike. What had focus as
+it opened is kept as the deep reader gives it, a blank body of the dialog's document or one around
+it counting as nothing and one of another frame as that frame, and focus that reads the same through
+`seen` as the dialog closes counts as the browser's handback: the engines measured differ there,
+Chromium leaving focus on the frame's body, WebKit on the closed dialog's control and Firefox on the
+page's opener, and none puts it on the frame's earlier control. A dialog in a frame makes only that
+frame inert, so a page that needs the whole view held opens the dialog on the page. A panel's button
+keeps the document it was attached in, the listeners every panel shares are added to each document
+that holds an attached button and taken off with the last button in it or once that document has
+lost its window, and the panel's id, its buttons, the button that opened it and whether it has
+started are kept for each document, so a panel of the page and one of a frame that share an id stay
+apart. Each stays in the document it was attached in, so a page that moves one into another takes it
+down and attaches it again. The listeners the controls' shared module adds as it loads, which note a
 visitor's presses for a focus request, stay on the page's document, and neither the dialog nor the
 panels read them.
 
@@ -205,7 +219,7 @@ The path is in `packages/design-kit`.
   finds both listening in the frame and adding nothing to the page's document or window, the page
   and the frame back where they started, and the panels' listeners off a frame that left the page
   with no takedown.
-- For focus a visitor put in another frame, `e2e/focus.spec.ts` finds a focus request leaving an
+- For focus a visitor put in another frame, `e2e/focus.spec.tsx` finds a focus request leaving an
   editor's body in a frame, editable or in design mode, and `e2e/dialog.spec.ts` finds a dialog of
   the page handing focus back to that editor, a dialog in a frame leaving focus on the page's body
   where a visitor clicked, a dialog of the page taken down with focus on a control in a frame it
@@ -213,6 +227,15 @@ The path is in `packages/design-kit`.
   button. `e2e/panel.spec.ts` finds a panel of the page leaving focus in a frame whose blank space a
   visitor clicked, handing focus to its button from a control in a frame it holds, and a panel in a
   frame inside a frame handing focus to its button.
+- `e2e/seen.spec.ts`, in Chromium, WebKit and Firefox, reads `seen` as a pure function over a page
+  with a frame, a frame inside it, a frame beside it and a frame taken from the page, for an asker
+  in each, and finds a kept place reading the same as the element, and the walk going on past a
+  place in a frame whose own listener drops focus to the page's body. `e2e/focus.spec.tsx` finds a
+  request asked with focus in a frame finding its id on the page and landing after the frame leaves
+  the page, `e2e/toast.spec.tsx` a request landing as a toast hands focus back to a frame whose
+  control has gone, and `e2e/dialog.spec.ts` a dialog of the page handing focus back to its opener
+  in a frame where focus is handed to that frame with nothing in it. `scripts/controls.test.ts`
+  finds the deep reader called outside the focus module only by the dialog and the toast.
 - `scripts/controls.test.ts` holds the controls to their budget.
 - `e2e/focus.spec.tsx` moves focus to a target, an id or a fallback once a change is drawn, by the
   walk a closing panel hands focus back by.

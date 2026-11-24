@@ -2221,11 +2221,11 @@ a shadow root finds its own control, never an element of the page around it that
 the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
 element's root. A panel and its button are found from the document the button sits in, which the
 panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
-root that holds it and into each frame of the page's own origin that has it, as a request reads
-where focus was, for a page that asks later and passes `from` itself. A frame of another origin
-shows nothing inside, so focus there reads as the frame. A request reads a body no one can type in
-as nothing only in the document it was asked from, and one of another frame as that frame, so focus
-a visitor put in a frame's blank space or an editor's body stays theirs.
+root that holds it, as a request reads where focus was, for a page that asks later and passes `from`
+itself. Focus inside a frame reads as the frame there, as the page sees it. A request compares where
+focus is as the page sees it, a blank body of the page as nothing and a frame as the frame whatever
+has focus inside it, so focus a visitor put in a frame's blank space or an editor's body stays
+theirs.
 
 #### Moving focus in React
 
@@ -4317,7 +4317,7 @@ component where the component's shadow root is open, and the component's host am
 component that marks its host as an open combobox keeps its Escape. Inside a closed shadow root the
 panel sees only the host. An element inside a component's shadow tree that shares a panel's id
 closes nothing, since only the page's own elements name a panel. A panel's id must be the only one
-on the page, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A
+in its document, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A
 panel whose button the page attaches inside a frame of its own origin that it drives works in that
 frame's document as it does on the page, and the button stays in the document it was attached in, so
 a page that moves it into another takes it down and attaches it again.
@@ -4398,16 +4398,15 @@ large numeral, a hero beside its picture, an empty state and progress.
 `attachThemeSwitch()`, `attachCopyButton()`, `attachStepper()`, `attachToast()`, `attachDialog()`,
 `attachPanel()`, `attachTable()`, `attachStatus()` and `chooseTheme()`, which make the controls
 work, `moveFocus()`, which moves focus once a change is drawn, `activeOf()`, which reads what has
-focus inside a shadow root and a frame of the page's own origin too, `focusOnArrival()`, which
-focuses a view's heading on an arrival a press brought, `attachRoving()`, which moves among a
-group's cells by the arrow keys, `attachForm()`, which checks a form against the browser's
-constraints on submit, draws the errors and refuses it, `attachBusy()`, which says a busy button's
-wait, `attachProgress()`, which says progress at its steps, and the types `AttachOptions`, which
-carries the `signal` that holds a control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`,
-`DialogOpener`, `DialogOptions`, `PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`,
-`FocusTarget`, `MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`,
-`FormOptions`, `Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and
-`ProgressOptions`.
+focus inside a shadow root too, `focusOnArrival()`, which focuses a view's heading on an arrival a
+press brought, `attachRoving()`, which moves among a group's cells by the arrow keys,
+`attachForm()`, which checks a form against the browser's constraints on submit, draws the errors
+and refuses it, `attachBusy()`, which says a busy button's wait, `attachProgress()`, which says
+progress at its steps, and the types `AttachOptions`, which carries the `signal` that holds a
+control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`, `DialogOptions`,
+`PanelControl`, `SetPanel`, `StepperOptions`, `Say`, `SayOptions`, `FocusTarget`,
+`MoveFocusOptions`, `ArrivalOptions`, `RovingOptions`, `RovingOrientation`, `FormOptions`,
+`Failure`, `FailureWords`, `FieldFailure`, `Refuse`, `BusyOptions` and `ProgressOptions`.
 
 ### `@jasonsdevspace/design-kit/react`
 

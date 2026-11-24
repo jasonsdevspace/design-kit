@@ -1,5 +1,5 @@
 import { FOCUSABLE, isElement } from './find.js';
-import { activeOf, focusedNow, handBack, holds, isBlank, mayHandBack } from './focus.js';
+import { deepActive, handBack, holds, isBlank, mayHandBack, placeNow, seen } from './focus.js';
 import { restore } from './marks.js';
 import { restoring } from './state.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
@@ -56,7 +56,7 @@ const moveOffClose = (dialog: HTMLDialogElement, close: Element): void => {
             continue;
         }
         next.focus();
-        if (activeOf() === next) return;
+        if (deepActive() === next) return;
     }
     const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
     if (!title) return;
@@ -88,7 +88,7 @@ const openerOf = (from: DialogOpener | undefined, doc: Document): Element | null
           : null;
     if (found && !isBlank(found)) return found;
     // A blank body, where nothing has focus, is no opener, so focus goes where returnTo says.
-    return focusedNow(doc);
+    return placeNow(doc);
 };
 
 /**
@@ -176,7 +176,8 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     // takedown: still on what the browser handed it to as the dialog closed, or by the rule every
     // piece hands it back by. Focus a request or the page has put anywhere else stays.
     const handsBack = () =>
-        restoring.get(dialog) === focusedNow(dialog.ownerDocument) || mayHandBack(dialog, true);
+        seen(restoring.get(dialog) ?? null, dialog.ownerDocument) ===
+            seen(deepActive(), dialog.ownerDocument) || mayHandBack(dialog, true);
     const onClose = (back: boolean) => {
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
@@ -194,14 +195,14 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         opener = openerOf(from, dialog.ownerDocument);
         // Where nothing had focus, the browser hands it nowhere as the dialog closes.
         // A blank body of another document, the page's around a frame, is nothing to hand back to.
-        const before = focusedNow(dialog.ownerDocument);
+        const before = placeNow(dialog.ownerDocument);
         if (before && !isBlank(before)) restoring.set(dialog, before);
         else restoring.delete(dialog);
         dialog.showModal();
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
         // in the dialog asks for focus, as when React's autoFocus writes no attribute.
         const close = dialog.querySelector(':scope > .dk-close');
-        if (close && holds(close, activeOf())) moveOffClose(dialog, close);
+        if (close && holds(close, deepActive())) moveOffClose(dialog, close);
     };
     // A dialog let go while open closes, so the page behind is no longer inert, and focus goes back
     // at once, open or closed in the same task, since the close event that would hand it back comes

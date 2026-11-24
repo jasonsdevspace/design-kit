@@ -109,12 +109,13 @@ on the dialog and the panels: a frame's own record of focus reads as nothing onc
 to the page, so a piece in the frame took focus a visitor put on the page for focus fallen to
 nowhere, and the page's own controls could not be judged from inside the frame.
 
-**C. The toast reads the one view of focus, from the page down.** It listens for F8 on the element's
-own document and to that document's window for its size, and scrolls that window as it takes its row
-above the dock, while focus is read as every piece reads it, followed from the page into each frame
-of the page's own origin that has it. A body no one can type in counts as nothing only in the
-toast's own document, and one of another frame reads as that frame, so focus a visitor put in a
-frame's blank space or an editor's body is where the toast goes back to.
+**C. The toast reads focus as every piece reads it.** It listens for F8 on the element's own
+document and to that document's window for its size, and scrolls that window as it takes its row
+above the dock, while focus is kept and compared through the one view record 19's amendment for
+0.9.4 sets out: kept as the deep reader gives it, and compared and judged through `seen` for the
+toast's own document, so a blank body of that document is nothing, one of another frame reads as
+that frame, and focus a visitor put in a frame's blank space or an editor's body is where the toast
+goes back to.
 
 Option C. As a message comes, the toast keeps the control that has focus, inside a frame and a frame
 within it too, and the frames around it out to its own document, the innermost first, read then
@@ -122,13 +123,13 @@ since a frame that loads its page again leaves the control's old document with n
 them by. Its walk goes to that control, passed over inside a frame where it is marked off, then to
 each of those frames, so focus stays on the frame where the control is gone, marked off or on a page
 the frame has replaced, and a frame of another origin, which shows nothing inside, is handed focus
-itself. It measures the control out through each frame to keep it clear, and only a control in its
-own document or a frame inside it, since one on the page or in another frame is in a view the toast
-is not drawn in. The focus the kit notes it handed back is the control in the frame, so a focus
-request in the page compares the same view. A toast stays in the document it was attached in, so a
-page that moves it into another takes it down and attaches it again. The listeners the controls'
-shared module adds as it loads, which note a visitor's presses for a focus request, stay on the
-page's document, so a press in the frame is not counted there.
+itself. It keeps clear only a control in its own document or in a frame inside it, measured out
+through each frame, since one on the page or in another frame is in a view the toast is not drawn
+in. The focus the kit notes it handed back is the control in the frame, so a focus request in the
+page compares the same view. A toast stays in the document it was attached in, so a page that moves
+it into another takes it down and attaches it again. The listeners the controls' shared module adds
+as it loads, which note a visitor's presses for a focus request, stay on the page's document, so a
+press in the frame is not counted there.
 
 ## How it is tested
 

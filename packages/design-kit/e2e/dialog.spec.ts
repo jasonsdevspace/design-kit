@@ -945,3 +945,43 @@ window.ready = true;`,
     await expect(page.locator('iframe')).toBeFocused();
     await expect(opener).toBeFocused();
 });
+
+test("hands focus back to the button in a frame that opened the page's own dialog, where focus is handed to that frame with nothing focused in it", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Notes',
+        body:
+            '<main><h1>Notes</h1><button type="button" id="fallback">Where focus lands</button>' +
+            '<iframe title="Notes" srcdoc="<button type=button id=far>Save</button>"></iframe></main>' +
+            '<dialog class="dk-dialog" id="ask" aria-labelledby="ask-title"><h2 class="dk-dialog-title" id="ask-title">Save the notes?</h2>' +
+            '<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Keep editing</button></form></dialog>',
+        script: `import { attachDialog } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('#far'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+const open = attachDialog(document.querySelector('#ask'), {
+    returnTo: () => document.querySelector('#fallback'),
+});
+frame.contentDocument.querySelector('#far').addEventListener('click', open);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const opener = page.frameLocator('iframe').locator('#far');
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeVisible();
+    // The dialog closes and focus is handed to the frame with nothing focused in it, as an engine's
+    // own handback may leave it, before the close event.
+    await page.evaluate(() => {
+        document.querySelector<HTMLDialogElement>('#ask')?.close();
+        document
+            .querySelector('iframe')
+            ?.contentDocument?.querySelector<HTMLElement>('#far')
+            ?.blur();
+    });
+    await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeHidden();
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(opener).toBeFocused();
+});

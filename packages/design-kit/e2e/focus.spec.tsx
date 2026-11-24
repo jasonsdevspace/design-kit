@@ -757,3 +757,45 @@ window.ready = true;`,
         await expect(page.frameLocator('iframe').locator('body')).toBeFocused();
     });
 }
+
+/** A page with a target of its own and a frame whose control has focus, with an id the page shares. */
+const openWithFrame = async (page: Page) => {
+    await servePage(page, {
+        title: 'Focus',
+        body:
+            '<p id="save-error" tabindex="-1">The round was not saved.</p>' +
+            '<button type="button" id="target">Target</button>' +
+            '<iframe title="Notes" srcdoc="<button type=button id=inner>Inside</button><p id=save-error tabindex=-1>The frame' +
+            "'" +
+            's own.</p>"></iframe>',
+        script: `import { moveFocus } from './controls.js';
+window.moveFocus = moveFocus;
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('#inner'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.frameLocator('iframe').locator('#inner').focus();
+};
+
+test("finds a request's id on the page, where focus was on a control in a frame as it was asked", async ({
+    page,
+}) => {
+    await openWithFrame(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('save-error');
+    });
+    await expect(page.locator('#save-error')).toBeFocused();
+});
+
+test('lands a request asked from inside a frame that leaves the page before the request lands', async ({
+    page,
+}) => {
+    await openWithFrame(page);
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('target');
+        document.querySelector('iframe')?.remove();
+    });
+    await expect(page.locator('#target')).toBeFocused();
+});

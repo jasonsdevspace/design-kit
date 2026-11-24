@@ -2642,3 +2642,25 @@ test('sends focus to the main content in the shadow root a toast inside a frame 
     await expect(frame.locator('.dk-toast-message')).toHaveText('');
     await expect(frame.locator('#shadow-main')).toBeFocused();
 });
+
+test('lands a focus request asked as the toast hands focus back to a frame whose control has gone', async ({
+    page,
+}) => {
+    await open(page, { body: framed() });
+    const inner = page.frameLocator('iframe').locator('#inner');
+    await inner.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).focus();
+    await inner.evaluate((button) => button.remove());
+    // The page asks for Save and dismisses the message in one task, and the toast hands focus back
+    // to the frame, whose control has gone, so the frame's body has focus there.
+    await page.evaluate(async () => {
+        const { moveFocus } = (await import(`${location.origin}/controls.js`)) as {
+            moveFocus: (target: string) => () => void;
+        };
+        moveFocus('save');
+        (window as unknown as { kit: Kit }).kit.last?.();
+    });
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
