@@ -812,3 +812,136 @@ test('leaves focus on the page where a visitor moved it, as the page closes a di
     await expect(framedDialog(page)).toBeHidden();
     await expect(elsewhere).toBeFocused();
 });
+
+test('leaves focus on the page where a visitor clicked its blank space, as the page closes a dialog inside a frame', async ({
+    page,
+}) => {
+    await openFramed(page);
+    await page.frameLocator('iframe').locator('#inner').click();
+    await expect(framedDialog(page)).toBeVisible();
+    // A click on the page's heading, which takes no focus, leaves focus on the page's body.
+    await page.locator('h1').click();
+    await page.evaluate(() => {
+        (window as unknown as { framedDialog: HTMLDialogElement }).framedDialog.close();
+    });
+    await expect(framedDialog(page)).toBeHidden();
+    await expect(page.locator('iframe')).not.toBeFocused();
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+});
+
+/**
+ * A page with a dialog of its own, holding a frame with a button, a place for focus to go where
+ * nothing else takes it, a button that opens the dialog, and a frame of the page's own origin whose
+ * body is an editor, editable or in design mode.
+ */
+const EDITOR = `<main><h1>Notes</h1>
+<p><button type="button" class="dk-button" id="ask-button">Save</button>
+<button type="button" class="dk-button" id="fallback">Where focus lands</button></p>
+<iframe title="Editor" srcdoc="<p>Ana dealt.</p>"></iframe></main>
+<dialog class="dk-dialog" id="ask" aria-labelledby="ask-title">
+<h2 class="dk-dialog-title" id="ask-title">Save the notes?</h2>
+<iframe title="Preview" srcdoc="<button type=button id=held>Preview</button>"></iframe>
+<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Keep editing</button></form>
+</dialog>`;
+
+const ATTACH_EDITOR = (design: boolean) => `import { attachDialog } from './controls.js';
+const frames = [...document.querySelectorAll('iframe')];
+await Promise.all(
+    frames.map((frame) =>
+        frame.contentDocument?.readyState === 'complete' && frame.contentDocument.body.firstChild
+            ? undefined
+            : new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }))
+    )
+);
+const editor = frames[0].contentDocument;
+if (${String(design)}) editor.designMode = 'on';
+else editor.body.contentEditable = 'true';
+window.controller = new AbortController();
+window.ask = attachDialog(document.querySelector('#ask'), {
+    returnTo: () => document.querySelector('#fallback'),
+    signal: controller.signal,
+});
+document.querySelector('#ask-button').addEventListener('click', ask);
+window.ready = true;`;
+
+for (const design of [false, true]) {
+    test(`hands focus back to a frame's editor, ${design ? 'in design mode' : 'editable'}, that had focus as the page opened a dialog`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 390, height: 700 });
+        await servePage(page, { title: 'Notes', body: EDITOR, script: ATTACH_EDITOR(design) });
+        await page.waitForFunction(() => 'ready' in window);
+        const editor = page.frameLocator('iframe[title="Editor"]').locator('body');
+        await editor.click();
+        await expect(editor).toBeFocused();
+        // The page opens the dialog from a shortcut of its own, with nothing handed over.
+        await page.evaluate(() => {
+            (window as unknown as { ask: () => void }).ask();
+        });
+        await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeVisible();
+        await page.getByRole('button', { name: 'Keep editing' }).focus();
+        await page.keyboard.press('Enter');
+        await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeHidden();
+        await expect(page.locator('#fallback')).not.toBeFocused();
+        await expect(page.locator('iframe[title="Editor"]')).toBeFocused();
+        await expect(editor).toBeFocused();
+    });
+}
+
+test('hands focus back to its opener as it is taken down with focus on a control in a frame it holds', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, { title: 'Notes', body: EDITOR, script: ATTACH_EDITOR(false) });
+    await page.waitForFunction(() => 'ready' in window);
+    const opener = page.locator('#ask-button');
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeVisible();
+    await page.frameLocator('iframe[title="Preview"]').locator('#held').focus();
+    await page.evaluate(() => {
+        (window as unknown as { controller: AbortController }).controller.abort();
+    });
+    await expect(page.getByRole('dialog', { name: 'Save the notes?' })).toBeHidden();
+    await expect(opener).toBeFocused();
+});
+
+test('hands focus back to the button that opened a dialog in a frame inside a frame, attached from the page', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: '<main><h1>Round 3</h1><iframe title="Round"></iframe></main>',
+        css: 'iframe { inline-size: 360px; block-size: 480px; }',
+        script: `import { attachDialog } from './controls.js';
+const loaded = (frame) => new Promise((done) => frame.addEventListener('load', done, { once: true }));
+const outer = document.querySelector('iframe');
+const outerLoaded = loaded(outer);
+outer.srcdoc = '<p>Round 3</p>';
+await outerLoaded;
+const inner = outer.contentDocument.createElement('iframe');
+inner.title = 'Scores';
+inner.style.cssText = 'inline-size: 340px; block-size: 400px';
+inner.srcdoc =
+    '<link rel=stylesheet href=/kit.css><button type=button id=deep>End the game</button>' +
+    '<dialog class=dk-dialog aria-labelledby=t><h2 class=dk-dialog-title id=t>End the game now?</h2>' +
+    '<form method=dialog class=dk-dialog-actions><button type=submit class=dk-button>Keep playing</button></form></dialog>';
+const innerLoaded = loaded(inner);
+outer.contentDocument.body.append(inner);
+await innerLoaded;
+const open = attachDialog(inner.contentDocument.querySelector('dialog'));
+inner.contentDocument.querySelector('#deep').addEventListener('click', open);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inner = page.frameLocator('iframe').frameLocator('iframe');
+    const opener = inner.locator('#deep');
+    await opener.focus();
+    await page.keyboard.press('Enter');
+    await expect(inner.getByRole('dialog', { name: 'End the game now?' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(inner.getByRole('dialog', { name: 'End the game now?' })).toBeHidden();
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(opener).toBeFocused();
+});

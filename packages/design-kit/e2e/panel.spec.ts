@@ -1865,3 +1865,109 @@ test('sends focus to the place a link in a panel inside a frame jumps to, in a f
     await expect(frame.locator('#round-tips')).toBeHidden();
     await expect(frame.locator('#dealing')).toBeFocused();
 });
+
+/**
+ * A page with a panel of its own that holds a frame with a button, and beside it a frame of the
+ * page's own origin with nothing in it to focus and no panel of its own, so a press in it is never
+ * heard by the panels.
+ */
+const HELD = `<main class="dk-page" tabindex="-1"><h1>Round 3</h1>
+<p><button type="button" class="dk-button" id="held-tips" aria-expanded="false" aria-controls="held-panel">Tips</button></p>
+<div class="dk-panel" id="held-panel" hidden><h2 class="dk-panel-title">Round tips</h2><p><a href="#rules" id="inside">The rules</a></p>
+<iframe title="Preview" srcdoc="<button type=button id=held>Preview</button>"></iframe></div>
+<iframe title="Notes" id="notes" srcdoc="<p>Ana dealt.</p>"></iframe></main>`;
+
+const ATTACH_HELD = `import { attachPanel } from './controls.js';
+const frames = [...document.querySelectorAll('iframe')];
+await Promise.all(
+    frames.map((frame) =>
+        frame.contentDocument?.readyState === 'complete' && frame.contentDocument.body.firstChild
+            ? undefined
+            : new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }))
+    )
+);
+window.heldTips = attachPanel(document.querySelector('#held-tips'));
+window.ready = true;`;
+
+const openHeld = async (page: Page): Promise<void> => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: HELD,
+        script: ATTACH_HELD,
+        css: 'iframe { inline-size: 300px; block-size: 200px; }',
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+const setHeld = (page: Page, open: boolean) =>
+    page.evaluate((to) => {
+        (window as unknown as { heldTips: { set: (open: boolean) => void } }).heldTips.set(to);
+    }, open);
+
+test("leaves focus in a frame where a visitor clicked its blank space, as the page's code closes a panel", async ({
+    page,
+}) => {
+    await openHeld(page);
+    await page.locator('#held-tips').click();
+    await page.locator('#inside').focus();
+    // A click on the frame's blank space, which no panel hears, puts focus on the frame's body.
+    const notes = await page.locator('#notes').boundingBox();
+    if (!notes) throw new Error('no frame drawn');
+    await page.mouse.click(notes.x + notes.width - 10, notes.y + notes.height - 10);
+    await expect(page.locator('#notes')).toBeFocused();
+    await setHeld(page, false);
+    await expect(page.locator('#held-panel')).toBeHidden();
+    await twoFrames(page);
+    await expect(page.locator('#notes')).toBeFocused();
+    await expect(page.locator('#held-tips')).not.toBeFocused();
+});
+
+test("hands focus back to its button as the page's code closes a panel with focus on a control in a frame it holds", async ({
+    page,
+}) => {
+    await openHeld(page);
+    await page.locator('#held-tips').click();
+    await page.frameLocator('iframe[title="Preview"]').locator('#held').focus();
+    await setHeld(page, false);
+    await expect(page.locator('#held-panel')).toBeHidden();
+    await expect(page.locator('#held-tips')).toBeFocused();
+});
+
+test('hands focus back to the button of a panel in a frame inside a frame, attached from the page', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: '<main><h1>Round 3</h1><iframe title="Round"></iframe></main>',
+        css: 'iframe { inline-size: 360px; block-size: 480px; }',
+        script: `import { attachPanel } from './controls.js';
+const loaded = (frame) => new Promise((done) => frame.addEventListener('load', done, { once: true }));
+const outer = document.querySelector('iframe');
+const outerLoaded = loaded(outer);
+outer.srcdoc = '<p>Round 3</p>';
+await outerLoaded;
+const inner = outer.contentDocument.createElement('iframe');
+inner.title = 'Scores';
+inner.style.cssText = 'inline-size: 340px; block-size: 400px';
+inner.srcdoc =
+    '<link rel=stylesheet href=/kit.css><main class=dk-page tabindex=-1>' +
+    '<button type=button id=deep aria-expanded=false aria-controls=deep-tips>Tips</button>' +
+    '<div class=dk-panel id=deep-tips hidden><p><a href=#x id=deep-link>How to deal</a></p></div></main>';
+const innerLoaded = loaded(inner);
+outer.contentDocument.body.append(inner);
+await innerLoaded;
+attachPanel(inner.contentDocument.querySelector('#deep'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inner = page.frameLocator('iframe').frameLocator('iframe');
+    await inner.locator('#deep').click();
+    await expect(inner.locator('#deep-tips')).toBeVisible();
+    await inner.locator('#deep-link').focus();
+    await page.keyboard.press('Escape');
+    await expect(inner.locator('#deep-tips')).toBeHidden();
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(inner.locator('#deep')).toBeFocused();
+});

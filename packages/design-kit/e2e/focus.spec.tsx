@@ -51,7 +51,7 @@ window.ready = true;`;
 type Mover = {
     moveFocus: (
         target: string | Element | null,
-        options?: { fallbacks?: readonly (string | Element | null)[] }
+        options?: { fallbacks?: readonly (string | Element | null)[]; from?: Element | null }
     ) => () => void;
     focusOnArrival: (heading: string, options?: { changed?: boolean }) => () => void;
     /** Sets what the page reads of its being in sight, and sends the event where `told`. */
@@ -722,3 +722,38 @@ test.describe('in React', () => {
         expect(await listenersOn(page, everywhere)).toBe(before);
     });
 });
+
+for (const editor of ['an editable body', 'a body in design mode'] as const) {
+    test(`leaves focus a visitor put in a frame's editor with ${editor}, as a request lands`, async ({
+        page,
+    }) => {
+        await servePage(page, {
+            title: 'Focus',
+            body:
+                '<button type="button" id="start">Start</button><button type="button" id="target">Target</button>' +
+                '<iframe title="Notes" srcdoc="<p>Ana dealt.</p>"></iframe>',
+            script: `import { moveFocus } from './controls.js';
+window.moveFocus = moveFocus;
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('p'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+if (${String(editor === 'a body in design mode')}) frame.contentDocument.designMode = 'on';
+else frame.contentDocument.body.contentEditable = 'true';
+window.ready = true;`,
+        });
+        await page.waitForFunction(() => 'ready' in window);
+        await page.locator('#start').focus();
+        // The visitor goes on to type in the frame's editor, and a request asked with focus where it
+        // was before lands after.
+        await page.frameLocator('iframe').locator('body').click();
+        await page.evaluate(() => {
+            (window as unknown as Mover).moveFocus('target', {
+                from: document.querySelector('#start'),
+            });
+        });
+        await settled(page);
+        await expect(page.locator('#target')).not.toBeFocused();
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(page.frameLocator('iframe').locator('body')).toBeFocused();
+    });
+}

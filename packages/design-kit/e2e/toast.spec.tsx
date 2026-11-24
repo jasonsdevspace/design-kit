@@ -2562,3 +2562,83 @@ test('wraps its buttons under its message and keeps them inside it on a 320px ph
     }
     expect(await sideways(page)).toBe(0);
 });
+
+test('leaves the page where it is when a toast inside a frame shows with focus on a control of the page', async ({
+    page,
+}) => {
+    // The frame stands to the right, as tall as the screen, so its toast rests at its foot, and the
+    // page's control sits to the left at the screen's foot, partly out of sight, where it would meet
+    // the toast were it measured in the frame's view.
+    await open(page, {
+        width: 800,
+        height: 700,
+        attach: false,
+        body:
+            '<button type="button" id="low" style="position: absolute; inset-block-start: 660px; inset-inline-start: 10px; block-size: 60px">Low</button>' +
+            '<div style="block-size: 2000px"></div>' +
+            '<iframe title="Notes" style="position: absolute; inset-block-start: 0; inset-inline-start: 400px; inline-size: 380px; block-size: 700px; border: 0" srcdoc="' +
+            `<link rel=stylesheet href=/kit.css>${TOAST}`
+                .replaceAll('&', '&amp;')
+                .replaceAll('"', '&quot;') +
+            '"></iframe>',
+    });
+    await attachInFrame(page);
+    await page.evaluate(() => {
+        document.querySelector<HTMLElement>('#low')?.focus({ preventScroll: true });
+    });
+    const before = await page.evaluate(() => scrollY);
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await expect(page.frameLocator('iframe').locator('.dk-toast-message')).toHaveText(
+        'Round 3 saved.'
+    );
+    await frames(page, 3);
+    expect(await page.evaluate(() => scrollY)).toBe(before);
+});
+
+test('sends focus to the main content in the shadow root a toast inside a frame sits in, where nothing nearer takes it', async ({
+    page,
+}) => {
+    await open(page, {
+        attach: false,
+        body:
+            '<main><h1>Scores</h1></main><iframe title="Notes" srcdoc="' +
+            '<link rel=stylesheet href=/kit.css><div id=host></div>' +
+            '"></iframe>',
+    });
+    await page.evaluate(async (markup) => {
+        const kit = (await import(`${location.origin}/controls.js`)) as {
+            attachToast: (element: HTMLElement) => Kit['show'];
+        };
+        const frame = document.querySelector('iframe');
+        if (
+            frame?.contentDocument?.readyState !== 'complete' ||
+            !frame.contentDocument.querySelector('#host')
+        )
+            await new Promise((loaded) => frame?.addEventListener('load', loaded, { once: true }));
+        const host = frame?.contentDocument?.querySelector('#host');
+        if (!host) throw new Error('no host in the frame');
+        const root = host.attachShadow({ mode: 'open' });
+        root.innerHTML = `<main id="shadow-main" tabindex="-1"><p>Ana dealt.</p></main>${markup}`;
+        const toastIn = root.querySelector<HTMLElement>('.dk-toast');
+        if (!toastIn) throw new Error('no toast in the shadow root');
+        (window as unknown as { show: Kit['show'] }).show = kit.attachToast(toastIn);
+    }, TOAST);
+    // Shown with nothing focused, so the toast hands focus to its home as it leaves.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    const frame = page.frameLocator('iframe');
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(frame.locator('#shadow-main')).toBeFocused();
+});

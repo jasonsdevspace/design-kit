@@ -156,26 +156,19 @@ const clearOf = (element: HTMLElement, control: Element, via: readonly Element[]
 
 /**
  * The frames a control sits inside, from its own document out to the one given, the innermost
- * first, read through each document's window while it has one.
+ * first, read through each document's window while it has one, and whether that walk reached the
+ * document given, which it does not for a control on the page or in another frame than the toast's.
  */
-const framesOf = (control: Element | null, doc: Document): Element[] => {
+const framesOf = (control: Element | null, doc: Document): [Element[], boolean] => {
     const via: Element[] = [];
-    for (let at = control?.ownerDocument; at && at !== doc;) {
+    let at = control?.ownerDocument;
+    while (at && at !== doc) {
         const frame = at.defaultView?.frameElement;
         if (!frame) break;
         via.push(frame);
         at = frame.ownerDocument;
     }
-    return via;
-};
-
-/**
- * Where focus is, as the control and the frames around it out to the document given, focus on a
- * frame's body counting as on the frame and focus on that document's body as nowhere.
- */
-const placeOf = (active: Element | null, doc: Document): [Element | undefined, Element[]] => {
-    const via = framesOf(active, doc);
-    return [(active === active?.ownerDocument.body ? via.shift() : active) ?? undefined, via];
+    return [via, at === doc];
 };
 
 /**
@@ -331,11 +324,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             !element.isConnected
         )
             return;
-        const before = focusedNow();
+        const before = focusedNow(doc);
         if (holds(element, before)) giveBack();
         else if (before?.closest('.dk-toast')) return;
         else actionButton.focus();
-        if (focusedNow() !== before) event.preventDefault();
+        if (focusedNow(doc) !== before) event.preventDefault();
     };
     const dismiss = () => {
         window.clearTimeout(timer);
@@ -365,6 +358,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             const now = activeOf();
             if (holds(element, now)) (now as HTMLElement).blur();
         }
+        via = [];
         message.textContent = '';
         actionButton.textContent = '';
         actionButton.hidden = true;
@@ -377,9 +371,11 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
     };
     const show: ShowToast = (words, action) => {
         if (signal.aborted) return () => undefined;
-        const active = activeOf();
-        const outside = !holds(element, active);
-        if (outside) [arrivedAt, via] = placeOf(active, doc);
+        // Read as the toast's document sees it, so a blank body in another frame is that frame.
+        const active = focusedNow(doc);
+        let reached = false;
+        if (!holds(element, active))
+            [arrivedAt, via, reached] = [active ?? undefined, ...framesOf(active, doc)];
         const id = (shown = count += 1);
         message.textContent = words;
         say(status, action ? `${words} ${action.label} is available.` : words, true);
@@ -405,8 +401,9 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
         // Added once however many messages are shown, as the DOM ignores the same listener again.
         doc.defaultView?.addEventListener('resize', remeasure, { signal });
         // Only where focus was outside the toast as the message came, since focus in it needs no
-        // room.
-        if (outside && arrivedAt) clearOf(element, arrivedAt, via);
+        // room, and in the toast's document or a frame inside it, since a control on the page or
+        // in another frame is measured in a view the toast is not drawn in.
+        if (reached && arrivedAt) clearOf(element, arrivedAt, via);
         wait();
         return () => {
             if (shown === id) dismiss();

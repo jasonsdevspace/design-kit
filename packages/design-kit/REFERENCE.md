@@ -2223,7 +2223,9 @@ element's root. A panel and its button are found from the document the button si
 panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
 root that holds it and into each frame of the page's own origin that has it, as a request reads
 where focus was, for a page that asks later and passes `from` itself. A frame of another origin
-shows nothing inside, so focus there reads as the frame.
+shows nothing inside, so focus there reads as the frame. A request reads a body no one can type in
+as nothing only in the document it was asked from, and one of another frame as that frame, so focus
+a visitor put in a frame's blank space or an editor's body stays theirs.
 
 #### Moving focus in React
 

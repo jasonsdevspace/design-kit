@@ -4,7 +4,6 @@ import {
     focusedNow,
     focusFirst,
     type FocusTarget,
-    holds,
     homeOf,
     type MoveFocusOptions,
 } from './focus.js';
@@ -70,13 +69,14 @@ const land = (
     asked: Asked
 ) => {
     if (!live(asked)) return;
-    const now = focusedNow();
+    // Read as the request's own document sees it, the page's where it was asked from nothing.
+    const now = focusedNow(from?.ownerDocument);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
     // Focus on what had it as a dialog opened is free while that dialog is closed and its close
     // not yet handled, since the browser put it there as the dialog closed. A request that lands
     // takes that place from the dialog, so its close event leaves focus where the request put it.
-    const restored = [...restoring].filter(([dialog, to]) => holds(to, now) && !dialog.open);
+    const restored = [...restoring].filter(([dialog, to]) => to === now && !dialog.open);
     if (now && now !== from && (now !== handed.to || handed.at < asked.at) && !restored[0]) return;
     const place = placeOf(target, from);
     if (

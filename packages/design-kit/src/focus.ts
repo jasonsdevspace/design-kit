@@ -10,16 +10,28 @@ import type { AttachOptions } from './teardown.js';
  * `./controls`.
  */
 
-/** Whether an element is a document's body, which stands in where nothing has focus. */
-const isBody = (element: Element | null): boolean => element?.ownerDocument.body === element;
+/**
+ * Whether an element is a body no one can type in, which stands in where nothing has focus, unlike
+ * the body of an editor, editable or in design mode.
+ */
+export const isBlank = (element: Element): boolean =>
+    element.localName === 'body' &&
+    !(element as HTMLElement).isContentEditable &&
+    element.ownerDocument.designMode !== 'on';
 
 /**
- * What has focus, read as `activeOf` reads it, or null where nothing does and a body stands in for
- * it, the page's or that of a frame focus is in.
+ * What has focus, read as `activeOf` reads it, as a piece in the document given sees it, the page's
+ * where none is given. A blank body in that document is nothing, so null, while one in any other
+ * document is the frame that holds it, or that body where no frame does, so focus a visitor put in
+ * another document counts as elsewhere. An editor's body counts as focus wherever it is. The one
+ * place that decides what a body means.
  */
-export const focusedNow = (): Element | null => {
+export const focusedNow = (doc: Document = document): Element | null => {
     const active = activeOf();
-    return isBody(active) ? null : active;
+    if (!active || !isBlank(active)) return active;
+    return active.ownerDocument === doc
+        ? null
+        : (active.ownerDocument.defaultView?.frameElement ?? active);
 };
 
 /**
@@ -56,14 +68,14 @@ const tryFocus = (place: Element | null | undefined): boolean | undefined => {
         !place?.ownerDocument.defaultView ||
         typeof (place as Partial<HTMLElement>).focus !== 'function' ||
         !place.isConnected ||
-        isBody(place)
+        isBlank(place)
     )
         return undefined;
     const before = activeOf();
     (place as HTMLElement).focus({ preventScroll: place.matches('.dk-app-body') });
     const now = activeOf();
     if (holds(place, now) && (now !== before || place === before)) return true;
-    return now && !isBody(now) && now !== before ? false : undefined;
+    return now !== before && focusedNow(place.ownerDocument) ? false : undefined;
 };
 
 /**
@@ -100,7 +112,7 @@ export const focusFirst = (...places: readonly Place[]): boolean => {
  * does not use it, and hands focus back only where focus is on one of the buttons it hides.
  */
 export const mayHandBack = (piece: Element, had: boolean): boolean => {
-    const active = focusedNow();
+    const active = focusedNow(piece.ownerDocument);
     return active ? holds(piece, active) : had;
 };
 
@@ -147,11 +159,11 @@ export type MoveFocusOptions = AttachOptions & {
 
 /**
  * What has focus, read from the page down: followed into each shadow root that holds it, and into
- * each frame of the page's own origin that has it, to the control focused inside the frame or to
- * the frame's body where nothing is. A frame of another origin shows nothing inside, so focus there
- * reads as the frame. A frame's own record is read only while focus is in the frame, so a control
- * it last focused is never taken for focus once a visitor has moved on. A request reads where focus
- * was when it was asked for by it.
+ * each frame of the page's own origin that has it, an object showing a document among them, to the
+ * control focused inside the frame or to the frame's body where nothing is. A frame of another
+ * origin shows nothing inside, so focus there reads as the frame. A frame's own record is read only
+ * while focus is in the frame, so a control it last focused is never taken for focus once a visitor
+ * has moved on. A request reads where focus was when it was asked for by it.
  */
 export const activeOf = (): Element | null => {
     let active = document.activeElement;
@@ -159,9 +171,7 @@ export const activeOf = (): Element | null => {
         let next;
         (next =
             active?.shadowRoot?.activeElement ??
-            (active?.localName === 'iframe'
-                ? (active as HTMLIFrameElement).contentDocument?.activeElement
-                : null));
+            (active as Partial<HTMLIFrameElement> | null)?.contentDocument?.activeElement);
     )
         active = next;
     return active;
