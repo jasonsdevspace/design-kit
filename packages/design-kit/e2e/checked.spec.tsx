@@ -1157,6 +1157,105 @@ test('holds no input of a stepper drawn again and again in one form once each ha
     ).toEqual(['false', 'false', 'false', 'false', 'false']);
 });
 
+test('keeps the mark of a stepper taken down and attached again on the same value', async ({
+    page,
+}) => {
+    await openBid(page, { high: true });
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('5');
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+    // As a page's effect runs again with new options, the old attach's takedown landing after.
+    await page.evaluate(() => {
+        const drawn = window as unknown as {
+            attachStepper: (stepper: Element | null) => void;
+            detachStepper: () => void;
+        };
+        drawn.detachStepper();
+        drawn.attachStepper(document.querySelector('.dk-stepper'));
+    });
+    await page.clock.runFor(100);
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+});
+
+/** The test page's hooks for attaching forms of its own, and the bid once it has left. */
+type Forms = {
+    attachForm: (form: Element | null, options: { signal: AbortSignal }) => void;
+    detachStepper: () => void;
+    forms: AbortController[];
+    left: Element | null;
+};
+
+/**
+ * Takes the bid off the page and its stepper down, then finds the mark gone and, with a mark set by
+ * hand, every form's check taken down without reaching it, so no form's list held the bid.
+ */
+const releasedByEvery = async (page: Page) => {
+    await page.evaluate(() => {
+        const drawn = window as unknown as Forms;
+        drawn.left = document.querySelector('#bid');
+        drawn.left?.closest('.dk-field')?.remove();
+        drawn.detachStepper();
+    });
+    const markOf = () =>
+        page.evaluate(() => (window as unknown as Forms).left?.getAttribute('aria-invalid'));
+    expect.soft(await markOf()).toBeNull();
+    await page.evaluate(() => {
+        const drawn = window as unknown as Forms;
+        drawn.left?.setAttribute('aria-invalid', 'false');
+        for (const form of drawn.forms) form.abort();
+    });
+    await page.clock.runFor(100);
+    expect(await markOf()).toBe('false');
+};
+
+test('lets go of a stepper the form marked itself once it leaves the page', async ({ page }) => {
+    // The form is checked only after the stepper's error has cleared, so the form marks it first.
+    await openBid(page, { high: true, unchecked: true });
+    const bid = page.getByRole('spinbutton', { name: 'Bid' });
+    await bid.fill('5');
+    await expect(bid).not.toHaveAttribute('aria-invalid');
+    await page.evaluate(() => {
+        const drawn = window as unknown as Forms;
+        const controller = new AbortController();
+        drawn.forms = [controller];
+        drawn.attachForm(document.querySelector('form'), { signal: controller.signal });
+    });
+    await expect(bid).toHaveAttribute('aria-invalid', 'false');
+    await releasedByEvery(page);
+});
+
+test('lets go of a stepper moved between two checked forms once it leaves the page', async ({
+    page,
+}) => {
+    await openBid(page, { unchecked: true });
+    await page.evaluate(() => {
+        const drawn = window as unknown as Forms;
+        const first = document.querySelector('form');
+        const second = document.createElement('form');
+        first?.after(second);
+        drawn.forms = [new AbortController(), new AbortController()];
+        for (const [at, form] of [first, second].entries()) {
+            const controller = drawn.forms[at];
+            if (controller) drawn.attachForm(form, { signal: controller.signal });
+        }
+        // Marked by the first form as it is checked, then moved to the second, where its error
+        // shows and clears.
+        const input = document.querySelector<HTMLInputElement>('#bid');
+        const field = input?.closest('.dk-field');
+        if (!input || !field) throw new Error('the page has no bid');
+        second.append(field);
+        input.value = '99';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        input.value = '5';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect(page.getByRole('spinbutton', { name: 'Bid' })).toHaveAttribute(
+        'aria-invalid',
+        'false'
+    );
+    await releasedByEvery(page);
+});
+
 test('takes away the mark a stepper outside any attached form set as its error clears', async ({
     page,
 }) => {

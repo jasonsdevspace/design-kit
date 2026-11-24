@@ -1517,22 +1517,22 @@ const restore = (element: Element, name: string, value: string | null) => {
  * once its form's errors are gone. A stepper in which the page shows an error of its own leaves its
  * failure to the form. Only the error's own id and the invalid state it set are added and taken
  * away, the state put back to "false" in a form the kit checks, as the form marks every field not
- * in error, and taken away with the stepper where the stepper added it, so the form lets go of a
- * field that leaves the page with its stepper. A hint or an error the page draws keeps its place,
- * and a shown error is put back whenever a page that draws the field again, as React does, rewrites
- * its description or its invalid mark. The field is described by its range in words, after the
- * page's own description, and while the error is shown by the error alone, which names the range
- * itself. A press that lands on a limit says so with the value, and a page's words, given as an
- * option, are said after it in the same message, on the page's status line when one is given. Taken
- * down while one of its buttons has focus, it hands focus to its value where the value is read only
- * and enabled, and otherwise, or where the value refuses focus, to the stepper itself, since an
- * editable value would open a phone's keyboard. The stepper, which the markup draws as a group
- * named by its field's label, then holds focus and draws the focus ring where the browser shows
- * focus. A stepper with no tabindex is given one of -1 then, which stays. Where the stepper refuses
- * focus too, focus goes on to the app frame's body or the page's main content. Focus the page has
- * moved elsewhere stays. It takes the stepper's field or the stepper, attaches each stepper once
- * whichever it is given, runs on the options of its newest holder, and returns what takes it down
- * again.
+ * in error, and taken away with the stepper once the field has left the page, as its form lets go
+ * of the field then, while a field still in the page keeps it until its form is let go. A hint or
+ * an error the page draws keeps its place, and a shown error is put back whenever a page that draws
+ * the field again, as React does, rewrites its description or its invalid mark. The field is
+ * described by its range in words, after the page's own description, and while the error is shown
+ * by the error alone, which names the range itself. A press that lands on a limit says so with the
+ * value, and a page's words, given as an option, are said after it in the same message, on the
+ * page's status line when one is given. Taken down while one of its buttons has focus, it hands
+ * focus to its value where the value is read only and enabled, and otherwise, or where the value
+ * refuses focus, to the stepper itself, since an editable value would open a phone's keyboard. The
+ * stepper, which the markup draws as a group named by its field's label, then holds focus and draws
+ * the focus ring where the browser shows focus. A stepper with no tabindex is given one of -1 then,
+ * which stays. Where the stepper refuses focus too, focus goes on to the app frame's body or the
+ * page's main content. Focus the page has moved elsewhere stays. It takes the stepper's field or
+ * the stepper, attaches each stepper once whichever it is given, runs on the options of its newest
+ * holder, and returns what takes it down again.
  */
 export const attachStepper = (element: HTMLElement, options?: StepperOptions): (() => void) => {
     const field = element.closest<HTMLElement>('.dk-field') ?? element;
@@ -1601,9 +1601,9 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             button.hidden = attached() && fixed ? activeOf() !== button : !attached();
     };
     let setInvalid = false;
-    // The marks of the checked form the stepper last added its value to, so its teardown takes
-    // that mark away and lets go of the value, which may leave the page with it.
-    let joined: Set<Element> | null = null;
+    // Every form the value has stood in, so a teardown that finds it gone from the page has each
+    // form's check let go of it and takes its mark away, whoever set it.
+    const homes = new Set(input.form ? [input.form] : []);
     /**
      * Puts the range in words in the field's description, after the page's own, or the error in its
      * place while the error shows. Each is written only when it changes, so the watch below, woken
@@ -1626,6 +1626,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             (error) => error !== range && !error.hidden
         );
     const report = (wrong: boolean) => {
+        if (input.form) homes.add(input.form);
         if (range) range.hidden = !wrong;
         describe();
         if (!range) return;
@@ -1637,10 +1638,7 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
             // taken away where no checked form holds the stepper.
             const checked = input.form ? checkedForms.get(input.form) : undefined;
             restore(input, 'aria-invalid', checked ? 'false' : null);
-            if (checked && !checked.marks.has(input)) {
-                checked.marks.add(input);
-                joined = checked.marks;
-            }
+            checked?.marks.add(input);
             setInvalid = false;
         }
     };
@@ -1819,8 +1817,11 @@ export const attachStepper = (element: HTMLElement, options?: StepperOptions): (
         quiet();
         if (formSteppers.get(input) === settle) formSteppers.delete(input);
         report(false);
-        // The mark it added goes with it, so the form, which may outlive the value, holds neither.
-        if (joined?.delete(input)) unmark([input]);
+        // A value still in the page keeps its mark until its form is let go, as every field does,
+        // and one that has left it is let go of at once, since its form may outlive it.
+        if (!input.isConnected)
+            for (const home of homes)
+                if (checkedForms.get(home)?.marks.delete(input)) unmark([input]);
         // A button with focus is about to hide, so focus goes first to a read-only value, which
         // opens no keyboard, or else to the stepper, which the markup draws as a group named by the
         // field's label. A stepper with no tabindex is given -1, so a script can focus it while the
@@ -2885,7 +2886,8 @@ const checkForm = (own: HTMLFormElement): CheckedForm => {
         for (const timer of timers) window.clearTimeout(timer);
         own.noValidate = was;
         unmark(checked.marks);
-        // Let go of, so a stepper that outlives this check leaves alone a mark a later one sets.
+        // The marks are let go of, so a stepper that outlives this check leaves alone a mark a later
+        // one sets.
         checked.marks.clear();
         checkedForms.delete(own);
     });

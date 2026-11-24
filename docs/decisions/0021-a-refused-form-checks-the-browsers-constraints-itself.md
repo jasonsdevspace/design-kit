@@ -120,27 +120,31 @@ Option D. The browser's constraints decide what is valid, and the kit draws the 
   as any field's, so the page is handed it and its words are never shown beside the stepper's. A
   stepper whose error clears puts its mark back to `aria-invalid="false"` where the kit checks its
   form, read as the error clears, as the form marks every field not in error, and takes it away
-  elsewhere. Taken down, it takes away a mark it added there itself and the form lets go of its
-  field, so a stepper drawn again and again in one form, as one keyed by a round, leaves none of its
-  fields held once they leave the page. Letting go of the field alone was turned down, since a
-  stepper taken down before its form would then keep its mark once both are down. A second list,
-  `invalid(failures, shown)`, holds every failure in the form's order with the words its field
-  shows, the form's words for a failure in the first list and the stepper's own error's words for
-  one left out of it, so a summary built from it lists the stepper. Handing the stepper's failure in
-  the first list with a mark that it is drawn already was turned down, since every page that draws
-  all its failures would have to filter them. As the form refuses, it has each stepper that fails
-  take its own waiting words back, so the refusal is the one message. Other ways were turned down. A
-  form that kept its verdict for its steppers to read made two owners of one error. So did a form
-  that owned the error after a submit, which the stepper took away on a change through an undo it
-  was handed: in React the page owns its error nodes, which an undo of the kit's cannot take away,
-  and `aria-invalid` would have two writers. Writing the form's words into the stepper's range error
-  was turned down too, since React owns that element's children, and record 20's `NotFoundError`
-  follows a write into them. A submit listener of the stepper's on the document heard every submit,
-  so it took back words no refusal would say, and it kept a removed stepper alive. The kit puts back
-  what it changed once the field passes on a later checked submit, or the form is reset, and only
-  what still holds the kit's change. **In React the failures go to `invalid`,** which the hook asks
-  for, since the markup belongs to the page's state, and the hook refuses after the render that
-  draws them.
+  elsewhere. Taken down once its field has left the page, it has every checked form the field stood
+  in let go of it and takes its mark away, whoever set it, so a stepper drawn again and again in one
+  form, as one keyed by a round, leaves none of its fields held. A field still in the page keeps its
+  mark until its form is let go, as every field does, so a stepper taken down and attached again, as
+  a page's effect that runs again does, keeps its mark, and one taken down before its form loses it
+  with the form. Letting go of the field at every takedown was turned down, since a stepper attached
+  again would lose its mark while the form still checks every other field, and letting go of the
+  field without taking its mark away left a stepper taken down before its form with its mark once
+  both are down. A second list, `invalid(failures, shown)`, holds every failure in the form's order
+  with the words its field shows, the form's words for a failure in the first list and the stepper's
+  own error's words for one left out of it, so a summary built from it lists the stepper. Handing
+  the stepper's failure in the first list with a mark that it is drawn already was turned down,
+  since every page that draws all its failures would have to filter them. As the form refuses, it
+  has each stepper that fails take its own waiting words back, so the refusal is the one message.
+  Other ways were turned down. A form that kept its verdict for its steppers to read made two owners
+  of one error. So did a form that owned the error after a submit, which the stepper took away on a
+  change through an undo it was handed: in React the page owns its error nodes, which an undo of the
+  kit's cannot take away, and `aria-invalid` would have two writers. Writing the form's words into
+  the stepper's range error was turned down too, since React owns that element's children, and
+  record 20's `NotFoundError` follows a write into them. A submit listener of the stepper's on the
+  document heard every submit, so it took back words no refusal would say, and it kept a removed
+  stepper alive. The kit puts back what it changed once the field passes on a later checked submit,
+  or the form is reset, and only what still holds the kit's change. **In React the failures go to
+  `invalid`,** which the hook asks for, since the markup belongs to the page's state, and the hook
+  refuses after the render that draws them.
 - **A refusal says the field it leaves focus on,** its name and its error, with how many fields need
   attention where more are wrong, nothing where focus moves to an error summary, which reads its own
   words, and the first field's name and error where focus was already on the summary, which a screen
@@ -236,9 +240,11 @@ The paths are in `packages/design-kit`.
   error on a reset that brings back a value past its range over the kit's error, and takes away the
   mark a stepper put back once its form's attach is taken down, and the mark of a stepper taken down
   before its form once both are down, holds none of the fields of a stepper drawn again and again in
-  one form once each has left the page, leaves the mark a later check of its form set on a stepper
-  that outlived the first, shows a stepper's range error alone where it fails the page's own refusal
-  too and the page's words once it is in range, leaves a stepper's own words said where no refusal
+  one form once each has left the page, keeps the mark of a stepper taken down and attached again on
+  the same value, lets go of a stepper the form marked itself and of one moved between two checked
+  forms once it leaves the page, leaves the mark a later check of its form set on a stepper that
+  outlived the first, shows a stepper's range error alone where it fails the page's own refusal too
+  and the page's words once it is in range, leaves a stepper's own words said where no refusal
   follows, marks fields not in error before any submit, and in React hands the failures, a set's
   among them, to the page, which draws them, and refuses once they are drawn. It hands every failure
   with the words its field shows as a second list, a stepper's own error's words among them, in
