@@ -6,10 +6,16 @@
  * it.
  */
 
-/** The root a node lives in: a shadow root where it sits in one, else the document. */
+/**
+ * The root a node lives in: a shadow root where it sits in one, else the document it sits in, the
+ * page's or a frame's, or the document itself where a document is given, told apart without the
+ * page's own `ShadowRoot`, which a frame's is not.
+ */
 export const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
     const root = node?.getRootNode();
-    return root instanceof ShadowRoot ? root : document;
+    return root?.nodeType === 9 || (root?.nodeType === 11 && 'host' in root)
+        ? (root as Document | ShadowRoot)
+        : (node?.ownerDocument ?? document);
 };
 
 /**
@@ -50,6 +56,14 @@ export const fieldOf = (marked: Element): Element => {
     const set = marked.closest('fieldset');
     return set && holdsOneSet(set) ? set : marked;
 };
+
+/**
+ * Whether a node or an event's target is an element, of the page's own window or of a frame's,
+ * which an element of a frame the page drives is, so a check by the page's own `Element` would
+ * refuse it.
+ */
+export const isElement = (node: unknown): node is Element =>
+    (node as Partial<Node> | null | undefined)?.nodeType === 1;
 
 /** Whether a control is marked off, kept in the tab order to say why rather than to act. */
 export const isOff = (control: Element | undefined): boolean =>

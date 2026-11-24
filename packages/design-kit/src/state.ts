@@ -100,10 +100,11 @@ if (typeof document !== 'undefined') {
 export const handed: { to: Element | null; at: number } = { to: null, at: 0 };
 
 /**
- * For each attached dialog, what had focus as it opened, which the browser hands focus back to as
- * the dialog closes, ahead of the close event. Kept until the dialog's close is handled or it is
- * taken down, until a request lands while focus is there, or until a request finds the dialog gone
- * from the page.
+ * For each attached dialog, what had focus as it opened, kept as the deep reader gives it, which
+ * the browser may hand focus back to as the dialog closes, ahead of the close event, and focus that
+ * reads the same through `seen`, for the dialog's document or for the page's, counts as so handed.
+ * Kept until the dialog's close is handled or it is taken down, until a request lands while focus
+ * is there, or until a request finds the dialog gone from the page.
  */
 export const restoring = new Map<HTMLDialogElement, Element>();
 

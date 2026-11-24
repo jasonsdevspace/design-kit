@@ -213,6 +213,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | A stepper's error held back while a press outside it is down, with too little room left  | 21,994 bytes   | 651 bytes       | 22.25 KB   |
 | 0.9.4   | Limit and step words as the field reads them, with too little room left                  | 22,260 bytes   | 649 bytes       | 22.5 KB    |
 | 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,498 bytes   | 735 bytes       | 22.75 KB   |
+| 0.9.4   | Focus read through frames by one view, with too little room left                         | 23,164 bytes   | 667 bytes       | 23.5 KB    |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
@@ -250,6 +251,7 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachTable` alone      | The first budget for an entry                   | 2,016 bytes | 637 bytes       | 2.75 KB    |
 | 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes | 637 bytes       | 9.25 KB    |
 | 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
+| 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 667 bytes       | 9.75 KB    |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

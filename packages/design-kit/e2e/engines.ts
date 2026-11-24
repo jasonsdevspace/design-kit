@@ -48,6 +48,7 @@ export const WEBKIT: Engine = {
     flow: 'One step between pieces, over the margins each engine gives a list, a form and a dialog.',
     dated: 'A date or a time field, which Safari never counts as focused by the keyboard.',
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
+    seen: "Focus read through frames, by each engine's record of focus in a frame.",
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
@@ -85,6 +86,7 @@ export const FIREFOX: Engine = {
     dated: "A date or a time field's ring, drawn once where the field is focused two ways.",
     tabbar: 'What the keyboard reaches kept clear of the bar at a root size the page sets.',
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
+    seen: "Focus read through frames, by each engine's record of focus in a frame.",
 };
 
 /**

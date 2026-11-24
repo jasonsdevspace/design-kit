@@ -1313,6 +1313,46 @@ test.describe('a panel', () => {
         await page.getByRole('button', { name: 'Close round tips' }).click();
         await expect(page.locator('#round-tips')).toBeVisible();
     });
+
+    test('leaves focus on the page where a visitor moved it, as the page closes a panel it attached in a frame', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        await page.evaluate(`window.framedTips = kit.attachPanel(frameTips)`);
+        const inFrame = page.frameLocator('iframe');
+        await inFrame.locator('#tips-button').click();
+        await inFrame.locator('#deal').focus();
+        // The page has no panel of its own attached, so the visitor's last place stays in the frame.
+        await page.locator('#start').focus();
+        await page.evaluate('framedTips.set(false)');
+        await expect(inFrame.locator('#round-tips')).toBeHidden();
+        await expect(page.locator('#start')).toBeFocused();
+    });
+
+    test("takes a panel the page attached in a frame down, the panels' listeners off the frame's document", async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        const onFrame = () =>
+            page.evaluate<number>('frame.contentWindow.leaks.on([frame.contentDocument])');
+        const before = await onFrame();
+        const onPage = await count(page, PANELS);
+        await page.evaluate(`(() => {
+            window.framed = new AbortController();
+            kit.attachPanel(frameTips, { signal: framed.signal });
+        })()`);
+        // The panels' listeners sit on the frame's document, and none on the page's.
+        expect(await onFrame()).toBeGreaterThan(before);
+        expect(await count(page, PANELS)).toBe(onPage);
+        const inFrame = page.frameLocator('iframe');
+        await inFrame.locator('#tips-button').click();
+        await expect(inFrame.locator('#round-tips')).toBeVisible();
+        await page.evaluate('framed.abort()');
+        await expect(inFrame.locator('#tips-button')).toHaveAttribute('aria-expanded', 'false');
+        await expect.poll(onFrame).toBe(before);
+    });
 });
 
 test.describe('the stepper', () => {
@@ -1584,6 +1624,49 @@ test.describe('the dialog', () => {
         })()`);
         await expect(page.locator('#end-game')).toHaveAttribute('open');
     };
+
+    test('takes a dialog the page attached in a frame down, its listeners off and focus back on what opened it in the frame', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        const onDialog = () => page.evaluate<number>('frame.contentWindow.leaks.on([frameDialog])');
+        const before = await onDialog();
+        const inFrame = page.frameLocator('iframe');
+        const inner = inFrame.locator('#inner');
+        // Opened by the page's script with nothing in the frame focused, naming its opener.
+        await page.evaluate(`(() => {
+            window.framed = new AbortController();
+            const open = kit.attachDialog(frameDialog, { signal: framed.signal });
+            open(frame.contentDocument.querySelector('#inner'));
+        })()`);
+        await expect(inFrame.locator('#end-game')).toHaveAttribute('open');
+        expect(await onDialog()).toBeGreaterThan(before);
+        await page.evaluate('framed.abort()');
+        await expect(inFrame.locator('#end-game')).not.toHaveAttribute('open');
+        await expect(page.locator('iframe')).toBeFocused();
+        await expect(inner).toBeFocused();
+        await expect.poll(onDialog).toBe(before);
+    });
+
+    test('leaves focus on the page where a visitor moved it, as a dialog the page attached in a frame is taken down', async ({
+        page,
+    }) => {
+        await opened(page, { clock: false });
+        await page.evaluate(DRAW_FRAME);
+        const inFrame = page.frameLocator('iframe');
+        await page.evaluate(`(() => {
+            window.framed = new AbortController();
+            const open = kit.attachDialog(frameDialog, { signal: framed.signal });
+            open(frame.contentDocument.querySelector('#inner'));
+        })()`);
+        await expect(inFrame.locator('#end-game')).toHaveAttribute('open');
+        // The frame's dialog makes only the frame inert, so the visitor reaches the page around it.
+        await page.locator('#start').focus();
+        await page.evaluate('framed.abort()');
+        await expect(inFrame.locator('#end-game')).not.toHaveAttribute('open');
+        await expect(page.locator('#start')).toBeFocused();
+    });
 
     test('opens nothing and sets no closedby given a signal already aborted', async ({ page }) => {
         await opened(page, { clock: false });

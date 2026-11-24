@@ -2219,9 +2219,13 @@ Each request is new, so the same control asked for twice is focused twice, and t
 An id is looked for in the root where focus was when the request was made, so a widget drawn inside
 a shadow root finds its own control, never an element of the page around it that shares the id, and
 the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
-element's root. A panel and its button are found from the page's document, which the panel listens
-on. `activeOf()` from `./controls` returns what has focus, followed into each shadow root that holds
-it, as a request reads where focus was, for a page that asks later and passes `from` itself.
+element's root. A panel and its button are found from the document the button sits in, which the
+panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
+root that holds it, as a request reads where focus was, for a page that asks later and passes `from`
+itself. Focus inside a frame reads as the frame there, as the page sees it. A request compares where
+focus is as the page sees it, a blank body of the page as nothing and a frame as the frame whatever
+has focus inside it, so focus a visitor put in a frame's blank space or an editor's body stays
+theirs.
 
 #### Moving focus in React
 
@@ -3490,25 +3494,25 @@ view, scrolled clear of the toast where the toast, measured where it comes to re
 A control counts as covered only where it meets the toast across as well as down, so one beside a
 narrow toast on a wide screen stays where it is. With focus inside a frame of the page's own origin,
 that is the control that has focus there, which the toast reads as the message comes and measures
-where the frame places it, past the frame's border and padding, scaled across and down as the frame
-is drawn and cut to what the frame shows inside its scrollbars, so a tall frame does not hide it. A
-control the frame has scrolled out of its own sight is left where it is, and a frame rotated or
-skewed is measured by its bounding box. WebKit 27.2 lays out the document of a frame scaled by
-`zoom` larger than it draws it, so there a control in such a frame can sit past what the frame shows
-and be left where it is. A frame of another origin, whose controls a page cannot reach, or one where
-only its body has focus, is measured whole. A control taller than the room above the toast, such a
-frame included, is left where it is. When a toast leaves with focus in it, focus goes to the first
-of these that takes it: the control focus last came into the toast from, then the control outside
-the toast that had focus as the latest message came, then the body of the app's frame, or on a page
-with no frame its main content where that takes focus, as the `tabindex="-1"` the skip link's markup
-puts on it lets it. The first is passed over where focus last came into the toast from nowhere. So a
-keyboard user who moved on from where they were as the message came lands where they left off. Its
-Close and its action carry `tabindex="0"`, which `Toast` draws and `attachToast` adds where a page's
-markup has none, so Safari, which focuses a pressed button only where it has a tabindex, leaves
-focus in the toast on a press and focus goes back as the toast leaves. An action runs after the
-toast has left, so where it takes away what focus came from, it moves focus itself. A message with
-no action replaces one with an action and its way back, so a page shows one another only when the
-first is done with. More than one action is a dialog's job.
+where each frame around it places it, past the frame's border and padding, scaled across and down as
+the frame is drawn and cut to what the frame shows inside its scrollbars, so a tall frame does not
+hide it. A control the frame has scrolled out of its own sight is left where it is, and a frame
+rotated or skewed is measured by its bounding box. WebKit 27.2 lays out the document of a frame
+scaled by `zoom` larger than it draws it, so there a control in such a frame can sit past what the
+frame shows and be left where it is. A frame of another origin, whose controls a page cannot reach,
+or one where only its body has focus, is measured whole. A control taller than the room above the
+toast, such a frame included, is left where it is. When a toast leaves with focus in it, focus goes
+to the first of these that takes it: the control focus last came into the toast from, then the
+control outside the toast that had focus as the latest message came, then the body of the app's
+frame, or on a page with no frame its main content where that takes focus, as the `tabindex="-1"`
+the skip link's markup puts on it lets it. The first is passed over where focus last came into the
+toast from nowhere. So a keyboard user who moved on from where they were as the message came lands
+where they left off. Its Close and its action carry `tabindex="0"`, which `Toast` draws and
+`attachToast` adds where a page's markup has none, so Safari, which focuses a pressed button only
+where it has a tabindex, leaves focus in the toast on a press and focus goes back as the toast
+leaves. An action runs after the toast has left, so where it takes away what focus came from, it
+moves focus itself. A message with no action replaces one with an action and its way back, so a page
+shows one another only when the first is done with. More than one action is a dialog's job.
 
 F8 reaches a shown action in one keystroke from anywhere on the page, so a keyboard user does not
 Tab through the whole page to get to it, as [decision record
@@ -3537,15 +3541,14 @@ Focus leaves the toast where nothing on that list takes it, so it falls to the p
 engine rather than staying on the toast's hidden button. The toast takes off its shown state before
 it hands focus back, so the room the sheet keeps under a shown toast does not scroll the control
 focus goes to. Where a page's own listener moves focus elsewhere as the toast hands it back, the
-toast goes no further down the list and that focus stays. A page sees focus inside a frame only as
-the frame, and focus that comes into the toast from inside a frame as coming from nowhere. Where the
-toast's handback focuses a frame of the page's own origin, it goes on to the control that had focus
-there as the latest message came, which the toast reads as the message comes. It stays on the frame
-where that control is gone, marked off, on a page the frame has since replaced, and on a frame of
-another origin, whose controls a page cannot reach. A frame inside that frame is not followed, so
-focus goes back to the inner frame rather than to the control inside it. Firefox does not focus a
-frame of another origin while a key is being pressed, so a dismiss by keyboard there goes on down
-the list, to the body of the app's frame or the main content.
+toast goes no further down the list and that focus stays. The toast reads focus from the page down,
+into each frame of the page's own origin that has it, so where focus was inside a frame as the
+latest message came, it goes back to the control there, inside a frame within that frame too, and
+focus that comes into the toast from inside a frame counts as coming from nowhere. It goes to the
+frame instead where that control is gone, marked off or on a page the frame has since replaced, and
+to the frame itself for a frame of another origin, whose controls a page cannot reach. Firefox does
+not focus a frame of another origin while a key is being pressed, so a dismiss by keyboard there
+goes on down the list, to the body of the app's frame or the main content.
 
 A page that takes a toast down while the toast stays on the page, such as on a screen it draws
 itself, attaches it as `attachToast(element, { signal })`, as [Taking a control
@@ -4161,7 +4164,12 @@ on what had focus as the dialog opened counts as the browser's handing it back. 
 an earlier task, such as before an awaited save, lands only where its frame comes after the dialog
 closes, so a page that awaits before closing asks again just before it closes. It also closes the
 dialog on a tap on the scrim around it, one that starts and ends there so a drag out of the dialog
-closes nothing.
+closes nothing. A dialog the page attaches inside a frame of its own origin that it drives hands
+focus back as it does on the page, to an opener in the frame or on the page, and stays in the
+document it was attached in, so a page that moves it into another takes it down and attaches it
+again. A dialog in a frame makes only that frame inert, so Tab past its last control and a screen
+reader's reading keys reach the page around it, and a page that needs the whole view held opens the
+dialog on the page.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads
@@ -4299,17 +4307,20 @@ them, marks itself as the panel is and leaves the panel alone. A press of a butt
 `aria-disabled="true"`, does nothing, and focus never goes back to one. A button attached again
 returns the same, and one with no `aria-controls` is refused with an error that says so. The button
 and the panel are found at each press, so a panel drawn again keeps working, and listeners on the
-page serve every panel, taken off once every button is taken down. Escape with focus in a panel or
-on its button closes the innermost such panel and marks the press handled, so a dialog around the
-panel stays open. It leaves alone an Escape the page has already handled, one that ends typing in a
-script such as Japanese, one on a panel's button that is off, one in an open dialog or an open
-popover inside the panel, and one on a search with words in it or on a combobox or a button whose
-list or menu is open. Those checks read where the key was pressed, inside a page's own component
-where the component's shadow root is open, and the component's host among them, so a component that
-marks its host as an open combobox keeps its Escape. Inside a closed shadow root the panel sees only
-the host. An element inside a component's shadow tree that shares a panel's id closes nothing, since
-only the page's own elements name a panel. A panel's id must be the only one on the page, so a page
-that shows markup its visitors wrote prefixes or strips the ids in it.
+document serve every panel in it, taken off once every button in it is taken down. Escape with focus
+in a panel or on its button closes the innermost such panel and marks the press handled, so a dialog
+around the panel stays open. It leaves alone an Escape the page has already handled, one that ends
+typing in a script such as Japanese, one on a panel's button that is off, one in an open dialog or
+an open popover inside the panel, and one on a search with words in it or on a combobox or a button
+whose list or menu is open. Those checks read where the key was pressed, inside a page's own
+component where the component's shadow root is open, and the component's host among them, so a
+component that marks its host as an open combobox keeps its Escape. Inside a closed shadow root the
+panel sees only the host. An element inside a component's shadow tree that shares a panel's id
+closes nothing, since only the page's own elements name a panel. A panel's id must be the only one
+in its document, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A
+panel whose button the page attaches inside a frame of its own origin that it drives works in that
+frame's document as it does on the page, and the button stays in the document it was attached in, so
+a page that moves it into another takes it down and attaches it again.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
 as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches

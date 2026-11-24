@@ -1045,6 +1045,52 @@ test("hands focus back on a dismiss inside a frame of the page's own origin that
     await expect(inner).toBeFocused();
 });
 
+test('leaves focus on the page where a visitor moved it, as the page dismisses a toast it attached inside a frame', async ({
+    page,
+}) => {
+    await open(page, { body: TOAST_FRAMED, attach: false });
+    await attachInFrame(page);
+    const frame = page.frameLocator('iframe');
+    await frame.locator('#inner').focus();
+    await page.evaluate(() => {
+        const kit = window as unknown as { show: Kit['show']; dismiss: () => void };
+        kit.dismiss = kit.show('Round 3 saved.', { label: 'Undo', onAction: () => undefined });
+    });
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    // The visitor moves on to the page, and the page dismisses the message.
+    await page.locator('#save').focus();
+    await page.evaluate(() => {
+        (window as unknown as { dismiss: () => void }).dismiss();
+    });
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('hands focus back to the control inside a frame inside a frame that had it as the message came', async ({
+    page,
+}) => {
+    await open(page, { body: framed() });
+    // A frame drawn inside the page's frame, holding a button of its own.
+    await page.evaluate(async () => {
+        const outer = document.querySelector('iframe')?.contentDocument;
+        if (!outer) throw new Error('no frame');
+        const nested = outer.createElement('iframe');
+        nested.title = 'Scores';
+        nested.srcdoc = '<button type=button id=deep>Deep</button>';
+        const loaded = new Promise((done) => nested.addEventListener('load', done, { once: true }));
+        outer.body.append(nested);
+        await loaded;
+    });
+    const deep = page.frameLocator('iframe').frameLocator('iframe').locator('#deep');
+    await deep.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).focus();
+    await page.keyboard.press('Enter');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('iframe')).toBeFocused();
+    await expect(deep).toBeFocused();
+});
+
 test('hands focus back inside a frame to a button the page made and moved into the frame', async ({
     page,
 }) => {
@@ -2515,4 +2561,141 @@ test('wraps its buttons under its message and keeps them inside it on a 320px ph
         expect(drawn.y + drawn.height).toBeLessThanOrEqual(card.y + card.height + 0.5);
     }
     expect(await sideways(page)).toBe(0);
+});
+
+test('leaves the page where it is when a toast inside a frame shows with focus on a control of the page', async ({
+    page,
+}) => {
+    // The frame stands to the right, as tall as the screen, so its toast rests at its foot, and the
+    // page's control sits to the left at the screen's foot, partly out of sight, where it would meet
+    // the toast were it measured in the frame's view.
+    await open(page, {
+        width: 800,
+        height: 700,
+        attach: false,
+        body:
+            '<button type="button" id="low" style="position: absolute; inset-block-start: 660px; inset-inline-start: 10px; block-size: 60px">Low</button>' +
+            '<div style="block-size: 2000px"></div>' +
+            '<iframe title="Notes" style="position: absolute; inset-block-start: 0; inset-inline-start: 400px; inline-size: 380px; block-size: 700px; border: 0" srcdoc="' +
+            `<link rel=stylesheet href=/kit.css>${TOAST}`
+                .replaceAll('&', '&amp;')
+                .replaceAll('"', '&quot;') +
+            '"></iframe>',
+    });
+    await attachInFrame(page);
+    await page.evaluate(() => {
+        document.querySelector<HTMLElement>('#low')?.focus({ preventScroll: true });
+    });
+    const before = await page.evaluate(() => scrollY);
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await expect(page.frameLocator('iframe').locator('.dk-toast-message')).toHaveText(
+        'Round 3 saved.'
+    );
+    await frames(page, 3);
+    expect(await page.evaluate(() => scrollY)).toBe(before);
+});
+
+test('sends focus to the main content in the shadow root a toast inside a frame sits in, where nothing nearer takes it', async ({
+    page,
+}) => {
+    await open(page, {
+        attach: false,
+        body:
+            '<main><h1>Scores</h1></main><iframe title="Notes" srcdoc="' +
+            '<link rel=stylesheet href=/kit.css><div id=host></div>' +
+            '"></iframe>',
+    });
+    await page.evaluate(async (markup) => {
+        const kit = (await import(`${location.origin}/controls.js`)) as {
+            attachToast: (element: HTMLElement) => Kit['show'];
+        };
+        const frame = document.querySelector('iframe');
+        if (
+            frame?.contentDocument?.readyState !== 'complete' ||
+            !frame.contentDocument.querySelector('#host')
+        )
+            await new Promise((loaded) => frame?.addEventListener('load', loaded, { once: true }));
+        const host = frame?.contentDocument?.querySelector('#host');
+        if (!host) throw new Error('no host in the frame');
+        const root = host.attachShadow({ mode: 'open' });
+        root.innerHTML = `<main id="shadow-main" tabindex="-1"><p>Ana dealt.</p></main>${markup}`;
+        const toastIn = root.querySelector<HTMLElement>('.dk-toast');
+        if (!toastIn) throw new Error('no toast in the shadow root');
+        (window as unknown as { show: Kit['show'] }).show = kit.attachToast(toastIn);
+    }, TOAST);
+    // Shown with nothing focused, so the toast hands focus to its home as it leaves.
+    await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    const frame = page.frameLocator('iframe');
+    await frame.getByRole('button', { name: 'Undo' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(frame.locator('.dk-toast-message')).toHaveText('');
+    await expect(frame.locator('#shadow-main')).toBeFocused();
+});
+
+test('lands a focus request asked as the toast hands focus back to a frame whose control has gone', async ({
+    page,
+}) => {
+    await open(page, { body: framed() });
+    const inner = page.frameLocator('iframe').locator('#inner');
+    await inner.focus();
+    await show(page, 'Round 3 saved.', 'Undo');
+    await undo(page).focus();
+    await inner.evaluate((button) => button.remove());
+    // The page asks for Save and dismisses the message in one task, and the toast hands focus back
+    // to the frame, whose control has gone, so the frame's body has focus there.
+    await page.evaluate(async () => {
+        const { moveFocus } = (await import(`${location.origin}/controls.js`)) as {
+            moveFocus: (target: string) => () => void;
+        };
+        moveFocus('save');
+        (window as unknown as { kit: Kit }).kit.last?.();
+    });
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
+});
+
+test('works for a toast copied from a template and attached before the page takes it in', async ({
+    page,
+}) => {
+    await open(page, {
+        attach: false,
+        body: PAGE.replace(TOAST, `<template id="drawn">${TOAST}</template>`),
+    });
+    await page.evaluate(async () => {
+        const kit = (await import(`${location.origin}/controls.js`)) as {
+            attachToast: (element: HTMLElement) => Kit['show'];
+        };
+        // The copy belongs to the template's document, which has no window, until the page takes
+        // it in.
+        const copy = document
+            .querySelector<HTMLTemplateElement>('#drawn')
+            ?.content.cloneNode(true) as DocumentFragment;
+        const drawn = copy.querySelector<HTMLElement>('.dk-toast');
+        if (!drawn) throw new Error('no toast in the template');
+        (window as unknown as { show: Kit['show'] }).show = kit.attachToast(drawn);
+        document.body.append(copy);
+    });
+    await page.locator('#save').focus();
+    await page.evaluate(() => {
+        (window as unknown as { show: Kit['show'] }).show('Round 3 saved.', {
+            label: 'Undo',
+            onAction: () => undefined,
+        });
+    });
+    await page.keyboard.press('F8');
+    await expect(undo(page)).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(message(page)).toHaveText('');
+    await expect(page.locator('#save')).toBeFocused();
 });
