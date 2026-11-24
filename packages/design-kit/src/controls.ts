@@ -207,17 +207,25 @@ const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
 };
 
 /**
- * How many times the page has come back into sight. A browser runs no frame while the page is out
- * of sight, so a request that sees this change before its frame was waiting while the visitor was
- * away, and is dropped so focus does not jump when they come back. A clock would drop a request a
- * long render held past its limit on a page in sight, and leave focus where a removed control left
- * it, on the page's body.
+ * How many times the page has gone out of sight or come back, the rule for which request is
+ * dropped. A browser runs no frame while the page is out of sight, so a request that sees this
+ * change before its frame was waiting while the visitor was away, and is dropped so focus does not
+ * jump when they come back. The page is told it is going before it stops drawing, so a request
+ * whose frame the browser runs on the way back, before it tells the page, is dropped too.
  */
-let backInSight = 0;
+let sightChanges = 0;
 
 /**
- * When a request was asked, and how many times the page had come back into sight by then, or NaN,
- * which matches no count, where the page was out of sight as it was asked.
+ * How late a frame may come before its request is dropped, in milliseconds, a backstop for a frame
+ * held back with the page in sight, as a browser holds a frame out of view with no event. It is
+ * far past any render, since a render held past it on a page in sight would lose its request and
+ * leave focus where a removed control left it, on the page's body.
+ */
+const STALE = 10_000;
+
+/**
+ * When a request was asked, and how many times the page had gone out of sight or come back by
+ * then, or NaN, which matches no count, where the page was out of sight as it was asked.
  */
 type Asked = { readonly at: number; readonly sight: number };
 
@@ -227,12 +235,16 @@ type Asked = { readonly at: number; readonly sight: number };
  */
 const askedNow = (): Asked => ({
     at: performance.now(),
-    sight: document.hidden ? NaN : backInSight,
+    sight: document.hidden ? NaN : sightChanges,
 });
+
+/** Whether a request may still land, in sight and unchanged since it was asked, and in time. */
+const live = (asked: Asked) =>
+    !document.hidden && sightChanges === asked.sight && performance.now() - asked.at <= STALE;
 
 /**
  * Focuses a request's target or a fallback, where focus is still where it was, or where the kit has
- * handed it back since the request was asked, and the page has not been out of sight since.
+ * handed it back since the request was asked, and the request is live.
  */
 const land = (
     target: FocusTarget,
@@ -240,7 +252,7 @@ const land = (
     from: Element | null,
     asked: Asked
 ) => {
-    if (backInSight !== asked.sight) return;
+    if (!live(asked)) return;
     const now = focusedNow();
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
@@ -274,8 +286,9 @@ const land = (
  * since, as a toast, a dialog or a panel does as it closes and a stepper as it is taken down, or on
  * what the browser hands it to as a dialog closes, until the dialog's close is handled. A request
  * made while the page is out of sight, or before it goes, is dropped, so focus does not jump when
- * the visitor comes back, while one a long render holds on a page in sight still lands. Each
- * request is new, so a control asked for twice is focused twice.
+ * the visitor comes back, and so is one whose frame comes more than ten seconds late, while one a
+ * long render holds on a page in sight for less still lands. Each request is new, so a control
+ * asked for twice is focused twice.
  */
 export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): (() => void) => {
     // Aborting calls off a request that has not landed, as the function it returns does, and one
@@ -364,11 +377,11 @@ const heard = (event: Event) => {
 };
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
 // view is heard and a request made before the page went out of sight is known. It notes inputs and
-// when the page comes back into sight, and nothing else.
+// each time the page goes out of sight or comes back, and nothing else.
 if (typeof document !== 'undefined') {
     for (const type of ['keydown', 'click', 'submit']) document.addEventListener(type, heard, true);
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) backInSight += 1;
+        sightChanges += 1;
     });
 }
 
@@ -386,6 +399,8 @@ type Arrival = {
     readonly heading: FocusTarget;
     readonly from: Element | null;
     readonly fallbacks: readonly FocusTarget[] | undefined;
+    /** When the view asked, so one asked before the page went out of sight lands nothing. */
+    readonly asked: Asked;
     /** Calls the view's request off, and lets go of the signal it was given. */
     readonly stop: () => void;
 };
@@ -410,7 +425,9 @@ let arriving: {
  * changed on a press asks with `changed`, so it takes focus whatever the last input was, lands
  * with the views first drawn for the same press, and spends the press. Its `signal` calls the
  * request off as the function it returns does, a microtask after it aborts, as `moveFocus` has it,
- * and a signal already aborted asks for nothing and leaves the press for another view.
+ * and a signal already aborted asks for nothing and leaves the press for another view. A view is
+ * dropped as a request to `moveFocus` is, and one asked once the page is back in sight lands
+ * without the views asked before it went.
  */
 export const focusOnArrival = (
     heading: FocusTarget,
@@ -424,12 +441,13 @@ export const focusOnArrival = (
         const press = pressedAt;
         pressedAt = null;
         const views = new Set<Arrival>();
-        const asked = askedNow();
         const frame = window.requestAnimationFrame(() => {
             arriving = null;
             // Stopped as they land, so a signal the page keeps for longer holds nothing of a view.
-            const asking = [...views];
-            for (const view of asking) view.stop();
+            const asked = [...views];
+            for (const view of asked) view.stop();
+            // A view asked since the page went out of sight or came back lands without the others.
+            const asking = asked.filter((view) => live(view.asked));
             const places = asking.flatMap((view) => {
                 const place = placeOf(view.heading, view.from);
                 return place?.isConnected ? [{ view, place }] : [];
@@ -440,11 +458,11 @@ export const focusOnArrival = (
                     : -1
             );
             const [first] = places;
-            if (first) land(first.place, first.view.fallbacks, first.view.from, asked);
+            if (first) land(first.place, first.view.fallbacks, first.view.from, first.view.asked);
             else {
                 // No heading is there to take focus, so the first view asked goes by its fallbacks.
                 const [view] = asking;
-                if (view) land(view.heading, view.fallbacks, view.from, asked);
+                if (view) land(view.heading, view.fallbacks, view.from, view.asked);
             }
         });
         arriving = { views, frame, at: inputs, press };
@@ -455,6 +473,7 @@ export const focusOnArrival = (
         heading,
         from: options.from === undefined ? activeOf() : options.from,
         fallbacks: options.fallbacks,
+        asked: askedNow(),
         stop: down.stop,
     };
     batch.views.add(view);
