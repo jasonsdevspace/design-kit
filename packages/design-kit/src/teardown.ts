@@ -37,8 +37,11 @@ export type Teardown<Options = AttachOptions> = {
      * options apply.
      */
     readonly hold: (by: AbortSignal | undefined, options?: Options) => void;
-    /** What applies a holder's options to the control, given by the attach before `keep`. */
-    set?: ((options: Options) => void) | undefined;
+    /**
+     * What applies a holder's options to the control, given by the attach before `keep`. It is
+     * handed `{}` where no holder left gave options, so each key may be missing.
+     */
+    set?: ((options: Partial<Options>) => void) | undefined;
 };
 
 /** A control kept by its element: what its attach returned, and its teardown. */
@@ -115,7 +118,7 @@ export const teardown = <Options = AttachOptions>(
                 // them.
                 const next = [...holders].findLast(([, given]) => given);
                 applied = next?.[0];
-                down.set?.((next ? next[1] : {}) as Options);
+                down.set?.(next?.[1] ?? {});
             }
         });
     };
