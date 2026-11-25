@@ -146,3 +146,24 @@ describe("the controls' reads of focus", () => {
         expect(files.filter((name) => textOf(name).includes('focusedNow'))).toEqual([]);
     });
 });
+
+/*
+ * A document gives each named element as a property of its own, so `'host' in` a document is true
+ * on a page with a form named host, which held a walk out through the hosts forever, and a frame
+ * named host hands back its window. A shadow root is told by its node type, 11, as `rootOf` tells
+ * it.
+ */
+describe("the controls' tests for a shadow root", () => {
+    const sources = fileURLToPath(new URL('../packages/design-kit/src', import.meta.url));
+    const files = readdirSync(sources).filter((name) => /^[^.]+\.tsx?$/.test(name));
+
+    it("never ask whether a root has a host with 'in'", () => {
+        const askers = files.filter((name) =>
+            /['"]host['"]\s+in\b/.test(readFileSync(join(sources, name), 'utf8'))
+        );
+        expect(
+            askers,
+            "tell a shadow root by its node type, 11, since a document's named elements answer for 'host' in it"
+        ).toEqual([]);
+    });
+});

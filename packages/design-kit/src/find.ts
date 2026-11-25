@@ -1,19 +1,20 @@
 /*
- * How the controls find a piece's parts: the root a node lives in, the element an id names there,
- * the ids an attribute names and the field a control stands for, whether a control is off or takes
- * focus, and the words that name a field, shared by the parts of the controls and the kit's words
- * for a failure. No entry of the package exports this module, so a page never reaches
- * it.
+ * How the controls find a piece's parts: the root a node lives in, the element an id names there
+ * or in a root around it, the ids an attribute names and the field a control stands for, whether a
+ * control is off or takes focus, and the words that name a field, shared by the parts of the
+ * controls and the kit's words for a failure. No entry of the package exports this module, so a
+ * page never reaches it.
  */
 
 /**
  * The root a node lives in: a shadow root where it sits in one, else the document it sits in, the
- * page's or a frame's, or the document itself where a document is given, told apart without the
- * page's own `ShadowRoot`, which a frame's is not.
+ * page's or a frame's, or the document itself where a document is given, told apart by node type
+ * and host without the page's own `ShadowRoot`, which a frame's is not. A document is never asked
+ * whether it has a host, since an element named `host` on it answers for it.
  */
 export const rootOf = (node: Node | null | undefined): Document | ShadowRoot => {
     const root = node?.getRootNode();
-    return root?.nodeType === 9 || (root?.nodeType === 11 && 'host' in root)
+    return root?.nodeType === 9 || (root?.nodeType === 11 && !!(root as Partial<ShadowRoot>).host)
         ? (root as Document | ShadowRoot)
         : (node?.ownerDocument ?? document);
 };
@@ -24,6 +25,20 @@ export const rootOf = (node: Node | null | undefined): Document | ShadowRoot => 
  */
 export const byId = (near: Node | null | undefined, id: string): Element | null =>
     rootOf(near).getElementById(id);
+
+/**
+ * The element an id names in the root a node lives in, else in each root around it, out through
+ * the hosts to the document the node sits in, so a focus request asked from a widget's shadow root
+ * finds the widget's own element first and one of the page around it after. The walk ends at the
+ * root that is no shadow root, told by its node type, since an element named `host` on a document
+ * would answer for it.
+ */
+export const byIdOutward = (near: Node | null | undefined, id: string): Element | null => {
+    for (let root = rootOf(near); ; root = rootOf((root as ShadowRoot).host)) {
+        const found = root.getElementById(id);
+        if (found || root.nodeType !== 11) return found;
+    }
+};
 
 export const CHOICE = 'input[type="checkbox"], input[type="radio"]';
 

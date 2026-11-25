@@ -6,7 +6,8 @@ dialog taken down by its signal hand focus back by this rule, in 0.9.4 for a sea
 only once every button refuses focus, by record 29 in 0.9.4, under which F8 moves focus to a shown
 toast's action and back, and in 0.9.4 for a dialog, a panel, a stepper, a form and a group of cells
 the page attaches inside a frame, a focus request asked with focus inside one, the presses and keys
-inside one that a focus request hears, and a press cleared as focus enters a frame nothing can hear
+inside one that a focus request hears, a press cleared as focus enters a frame nothing can hear, and
+an id a focus request looks for in each root outward from where focus was
 
 ## Context
 
@@ -139,7 +140,10 @@ focus from them. The form and the group also told the frame's controls by the pa
 which a frame's are not, so a form in the frame let a submit through with nothing checked. The
 listeners that note a visitor's presses for a focus request sat on the page's document alone, so a
 key inside a frame left a press on the page standing for a view to take focus from where the visitor
-went on, and a press inside a frame never counted, so the view it brought took no focus.
+went on, and a press inside a frame never counted, so the view it brought took no focus. A focus
+request looked its id up only in the root where focus was, so a widget's button in a shadow root
+that asked for a heading in the page's markup found nothing and focus fell to the page's main
+content, and a request asked with focus in a frame inside a shadow root looked only in that root.
 
 **A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
 since the page would add listeners to every frame focus enters, and still read focus as the frame.
@@ -183,7 +187,18 @@ focus wherever it is. The walk that hands focus back counts focus fallen to any 
 move of the page's. `activeOf` stays as 0.9.3 had it, followed into shadow roots only, and stays
 public for a page that passes `from` itself, while no part of the kit calls it. A request finds its
 id and the home it falls back to from the page's view of where focus was, the frame where focus was
-in one.
+in one. The id is looked for in the root that view sits in, then in each root around it out through
+the hosts to the page's document, in one walk from the one read of focus, so a widget's own id wins
+over the same id on the page and a widget's button that asks for a heading in the page's markup
+finds it. A frame inside a shadow root starts the walk in that root, and focus inside a closed
+shadow root reads as its host, so with no `from` the walk starts in the root the host sits in and
+finds no id inside the closed root. Looking in the page's document first was turned down, since it
+let the page's id win over the widget's own. The cost is that a widget's id missing from its own
+root as the request lands, one the widget has not drawn yet, finds an element of the page that
+shares it, where the request fell back before. A late request from `useFocusAfterDraw` looks an id
+up by the same walk, from where focus was as it was asked. The walk ends at the root that is no
+shadow root, told by its node type, since a document's named elements answer for `'host' in` it, so
+a page with a form named host held the walk forever.
 
 Option D. The dialog finds its opener, an element or an event of the frame's or the page's, from the
 deep reader, and hands focus back to an opener in the frame or on the page alike. What had focus as
@@ -393,6 +408,18 @@ The path is in `packages/design-kit`.
   next cell where the one with focus is taken out, in a frame whose body can be typed in too.
   `e2e/table.spec.ts`, in the three engines, finds a link in a table inside the frame brought out
   from under its pinned column as the keyboard reaches it.
+- `e2e/focus.spec.tsx`, in the three engines, finds a heading on the page that a widget's button in
+  an open shadow root asks for by id taking focus as its view arrives, a widget's own id found in
+  its shadow root before the same id on the page, a button in a nested shadow root finding the id in
+  the root around it before the page's and an id only the page holds on the page, a request from a
+  closed shadow root read as its host finding the page's element of an id the closed root shares and
+  none of the closed root's own, a request asked with focus in a frame inside a shadow root finding
+  its id on the page, a late request from `useFocusAfterDraw` by a component in a shadow root since
+  gone finding an id only the page holds, and a page holding a form or a frame named host finding
+  its id past one it lacks, with no hang and no page error. The open, the nested, the frame and the
+  late request failed before the walk reached them, the own id and the nested failed against a walk
+  that looks in the page's document first, and the named host held the page or threw.
+  `scripts/controls.test.ts` finds no module of the controls asking `'host' in` a root.
 - `e2e/focus.spec.tsx`, in the three engines, finds a request asked from one control of a frame
   leaving focus on another of that frame that the visitor moved to, asked through `moveFocus`,
   through `useFocusAfterDraw` and as a view's arrival through `useArrivalFocus`, a request given a

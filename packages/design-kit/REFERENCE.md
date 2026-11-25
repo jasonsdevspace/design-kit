@@ -2224,12 +2224,19 @@ Each request is new, so the same control asked for twice is focused twice, and t
 
 #### An id inside a shadow root
 
-An id is looked for in the root where focus was when the request was made, so a widget drawn inside
-a shadow root finds its own control, never an element of the page around it that shares the id, and
-the form's refusal, a stepper and progress find the errors, hints and labels they read in their own
-element's root. A panel and its button are found from the document the button sits in, which the
-panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each shadow
-root that holds it, for a page that asks later and passes `from` itself.
+An id is looked for in the root where focus was when the request was made, then in each root around
+it, out through the hosts to the page, so a widget drawn inside a shadow root finds its own control
+before an element of the page around it that shares the id, and a widget's own button that asks for
+a heading in the page's markup finds that heading. An id the widget's root does not hold as the
+request lands is looked for in the page ahead of the fallbacks, so a widget asks for a control it
+may not have drawn yet by passing the element or a function that returns it, not its id. Focus
+inside a closed shadow root reads as its host, so a request asked there with no `from` looks from
+the root the host sits in and finds no id inside the closed root. A widget in a closed root passes
+its own control as an element, not as an id. The form's refusal, a stepper and progress find the
+errors, hints and labels they read in their own element's root alone. A panel and its button are
+found from the document the button sits in, which the panel listens on. `activeOf()` from
+`./controls` returns what has focus, followed into each shadow root that holds it, for a page that
+asks later and passes `from` itself.
 
 A request keeps where focus was inside a frame of the page's own origin as well, and compares where
 focus is as the document it was in sees it, while that document is still the one its frame shows: a
@@ -2239,7 +2246,8 @@ visitor put in another frame's blank space or an editor's body stays theirs. Whe
 left the page or loaded another page since, the request compares as the page sees it, with focus in
 the frame read as the frame. A request's id and the home it falls back to are looked for from the
 page's view of where focus was, the frame where focus was in one, whether the page passes `from` or
-not, so a request asked with focus in a frame finds its id on the page.
+not, so a request asked with focus in a frame finds its id on the page, from the root the frame sits
+in outward, a shadow root around the frame first.
 
 #### Moving focus in React
 
@@ -2275,10 +2283,11 @@ A request asked after the component has gone, as a panel that closes itself and 
 await, waits a frame and is made then, taking focus only from the page's body, whatever `from` it
 was given, and only where its target is in sight, so a visitor already on the next screen is left
 where they are. It still finds an id in the root where focus was as it was asked, or where the
-`from` it was given is. Focus has most often fallen to the page's body by then, so a widget drawn
-inside a shadow root passes `from`, an element still in that root, to find its own control, and with
-no `from` an id is found there only while focus is still in that root. One whose target an
-`Activity` hides with the component is held until the component shows, and is made then.
+`from` it was given is, then in each root around it out to the page. Focus has most often fallen to
+the page's body by then, so a widget drawn inside a shadow root passes `from`, an element still in
+that root, to find its own control, and with no `from` an id is found there only while focus is
+still in that root. One whose target an `Activity` hides with the component is held until the
+component shows, and is made then.
 
 #### Focus on arrival
 

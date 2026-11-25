@@ -23,14 +23,18 @@ import { box, frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
  * frame inside a shadow root, a frame of another origin or a frame that went on to one leaves no
  * press of the page's standing either, with no page error, a press in a frame inside a shadow root
  * counts whether focus is read before its click or after a click it already heard, a keydown with
- * no key counts for nothing, and a frame's document is heard once. A request still waiting as its
- * component unmounts lands, from a row removed at once, after an await, from a timer or in a
- * transition, from a transition an urgent update overtook, on its fallback where the transition
- * draws its target, and from a component an `Activity` hides, unless the visitor moved focus first.
- * One made in a commit before its component goes lands, one asked from a ref as its component first
- * draws lands, one whose target an `Activity` hides with its component is held until it shows, one
- * asked after an await by a component that has gone lands, and one asked once the visitor is on the
- * next screen leaves focus there, whatever place it names.
+ * no key counts for nothing, a frame's document is heard once, and an id asked for from a widget's
+ * shadow root, or from a frame inside one, is found in that root first and then in each root around
+ * it out to the page, an id asked from a closed root is looked for from its host, and a page with
+ * an element named host neither holds the walk nor throws. A request still waiting as its component
+ * unmounts lands, from a row removed at once, after an await, from a timer or in a transition, from
+ * a transition an urgent update overtook, on its fallback where the transition draws its target,
+ * and from a component an `Activity` hides, unless the visitor moved focus first. One made in a
+ * commit before its component goes lands, one asked from a ref as its component first draws lands,
+ * one whose target an `Activity` hides with its component is held until it shows, one asked after
+ * an await by a component that has gone lands, one asked late by a component in a shadow root since
+ * gone finds an id only the page holds, and one asked once the visitor is on the next screen leaves
+ * focus there, whatever place it names.
  *
  * A browser run headless cannot be sent out of sight, nor made to order its frames and its
  * visibility events as a real one does in each engine, so the tests that need the page out of sight
@@ -409,6 +413,18 @@ test.describe('in React', () => {
             (window as unknown as { answerShadow: () => void }).answerShadow();
         });
         await expect(page.locator('#shadow-panel-open')).toBeFocused();
+    });
+
+    test('moves focus asked for late, by an id only the page holds, by a component in a shadow root since gone', async ({
+        page,
+    }) => {
+        await servePage(page, { title: 'Focus', body: '<div id="root"></div>', script: app });
+        await press(page, '#shadow-done');
+        await expect(page.locator('#shadow-done')).toHaveCount(0);
+        await page.evaluate(() => {
+            (window as unknown as { answerShadowDone: () => void }).answerShadowDone();
+        });
+        await expect(page.locator('#shadow-results')).toBeFocused();
     });
 
     test('moves focus asked for after an await by a component that has since unmounted', async ({
@@ -899,6 +915,147 @@ test('lands a request asked from inside a frame the page hides before the reques
         if (frame) frame.hidden = true;
     });
     await expect(page.locator('#target')).toBeFocused();
+});
+
+/**
+ * A page with headings of its own and widgets that draw their buttons in shadow roots, as Lit,
+ * Shoelace and Material Web do: one in an open root with a heading that shares an id with the
+ * page's and a widget nested in it, one in a closed root with a heading of its own and one that
+ * shares an id with the page's, and a frame in an open root. Each button in an open root asks for
+ * focus by id as its view arrives.
+ */
+const openWithWidgets = async (page: Page) => {
+    await servePage(page, {
+        title: 'Focus',
+        body:
+            '<main><h2 id="scores" tabindex="-1">Scores</h2><h2 id="round" tabindex="-1">Round</h2>' +
+            '<div id="widget"></div><div id="shut"></div><div id="framed"></div></main>',
+        script: `import { focusOnArrival, moveFocus } from './controls.js';
+window.moveFocus = moveFocus;
+const asks = (root) => {
+    for (const button of root.querySelectorAll('[data-asks]'))
+        button.addEventListener('click', () => focusOnArrival(button.dataset.asks));
+};
+const widget = document.querySelector('#widget').attachShadow({ mode: 'open' });
+widget.innerHTML =
+    '<button type="button" id="bring" data-asks="scores">Bring the scores</button>' +
+    '<button type="button" id="bring-round" data-asks="round">Bring the round</button>' +
+    '<h3 id="round" tabindex="-1">Widget round</h3><span id="nested"></span>';
+asks(widget);
+const nested = widget.querySelector('#nested').attachShadow({ mode: 'open' });
+nested.innerHTML =
+    '<button type="button" id="deep-round" data-asks="round">Bring the round from deep</button>' +
+    '<button type="button" id="deep-scores" data-asks="scores">Bring the scores from deep</button>';
+asks(nested);
+const shut = document.querySelector('#shut').attachShadow({ mode: 'closed' });
+shut.innerHTML =
+    '<button type="button" id="shut-bring">Bring</button><h3 id="shut-own" tabindex="-1">Own</h3>' +
+    '<h3 id="scores" tabindex="-1">Widget scores</h3>';
+window.shut = shut;
+const frame = document.createElement('iframe');
+frame.title = 'Notes';
+frame.srcdoc = '<button type=button id=inner>Inside</button>';
+const loaded = new Promise((done) => frame.addEventListener('load', done, { once: true }));
+document.querySelector('#framed').attachShadow({ mode: 'open' }).append(frame);
+await loaded;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+test("focuses a heading on the page that a widget's button in an open shadow root asks for by id", async ({
+    page,
+}) => {
+    await openWithWidgets(page);
+    await press(page, '#bring');
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+test("finds a widget's own id in its shadow root before the same id on the page", async ({
+    page,
+}) => {
+    await openWithWidgets(page);
+    await press(page, '#bring-round');
+    await expect(page.locator('#widget #round')).toBeFocused();
+    await expect(page.locator('main > #round')).not.toBeFocused();
+});
+
+test('finds an id in the nearest root outward from a nested shadow root, then on the page', async ({
+    page,
+}) => {
+    await openWithWidgets(page);
+    // The widget around the nested one holds a heading of the id the page shares, and is nearer.
+    await press(page, '#deep-round');
+    await expect(page.locator('#widget #round')).toBeFocused();
+    await press(page, '#deep-scores');
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+test("finds an id on the page from a closed shadow root, read as its host, and never one of the root's", async ({
+    page,
+}) => {
+    await openWithWidgets(page);
+    const ask = (id: string) =>
+        page.evaluate((asked) => {
+            const { shut } = window as unknown as { shut: ShadowRoot };
+            shut.querySelector<HTMLElement>('#shut-bring')?.focus();
+            (window as unknown as Mover).moveFocus(asked);
+        }, id);
+    const focused = () =>
+        page.evaluate(() => {
+            const { shut } = window as unknown as { shut: ShadowRoot };
+            return (shut.activeElement ?? document.activeElement)?.id;
+        });
+    // Focus inside a closed root reads as its host, so the walk starts in the root the host is in.
+    await ask('shut-own');
+    await settled(page);
+    expect(await focused()).toBe('shut-bring');
+    // The closed root holds a heading of the id the page's has, and the page's takes focus.
+    await ask('scores');
+    await expect(page.locator('main > #scores')).toBeFocused();
+    expect(
+        await page.evaluate(() => (window as unknown as { shut: ShadowRoot }).shut.activeElement)
+    ).toBeNull();
+});
+
+for (const named of ['<form name="host"></form>', '<iframe name="host" title="Notes"></iframe>'])
+    test(`finds an id on a page holding ${named}, past an id it lacks, with no page error`, async ({
+        page,
+    }) => {
+        // A walk that never ends holds the page, so the test fails at its own time rather than hang.
+        test.setTimeout(15_000);
+        const errors: string[] = [];
+        page.on('pageerror', (error) => errors.push(error.message));
+        await servePage(page, {
+            title: 'Focus',
+            body: `<main><button type="button" id="start">Start</button>${named}<h2 id="scores" tabindex="-1">Scores</h2></main>`,
+            script: `import { moveFocus } from './controls.js';
+window.moveFocus = moveFocus;
+window.ready = true;`,
+        });
+        await page.waitForFunction(() => 'ready' in window);
+        await page.locator('#start').focus();
+        // A document gives its named elements as properties, so one named host answers for a host.
+        await page.evaluate(() => {
+            (window as unknown as Mover).moveFocus('missing');
+        });
+        await settled(page);
+        await page.evaluate(() => {
+            (window as unknown as Mover).moveFocus('scores');
+        });
+        await expect(page.locator('#scores')).toBeFocused({ timeout: 3000 });
+        expect(errors).toEqual([]);
+    });
+
+test("finds a request's id on the page, where focus was in a frame inside a shadow root", async ({
+    page,
+}) => {
+    await openWithWidgets(page);
+    await page.frameLocator('#framed iframe').locator('#inner').focus();
+    await page.evaluate(() => {
+        (window as unknown as Mover).moveFocus('scores');
+    });
+    await expect(page.locator('#scores')).toBeFocused();
 });
 
 /**

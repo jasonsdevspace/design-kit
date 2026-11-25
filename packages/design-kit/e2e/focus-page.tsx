@@ -20,6 +20,7 @@ type Page = {
     answerLeave?: () => void;
     answerNamed?: () => void;
     answerShadow?: () => void;
+    answerShadowDone?: () => void;
     dropOwner?: () => void;
     hideOwner?: () => void;
     showOwner?: () => void;
@@ -39,15 +40,16 @@ const page = window as unknown as Page;
  * before any press, a view and a section of it brought by one press, a save answered after an await
  * that turns on the control it asks focus for, the same with the control in a sibling and with the
  * save pressed inside a shadow root, a view whose key a press inside a shadow root changes, a panel
- * inside a shadow root that asks late for focus on its opener by its id, a panel that asks for
- * focus on its opener once it is gone, rows that each ask for focus on the next as their own press
- * removes them, a screen that asks for focus late, once it is gone and the visitor is on the next,
- * the same naming that field as where focus was, a view that asks for focus on its first field from
- * that field's ref as a press draws it, rows removed after an await, from a timer and in a
- * transition, requests asked in a transition held back by a part that never loads, whose owner an
- * urgent update then unmounts or an `Activity` hides, a request asked as an `Activity` hides its
- * owner in the same press, one asked while it hides it, one made in a commit whose owner the next
- * commit takes away, and a request and a view's arrival asked with focus on a control in a frame.
+ * inside a shadow root that asks late for focus on its opener by its id, a Done inside one that
+ * asks late for focus on a heading of the page's by its id, a panel that asks for focus on its
+ * opener once it is gone, rows that each ask for focus on the next as their own press removes them,
+ * a screen that asks for focus late, once it is gone and the visitor is on the next, the same
+ * naming that field as where focus was, a view that asks for focus on its first field from that
+ * field's ref as a press draws it, rows removed after an await, from a timer and in a transition,
+ * requests asked in a transition held back by a part that never loads, whose owner an urgent update
+ * then unmounts or an `Activity` hides, a request asked as an `Activity` hides its owner in the
+ * same press, one asked while it hides it, one made in a commit whose owner the next commit takes
+ * away, and a request and a view's arrival asked with focus on a control in a frame.
  */
 
 /** A save's answer, in a task of its own as a store's is, so React draws what it sets later. */
@@ -473,9 +475,35 @@ const ShadowPanel = ({ onClose }: { readonly onClose: () => void }) => {
     );
 };
 
+// A form drawn inside a shadow root, sent by its own Done, which goes as it is pressed and asks
+// for focus by id on the results heading in the page's own markup once the test answers, after it
+// is gone, naming a place in its root as where focus was.
+const ShadowDone = ({ onDone }: { readonly onDone: () => void }) => {
+    const focusResults = useFocusAfterDraw();
+    const done = async (near: Element | null) => {
+        onDone();
+        await new Promise<void>((resolve) => {
+            page.answerShadowDone = resolve;
+        });
+        focusResults('shadow-results', { from: near });
+    };
+    return (
+        <button
+            id="shadow-done"
+            type="button"
+            onClick={(event) => {
+                void done(event.currentTarget.parentElement);
+            }}
+        >
+            Done in the widget
+        </button>
+    );
+};
+
 const ShadowPanels = () => {
     const [root, setRoot] = useState<ShadowRoot | null>(null);
     const [open, setOpen] = useState(true);
+    const [editing, setEditing] = useState(true);
     const host = useCallback((element: HTMLDivElement | null) => {
         if (element) setRoot(element.shadowRoot ?? element.attachShadow({ mode: 'open' }));
     }, []);
@@ -493,10 +521,14 @@ const ShadowPanels = () => {
                               Open the panel in the widget
                           </button>
                           {open ? <ShadowPanel onClose={() => setOpen(false)} /> : null}
+                          {editing ? <ShadowDone onDone={() => setEditing(false)} /> : null}
                       </div>,
                       root
                   )
                 : null}
+            <h2 id="shadow-results" tabIndex={-1}>
+                Results
+            </h2>
         </section>
     );
 };
