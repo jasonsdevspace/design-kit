@@ -324,7 +324,7 @@ for (const path of PAGES) {
         expect(refused).toEqual([]);
     });
 
-    test(`${path} downloads the code only the behavior page's examples use only where it shows them`, async ({
+    test(`${path} downloads the code the behavior page's examples alone use only where it shows them`, async ({
         page,
     }) => {
         // Every script the page asks for, the files its own script imports among them, each read
@@ -356,6 +356,29 @@ for (const path of PAGES) {
         }
     });
 }
+
+test("the behavior page reads the one copy of the kit's shared state that every page's script holds", async ({
+    page,
+}) => {
+    const scripts: Response[] = [];
+    page.on('response', (response) => {
+        if (response.request().resourceType() === 'script') scripts.push(response);
+    });
+    await page.goto(`${BASE}behavior/`, { waitUntil: 'networkidle' });
+    const files = await Promise.all(
+        scripts.map(async (response) => ({ url: response.url(), code: await response.text() }))
+    );
+    // The selector the kit's shared state reads a press by, which no other module of the kit and
+    // nothing of the site's own writes.
+    const mark = '[role="button"], [role="link"], [role="menuitem"]';
+    const copies = (code: string) => code.split(mark).length - 1;
+    const own = files.filter(({ url }) => url.includes('/assets/behavior/'));
+    const shared = files.filter(({ url }) => !url.includes('/assets/behavior/'));
+    expect(own.length).toBeGreaterThan(0);
+    expect(shared.length).toBeGreaterThan(0);
+    expect(own.reduce((sum, { code }) => sum + copies(code), 0)).toBe(0);
+    expect(shared.reduce((sum, { code }) => sum + copies(code), 0)).toBe(1);
+});
 
 /** Text as a pattern that matches it word for word, whatever marks it holds. */
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
