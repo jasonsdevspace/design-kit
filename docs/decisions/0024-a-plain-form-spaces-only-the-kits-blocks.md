@@ -1,10 +1,8 @@
 # 24. A plain form spaces only the kit's blocks
 
 **Status:** accepted in 0.9.4, amending record 16 so that in a form with no class attribute the kit
-spaces only its own blocks, and a page's own markup there keeps the place the browser and the page
-give it, amended in the same release to count a row of fields, record 25's `dk-fields`, among
-those blocks, and amended again in it, by record 27's rule, to count an empty callout written
-without its mark as a block
+spaces only its own blocks, a row of fields among them, and a page's own markup there keeps the
+place the browser and the page give it
 
 ## Context
 
@@ -43,14 +41,14 @@ them a step apart. Nothing else in the form is given room.
 Option C. The rule reads a child of `form:not([class])` that is a block, a field, a row of fields, a
 row of actions or a callout, not marked `hidden` or `data-empty` and not visually hidden, then any
 later block by the general sibling combinator. A field nested in a page's own `div` is not a child
-of the form, so it is not spaced. An empty callout written without its mark counts as a block.
-Telling it apart took a `:has()` on the callout before the block the rule spaces, which Chromium
-answers by restyling every block after that callout for a change inside any one of them, 337
-elements for a stepper's button shown in a form of 150 fields. Without it, the same change restyles
-the field it is in. The rule sits before the callout's rules, so an empty callout's own margin
-still wins by order and it takes no room. A form's buttons go in a `dk-actions`, a lone submit too,
-and the README's checkout and the reference write them so. A form with a class attribute lays out
-its own parts, as before.
+of the form, so it is not spaced. An empty callout written without its mark counts as a block, by
+record 27's rule. Telling it apart took a `:has()` on the callout before the block the rule spaces,
+which Chromium answers by restyling every block after that callout for a change inside any one of
+them, 337 elements for a stepper's button shown in a form of 150 fields. Without it, the same change
+restyles the field it is in. The rule sits before the callout's rules, so an empty callout's own
+margin still wins by order and it takes no room. A form's buttons go in a `dk-actions`, a lone
+submit too, and the README's checkout and the reference write them so. A form with a class attribute
+lays out its own parts, as before.
 
 ## Consequences
 

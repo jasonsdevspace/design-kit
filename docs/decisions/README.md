@@ -66,8 +66,8 @@ costs, and the test behind it.
 17. [A content page is a container of its own](0017-a-content-page-is-a-container.md): `dk-page`
     spacing a landing or an about page's blocks and sections by the flow and holding its prose and
     its lead to the measure, with bands, stacks and groups of sections for a landing page in bands,
-    and why a reset of every block's margins, the explainer and a content page per band were turned
-    down.
+    fields and the callouts beside them held to the measure too, and why a reset of every block's
+    margins, the explainer, a content page per band and a width of a field's own were turned down.
 18. [The tokens ship in the design tokens format, written by hand and held by a
     test](0018-the-tokens-ship-in-the-design-tokens-format-written-by-hand.md):
     `tokens.resolver.json` as one 2025.10 resolver document shipped as written, renaming or dropping

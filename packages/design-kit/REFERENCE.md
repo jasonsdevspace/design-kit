@@ -2232,11 +2232,12 @@ request lands is looked for in the page ahead of the fallbacks, so a widget asks
 may not have drawn yet by passing the element or a function that returns it, not its id. Focus
 inside a closed shadow root reads as its host, so a request asked there with no `from` looks from
 the root the host sits in and finds no id inside the closed root. A widget in a closed root passes
-its own control as an element, not as an id. The form's refusal, a stepper and progress find the
-errors, hints and labels they read in their own element's root alone. A panel and its button are
-found from the document the button sits in, which the panel listens on. `activeOf()` from
-`./controls` returns what has focus, followed into each shadow root that holds it, for a page that
-asks later and passes `from` itself.
+its own control as an element, not as an id, and leaves `from` out, since a request it asks with its
+own control as `from` is dropped while focus stays on that control, which reads as the host. The
+form's refusal, a stepper and progress find the errors, hints and labels they read in their own
+element's root alone. A panel and its button are found from the document the button sits in, which
+the panel listens on. `activeOf()` from `./controls` returns what has focus, followed into each
+shadow root that holds it, for a page that asks later and passes `from` itself.
 
 A request keeps where focus was inside a frame of the page's own origin as well, and compares where
 focus is as the document it was in sees it, while that document is still the one its frame shows: a
@@ -2300,9 +2301,11 @@ after the press, as a view a poll brings. A row of tabs' panels take no focus on
 tab keeps focus as its panel changes, so they leave the hook out.
 
 Views first drawn by one press land together, and the first in the page takes focus, so a view's
-title is heard before a section of it. Focus a view placed itself as it drew, as a field with
-autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on a
-widget's own button there brings focus to the heading.
+title is heard before a section of it. Where one of them sits inside a shadow root and another
+outside it, the browser orders the two as it chooses, which can differ between engines, so the first
+in the page may not be the one that takes focus. Focus a view placed itself as it drew, as a field
+with autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on
+a widget's own button there brings focus to the heading.
 
 The presses and keys heard are the page's and those inside each frame of the page's own origin the
 page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
@@ -4447,8 +4450,9 @@ stack and a group of sections, the explainer page and its tables, a pinned first
 panels and a raised panel, rows, with a picture at a row's start or a group of buttons at its end,
 as tiles and as tiles in columns, and an app's frame, tab bar, toast, grid of buttons, stepper and
 dialog, a dock row for a compact action beside the main one, a busy button, a loading line, a
-field's required or optional mark, read-only fields, the stack's steps, a split row, a note and a
-large numeral, a hero beside its picture, an empty state and progress.
+field's required or optional mark, read-only fields and a read-only value of words, a row of fields
+set side by side, the stack's steps, a split row, a note and a large numeral, a hero beside its
+picture, an empty state and progress.
 
 ### `@jasonsdevspace/design-kit/theme`
 

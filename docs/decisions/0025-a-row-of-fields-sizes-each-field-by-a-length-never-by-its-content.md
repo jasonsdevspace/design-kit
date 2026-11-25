@@ -1,7 +1,6 @@
 # 25. A row of fields sizes each field by a length, never by its content
 
-**Status:** accepted in 0.9.4, amended in the same release for a wrapped row in a column of pieces,
-whose lines stand that column's step apart
+**Status:** accepted in 0.9.4
 
 ## Context
 

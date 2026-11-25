@@ -40,6 +40,25 @@ WebKit, from Safari 17, lets a pressed form control take focus once its tabindex
 (`HTMLFormControlElement::isMouseFocusable`). React Aria stopped focusing on pointerdown, since it
 broke drag and drop, `:active` in Firefox and `:focus-visible` on a click.
 
+A page can attach its dialog, a panel's button, a stepper, a form or a group of cells to an element
+inside a frame of its own origin that it drives. Before 0.9.4, each read focus from the page's
+document, where focus anywhere in the frame reads as the frame, and the panels listened for presses,
+focus and Escape on the page's document, which never hears the frame's. So a dialog in the frame
+handed focus back to the frame rather than the control in it that opened it, or to nothing, a
+panel's button in the frame did nothing, a stepper hid the button that had focus as its value turned
+read only and handed nothing back as it was taken down, and a group of cells found none of the
+frame's cells, so it gave the group no stop and its arrows moved nothing. A focus request compared
+focus as the page sees it, so a visitor's move between two controls of a frame read as no move and
+the request took focus from them. The form and the group also told the frame's controls by the
+page's own classes, which a frame's are not, so a form in the frame let a submit through with
+nothing checked. The listeners that note a visitor's presses for a focus request sat on the page's
+document alone, so a key inside a frame left a press on the page standing for a view to take focus
+from where the visitor went on, and a press inside a frame never counted, so the view it brought
+took no focus. A focus request looked its id up only in the root where focus was, so a widget's
+button in a shadow root that asked for a heading in the page's markup found nothing and focus fell
+to the page's main content, and a request asked with focus in a frame inside a shadow root looked
+only in that root.
+
 ## Options
 
 **A. The path of the last click, with focus on what holds the panel counted as the panel's.**
@@ -56,6 +75,64 @@ the button.
 **C. A panel that takes focus, and one rule decided by focus as the panel closes.** The kit gives
 the panel a tabindex of -1, so a press in it leaves focus in it in every engine, and keeps the
 path of the last focus or press as evidence that the visitor's place was in the panel.
+
+Pieces inside a frame of the page's own origin, and the presses a focus request hears there, were
+weighed apart.
+
+**D. The page's listeners follow focus into the frame.** Rejected for the panels, as record 29
+rejects it for the toast, since the page would add listeners to every frame focus enters, and still
+read focus as the frame. Turned down alone for the listeners that note presses, for another reason:
+a frame that loads another page while focus stays in it, as a form sent inside it does, is entered
+by no move of focus, and a page script's click in a frame focus never entered moves none either, so
+each would go unheard. Adopted for them on top of the walk of the window tree and the read after a
+frame's page goes, below, since it reaches the frames those miss, a frame inside an open shadow root
+and a frame whose page is still loading as focus enters it.
+
+**E. Each piece reads focus in the document it sits in.** Rejected once built. A frame's own record
+of focus reads as nothing once a visitor moves on to the page, so a page's close of a dialog or a
+panel in the frame took that for focus fallen to nowhere and pulled focus back into the frame,
+against this record's rule that focus a visitor put elsewhere stays, and a dialog in the frame
+opened from a button of the page's judged its hand back in the frame and passed that button over.
+Guarding each case would compute the next option backward.
+
+**F. The public `activeOf` reads from the page down, and every read uses it.** Rejected once built.
+Focus followed into frames is right for a piece that keeps a place to hand back to, but a focus
+request's `from` came from it too, so a request asked with focus in a frame looked its id up in the
+frame, and values stored through the deep reader were compared through a view that took any blank
+body for nothing in the asker's document, so a request dropped where a frame left the page and a
+walk ended where focus fell to the page's body. A public function that reads deep could not be taken
+back once a release shipped it.
+
+**G. Focus is kept as it is and compared and judged through one view.** One private reader follows
+focus from the page's document into each shadow root that holds it and into each frame of the page's
+own origin that has it, an object showing a document among them, to the control focused inside or to
+the frame's body where nothing is, and a frame of another origin reads as the frame. A frame's
+record is read only while focus is in the frame, so a control it last focused is never taken for
+focus. What the kit stores, the focus it notes it handed back, what had focus as a dialog opened and
+where focus was as a request was asked, is that element as it is, except that a blank body is kept
+as `seen` reads it for the piece's own document. Every comparison reads both sides through `seen`,
+for one document, and nowhere means `seen` reads null for the asker's: a piece asks for its own
+document and a focus request for the document where focus was as it was asked. Through `seen`, a
+body no one can type in is nothing in that document, an element of the document or of one around it
+is itself, and an element of any other frame, one the document holds or one beside it, reads as the
+frame that holds it at the document's level, so focus a visitor put in another frame's blank space,
+or on the page around a frame, stays theirs. An editor's body, editable or in design mode, counts as
+focus wherever it is. The walk that hands focus back counts focus fallen to any blank body as no
+move of the page's. `activeOf` stays as 0.9.3 had it, followed into shadow roots only, and stays
+public for a page that passes `from` itself, while no part of the kit calls it. A request finds its
+id and the home it falls back to from the page's view of where focus was, the frame where focus was
+in one. The id is looked for in the root that view sits in, then in each root around it out through
+the hosts to the page's document, in one walk from the one read of focus, so a widget's own id wins
+over the same id on the page and a widget's button that asks for a heading in the page's markup
+finds it. A frame inside a shadow root starts the walk in that root, and focus inside a closed
+shadow root reads as its host, so with no `from` the walk starts in the root the host sits in and
+finds no id inside the closed root. Looking in the page's document first was turned down, since it
+let the page's id win over the widget's own. The cost is that a widget's id missing from its own
+root as the request lands, one the widget has not drawn yet, finds an element of the page that
+shares it, where the request fell back before. A late request from `useFocusAfterDraw` looks an id
+up by the same walk, from where focus was as it was asked. The walk ends at the root that is no
+shadow root, told by its node type, since a document's named elements answer for `'host' in` it, so
+a page with a form named host held the walk forever.
 
 ## Decision
 
@@ -106,120 +183,26 @@ moment a page takes a button away or draws it again.
 An option on `set` to hand focus back stays turned down, since every page would have to ask for
 it and the drop-in rule has the kit do it.
 
-## Consequences
-
-- A press on a panel's text puts focus on the panel in every engine, with no ring, since the base
-  sheet draws none on an element with a tabindex of -1.
-- In Safari's default settings the attached buttons and Closes are stops for Tab where the page's
-  other buttons are not, as with the libraries that give their buttons a tabindex.
-- A panel the page draws again while it is open takes its tabindexes as a press in it begins, before
-  Safari decides where the press puts focus.
-- Focus handed back scrolls the button into view, where React Aria, Radix, Ariakit and Headless
-  UI's popover restore focus without scrolling, since a panel sits in the page's flow and its
-  button may be off screen.
-- The fallback after the buttons passes over anything with a tabindex of -1, so an open panel
-  after the one closing does not take focus in its place. It is the one step that reads every
-  element of the page that takes focus, so it is looked for only once the place a link went to and
-  every button has refused focus, inside the same walk, and a close whose button takes focus
-  searches nothing.
-- TalkBack and VoiceOver on iOS are walked on a device before a release that changes this, since a
-  focusable panel may be read as one stop, which no browser test shows.
-
-## Amendment for 0.9.4: pieces inside a frame
-
-A page can attach its dialog, a panel's button, a stepper, a form or a group of cells to an element
-inside a frame of its own origin that it drives. Each read focus from the page's document, where
-focus anywhere in the frame reads as the frame, and the panels listened for presses, focus and
-Escape on the page's document, which never hears the frame's. So a dialog in the frame handed focus
-back to the frame rather than the control in it that opened it, or to nothing, a panel's button in
-the frame did nothing, a stepper hid the button that had focus as its value turned read only and
-handed nothing back as it was taken down, and a group of cells found none of the frame's cells, so
-it gave the group no stop and its arrows moved nothing. A focus request compared focus as the page
-sees it, so a visitor's move between two controls of a frame read as no move and the request took
-focus from them. The form and the group also told the frame's controls by the page's own classes,
-which a frame's are not, so a form in the frame let a submit through with nothing checked. The
-listeners that note a visitor's presses for a focus request sat on the page's document alone, so a
-key inside a frame left a press on the page standing for a view to take focus from where the visitor
-went on, and a press inside a frame never counted, so the view it brought took no focus. A focus
-request looked its id up only in the root where focus was, so a widget's button in a shadow root
-that asked for a heading in the page's markup found nothing and focus fell to the page's main
-content, and a request asked with focus in a frame inside a shadow root looked only in that root.
-
-**A. The page's listeners follow focus into the frame.** Rejected for the panels as for the toast,
-since the page would add listeners to every frame focus enters, and still read focus as the frame.
-Turned down alone for the listeners that note presses, for another reason: a frame that loads
-another page while focus stays in it, as a form sent inside it does, is entered by no move of focus,
-and a page script's click in a frame focus never entered moves none either, so each would go
-unheard. Adopted for them on top of the walk of the window tree and the read after a frame's page
-goes, below, since it reaches the frames those miss, a frame inside an open shadow root and a frame
-whose page is still loading as focus enters it.
-
-**B. Each piece reads focus in the document it sits in.** Rejected once built. A frame's own record
-of focus reads as nothing once a visitor moves on to the page, so a page's close of a dialog or a
-panel in the frame took that for focus fallen to nowhere and pulled focus back into the frame,
-against the rule above that focus a visitor put elsewhere stays, and a dialog in the frame opened
-from a button of the page's judged its hand back in the frame and passed that button over. Guarding
-each case would compute the next option backward.
-
-**C. The public `activeOf` reads from the page down, and every read uses it.** Rejected once built.
-Focus followed into frames is right for a piece that keeps a place to hand back to, but a focus
-request's `from` came from it too, so a request asked with focus in a frame looked its id up in the
-frame, and values stored through the deep reader were compared through a view that took any blank
-body for nothing in the asker's document, so a request dropped where a frame left the page and a
-walk ended where focus fell to the page's body. A public function that reads deep could not be taken
-back once a release shipped it.
-
-**D. Focus is kept as it is and compared and judged through one view.** One private reader follows
-focus from the page's document into each shadow root that holds it and into each frame of the page's
-own origin that has it, an object showing a document among them, to the control focused inside or to
-the frame's body where nothing is, and a frame of another origin reads as the frame. A frame's
-record is read only while focus is in the frame, so a control it last focused is never taken for
-focus. What the kit stores, the focus it notes it handed back, what had focus as a dialog opened and
-where focus was as a request was asked, is that element as it is, except that a blank body is kept
-as `seen` reads it for the piece's own document. Every comparison reads both sides through `seen`,
-for one document, and nowhere means `seen` reads null for the asker's: a piece asks for its own
-document and a focus request for the document where focus was as it was asked. Through `seen`, a
-body no one can type in is nothing in that document, an element of the document or of one around it
-is itself, and an element of any other frame, one the document holds or one beside it, reads as the
-frame that holds it at the document's level, so focus a visitor put in another frame's blank space,
-or on the page around a frame, stays theirs. An editor's body, editable or in design mode, counts as
-focus wherever it is. The walk that hands focus back counts focus fallen to any blank body as no
-move of the page's. `activeOf` stays as 0.9.3 had it, followed into shadow roots only, and stays
-public for a page that passes `from` itself, while no part of the kit calls it. A request finds its
-id and the home it falls back to from the page's view of where focus was, the frame where focus was
-in one. The id is looked for in the root that view sits in, then in each root around it out through
-the hosts to the page's document, in one walk from the one read of focus, so a widget's own id wins
-over the same id on the page and a widget's button that asks for a heading in the page's markup
-finds it. A frame inside a shadow root starts the walk in that root, and focus inside a closed
-shadow root reads as its host, so with no `from` the walk starts in the root the host sits in and
-finds no id inside the closed root. Looking in the page's document first was turned down, since it
-let the page's id win over the widget's own. The cost is that a widget's id missing from its own
-root as the request lands, one the widget has not drawn yet, finds an element of the page that
-shares it, where the request fell back before. A late request from `useFocusAfterDraw` looks an id
-up by the same walk, from where focus was as it was asked. The walk ends at the root that is no
-shadow root, told by its node type, since a document's named elements answer for `'host' in` it, so
-a page with a form named host held the walk forever.
-
-Option D. The dialog finds its opener, an element or an event of the frame's or the page's, from the
-deep reader, and hands focus back to an opener in the frame or on the page alike. What had focus as
-it opened is kept as the deep reader gives it, a blank body of the dialog's document or one around
-it counting as nothing and one of another frame as that frame, and focus that reads the same through
-`seen` as the dialog closes counts as the browser's handback: the engines measured differ there,
-Chromium leaving focus on the frame's body, WebKit on the closed dialog's control and Firefox on the
-page's opener, and none puts it on the frame's earlier control. A dialog in a frame makes only that
-frame inert, so a page that needs the whole view held opens the dialog on the page. A panel's button
-keeps the document it was attached in, the page's where that document has no window, as a template's
-copy has before the page takes it in, the listeners every panel shares are added to each document
-that holds an attached button and taken off with the last button in it or once that document has
-lost its window, and the panel's id, its buttons, the button that opened it and whether it has
-started are kept for each document, so a panel of the page and one of a frame that share an id stay
-apart. The stepper and a group of cells read focus through `seen` for the document they sit in, the
-page's where it has no window, so a stepper keeps a button with focus shown as its value turns read
-only and hands focus to its value or itself in the frame as it is taken down, and a group hands
-focus on where focus fell to the frame's body. The form, the group and a table's frame tell a
-control by its name and an element by its node type rather than by the page's classes. Each stays in
-the document it was attached in, so a page that moves one into another takes it down and attaches it
-again.
+For pieces inside a frame, option G. The dialog finds its opener, an element or an event of the
+frame's or the page's, from the deep reader, and hands focus back to an opener in the frame or on
+the page alike. What had focus as it opened is kept as the deep reader gives it, a blank body of the
+dialog's document or one around it counting as nothing and one of another frame as that frame, and
+focus that reads the same through `seen` as the dialog closes counts as the browser's handback: the
+engines measured differ there, Chromium leaving focus on the frame's body, WebKit on the closed
+dialog's control and Firefox on the page's opener, and none puts it on the frame's earlier control.
+A dialog in a frame makes only that frame inert, so a page that needs the whole view held opens the
+dialog on the page. A panel's button keeps the document it was attached in, the page's where that
+document has no window, as a template's copy has before the page takes it in, the listeners every
+panel shares are added to each document that holds an attached button and taken off with the last
+button in it or once that document has lost its window, and the panel's id, its buttons, the button
+that opened it and whether it has started are kept for each document, so a panel of the page and one
+of a frame that share an id stay apart. The stepper and a group of cells read focus through `seen`
+for the document they sit in, the page's where it has no window, so a stepper keeps a button with
+focus shown as its value turns read only and hands focus to its value or itself in the frame as it
+is taken down, and a group hands focus on where focus fell to the frame's body. The form, the group
+and a table's frame tell a control by its name and an element by its node type rather than by the
+page's classes. Each stays in the document it was attached in, so a page that moves one into another
+takes it down and attaches it again.
 
 A focus request reads focus once, as it is asked, and keeps two views of that one read: the element
 as the deep reader gives it, or the one a page passes as `from`, as the dialog and the toast keep a
@@ -298,7 +281,27 @@ scrollbars over the content in a run with no screen, where a press at a frame's 
 frame, focuses it and clears the press, so whether a scrollbar Firefox draws beside the content
 takes focus was not probed, and no test holds it.
 
-Nearly every gap left fails safe, losing a press rather than leaving one standing. Two do not:
+## Consequences
+
+- A press on a panel's text puts focus on the panel in every engine, with no ring, since the base
+  sheet draws none on an element with a tabindex of -1.
+- In Safari's default settings the attached buttons and Closes are stops for Tab where the page's
+  other buttons are not, as with the libraries that give their buttons a tabindex.
+- A panel the page draws again while it is open takes its tabindexes as a press in it begins, before
+  Safari decides where the press puts focus.
+- Focus handed back scrolls the button into view, where React Aria, Radix, Ariakit and Headless
+  UI's popover restore focus without scrolling, since a panel sits in the page's flow and its
+  button may be off screen.
+- The fallback after the buttons passes over anything with a tabindex of -1, so an open panel
+  after the one closing does not take focus in its place. It is the one step that reads every
+  element of the page that takes focus, so it is looked for only once the place a link went to and
+  every button has refused focus, inside the same walk, and a close whose button takes focus
+  searches nothing.
+- TalkBack and VoiceOver on iOS are walked on a device before a release that changes this, since a
+  focusable panel may be read as one stop, which no browser test shows.
+
+Nearly every gap left in the frames a focus request hears fails safe, losing a press rather than
+leaving one standing. Two do not:
 
 - A frame in a closed shadow root entered from a heard frame, or entered from the page where a frame
   of the page's origin holds that closed root, leaves the press standing. The read ends on a host

@@ -6,12 +6,14 @@ controls through a kit hook, in 0.9.0 for the listener the module adds to the do
 by record 22 in 0.9.3, under which every attach takes a signal that takes its piece down, by record
 23 in 0.9.3, under which each signal that attaches an element holds its control, by record 27 in
 0.9.4, under which the room an app's frame keeps under a toast is told by a mark the toast's attach
-function writes on the frame, in 0.9.4 for the listener the module adds for the page going out of
-sight or coming back, in 0.9.4 for markup missing a part, which throws at the first attach even
-under a signal already aborted, and in 0.9.4 for the controls shipped in parts a page's bundler can
-split. Its budgets were set again in 0.7.0, 0.8.0, 0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4, as
-its tables give, and in 0.9.4 for the budgets of three entries of the controls and a rule that
-lowers a budget
+function writes on the frame, by record 19 in 0.9.4, under which the module's listeners for presses
+and keys sit on the document of each frame of the page's own origin it reaches too, in 0.9.4 for the
+listener the module adds for the page going out of sight or coming back, in 0.9.4 for markup missing
+a part, which throws at the first attach even under a signal already aborted, and in 0.9.4 for the
+controls shipped in parts a page's bundler can split. Its budgets were set again in 0.7.0, 0.8.0,
+0.8.2, 0.8.4, 0.8.6, 0.9.0, 0.9.3 and 0.9.4, as its tables give, and in 0.9.4 for the budgets of
+three entries of the controls, every budget of the controls measured, from the package as npm
+ships it, with one median, and a rule that lowers a budget
 
 ## Context
 
@@ -185,10 +187,10 @@ own functions, with the medians the package record gave at each.
 | 0.8.6   | A grid of buttons dropping to a column count that divides its cells             | 11,394 bytes    | 169 bytes    | 11.5 KB    |
 | 0.9.0   | A prototype of the release's planned pieces, from 11,398 bytes                  | 12,112 bytes    | 169 bytes    | 12 KB      |
 | 0.9.0   | Those pieces landed, 113 bytes over the prototype, with too little room left    | 12,225 bytes    | 144 bytes    | 12.25 KB   |
-| 0.9.4   | A busy button's dots, with too little room left                                 | 12,523 bytes    | 154 bytes    | 12.5 KB    |
+| 0.9.4   | A busy button's dots                                                            | 12,555 bytes    | 156 bytes    | 12.5 KB    |
 | 0.9.4   | A field held to the measure, with too little room left                          | 12,661 bytes    | 155 bytes    | 12.75 KB   |
 | 0.9.4   | The root's room written in em, with too little room left                        | 12,909 bytes    | 181 bytes    | 13 KB      |
-| 0.9.4   | A read-only value of words sized to its value, with too little room left        | 13,173 bytes    | 180 bytes    | 13.25 KB   |
+| 0.9.4   | A read-only value of words sized to its value, with too little room left        | 13,149 bytes    | 183 bytes    | 13.25 KB   |
 
 | Release | What set it                                                                              | Every function | Median function | Budget set |
 | ------- | ---------------------------------------------------------------------------------------- | -------------- | --------------- | ---------- |
@@ -208,17 +210,24 @@ own functions, with the medians the package record gave at each.
 | 0.9.3   | A handback that takes an SVG element as well as an HTML one, with too little room left   | 18,975 bytes   | 636 bytes       | 19.25 KB   |
 | 0.9.3   | Focus falling to the body and followed into a frame, with too little room left           | 19,222 bytes   | 624 bytes       | 19.5 KB    |
 | 0.9.3   | A control kept clear inside a frame of the page's own origin, with too little room left  | 19,609 bytes   | 633 bytes       | 20 KB      |
-| 0.9.4   | A dated field's limit in words a visitor reads, with too little room left                | 20,708 bytes   | 626 bytes       | 21 KB      |
-| 0.9.4   | A toast's mark on its frame, with too little room left                                   | 21,112 bytes   | 627 bytes       | 21.25 KB   |
+| 0.9.4   | A dated field's limit in words a visitor reads                                           | 20,708 bytes   | 649 bytes       | 21 KB      |
+| 0.9.4   | A toast's mark on its frame, with too little room left                                   | 21,112 bytes   | 653 bytes       | 21.25 KB   |
 | 0.9.4   | A stepper quiet as its form refuses it, with too little room left                        | 21,224 bytes   | 644 bytes       | 21.5 KB    |
-| 0.9.4   | A focus request dropped as the page leaves sight, with too little room left              | 21,506 bytes   | 622 bytes       | 21.75 KB   |
-| 0.9.4   | Letters shown as a stepper is left and its field named, with too little room left        | 21,751 bytes   | 651 bytes       | 22 KB      |
-| 0.9.4   | A stepper's error held back while a press outside it is down, with too little room left  | 21,994 bytes   | 651 bytes       | 22.25 KB   |
+| 0.9.4   | A focus request dropped as the page leaves sight, with too little room left              | 21,506 bytes   | 643 bytes       | 21.75 KB   |
+| 0.9.4   | Letters shown as a stepper is left and its field named, with too little room left        | 21,677 bytes   | 654 bytes       | 22 KB      |
+| 0.9.4   | A stepper's error held back while a press outside it is down, with too little room left  | 22,087 bytes   | 645 bytes       | 22.25 KB   |
 | 0.9.4   | Limit and step words as the field reads them, with too little room left                  | 22,260 bytes   | 649 bytes       | 22.5 KB    |
-| 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,498 bytes   | 735 bytes       | 22.75 KB   |
-| 0.9.4   | Focus read through frames by one view, with too little room left                         | 23,164 bytes   | 667 bytes       | 23.5 KB    |
+| 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,519 bytes   | 741 bytes       | 22.75 KB   |
+| 0.9.4   | Focus read through frames by one view, with too little room left                         | 23,184 bytes   | 672 bytes       | 23.5 KB    |
 | 0.9.4   | The pieces and the hooks reading focus inside a frame, with too little room left         | 23,426 bytes   | 678 bytes       | 23.75 KB   |
 | 0.9.4   | A frame heard as focus enters and its next page, with too little room left               | 23,956 bytes   | 668 bytes       | 24.25 KB   |
+
+Every 0.9.4 row of these tables is measured at the commit on main that set its budget, the controls
+from the package laid out as npm ships it, each with one median, the upper of the middle two costs
+where their count is even. Measured so, a busy button's dots took the sheets past 12.25 KB and a
+dated field's limit in words took the controls past 20 KB, rather than only leaving too little room,
+and a toast's mark on its frame, with room for a function of the usual size, came to 21,765 bytes,
+five past the 21.25 KB it set, so the rule asked 21.5 KB there, which the next row set.
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
@@ -256,7 +265,7 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachTable` alone      | The first budget for an entry                   | 2,016 bytes | 637 bytes       | 2.75 KB    |
 | 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes | 637 bytes       | 9.25 KB    |
 | 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
-| 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 667 bytes       | 9.75 KB    |
+| 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 672 bytes       | 9.75 KB    |
 | 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes | 678 bytes       | 10 KB      |
 | 0.9.4   | The module imported bare | Presses in a frame, with too little room left   | 868 bytes   | 680 bytes       | 1.75 KB    |
 | 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,163 bytes | 680 bytes       | 3 KB       |
