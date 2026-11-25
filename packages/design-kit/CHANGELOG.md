@@ -35,13 +35,13 @@ a page restyles only what it touches, in Safari a page that sets its root font s
 under a toast and over a tab bar, and a date or time field draws the kit's focus ring. The controls
 ship in parts a page's bundler can split, so a site sends each piece's code only to the pages that
 use it, and a page that imports a function of the controls bundles nothing of the theme script.
-Upgrading names what a page and its tests change. No token is added or renamed and the theme script
-is unchanged, so `themeScriptHash` is the same. The budgets are set under record 13's rule and
-measured from the package as npm ships it, with one median: the sheets within 13.25 KB, at 13,149
-bytes with a median piece of 183, the controls within 24.25 KB as a bundler sends every function, at
-24,008 bytes with a median function of 671, the module imported bare within 2.25 KB, at 1,433 bytes,
-`attachTable` alone within 3.5 KB, at 2,699, `attachForm` alone within 10.5 KB, at 9,959, and the
-theme script within 1 KB of its own, at 757.
+Upgrading names what a page and its tests change. No public token is added or renamed and the theme
+script is unchanged, so `themeScriptHash` is the same. The budgets are set under record 13's rule
+and measured from the package as npm ships it, with one median: the sheets within 13.25 KB, at
+13,149 bytes with a median piece of 183, the controls within 24.25 KB as a bundler sends every
+function, at 24,008 bytes with a median function of 671, the module imported bare within 2.25 KB, at
+1,433 bytes, `attachTable` alone within 3.5 KB, at 2,699, `attachForm` alone within 10.5 KB, at
+9,959, and the theme script within 1 KB of its own, at 757.
 
 - **Upgrading.** A test that reads the kit's default error words expects the words 0.9.4 writes:
   "Enter an email address like name@example.com here." and "Enter the full web address, with
@@ -75,7 +75,8 @@ theme script within 1 KB of its own, at 757.
   for letters as well as a value past the limits or between steps. On a page wider than 48rem,
   outside an app's frame, a page that ends in a tab bar and their dialogs, a stepper is
   `--dk-field-height` tall, 36 pixels, where it was 44, so what follows it sits 8 pixels higher, and
-  a page that wants more gives it `dk-stepper-tall`, `tall` in React, with `--dk-fields-least` at
+  a page that wants more gives it `dk-stepper-tall`, `tall` in React, 56 pixels, since nothing gives
+  a stepper the earlier 44 pixels and its buttons keep their width, with `--dk-fields-least` at
   12rem in a `dk-fields` row. A page that sets fields side by side in a row of its own, a flex or
   grid row of `dk-field` elements, moves them into a `dk-fields` row, which wraps them onto lines of
   their own where they do not fit, stands their controls level, holds the row to the measure and
@@ -122,156 +123,156 @@ theme script within 1 KB of its own, at 757.
   the room the root keeps under a toast or over a tab bar to follow, sets `scroll-padding-bottom` on
   its root in a rule of its own. A focus request from `moveFocus` or `focusOnArrival` that a long
   render holds past a second lands, so a page that relied on the drop to leave focus alone after a
-  slow render calls the request off instead. - **Sheets.** A read-only `dk-stepper-value` shown
-  alone starts its figures at a field's inline padding, where a read-only field's words start, and
-  stands at a field's height at each width, unless the stepper is tall, where its figures start at
-  the same place and it keeps the larger target. An inline stepper's read-only value keeps its
-  centered figures at its row's end, as tall as one that can be changed. While a button keeps focus
-  as the field turns read only, the value keeps the editable stepper's place and the hidden button
-  keeps its room out of sight, so nothing moves under the focused button. Both rest on `:has()`, and
-  without it a read-only value keeps its centered figures and every hidden piece stays hidden. An
-  editable stepper is unchanged. In a form with no class attribute, a field, a row of actions or a
-  callout that is not empty stands `--dk-space-4` below what sits above it, once another of those
-  has come before it, wherever a hidden input or a script sits between them, where before only a
-  field after a field stood apart and the README's buttons sat flush under the select above them.
-  Only the kit's own blocks are spaced, so a page's own markup in a plain form draws as it would in
-  a form with a class, and a block out of sight or an empty callout counts as none. `.dk-field`
-  gives its one column no least width, so a word with no place to break, such as the email address
-  in the kit's own error, breaks inside the field at 320 wide and twice the text size rather than
-  hanging past its edge, in a narrow form and beside a button in a page's own row. A busy button
-  marked off, once `--dk-wait` has passed, draws three dots centered at its foot as its `::after`, a
-  gradient repeated across a box exactly three dots wide, so every engine draws three at every text
-  size. They are in `--dk-fg` and pulse no fainter than 3:1 on the kit's grounds, stand still under
-  reduced motion, and keep the system's gray in forced colors, where they stand still too. A busy
-  button not yet marked off draws none, so no dots sit on the accent's fill. They are centered
-  whatever the button's own alignment, take no place in the row and hold no words, so the button
-  keeps its size and its name. Every button keeps a band of 0.375rem above and below its words,
-  inside the height of a button of one line, so the dots never meet words that wrap or grow. A text
-  button keeps only what the leading around it leaves short of that band, so a line of it in
-  ordinary text keeps the button's height. A busy button is `position: relative`, which the dots are
-  placed against. A field anywhere in a page, a band or a stack, and a callout in a form there, take
-  `--dk-field-measure` as their widest, `--dk-measure` until a page sets it, so a field for a short
-  name never runs the width of a wide panel and a form's callout ends where its fields end. A page
-  narrows one with a shorter length, for a short answer such as a ZIP code, or widens one with
-  `none`. A field in a dialog or a popover keeps the width the dialog or popover gives it, which a
-  page may widen. A `dk-stepper` draws the focus ring where the browser shows focus on it. A
-  `dk-field` holding a `dk-stepper`, not inline, is never narrower than the stepper with its buttons
-  at their least width, wherever the page's row leaves its items their own least width, so in a
-  page's own flex row beside a text field the stepper stays inside its field. The stepper alone sets
-  that width, so a long word, a picture or words that never wrap in the label, hint or error leave
-  the field as wide as its stepper. A stepper's button is the target wide at most, its edge
-  included, in place of a width, so it asks for the target where there is room and for its least
-  width where there is not, and a thicker edge a page gives it no longer widens it. The field's
-  least width rests on `:has()`, and without it the field keeps none. `.dk-field` sets
-  `align-content: start`, so a field stretched to a taller row, as beside a field whose label wraps,
-  keeps its label, hint, error and control at their own heights and leaves the spare room below
-  them. Two text fields in a `1fr 1fr` row at 390 wide keep their inputs at 44px where the shorter
-  one grew to about 55px, and a stepper's field in an `auto` column at 320 wide and twice the text
-  size keeps its buttons at the target. An inline stepper in a taller cell keeps its label and
-  stepper at the top, its label level with the labels beside it, where it sat lower before. A field
-  drawn alone is drawn as before. `dk-fields` is a row of fields that wraps. Every field in it
-  starts from `--dk-fields-least`, 10rem until a page sets it, a stepper's width rounded up, and
-  shares what is left, so no label, hint or error moves the field beside it. Two fields share a line
-  where the row is at least 21rem wide, two lengths and the gap, which in a page's column is a
-  screen from 368 pixels, and a narrower row or a larger text size stacks them, every label whole.
-  The fields stand `--dk-space-4` apart both ways and line up along their foot, so their controls
-  stand level where one label takes two lines or one field shows a hint or an error. An inline
-  stepper and a choice field each take a line of their own. The row holds to `--dk-field-measure` as
-  a field does, a field in it narrows by the same property, and in a form with no class attribute
-  the row stands `--dk-space-4` from the fields around it. A `dk-fields` row written straight in a
-  panel, a dialog, a stack or anything else that spaces what it holds by `--dk-flow-step` stands its
-  lines that step apart, where it stood them `--dk-space-4` apart everywhere, wider than the step
-  between the fields around it in a panel, a dialog or a stack inside one. A row in a plain form
-  keeps the form's step. A text button's band is written from `--dk-leading-tight` rather than a
-  length of its own, at the same size. No rule writes a `:has()` on the root, the body, an app's
-  frame or a page that ends in a tab bar unless it draws that element, since Chromium restyles
-  everything inside an element whose `:has()` draws something else. The body is the subject of its
-  own rule for the padding under a page's toast, and a body that is itself the frame takes none. An
-  app's frame keeps the room under its toast by `data-toast-rows` on the frame, and a pictured frame
-  by the shown toast it holds. A dialog takes an app's sizes where it sits inside a frame or a page
-  that ends in a tab bar, beside one, or carries `dk-dialog-app`. On a page of about 2,300 elements
-  in Chromium 158, an element added restyles 10 elements in 0.14 ms where it restyled every one in
-  12 ms, and words said on a status line take 0.06 ms where they took 6 ms. Showing a toast restyles
-  the whole page once where it did twice. The room in a frame under a floating toast, and a dialog
-  inside or after a frame, hold in a browser with no `:has()`, where a toast that takes its row
-  above the dock still floats with no room kept. A picture of a frame with a shown toast inside a
-  live frame leaves the live frame's body as it is. The root's `scroll-padding-bottom` under a shown
-  toast on a page with no frame, and over a tab bar that ends a page, is written in em through
-  working values in the tokens sheet that hold each token's number, where it was written in the
-  tokens' rem. Safari draws a rem in a property of the root itself from 16px whatever size the page
-  sets there, so with `html { font-size: 200% }` it kept 114px under a toast 186px tall and 73px
-  over a bar 113px tall, and Tab set a link wholly under each. It keeps 226px and 146px, as Chromium
-  and Firefox do. A page at the usual root size, and every other browser, draws as before. A
-  `dk-stepper`'s buttons and its `dk-stepper-value` set no height of their own, so each takes the
-  height every button and field takes: `--dk-field-height` above 48rem, and `--dk-target` at 48rem
-  or less, in an app's frame, on a page that ends in a tab bar and in a dialog on either. In a
-  `dk-fields` row a stepper's label and control stand level with those of the fields beside it at
-  every width, where the label stood 8 pixels higher on a wide page. A read-only stepper and an
-  inline one are as tall as any other, so a stepper turned read only keeps its height. A stepper's
-  button keeps no padding, so its figure stands inside a field's height. `dk-stepper-tall` keeps the
-  larger target at every width. An input for a date, a time, a date and time, a month or a week
-  draws the focus ring whenever it holds focus. Safari hands focus to a part inside such a field and
-  never counts the field itself as focused by the keyboard, so there only its own highlight on the
-  part showed, by Tab, by a press and after a refusal. Chromium and Firefox already show focus on
-  these fields however it came, as on any field a visitor types in, so they draw the same one ring
-  as before. In a page, a band or a stack, a callout written before or after a field or a row of
-  fields in what holds them holds to `--dk-field-measure` as they do, so a page that draws its
-  fields with no form keeps one right edge, where only a callout inside a form did. A callout with
-  no field beside it there runs the column as before. `dk-value` on a `dk-textarea` takes
-  `field-sizing: content` with no resize handle where the browser has it, and takes the block
+  slow render calls the request off instead.
+- **Sheets.** A read-only `dk-stepper-value` shown alone starts its figures at a field's inline
+  padding, where a read-only field's words start, and stands at a field's height at each width,
+  unless the stepper is tall, where its figures start at the same place and it keeps the larger
+  target. An inline stepper's read-only value keeps its centered figures at its row's end, as tall
+  as one that can be changed. While a button keeps focus as the field turns read only, the value
+  keeps the editable stepper's place and the hidden button keeps its room out of sight, so nothing
+  moves under the focused button. Both rest on `:has()`, and without it a read-only value keeps its
+  centered figures and every hidden piece stays hidden. An editable stepper is unchanged. In a form
+  with no class attribute, a field, a row of actions or a callout that is not empty stands
+  `--dk-space-4` below what sits above it, once another of those has come before it, wherever a
+  hidden input or a script sits between them, where before only a field after a field stood apart
+  and the README's buttons sat flush under the select above them. Only the kit's own blocks are
+  spaced, so a page's own markup in a plain form draws as it would in a form with a class, and a
+  block out of sight or an empty callout counts as none. `.dk-field` gives its one column no least
+  width, so a word with no place to break, such as the email address in the kit's own error, breaks
+  inside the field at 320 wide and twice the text size rather than hanging past its edge, in a
+  narrow form and beside a button in a page's own row. A busy button marked off, once `--dk-wait`
+  has passed, draws three dots centered at its foot as its `::after`, a gradient repeated across a
+  box exactly three dots wide, so every engine draws three at every text size. They are in `--dk-fg`
+  and pulse no fainter than 3:1 on the kit's grounds, stand still under reduced motion, and keep the
+  system's gray in forced colors, where they stand still too. A busy button not yet marked off draws
+  none, so no dots sit on the accent's fill. They are centered whatever the button's own alignment,
+  take no place in the row and hold no words, so the button keeps its size and its name. Every
+  button keeps a band of 0.375rem above and below its words, inside the height of a button of one
+  line, so the dots never meet words that wrap or grow. A text button keeps only what the leading
+  around it leaves short of that band, so a line of it in ordinary text keeps the button's height. A
+  busy button is `position: relative`, which the dots are placed against. A field anywhere in a
+  page, a band or a stack, and a callout in a form there, take `--dk-field-measure` as their widest,
+  `--dk-measure` until a page sets it, so a field for a short name never runs the width of a wide
+  panel and a form's callout ends where its fields end. A page narrows one with a shorter length,
+  for a short answer such as a ZIP code, or widens one with `none`. A field in a dialog or a popover
+  keeps the width the dialog or popover gives it, which a page may widen. A `dk-stepper` draws the
+  focus ring where the browser shows focus on it. A `dk-field` holding a `dk-stepper`, not inline,
+  is never narrower than the stepper with its buttons at their least width, wherever the page's row
+  leaves its items their own least width, so in a page's own flex row beside a text field the
+  stepper stays inside its field. The stepper alone sets that width, so a long word, a picture or
+  words that never wrap in the label, hint or error leave the field as wide as its stepper. A
+  stepper's button is the target wide at most, its edge included, in place of a width, so it asks
+  for the target where there is room and for its least width where there is not, and a thicker edge
+  a page gives it no longer widens it. The field's least width rests on `:has()`, and without it the
+  field keeps none. `.dk-field` sets `align-content: start`, so a field stretched to a taller row,
+  as beside a field whose label wraps, keeps its label, hint, error and control at their own heights
+  and leaves the spare room below them. Two text fields in a `1fr 1fr` row at 390 wide keep their
+  inputs at 44px where the shorter one grew to about 55px, and a stepper's field in an `auto` column
+  at 320 wide and twice the text size keeps its buttons at the target. An inline stepper in a taller
+  cell keeps its label and stepper at the top, its label level with the labels beside it, where it
+  sat lower before. A field drawn alone is drawn as before. `dk-fields` is a row of fields that
+  wraps. Every field in it starts from `--dk-fields-least`, 10rem until a page sets it, a stepper's
+  width rounded up, and shares what is left, so no label, hint or error moves the field beside it.
+  Two fields share a line where the row is at least 21rem wide, two lengths and the gap, which in a
+  page's column is a screen from 368 pixels, and a narrower row or a larger text size stacks them,
+  every label whole. The fields stand `--dk-space-4` apart both ways and line up along their foot,
+  so their controls stand level where one label takes two lines or one field shows a hint or an
+  error. An inline stepper and a choice field each take a line of their own. The row holds to
+  `--dk-field-measure` as a field does, a field in it narrows by the same property, and in a form
+  with no class attribute the row stands `--dk-space-4` from the fields around it. A `dk-fields` row
+  written straight in a panel, a dialog, a stack or anything else that spaces what it holds by
+  `--dk-flow-step` stands its lines that step apart, where it stood them `--dk-space-4` apart
+  everywhere, wider than the step between the fields around it in a panel, a dialog or a stack
+  inside one. A row in a plain form keeps the form's step. A text button's band is written from
+  `--dk-leading-tight` rather than a length of its own, at the same size. No rule writes a `:has()`
+  on the root, the body, an app's frame or a page that ends in a tab bar unless it draws that
+  element, since Chromium restyles everything inside an element whose `:has()` draws something else.
+  The body is the subject of its own rule for the padding under a page's toast, and a body that is
+  itself the frame takes none. An app's frame keeps the room under its toast by `data-toast-rows` on
+  the frame, and a pictured frame by the shown toast it holds. A dialog takes an app's sizes where
+  it sits inside a frame or a page that ends in a tab bar, beside one, or carries `dk-dialog-app`.
+  On a page of about 2,300 elements in Chromium 158, an element added restyles 10 elements in 0.14
+  ms where it restyled every one in 12 ms, and words said on a status line take 0.06 ms where they
+  took 6 ms. Showing a toast restyles the whole page once where it did twice. The room in a frame
+  under a floating toast, and a dialog inside or after a frame, hold in a browser with no `:has()`,
+  where a toast that takes its row above the dock still floats with no room kept. A picture of a
+  frame with a shown toast inside a live frame leaves the live frame's body as it is. The root's
+  `scroll-padding-bottom` under a shown toast on a page with no frame, and over a tab bar that ends
+  a page, is written in em through working values in the tokens sheet that hold each token's number,
+  where it was written in the tokens' rem. Safari draws a rem in a property of the root itself from
+  16px whatever size the page sets there, so with `html { font-size: 200% }` it kept 114px under a
+  toast 186px tall and 73px over a bar 113px tall, and Tab set a link wholly under each. It keeps
+  226px and 146px, as Chromium and Firefox do. A page at the usual root size, and every other
+  browser, draws as before. A `dk-stepper`'s buttons and its `dk-stepper-value` set no height of
+  their own, so each takes the height every button and field takes: `--dk-field-height` above 48rem,
+  and `--dk-target` at 48rem or less, in an app's frame, on a page that ends in a tab bar and in a
+  dialog on either. In a `dk-fields` row a stepper's label and control stand level with those of the
+  fields beside it at every width, where the label stood 8 pixels higher on a wide page. A read-only
+  stepper and an inline one are as tall as any other, so a stepper turned read only keeps its
+  height. A stepper's button keeps no padding, so its figure stands inside a field's height.
+  `dk-stepper-tall` keeps the larger target at every width. An input for a date, a time, a date and
+  time, a month or a week draws the focus ring whenever it holds focus. Safari hands focus to a part
+  inside such a field and never counts the field itself as focused by the keyboard, so there only
+  its own highlight on the part showed, by Tab, by a press and after a refusal. Chromium and Firefox
+  already show focus on these fields however it came, as on any field a visitor types in, so they
+  draw the same one ring as before. In a page, a band or a stack, a callout written before or after
+  a field or a row of fields in what holds them holds to `--dk-field-measure` as they do, so a page
+  that draws its fields with no form keeps one right edge, where only a callout inside a form did. A
+  callout with no field beside it there runs the column as before. `dk-value` on a `dk-textarea`
+  takes `field-sizing: content` with no resize handle where the browser has it, and takes the block
   padding that centers one line in a field's height, the target's on a phone and in an app's frame,
   so a value of one line stands as tall as a read-only field beside it with its words level. A value
   in a `dk-field-action` row keeps the room the button leaves, as an input does, and stands in the
   row's middle, so its line stays level with a button whose words take two lines. The plain form's
   spacing rule tells a block out of sight by `hidden`, `data-empty` and `dk-visually-hidden` alone,
   with no `:has()` on the callout before the block it spaces, which Chromium answered by restyling
-  every later block for a change inside any one of them. - **Controls.** The kit's email and web
-  address errors no longer put punctuation against the value they show, reading "Enter an email
-  address like name@example.com here." and "Enter the full web address, with https:// at the
-  start.", and an error the form draws allows a break after each "@", so a long address breaks there
-  rather than at whichever letter or stop the line runs out on. Its words, its description and the
-  status line read the address whole. `attachStepper`'s takedown, by its signal or its detach, hands
-  focus from a focused button to the value where the value is read only and enabled, and otherwise,
-  or where the value refuses focus, to the stepper's box, since an editable value would open a
-  phone's keyboard and a disabled one refuses focus. A box focus goes to with no tabindex is given
-  one of -1, which stays, and a page's own tabindex is kept. Where the box refuses focus too, the
-  tabindex it was given goes again at once, and focus goes on to the app frame's body or the page's
-  main content. Focus moves before the buttons hide and only where a button has focus, so focus the
-  page moves in the abort's task stays and a `moveFocus` asked in that task still lands, and a page
-  that attaches the stepper afresh as focus comes to it keeps its buttons. `attachForm`'s words for
-  a date, a date and time, a time, a month or a week before its least or past its most give the
-  limit as a visitor reads it and end on "or later" or "or earlier", as "Enter November 22, 2026 at
-  9:00 AM or later.", "Enter November 2026 or later." and "Enter the week of November 23, 2026 or
-  later.", counted from the week's Monday. No raw value such as "2026-11-22T09:00" or "2026-W48" is
-  shown, and no period sits against the limit. The limit is in the nearest `lang` around the field,
-  past any shadow root it sits in, where that language is English, and in US English otherwise,
-  since the words around it are English. It is the wall time written, so a limit in a spring-forward
-  gap keeps its hour, a year under 100 stays as written, and a limit past any date a script can hold
-  is shown as written. A limit with a fraction of a second shows it to its own digits, so the limit
-  shown is one the field takes. A date and its time are joined by "at" in every engine. A time whose
-  limits both parse with its most before its least is a window overnight, and a time in its gap
-  takes "Enter a time between 10:00 PM and 6:00 AM the next day." `attachForm` leaves a stepper
-  whose own range error shows out of the failures it hands `invalid`, so a page refused through
-  `useFormRefusal` shows and describes the stepper's error alone, where it drew the form's "Enter 10
-  or less." above it and the refusal said both. The refusal still counts the stepper and names it.
-  As it refuses, the form takes back a failing stepper's own words not yet said, on the stepper's
-  own line, on a page's line and through a page's `say`, so a value typed past its range and
-  submitted by Enter or a press on the button is said by the refusal alone, or not at all where
-  focus moves to a summary, where the stepper's line and the page's line both changed in one moment.
-  `attachStepper` reads the field's `validity` to decide whether its own error shows: a value
-  outside the limits, between steps or that is no number, and none at all only in a field that is
-  required, where a blank showed the error in any stepper while its form saved. An error that shows
-  follows `required` and `step` as a script changes them, as it does its limits.
-  `focusOnArrival(view, { signal })` asks for nothing under a signal already aborted, and leaves the
-  press for another view, and an abort calls off a request not yet landed, as the function it
-  returns does and as `moveFocus` has it. Before, the signal was taken and never read. A request
-  that lands lets go of its signal. A panel that closes tries the place its last link went to and
-  its buttons first, and looks through the page for what follows it only where each of those refuses
-  focus, in the same walk, so a page's own listener that moves focus still ends it. Since 0.9.3
-  every close that handed focus back queried every element of the page that takes focus first, which
-  a page of many links paid for on each close. An element among the places focus is handed to is
-  never called, though an object or an embed is a function to some browsers. A key that is not
-  Escape reads nothing of where it was pressed. `attachStepper` and `attachPanel` throw for a
+  every later block for a change inside any one of them.
+- **Controls.** The kit's email and web address errors no longer put punctuation against the value
+  they show, reading "Enter an email address like name@example.com here." and "Enter the full web
+  address, with https:// at the start.", and an error the form draws allows a break after each "@",
+  so a long address breaks there rather than at whichever letter or stop the line runs out on. Its
+  words, its description and the status line read the address whole. `attachStepper`'s takedown, by
+  its signal or its detach, hands focus from a focused button to the value where the value is read
+  only and enabled, and otherwise, or where the value refuses focus, to the stepper's box, since an
+  editable value would open a phone's keyboard and a disabled one refuses focus. A box focus goes to
+  with no tabindex is given one of -1, which stays, and a page's own tabindex is kept. Where the box
+  refuses focus too, the tabindex it was given goes again at once, and focus goes on to the app
+  frame's body or the page's main content. Focus moves before the buttons hide and only where a
+  button has focus, so focus the page moves in the abort's task stays and a `moveFocus` asked in
+  that task still lands, and a page that attaches the stepper afresh as focus comes to it keeps its
+  buttons. `attachForm`'s words for a date, a date and time, a time, a month or a week before its
+  least or past its most give the limit as a visitor reads it and end on "or later" or "or earlier",
+  as "Enter November 22, 2026 at 9:00 AM or later.", "Enter November 2026 or later." and "Enter the
+  week of November 23, 2026 or later.", counted from the week's Monday. No raw value such as
+  "2026-11-22T09:00" or "2026-W48" is shown, and no period sits against the limit. The limit is in
+  the nearest `lang` around the field, past any shadow root it sits in, where that language is
+  English, and in US English otherwise, since the words around it are English. It is the wall time
+  written, so a limit in a spring-forward gap keeps its hour, a year under 100 stays as written, and
+  a limit past any date a script can hold is shown as written. A limit with a fraction of a second
+  shows it to its own digits, so the limit shown is one the field takes. A date and its time are
+  joined by "at" in every engine. A time whose limits both parse with its most before its least is a
+  window overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM the next
+  day." `attachForm` leaves a stepper whose own range error shows out of the failures it hands
+  `invalid`, so a page refused through `useFormRefusal` shows and describes the stepper's error
+  alone, where it drew the form's "Enter 10 or less." above it and the refusal said both. The
+  refusal still counts the stepper and names it. As it refuses, the form takes back a failing
+  stepper's own words not yet said, on the stepper's own line, on a page's line and through a page's
+  `say`, so a value typed past its range and submitted by Enter or a press on the button is said by
+  the refusal alone, or not at all where focus moves to a summary, where the stepper's line and the
+  page's line both changed in one moment. `attachStepper` reads the field's `validity` to decide
+  whether its own error shows: a value outside the limits, between steps or that is no number, and
+  none at all only in a field that is required, where a blank showed the error in any stepper while
+  its form saved. An error that shows follows `required` and `step` as a script changes them, as it
+  does its limits. `focusOnArrival(view, { signal })` asks for nothing under a signal already
+  aborted, and leaves the press for another view, and an abort calls off a request not yet landed,
+  as the function it returns does and as `moveFocus` has it. Before, the signal was taken and never
+  read. A request that lands lets go of its signal. A panel that closes tries the place its last
+  link went to and its buttons first, and looks through the page for what follows it only where each
+  of those refuses focus, in the same walk, so a page's own listener that moves focus still ends it.
+  Since 0.9.3 every close that handed focus back queried every element of the page that takes focus
+  first, which a page of many links paid for on each close. An element among the places focus is
+  handed to is never called, though an object or an embed is a function to some browsers. A key that
+  is not Escape reads nothing of where it was pressed. `attachStepper` and `attachPanel` throw for a
   missing part, a stepper's value or buttons and a panel button's `aria-controls`, under a signal
   already aborted too, as `attachToast` and `attachTable` do. Before, each returned a function that
   does nothing, so markup missing a part said nothing. A stepper, a panel's button or a toast
@@ -451,65 +452,66 @@ theme script within 1 KB of its own, at 757.
   through the hosts to the page, so a widget's button in a shadow root that asks for a heading in
   the page's markup focuses that heading, where focus fell to the page's main content, and a
   widget's own id still wins over the same id on the page. A request asked with focus in a frame
-  inside a shadow root finds its id on the page too. - **React.** An error given to a field as words
-  allows the same break after each "@". The doc comment on `Button`'s `busy` describes the dots.
-  `Field`'s label, and so the label of every field the React components draw, has an id, the field's
-  id followed by `-label`. `StepperField`'s box is a group named by it. `useArrivalFocus` reads
-  where focus was through `activeOf()`, as `focusOnArrival` and `useFocusAfterDraw` do, so a view
-  whose key changes on a press of a button inside a shadow root takes focus on its heading. Before,
-  it read the root's host, and the request was dropped as though the visitor had moved. A request
-  `useFocusAfterDraw` makes late, once its component has gone, finds an id, its target's or a
-  fallback's, in the root where focus was when it was asked, as `moveFocus` does, so one inside a
-  shadow root is found in sight and lands where the page passes `from` in that root or focus is
-  still in it. `useFormRefusal` hands its `invalid` the same second list. `ValueField`, with
-  `ValueFieldProps`, draws the textarea with its label, hint, error and action, one row and read
-  only, its `ref` the textarea. A read-only `SelectField` draws the chosen option's words in it.
-  `useFormRefusal` hands `invalid` nothing for a stepper showing its own error, a blank or letters
-  among its failures, and says "Form cleared." on a reset after a refusal. `useFocusAfterDraw`,
-  `useArrivalFocus` and `useFormRefusal` take where focus was as a request does, so a request or a
-  refusal asked from inside a frame leaves a visitor's move in it alone. `useArrivalFocus` hears
-  presses and keys inside such a frame as `focusOnArrival` does. `useArrivalFocus` follows the same
-  frames as `focusOnArrival` does. A late request from `useFocusAfterDraw`, asked by a component in
-  a shadow root once it has gone, finds an id only the page holds by the same walk, where it was
-  held and never landed. `useArrivalFocus` finds an id as `focusOnArrival` does. - **Docs.** The
-  README's list of what is in the kit names the layouts page for a content page, bands and a hero,
-  which the page chrome page no longer holds. The README links the site's behavior page for the
-  kit's waits, focus, arrow keys and refused form, each working, the site's own palette page for a
-  page's palette, column, layers and the properties it sets, and the controls page for progress,
-  beside the reference's sections on them. The reference's busy button says gray, as the rest of the
-  kit spells it. The reference says a read-only stepper keeps the edge of a column of read-only
-  values, that an inline one keeps its centered figures, that a stepper is read only for the page,
-  and that nothing moves under a button holding focus. The README's checkout and the reference's
-  hold their two buttons in a row of actions. The reference says which blocks a plain form spaces
-  and that a field holds to its column, and record 24 gives the choice and the options turned down.
-  "A busy button" in the reference describes the dots, the properties they set and the relative
-  position, and no longer says there is no spinner. How a button is drawn names the band. Records 2,
-  5 and 6 let a busy button follow its `:where()` with `::after`, under record 2's rule for a mark a
-  component draws of its own state. The reference's fields say a field holds to the measure, how a
-  page narrows or widens one and that a dialog or a popover sizes its own fields, its content page
-  counts fields among what holds to the measure, and its table of properties a page sets lists
-  `--dk-field-measure`. The reference's sections on taking a control down and on `moveFocus` list
-  the stepper among the pieces that hand focus back, its section on the stepper says the box is a
-  group named by the label, where focus goes and the tabindex the box is given, and the markup of
-  every field `Field` draws shows its label's id. Record 23 says the same, why an editable value is
-  skipped and what it costs. The reference says a stepper's field with its label above is never
-  narrower than the stepper at its least width where the page's row allows it, that the stepper
-  alone sets that width, that a row whose items have no least width can still squeeze it, that one
-  with its label to the left keeps its least width too, and that in a row that cannot wrap the
-  fields beside it take what is left. The accessibility notes add the stepper's field to what
-  Firefox 120 draws without `:has()`. The reference's failure words give a date and time's range
-  error, how each kind of dated limit reads and the words for an overnight window. The reference's
-  section on a refused form says `attachForm` draws errors only in markup nothing will draw again, a
-  page written by hand or the React components rendered to static HTML and attached from plain
-  script, that a form React still draws refuses through `useFormRefusal`, and that `attachForm`
-  drawing its own errors in a form React still draws is not supported. Record 20 and the decisions
-  index say why each node and attribute of a field keeps one owner, and why a mark on every React
-  field and an observer that repairs React's markup were turned down. The reference's field section
-  says a field shorter than the tallest beside it keeps its control at its own height, with the
-  spare room below it, that an inline stepper there keeps its label level with the labels beside it,
-  and how a page makes a control fill a field it stretches. The reference documents the row and
-  `--dk-fields-least`, with its markup and the React a page writes around the fields, lists the
-  property among those a page sets, and names the row under `--dk-field-measure`. It gives the
+  inside a shadow root finds its id on the page too.
+- **React.** An error given to a field as words allows the same break after each "@". The doc
+  comment on `Button`'s `busy` describes the dots. `Field`'s label, and so the label of every field
+  the React components draw, has an id, the field's id followed by `-label`. `StepperField`'s box is
+  a group named by it. `useArrivalFocus` reads where focus was through `activeOf()`, as
+  `focusOnArrival` and `useFocusAfterDraw` do, so a view whose key changes on a press of a button
+  inside a shadow root takes focus on its heading. Before, it read the root's host, and the request
+  was dropped as though the visitor had moved. A request `useFocusAfterDraw` makes late, once its
+  component has gone, finds an id, its target's or a fallback's, in the root where focus was when it
+  was asked, as `moveFocus` does, so one inside a shadow root is found in sight and lands where the
+  page passes `from` in that root or focus is still in it. `useFormRefusal` hands its `invalid` the
+  same second list. `ValueField`, with `ValueFieldProps`, draws the textarea with its label, hint,
+  error and action, one row and read only, its `ref` the textarea. A read-only `SelectField` draws
+  the chosen option's words in it. `useFormRefusal` hands `invalid` nothing for a stepper showing
+  its own error, a blank or letters among its failures, and says "Form cleared." on a reset after a
+  refusal. `useFocusAfterDraw`, `useArrivalFocus` and `useFormRefusal` take where focus was as a
+  request does, so a request or a refusal asked from inside a frame leaves a visitor's move in it
+  alone. `useArrivalFocus` hears presses and keys inside such a frame as `focusOnArrival` does.
+  `useArrivalFocus` follows the same frames as `focusOnArrival` does. A late request from
+  `useFocusAfterDraw`, asked by a component in a shadow root once it has gone, finds an id only the
+  page holds by the same walk, where it was held and never landed. `useArrivalFocus` finds an id as
+  `focusOnArrival` does.
+- **Docs.** The README's list of what is in the kit names the layouts page for a content page, bands
+  and a hero, which the page chrome page no longer holds. The README links the site's behavior page
+  for the kit's waits, focus, arrow keys and refused form, each working, the site's own palette page
+  for a page's palette, column, layers and the properties it sets, and the controls page for
+  progress, beside the reference's sections on them. The reference's busy button says gray, as the
+  rest of the kit spells it. The reference says a read-only stepper keeps the edge of a column of
+  read-only values, that an inline one keeps its centered figures, that a stepper is read only for
+  the page, and that nothing moves under a button holding focus. The README's checkout and the
+  reference's hold their two buttons in a row of actions. The reference says which blocks a plain
+  form spaces and that a field holds to its column, and record 24 gives the choice and the options
+  turned down. "A busy button" in the reference describes the dots, the properties they set and the
+  relative position, and no longer says there is no spinner. How a button is drawn names the band.
+  Records 2, 5 and 6 let a busy button follow its `:where()` with `::after`, under record 2's rule
+  for a mark a component draws of its own state. The reference's fields say a field holds to the
+  measure, how a page narrows or widens one and that a dialog or a popover sizes its own fields, its
+  content page counts fields among what holds to the measure, and its table of properties a page
+  sets lists `--dk-field-measure`. The reference's sections on taking a control down and on
+  `moveFocus` list the stepper among the pieces that hand focus back, its section on the stepper
+  says the box is a group named by the label, where focus goes and the tabindex the box is given,
+  and the markup of every field `Field` draws shows its label's id. Record 23 says the same, why an
+  editable value is skipped and what it costs. The reference says a stepper's field with its label
+  above is never narrower than the stepper at its least width where the page's row allows it, that
+  the stepper alone sets that width, that a row whose items have no least width can still squeeze
+  it, that one with its label to the left keeps its least width too, and that in a row that cannot
+  wrap the fields beside it take what is left. The accessibility notes add the stepper's field to
+  what Firefox 120 draws without `:has()`. The reference's failure words give a date and time's
+  range error, how each kind of dated limit reads and the words for an overnight window. The
+  reference's section on a refused form says `attachForm` draws errors only in markup nothing will
+  draw again, a page written by hand or the React components rendered to static HTML and attached
+  from plain script, that a form React still draws refuses through `useFormRefusal`, and that
+  `attachForm` drawing its own errors in a form React still draws is not supported. Record 20 and
+  the decisions index say why each node and attribute of a field keeps one owner, and why a mark on
+  every React field and an observer that repairs React's markup were turned down. The reference's
+  field section says a field shorter than the tallest beside it keeps its control at its own height,
+  with the spare room below it, that an inline stepper there keeps its label level with the labels
+  beside it, and how a page makes a control fill a field it stretches. The reference documents the
+  row and `--dk-fields-least`, with its markup and the React a page writes around the fields, lists
+  the property among those a page sets, and names the row under `--dk-field-measure`. It gives the
   length that holds a wider stepper at its full size, 10.5rem for three figures, 12rem for a tall
   stepper and 13.25rem for a tall one of three, and asks a page that hides every field in a row to
   hide the row itself. The field and stepper sections point a page that sets fields side by side to
@@ -547,15 +549,14 @@ theme script within 1 KB of its own, at 757.
   the controls imported bare, `attachTable` alone and `attachForm` alone, with their first figures,
   measures every budget of the controls from the package as npm ships it with one median, and lets a
   release that leaves more than two medians of room under a budget lower it by the same rule. Record
-  13 gives the controls' size before and after the move, and record 21 names the unit tests. A
-  contents list under the reference's introduction links every heading. Fields is broken at its
-  topics, with a field's width, a field's height and a plain form each under a heading of its own,
-  and a row of buttons, fields side by side and a live callout link the plain form. A stepper's
-  width in a row is said once, under a stepper in a row, which fields side by side and how a stepper
-  is drawn link. A refused form reads in this order: the browser's constraints, who draws the
-  errors, the words, focus and speech, and then taking the form down. The properties a page sets
-  list `--dk-field-measure` and `--dk-fields-least` together. The package README's install line
-  saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes.
+  21 names the unit tests. A contents list under the reference's introduction links every heading.
+  Fields is broken at its topics, with a field's width, a field's height and a plain form each under
+  a heading of its own, and a row of buttons, fields side by side and a live callout link the plain
+  form. A stepper's width in a row is said once, under a stepper in a row, which fields side by side
+  and how a stepper is drawn link. A refused form reads in this order: the browser's constraints,
+  who draws the errors, the words, focus and speech, and then taking the form down. The properties a
+  page sets list `--dk-field-measure` and `--dk-fields-least` together. The package README's install
+  line saves one exact version, since a patch before 1.0.0 can still carry Upgrading notes.
   `attachForm`'s doc comment says it draws errors only in markup nothing draws again. Record 20
   names an attached stepper's observer as the one exception to one owner for each node and attribute
   of a field, and why it is safe. Record 21 says how a dated limit and a step are named, and records
@@ -614,105 +615,105 @@ theme script within 1 KB of its own, at 757.
   one record, with record 17 amended for the fields and callouts held to the measure, and the
   reference and the accessibility notes name the known limits of a focus request from a closed
   shadow root, of views in different trees, of a dialog in a frame and of the presses in frames a
-  view's arrival cannot hear. - **Tests.** The test that each state draws the attribute printed
-  under it finds an attribute with no value only where an attribute's name stands in a tag, never in
-  the text or inside another attribute's value, in the case HTML writes it or the one React writes.
-  A state's picture takes its address from the page that draws it, so the code a reader copies names
-  the file alone. A browser test draws a read-only stepper beside a read-only text field and finds
-  their values starting at the same place and the two standing the same height, at a phone's width
-  and a laptop's, in an app's frame, and on a phone at twice the text size, and an inline read-only
-  value centered and as tall as an editable one. Others find a tall read-only stepper at the larger
-  target with its figures at a field's padding, the value and a focused button where they stood as
-  the field turns read only, and hidden pieces kept hidden with the sheets read as a browser without
-  `:has()` reads them. Browser tests stand the README's checkout row and a filled callout
-  `--dk-space-4` under what is above them, with an empty or hidden callout adding no room, stand
-  each of the kit's blocks a step apart in a plain form and inside a dialog, draw a page's own
-  markup in a plain form as in a form with a class, keep a field with the kit's email error inside a
-  narrow form and beside a button in a page's own row at twice the text size, break the address in
-  the kit's error and in React's only after its "@" there, and leave the error a refusal adds to
-  bare markup at its own margins. Browser tests in Chromium, WebKit and Firefox find a busy button
-  past the wait drawing the dots, which an off button beside it lacks, with its name kept and
-  neither button's box changed by them, the dots centered on a button aligned to its start, three
-  across at larger text sizes, clear of words that wrap, of a text button's underline and of an icon
-  at larger text sizes, with every button of one line at its least height, text buttons in a lead
-  and in loose leading among them, out of sight during the wait, no fainter than the pulse's floor,
-  still under reduced motion, still and in the system's gray in forced colors, and absent from a
-  busy button not yet marked off. A save that ends just after the wait lets real time pass for
-  React's redraw, which WebKit needs. A unit test holds the dots at 3:1 on every ground at the
-  faintest of the pulse, and the scope test allows the busy button's `::after` alone and holds it to
-  a mark with no words that takes no place. A browser test finds a field in a wide stack, a page and
-  a band at 1280 no wider than the measure, a form's and one with a button beside its control too, a
-  callout in the form at the measure and ending where its fields end, a callout outside a form at
-  the column's width, a field a page widens at the stack's width, and a field in a kit dialog, a
-  native dialog and a popover a page widens at their width. A browser test focuses a button of a
-  read-only, an editable and a disabled stepper by the keyboard, takes each down by its signal and
-  by its detach, and finds focus on the read-only value or on the group named by the label, never on
-  the body or an editable value, both buttons hidden and the ring drawn. Others find the box's
-  attributes as drawn, but for the tabindex, through takedowns and attaches, a page's own attributes
-  kept, older markup given a tabindex, a box that refuses focus left as drawn with focus sent on to
-  the main content, the group's name kept as the value changes, a stepper attached again left out of
-  the tab order, the buttons kept where the page attaches the stepper afresh as focus comes to it,
-  and focus the page moves or asks for in the abort's task landing. The leak test takes the stepper
-  down with a button focused. Browser tests draw a stepper field beside a text field in a page's own
-  flex row at 320 wide, at the usual and twice the text size, and find the stepper and both its
-  buttons inside the field, at least 44 wide and the target tall. Another gives the field a hint
-  with words that never wrap and finds the field no wider than its stepper's least width, with the
-  stepper and its buttons inside it. Browser tests in Chromium, WebKit and Firefox submit a date, a
-  date and time, a time, a month and a week field below and above their limits and find each error
-  ending on "or later" or "or earlier" with its limit in words and no period against it, a page in
-  British English given its own order, a page in French given US English with an English part of it
-  given its own, a field in a shadow root given the language of the page around it, a limit in a
-  spring-forward gap in New York keeping its hour, a year under 100 kept, a limit past any date
-  shown as written, a fraction of a second shown, and an overnight window for a time, never for
-  limits that are equal or one that does not parse. WebKit and Firefox draw a month and a week as
-  text fields with no limits. A browser test in Chromium, WebKit and Firefox refuses a field through
-  `useFormRefusal`, draws its error again with new words, plain and with an address, while the
-  refusal stands, and finds no exception, one error with the field's id, shown, described and
-  marked, focus on the field and the refusal said once on the status line. The form tests run in
-  Firefox as well. A browser test in Chromium, WebKit and Firefox draws two text fields in a page's
-  own `1fr 1fr` row at 390 wide, one label wrapping, a text field with a wrapping label beside an
-  inline stepper in the same row, and a stepper's field in an `auto` column at 320 wide and twice
-  the text size, and finds each input and each stepper's buttons and value at the height of the same
-  field drawn alone, and the inline stepper's label level with the text field's. A browser test in
-  Chromium, WebKit and Firefox finds a stepper's field and a text field at equal widths a step apart
-  with their controls level at 390 and 1280 wide, and each on its own line at 320 wide and at twice
-  the text size, every label on one line, every part inside its field and no sideways scroll. It
-  finds a stepper no wider than 10rem, the same boxes drawn without `:has()`, neither field moved by
-  a range error or a long label, a long address breaking inside its field, an inline stepper and
-  choices each on a line of their own, two text fields sharing a line only where twice the length
-  and the gap fit, three at 1280, both controls level beside a hint, and a row in a plain form a
-  step from the fields around it, ending at their edge, with a field in it narrowed by
-  `--dk-field-measure`. It finds a tall stepper, a tall one of three figures and one of three, at
-  the lengths the reference gives, inside their fields with their buttons at full size beside a text
-  field, with and without `:has()`. A sheet test fails a rule that names the row with anything after
-  it unless it only sets how a field the row holds flexes, from a basis no content sets. CI runs the
-  browser tests in WebKit and Firefox in three shards each, where two came close to a job's time
-  limit, and a unit test holds each to more shards than Chromium, counted from its matrix alone.
-  Chromium keeps two. Firefox's shards run on Ubuntu, as Chromium's do, so WebKit's are the only
-  jobs on a Mac and none waits for a runner another holds. Browser tests in Chromium, WebKit and
-  Firefox type a value past a stepper's range and submit by Enter and by a press on the button, in a
-  form attached with `attachForm` and one refused through `useFormRefusal`, and find one error
-  drawn, one in the field's description and one message on one line, with the stepper named, with
-  another field named, with a summary taking focus and with a stepper that speaks through a `say` of
-  its own. They find the stepper's own words left said in a form the kit does not check and on a
-  stepper the check passes over. Browser tests in Chromium, WebKit and Firefox, in a form attached
-  with `attachForm` and one refused through `useFormRefusal`, save a blank stepper that is not
-  required with no error, refuse a required one emptied and one holding 2.5 with the stepper's own
-  error, refuse one holding a letter with one error, and give a required stepper drawn blank and
-  never touched its own error. A stepper's own tests find a shown error gone as a script makes the
-  field optional, and gone with its buttons marked again as a script changes the step. A browser
-  test in Chromium, WebKit and Firefox wraps a row between two fields in a page, a panel, a dialog,
-  a stack, a stack in a panel, a pair's stack, a plain form, a plain form in a panel and a stack
-  nothing holds, and finds every step between the fields equal. Browser tests in Chromium, WebKit
-  and Firefox find no focus moved and no press spent under a signal already aborted, a request
-  called off by an abort with its press handed back, a landed request holding nothing on its signal,
-  and the views left landing where one of several asking for the same press is aborted. Browser
-  tests in Chromium, WebKit and Firefox press a button inside a shadow root that changes a view's
-  key and find focus on the view's heading, and ask late, from a component since gone, for an id
-  inside a shadow root and find focus there. Browser tests in Chromium, WebKit and Firefox find no
-  search of the page as a panel's button takes focus and one where both buttons are off, and find a
-  key that is not Escape reading its path no more often with panels attached than with none. A unit
-  test calls every attach that throws for a missing part with markup missing it under a signal
+  view's arrival cannot hear.
+- **Tests.** The test that each state draws the attribute printed under it finds an attribute with
+  no value only where an attribute's name stands in a tag, never in the text or inside another
+  attribute's value, in the case HTML writes it or the one React writes. A state's picture takes its
+  address from the page that draws it, so the code a reader copies names the file alone. A browser
+  test draws a read-only stepper beside a read-only text field and finds their values starting at
+  the same place and the two standing the same height, at a phone's width and a laptop's, in an
+  app's frame, and on a phone at twice the text size, and an inline read-only value centered and as
+  tall as an editable one. Others find a tall read-only stepper at the larger target with its
+  figures at a field's padding, the value and a focused button where they stood as the field turns
+  read only, and hidden pieces kept hidden with the sheets read as a browser without `:has()` reads
+  them. Browser tests stand the README's checkout row and a filled callout `--dk-space-4` under what
+  is above them, with an empty or hidden callout adding no room, stand each of the kit's blocks a
+  step apart in a plain form and inside a dialog, draw a page's own markup in a plain form as in a
+  form with a class, keep a field with the kit's email error inside a narrow form and beside a
+  button in a page's own row at twice the text size, break the address in the kit's error and in
+  React's only after its "@" there, and leave the error a refusal adds to bare markup at its own
+  margins. Browser tests in Chromium, WebKit and Firefox find a busy button past the wait drawing
+  the dots, which an off button beside it lacks, with its name kept and neither button's box changed
+  by them, the dots centered on a button aligned to its start, three across at larger text sizes,
+  clear of words that wrap, of a text button's underline and of an icon at larger text sizes, with
+  every button of one line at its least height, text buttons in a lead and in loose leading among
+  them, out of sight during the wait, no fainter than the pulse's floor, still under reduced motion,
+  still and in the system's gray in forced colors, and absent from a busy button not yet marked off.
+  A save that ends just after the wait lets real time pass for React's redraw, which WebKit needs. A
+  unit test holds the dots at 3:1 on every ground at the faintest of the pulse, and the scope test
+  allows the busy button's `::after` alone and holds it to a mark with no words that takes no place.
+  A browser test finds a field in a wide stack, a page and a band at 1280 no wider than the measure,
+  a form's and one with a button beside its control too, a callout in the form at the measure and
+  ending where its fields end, a callout outside a form at the column's width, a field a page widens
+  at the stack's width, and a field in a kit dialog, a native dialog and a popover a page widens at
+  their width. A browser test focuses a button of a read-only, an editable and a disabled stepper by
+  the keyboard, takes each down by its signal and by its detach, and finds focus on the read-only
+  value or on the group named by the label, never on the body or an editable value, both buttons
+  hidden and the ring drawn. Others find the box's attributes as drawn, but for the tabindex,
+  through takedowns and attaches, a page's own attributes kept, older markup given a tabindex, a box
+  that refuses focus left as drawn with focus sent on to the main content, the group's name kept as
+  the value changes, a stepper attached again left out of the tab order, the buttons kept where the
+  page attaches the stepper afresh as focus comes to it, and focus the page moves or asks for in the
+  abort's task landing. The leak test takes the stepper down with a button focused. Browser tests
+  draw a stepper field beside a text field in a page's own flex row at 320 wide, at the usual and
+  twice the text size, and find the stepper and both its buttons inside the field, at least 44 wide
+  and the target tall. Another gives the field a hint with words that never wrap and finds the field
+  no wider than its stepper's least width, with the stepper and its buttons inside it. Browser tests
+  in Chromium, WebKit and Firefox submit a date, a date and time, a time, a month and a week field
+  below and above their limits and find each error ending on "or later" or "or earlier" with its
+  limit in words and no period against it, a page in British English given its own order, a page in
+  French given US English with an English part of it given its own, a field in a shadow root given
+  the language of the page around it, a limit in a spring-forward gap in New York keeping its hour,
+  a year under 100 kept, a limit past any date shown as written, a fraction of a second shown, and
+  an overnight window for a time, never for limits that are equal or one that does not parse. WebKit
+  and Firefox draw a month and a week as text fields with no limits. A browser test in Chromium,
+  WebKit and Firefox refuses a field through `useFormRefusal`, draws its error again with new words,
+  plain and with an address, while the refusal stands, and finds no exception, one error with the
+  field's id, shown, described and marked, focus on the field and the refusal said once on the
+  status line. The form tests run in Firefox as well. A browser test in Chromium, WebKit and Firefox
+  draws two text fields in a page's own `1fr 1fr` row at 390 wide, one label wrapping, a text field
+  with a wrapping label beside an inline stepper in the same row, and a stepper's field in an `auto`
+  column at 320 wide and twice the text size, and finds each input and each stepper's buttons and
+  value at the height of the same field drawn alone, and the inline stepper's label level with the
+  text field's. A browser test in Chromium, WebKit and Firefox finds a stepper's field and a text
+  field at equal widths a step apart with their controls level at 390 and 1280 wide, and each on its
+  own line at 320 wide and at twice the text size, every label on one line, every part inside its
+  field and no sideways scroll. It finds a stepper no wider than 10rem, the same boxes drawn without
+  `:has()`, neither field moved by a range error or a long label, a long address breaking inside its
+  field, an inline stepper and choices each on a line of their own, two text fields sharing a line
+  only where twice the length and the gap fit, three at 1280, both controls level beside a hint, and
+  a row in a plain form a step from the fields around it, ending at their edge, with a field in it
+  narrowed by `--dk-field-measure`. It finds a tall stepper, a tall one of three figures and one of
+  three, at the lengths the reference gives, inside their fields with their buttons at full size
+  beside a text field, with and without `:has()`. A sheet test fails a rule that names the row with
+  anything after it unless it only sets how a field the row holds flexes, from a basis no content
+  sets. CI runs the browser tests in WebKit and Firefox in three shards each, where two came close
+  to a job's time limit, and a unit test holds each to more shards than Chromium, counted from its
+  matrix alone. Chromium keeps two. Firefox's shards run on Ubuntu, as Chromium's do, so WebKit's
+  are the only jobs on a Mac and none waits for a runner another holds. Browser tests in Chromium,
+  WebKit and Firefox type a value past a stepper's range and submit by Enter and by a press on the
+  button, in a form attached with `attachForm` and one refused through `useFormRefusal`, and find
+  one error drawn, one in the field's description and one message on one line, with the stepper
+  named, with another field named, with a summary taking focus and with a stepper that speaks
+  through a `say` of its own. They find the stepper's own words left said in a form the kit does not
+  check and on a stepper the check passes over. Browser tests in Chromium, WebKit and Firefox, in a
+  form attached with `attachForm` and one refused through `useFormRefusal`, save a blank stepper
+  that is not required with no error, refuse a required one emptied and one holding 2.5 with the
+  stepper's own error, refuse one holding a letter with one error, and give a required stepper drawn
+  blank and never touched its own error. A stepper's own tests find a shown error gone as a script
+  makes the field optional, and gone with its buttons marked again as a script changes the step. A
+  browser test in Chromium, WebKit and Firefox wraps a row between two fields in a page, a panel, a
+  dialog, a stack, a stack in a panel, a pair's stack, a plain form, a plain form in a panel and a
+  stack nothing holds, and finds every step between the fields equal. Browser tests in Chromium,
+  WebKit and Firefox find no focus moved and no press spent under a signal already aborted, a
+  request called off by an abort with its press handed back, a landed request holding nothing on its
+  signal, and the views left landing where one of several asking for the same press is aborted.
+  Browser tests in Chromium, WebKit and Firefox press a button inside a shadow root that changes a
+  view's key and find focus on the view's heading, and ask late, from a component since gone, for an
+  id inside a shadow root and find focus there. Browser tests in Chromium, WebKit and Firefox find
+  no search of the page as a panel's button takes focus and one where both buttons are off, and find
+  a key that is not Escape reading its path no more often with panels attached than with none. A
+  unit test calls every attach that throws for a missing part with markup missing it under a signal
   already aborted and finds each throw, and another finds every error the controls throw, of any
   kind, among those cases. Browser tests in Chromium, WebKit and Firefox take a part from an
   attached stepper, panel's button and toast, and find a repeat attach returning the control and a
