@@ -2227,12 +2227,16 @@ Each request is new, so the same control asked for twice is focused twice, and t
 An id is looked for in the root where focus was when the request was made, then in each root around
 it, out through the hosts to the page, so a widget drawn inside a shadow root finds its own control
 before an element of the page around it that shares the id, and a widget's own button that asks for
-a heading in the page's markup finds that heading. Focus inside a closed shadow root reads as its
-host, so a request asked there looks from the root the host sits in and finds no id inside the
-closed root. The form's refusal, a stepper and progress find the errors, hints and labels they read
-in their own element's root alone. A panel and its button are found from the document the button
-sits in, which the panel listens on. `activeOf()` from `./controls` returns what has focus, followed
-into each shadow root that holds it, for a page that asks later and passes `from` itself.
+a heading in the page's markup finds that heading. An id the widget's root does not hold as the
+request lands is looked for in the page ahead of the fallbacks, so a widget asks for a control it
+may not have drawn yet by passing the element or a function that returns it, not its id. Focus
+inside a closed shadow root reads as its host, so a request asked there with no `from` looks from
+the root the host sits in and finds no id inside the closed root. A widget in a closed root passes
+its own control as an element, not as an id. The form's refusal, a stepper and progress find the
+errors, hints and labels they read in their own element's root alone. A panel and its button are
+found from the document the button sits in, which the panel listens on. `activeOf()` from
+`./controls` returns what has focus, followed into each shadow root that holds it, for a page that
+asks later and passes `from` itself.
 
 A request keeps where focus was inside a frame of the page's own origin as well, and compares where
 focus is as the document it was in sees it, while that document is still the one its frame shows: a

@@ -19,6 +19,9 @@ import { teardown } from './teardown.js';
  * only through `./controls`.
  */
 
+/** The walk a request finds an id by, given again for the React hooks, which import this module. */
+export { byIdOutward };
+
 /**
  * A place to focus, or nothing where it is an id with no element yet or a control marked off. An id
  * is looked for in the root of the element given, as where focus was when it was asked for, then in

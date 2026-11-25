@@ -20,8 +20,8 @@ describe('the controls', () => {
         for (const value of Object.values(controls)) expect(typeof value).toBe('function');
     });
 
-    // The hooks also take where focus was from the focus requests' own module, the one the entry
-    // gathers, so the same file and the same state serve both.
+    // The hooks also take where focus was and the walk an id is found by from the focus requests'
+    // own module, the one the entry gathers, so the same file and the same state serve both.
     it('reach the React modules only through the entry, so a page holds one copy of the state', async () => {
         const { readFileSync } = await import('node:fs');
         const imported = ['./react.tsx', './hooks.tsx'].flatMap((file) =>

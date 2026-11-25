@@ -32,7 +32,7 @@ import {
     type RovingOptions,
     type Say,
 } from './controls.js';
-import { focusWas } from './request.js';
+import { byIdOutward, focusWas } from './request.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over a function from `./controls`, as record 20 has
@@ -336,14 +336,13 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
     return useCallback<FocusAfterDraw>(
         (target, options) => {
             const { from, page } = focusWas(options?.from);
-            // The root focus was in as the page sees it, read as the request is asked, since a late
-            // request is made with no place focus was, which is where `moveFocus` would look for an
-            // id. A shadow root is told by its node type, so one of a frame's counts too.
-            const root = (page ?? from)?.getRootNode();
+            // Where focus was as the page sees it, read as the request is asked, since a late request
+            // is made with no place focus was, which is where `moveFocus` would look for an id. An
+            // id is looked for from there by the same walk `moveFocus` takes, in that root and then
+            // in each root around it.
+            const near = page ?? from;
             const within = (place: FocusTarget): FocusTarget =>
-                typeof place === 'string' && root?.nodeType === 11
-                    ? () => (root as ShadowRoot).getElementById(place)
-                    : place;
+                typeof place === 'string' ? () => byIdOutward(near, place) : place;
             // No signal tied to the component goes with the request, since the unmount that makes
             // a request still waiting would abort it too, so it is called off only by what
             // moveFocus returns.
@@ -370,7 +369,7 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
 const inSight = (target: FocusTarget): boolean => {
     const place =
         typeof target === 'string'
-            ? document.getElementById(target)
+            ? byIdOutward(null, target)
             : typeof target === 'function'
               ? target()
               : target;
