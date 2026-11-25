@@ -21,15 +21,16 @@ import { box, frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
  * before that page's load or written by the page among them, or inside an object, brings focus to
  * the view it opens, a key inside one leaves no press of the page's standing, focus entering a
  * frame inside a shadow root, a frame of another origin or a frame that went on to one leaves no
- * press of the page's standing either, with no page error, a keydown with no key counts for
- * nothing, and a frame's document is heard once. A
- * request still waiting as its component unmounts lands, from a row removed at once, after an
- * await, from a timer or in a transition, from a transition an urgent update overtook, on its
- * fallback where the transition draws its target, and from a component an `Activity` hides, unless
- * the visitor moved focus first. One made in a commit before its component goes lands, one asked
- * from a ref as its component first draws lands, one whose target an `Activity` hides with its
- * component is held until it shows, one asked after an await by a component that has gone lands,
- * and one asked once the visitor is on the next screen leaves focus there, whatever place it names.
+ * press of the page's standing either, with no page error, a press in a frame inside a shadow root
+ * counts whether focus is read before its click or after a click it already heard, a keydown with
+ * no key counts for nothing, and a frame's document is heard once. A request still waiting as its
+ * component unmounts lands, from a row removed at once, after an await, from a timer or in a
+ * transition, from a transition an urgent update overtook, on its fallback where the transition
+ * draws its target, and from a component an `Activity` hides, unless the visitor moved focus first.
+ * One made in a commit before its component goes lands, one asked from a ref as its component first
+ * draws lands, one whose target an `Activity` hides with its component is held until it shows, one
+ * asked after an await by a component that has gone lands, and one asked once the visitor is on the
+ * next screen leaves focus there, whatever place it names.
  *
  * A browser run headless cannot be sent out of sight, nor made to order its frames and its
  * visibility events as a real one does in each engine, so the tests that need the page out of sight
@@ -1124,30 +1125,41 @@ window.ready = true;`,
         await expect(page.locator('#scores')).toBeFocused();
     });
 
-test("focuses a view's heading as it arrives, brought by a press inside an object showing a page of the page's origin", async ({
-    page,
-}) => {
-    // Firefox loads an object's page past a test's routes, so a server of the test's own serves
-    // it, at the origin the page is served from.
-    const server = createServer((_, response) => {
-        response.setHeader('content-type', 'text/html');
-        response.end(NOTES);
-    });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
-    const { port } = server.address() as AddressInfo;
-    try {
-        await stillClock(page.clock);
-        const origin = `http://127.0.0.1:${String(port)}`;
-        // The page's route, which comes before the context's, sends the object's page to the server.
-        await page.route('**/notes.html', (route) => route.continue());
-        await servePage(page.context(), {
-            origin,
-            title: 'Focus',
-            body:
-                '<h2 id="scores" tabindex="-1" hidden>Scores</h2>' +
-                '<object data="/notes.html" type="text/html" title="Notes"></object>',
-            script: `import { focusOnArrival } from './controls.js';
+for (const how of [
+    'pressed by pointer',
+    'clicked by the page, loaded before the controls',
+] as const)
+    test(`focuses a view's heading as it arrives, brought by a press inside an object showing a page of the page's origin, ${how}`, async ({
+        page,
+    }) => {
+        const early = how !== 'pressed by pointer';
+        // Firefox loads an object's page past a test's routes, so a server of the test's own serves
+        // it, at the origin the page is served from.
+        const server = createServer((_, response) => {
+            response.setHeader('content-type', 'text/html');
+            response.end(NOTES);
+        });
+        server.listen(0, '127.0.0.1');
+        await once(server, 'listening');
+        const { port } = server.address() as AddressInfo;
+        try {
+            await stillClock(page.clock);
+            const origin = `http://127.0.0.1:${String(port)}`;
+            // The page's route, which comes before the context's, sends the object's page to the
+            // server.
+            await page.route('**/notes.html', (route) => route.continue());
+            // Loaded before the controls, the object is found only by the walk as they load, and a
+            // click the page's script makes in it moves no focus, so nothing else finds it.
+            await servePage(page.context(), {
+                origin,
+                title: 'Focus',
+                body:
+                    '<h2 id="scores" tabindex="-1" hidden>Scores</h2>' +
+                    '<object data="/notes.html" type="text/html" title="Notes"></object>',
+                script: `const shown = document.querySelector('object');
+if (${String(early)} && !shown.contentDocument?.querySelector('#later'))
+    await new Promise((loaded) => shown.addEventListener('load', loaded, { once: true }));
+const { focusOnArrival } = await import('./controls.js');
 window.bring = () => {
     setTimeout(() => {
         document.querySelector('#scores').hidden = false;
@@ -1155,46 +1167,48 @@ window.bring = () => {
     }, 1000);
 };
 window.ready = true;`,
-        });
-        await page.goto(`${origin}/`);
-        await page.waitForFunction(() => 'ready' in window);
-        await expect
-            .poll(() =>
-                page.evaluate(() =>
-                    Boolean(
-                        document
-                            .querySelector<HTMLObjectElement>('object')
-                            ?.contentDocument?.querySelector('#later')
+            });
+            await page.goto(`${origin}/`);
+            await page.waitForFunction(() => 'ready' in window);
+            await expect
+                .poll(() =>
+                    page.evaluate(() =>
+                        Boolean(
+                            document
+                                .querySelector<HTMLObjectElement>('object')
+                                ?.contentDocument?.querySelector('#later')
+                        )
                     )
                 )
-            )
-            .toBe(true);
-        // Firefox lists no frame for an object, so the press is made where the button is drawn.
-        const at = await page.evaluate(() => {
-            const shown = document.querySelector<HTMLObjectElement>('object');
-            const later = shown?.contentDocument?.querySelector('#later');
-            later?.addEventListener('click', () => {
-                (window as unknown as { bring: () => void }).bring();
-            });
-            const outer = shown?.getBoundingClientRect();
-            const inner = later?.getBoundingClientRect();
-            return outer && inner
-                ? {
-                      x: outer.x + inner.x + inner.width / 2,
-                      y: outer.y + inner.y + inner.height / 2,
-                  }
-                : null;
-        });
-        if (!at) throw new Error("expected the object's button to be drawn");
-        await page.mouse.click(at.x, at.y);
-        await page.clock.runFor(1100);
-        await expect(page.locator('#scores')).toBeVisible();
-        await page.clock.runFor(100);
-        await expect(page.locator('#scores')).toBeFocused();
-    } finally {
-        server.close();
-    }
-});
+                .toBe(true);
+            // Playwright lists no frame for an object in Firefox, so a press by pointer is made
+            // where the button is drawn.
+            const at = await page.evaluate((scripted) => {
+                const shown = document.querySelector<HTMLObjectElement>('object');
+                const later = shown?.contentDocument?.querySelector<HTMLElement>('#later');
+                later?.addEventListener('click', () => {
+                    (window as unknown as { bring: () => void }).bring();
+                });
+                if (scripted) later?.click();
+                const outer = shown?.getBoundingClientRect();
+                const inner = later?.getBoundingClientRect();
+                return outer && inner
+                    ? {
+                          x: outer.x + inner.x + inner.width / 2,
+                          y: outer.y + inner.y + inner.height / 2,
+                      }
+                    : null;
+            }, early);
+            if (!at) throw new Error("expected the object's button to be drawn");
+            if (!early) await page.mouse.click(at.x, at.y);
+            await page.clock.runFor(1100);
+            await expect(page.locator('#scores')).toBeVisible();
+            await page.clock.runFor(100);
+            await expect(page.locator('#scores')).toBeFocused();
+        } finally {
+            server.close();
+        }
+    });
 
 /**
  * A frame's page with a field, a control that brings the view and a picture the server holds back,
@@ -1216,12 +1230,12 @@ const FAR = '<!doctype html><title>Check</title><input id="code" aria-label="Cod
 
 /**
  * A page with a button that brings a view a second after its press, the frames given, the pages
- * they show served by the page's routes, and a host with an open shadow root holding a frame with
- * a field, as a widget drawn in a shadow root holds a frame, and one with a closed root holding
- * another, which the page keeps a hold of for the test to reach. The view names its heading by the
- * element, since an id is looked for where focus was, which in that frame is the shadow root. The
- * page's own load waits on a picture that never comes, so the test goes to the page without waiting
- * for it.
+ * they show served by the page's routes, and a host with an open shadow root holding a frame with a
+ * field and a button that brings the view, as a widget drawn in a shadow root holds a frame, and
+ * one with a closed root holding another, which the page keeps a hold of for the test to reach. The
+ * view names its heading by the element, since an id is looked for where focus was, which in that
+ * frame is the shadow root. The page's own load waits on a picture that never comes, so the test
+ * goes to the page without waiting for it.
  */
 const openWithFrames = async (page: Page, frames = '') => {
     await stillClock(page.clock);
@@ -1252,7 +1266,7 @@ window.bring = () => {
 document.querySelector('#bring').addEventListener('click', window.bring);
 const shadowed = document.createElement('iframe');
 shadowed.title = 'Widget';
-shadowed.srcdoc = '<input id=widget aria-label=Widget>';
+shadowed.srcdoc = '<input id=widget aria-label=Widget><button type=button id=go>Go</button>';
 const closed = document.createElement('iframe');
 closed.title = 'Closed';
 closed.srcdoc = '<input id=shut aria-label=Shut>';
@@ -1263,6 +1277,7 @@ document.querySelector('#host').attachShadow({ mode: 'open' }).append(shadowed);
 document.querySelector('#shut').attachShadow({ mode: 'closed' }).append(closed);
 window.shut = closed;
 await loaded;
+shadowed.contentDocument.querySelector('#go').addEventListener('click', window.bring);
 window.ready = true;`,
     });
     await page.goto(`${ORIGIN}/`, { waitUntil: 'commit' });
@@ -1311,6 +1326,40 @@ test('never takes focus from a field of a frame inside a shadow root pressed wit
     await arrive(page);
     await expect(page.locator('#scores')).not.toBeFocused();
     await expect(widget).toBeFocused();
+});
+
+test("focuses a view's heading for a press in a frame inside a shadow root first entered by that press, read between down and up", async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    const go = page.frameLocator('#host iframe').locator('#go');
+    const { x, y, width, height } = await box(go, 'the button in the frame');
+    await page.mouse.move(x + width / 2, y + height / 2);
+    await page.mouse.down();
+    // The clock moves timers alone, so a read put off a task comes here, before the click.
+    await page.clock.runFor(1);
+    await page.mouse.up();
+    await arrive(page);
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+test("focuses a view's heading for a press with no pause in a frame inside a shadow root heard before, after a click on the page", async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    const frame = page.frameLocator('#host iframe');
+    await frame.locator('#widget').click();
+    await page.clock.runFor(10);
+    // Back on the page, as a visitor who clicked the page between two visits to the frame.
+    await page.mouse.click(1000, 600);
+    await page.clock.runFor(10);
+    await expect(frame.locator('#widget')).not.toBeFocused();
+    const { x, y, width, height } = await box(frame.locator('#go'), 'the button in the frame');
+    await page.mouse.move(x + width / 2, y + height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await arrive(page);
+    await expect(page.locator('#scores')).toBeFocused();
 });
 
 test('leaves focus in a field of a frame inside a closed shadow root the visitor clicked into after a press on the page, as the view arrives', async ({

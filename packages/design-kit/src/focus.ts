@@ -7,9 +7,9 @@ export { deepActive };
 /*
  * How the controls move focus and hand it back: the one view of focus read from the page down
  * through shadow roots and frames of the page's own origin, by the reader the state module holds
- * and this module gives again, the walk that focuses the first place that takes it, and the one rule
- * by which a piece closing or leaving hands focus back. No entry of the package names this module,
- * so a page imports it only through `./controls`.
+ * and this module gives again, the walk that focuses the first place that takes it, and the one
+ * rule by which a piece closing or leaving hands focus back. No entry of the package names this
+ * module, so a page imports it only through `./controls`.
  */
 
 /**
