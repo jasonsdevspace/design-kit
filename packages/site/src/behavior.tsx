@@ -49,7 +49,7 @@ export const BEHAVIORS = [
         name: 'A refused form',
         draw: (live) => (
             <>
-                <form id="rule-form" className="dk-stack">
+                <form id="rule-form">
                     <kit.InputField id="rule-name" name="name" label="Rule name" required />
                     <kit.InputField
                         id="rule-email"
@@ -59,23 +59,24 @@ export const BEHAVIORS = [
                         hint="Where the alert is sent"
                         required
                     />
-                    {live ? (
-                        // The kit's Button never writes disabled, which the browser alone reads as
-                        // a submit Enter cannot press, so the live copy writes its markup by hand.
-                        <button
-                            type="submit"
-                            className="dk-button dk-button-accent"
-                            id="rule-save"
-                            hidden
-                            disabled
-                        >
-                            Save rule
-                        </button>
-                    ) : (
-                        <kit.Button type="submit" accent id="rule-save">
-                            Save rule
-                        </kit.Button>
-                    )}
+                    <div className="dk-actions" hidden={live}>
+                        {live ? (
+                            // The kit's Button never writes disabled, which the browser alone reads
+                            // as a submit Enter cannot press, so the live copy writes it by hand.
+                            <button
+                                type="submit"
+                                className="dk-button dk-button-accent"
+                                id="rule-save"
+                                disabled
+                            >
+                                Save rule
+                            </button>
+                        ) : (
+                            <kit.Button type="submit" accent id="rule-save">
+                                Save rule
+                            </kit.Button>
+                        )}
+                    </div>
                 </form>
                 <Line />
             </>
@@ -105,7 +106,7 @@ const Rule = () => {
         say('The rule was saved.');
     };
     return (
-        <form ref={form} className="dk-stack" onSubmit={submit}>
+        <form ref={form} onSubmit={submit}>
             <InputField
                 id="rule-name"
                 name="name"
@@ -122,9 +123,11 @@ const Rule = () => {
                 required
                 error={errors['rule-email']}
             />
-            <Button type="submit" accent id="rule-save">
-                Save rule
-            </Button>
+            <div className="dk-actions">
+                <Button type="submit" accent id="rule-save">
+                    Save rule
+                </Button>
+            </div>
         </form>
     );
 };
