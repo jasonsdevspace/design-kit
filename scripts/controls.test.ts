@@ -34,9 +34,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * record 23's holders left too little room for another, again once its one rule for handing focus
  * back did, again once a handback that takes an SVG element did, again once focus falling to the
  * body and followed into a frame did, again once a control kept clear inside a frame did, and again
- * for 0.9.4 once a dated field's limit in words left too little room for another, and again once a
- * toast marking its frame did, and again once a stepper quiet as its form refuses it did, and again
- * once a focus request dropped for a page out of sight rather than after a second did, and again
+ * for 0.9.4 once a dated field's limit in words took them past 20 KB, and again once a toast
+ * marking its frame left too little room for another, and again once a stepper quiet as its form
+ * refuses it did, and again once a focus request dropped for a page out of sight rather than after
+ * a second did, and again
  * once a stepper's letters shown as focus leaves it and its words naming its field did, and again
  * once a stepper holding its error back while a press outside it is down did, and again once a
  * limit kept to the field's calendar and digits, a year written in full and steps counted from the

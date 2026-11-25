@@ -142,6 +142,21 @@ is its CSS transformer, as the package README shows.
   and Firefox are documented to announce once focus is on the action. Nothing elsewhere on the page
   says the key exists, and a sighted keyboard or magnifier user gets no hint of it from the kit, so
   a page that wants the key known says so itself.
+- A focus request that a widget in a closed shadow root asks with its own control as `from` is
+  dropped while focus is still on that control, since focus there reads as the widget's host, so
+  focus stays where it was and a screen reader user hears nothing of the move. Views one press
+  brings, one inside a shadow root and one outside it, take focus in an order each engine chooses,
+  so the first in the page may not be the one focused. The reference says how a widget in a closed
+  root asks.
+- A dialog the page opens inside a frame of its own origin makes only that frame inert, so Tab past
+  its last control and a screen reader's reading keys reach the page around it. A page that needs
+  the whole view held opens the dialog on the page.
+- A press on the page stays standing as focus enters a frame inside a closed shadow root from a
+  heard frame, or a frame the page is writing with `open()`, so a view that arrives then can take
+  focus from a field the visitor moved to inside that frame. A press inside a frame of another
+  origin, or inside a frame in a closed shadow root, brings no focus to the view it opens, so the
+  visitor stays where they were. The reference's Focus on arrival gives the frames the kit hears and
+  those it cannot.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.
