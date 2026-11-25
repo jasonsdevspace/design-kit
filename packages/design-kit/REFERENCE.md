@@ -2316,9 +2316,11 @@ view it opens. The visitor stays where they were, and the view is there when the
 see the visitor move inside it. A frame of the page's origin inside one of another origin is heard
 as the controls load and as the outer frame loads, so a press there counts, and one the outer frame
 adds later is heard once focus first comes in from the page, which clears the press on the way. A
-page script's `click()` in a frame's page before its load, where focus never entered the frame, is
-not heard. Focus entering a frame inside a closed shadow root from a heard frame, or from the page
-where a frame of the page's origin holds that root, leaves a press on the page standing.
+page script's `click()` in a frame the page adds later, before the frame's page loads and with focus
+never in the frame, is not heard. Focus entering a frame inside a closed shadow root from a heard
+frame, or from the page where a frame of the page's origin holds that root, leaves a press on the
+page standing. In Firefox, a page script that moves focus to the page just after focus enters a
+frame clears the press.
 
 A mousedown on the scrollbar of a frame of another origin leaves the press standing in Chromium and
 WebKit, as a scroll on the page does. Firefox, where scrollbars are drawn over the content, may take

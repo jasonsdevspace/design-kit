@@ -213,11 +213,11 @@ const follow = (from: Window, count: number, late: boolean): boolean => {
     return true;
 };
 /**
- * A heard window losing focus while the page keeps it, which is focus entering a frame, on a click
- * or a key, ahead of the frame's click. The window tree is walked at once, so a frame in it is
- * heard before that click, and focus is followed into a frame the walk does not reach, as one
- * inside a shadow root is, in a microtask, or in a task where Firefox still reads the body. Focus
- * leaving the browser window, where the page has lost focus, clears nothing.
+ * A heard window losing focus while the page keeps it, as focus moves into a frame, out of one or
+ * between two, on a click or a key, ahead of the click that moved it. The window tree is walked at
+ * once, so a frame in it is heard before that click, and focus is followed into a frame the walk
+ * does not reach, as one inside a shadow root is, in a microtask, or in a task where Firefox still
+ * reads the body. Focus leaving the browser window, where the page has lost focus, clears nothing.
  */
 const entered = (event: Event) => {
     if (!document.hasFocus()) return;

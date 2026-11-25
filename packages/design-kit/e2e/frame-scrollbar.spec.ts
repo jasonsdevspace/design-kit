@@ -4,12 +4,12 @@ import { servePage, stillClock } from './page.js';
 
 /*
  * A press on the page stands through a mousedown on the scrollbar of a frame of another origin, in
- * Chromium and WebKit, where the scrollbar takes no focus and the page keeps it, as a scroll on the
- * page leaves a press standing. Chromium draws scrollbars in a test only once Playwright's flag that
- * hides them is left off, so this spec leaves it off for every test in it, and the frame's page
- * draws a scrollbar beside its content, which WebKit draws only so. Firefox draws its scrollbars
- * over the content in a run with no screen, where a press at the frame's edge lands in the frame, so
- * the spec does not run there.
+ * Chromium and WebKit, where the scrollbar takes no focus and the page keeps it, as a scroll on
+ * the page leaves a press standing. Chromium draws scrollbars in a test only once Playwright's
+ * flag that hides them is left off, so this spec leaves it off for every test in it, and the
+ * frame's page draws a scrollbar beside its content, which WebKit draws only so. Firefox draws its
+ * scrollbars over the content in a run with no screen, where a press at the frame's edge lands in
+ * the frame, so the spec does not run there.
  */
 
 test.use({ launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } });
