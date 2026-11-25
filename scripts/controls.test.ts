@@ -42,9 +42,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * limit kept to the field's calendar and digits, a year written in full and steps counted from the
  * browser's step base did, and again once F8 reaching a toast's action did, and again once a dialog
  * and a panel reading focus through frames by one view did, and again once the stepper, the form,
- * the grid, the table and the React hooks reading focus inside a frame did.
+ * the grid, the table and the React hooks reading focus inside a frame did, and again once hearing a
+ * frame as focus enters it and its next page as it begins did.
  */
-const BUDGET = 23.75 * 1024;
+const BUDGET = 24.25 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
@@ -57,12 +58,13 @@ const BUDGET = 23.75 * 1024;
  * left too little room for another, again once one view of focus that a focus request compares
  * through did, and again once a form inside a frame the page drives did, and for the module imported
  * bare and `attachTable` alone again once the presses and keys heard inside a frame of the page's
- * own origin did.
+ * own origin did, and for all three again once hearing a frame as focus enters it and its next page
+ * as it begins did.
  */
 const ENTRY_BUDGETS = [
-    ['the module imported bare', [], 1.75 * 1024],
-    ['attachTable alone', ['attachTable'], 3 * 1024],
-    ['attachForm alone', ['attachForm'], 10 * 1024],
+    ['the module imported bare', [], 2.25 * 1024],
+    ['attachTable alone', ['attachTable'], 3.5 * 1024],
+    ['attachForm alone', ['attachForm'], 10.5 * 1024],
 ] as const;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */
@@ -109,22 +111,26 @@ describe('the controls', () => {
 });
 
 /*
- * Focus is read from the page down in one place. Only the dialog and the toast, which keep a place
- * to hand focus back to, and a focus request, which keeps where focus was as it was asked so a move
- * inside a frame counts, call the deep reader or the place it gives by name, and every other module
- * reaches the deep read only through the one view, as `seenNow`, `isFocused` and `mayHandBack`
- * give it, or through where a request keeps focus was, as the React hooks take it. `activeOf`, the
- * shallow read a page may call, is called by no module but the one that defines it, so no piece
- * reads focus as the page alone sees it. The reader the controls had before it is gone.
+ * Focus is read from the page down in one place, the deep reader the shared state defines so the
+ * module that hears presses reads focus as it enters a frame, which the focus module gives again.
+ * Beside those two, only the dialog and the toast, which keep a place to hand focus back to, and a
+ * focus request, which keeps where focus was as it was asked so a move inside a frame counts, call
+ * the deep reader or the place it gives by name, and every other module reaches the deep read only
+ * through the one view, as `seenNow`, `isFocused` and `mayHandBack` give it, or through where a
+ * request keeps focus was, as the React hooks take it. `activeOf`, the shallow read a page may
+ * call, is called by no module but the one that defines it, so no piece reads focus as the page
+ * alone sees it. The reader the controls had before it is gone.
  */
 describe("the controls' reads of focus", () => {
     const sources = fileURLToPath(new URL('../packages/design-kit/src', import.meta.url));
     const files = readdirSync(sources).filter((name) => /^[^.]+\.tsx?$/.test(name));
     const textOf = (name: string) => readFileSync(join(sources, name), 'utf8');
 
-    it('call the deep reader or the place it gives by name outside the focus module only in the dialog, the toast and a request', () => {
+    it('call the deep reader or the place it gives by name outside the focus and state modules only in the dialog, the toast and a request', () => {
         const callers = files.filter(
-            (name) => name !== 'focus.ts' && /\b(?:deepActive|placeNow)\(/.test(textOf(name))
+            (name) =>
+                !['focus.ts', 'state.ts'].includes(name) &&
+                /\b(?:deepActive|placeNow)\(/.test(textOf(name))
         );
         expect(callers.sort()).toEqual(['dialog.ts', 'request.ts', 'toast.ts']);
     });

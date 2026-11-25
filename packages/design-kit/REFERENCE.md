@@ -1872,9 +1872,11 @@ returns a function that takes it down again. The markup is hidden until it is at
 without script meets no control that does nothing, and the functions set no style, so a page's
 policy can refuse every style it did not serve. Nothing runs when the module is imported but
 listeners for keys, clicks and submits on the document and on that of each frame of the page's own
-origin, which note the visitor's last press for `focusOnArrival`, one on each of those documents for
-a frame's load, which finds the frame's page, and one for the page going out of sight or coming
-back, which drops a focus request made while the page is out of sight or before it goes.
+origin it can reach, which note the visitor's last press for `focusOnArrival`, one on each of those
+documents for a frame's load, one on the window of each for focus entering a frame and, on a
+frame's, one for its page going, which find each frame's page, and one for the page going out of
+sight or coming back, which drops a focus request made while the page is out of sight or before it
+goes.
 
 ### Theme switch
 
@@ -2293,22 +2295,27 @@ title is heard before a section of it. Focus a view placed itself as it drew, as
 autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on a
 widget's own button there brings focus to the heading.
 
-The presses and keys heard are the page's and those inside each frame of the page's own origin that
-it holds, at any depth through such frames, an object showing such a page and a frame the page
-writes among them. So a press on a control inside such a frame brings focus to the heading of the
-view it opens, and a key that moves or types inside one leaves no press standing, as on the page. A
-frame's page is heard from the start where the frame shows it as the controls load, and otherwise
-from its load, which waits for its pictures, so a frame the page adds later, and the next page of a
-frame that goes on, as a form sent inside it does, are not heard until they load. Nothing is heard
-inside a frame of another origin, whose document the page cannot reach, or in a frame of the page's
-origin that one holds, or inside a frame within a shadow root, whose load the page never hears.
+The presses and keys heard are the page's and those inside each frame of the page's own origin the
+page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
+held inside one of another origin among them. So a press on a control inside such a frame brings
+focus to the heading of the view it opens, and a key that moves or types inside one leaves no press
+standing, as on the page. A frame is heard as the controls load, as it loads a page, and as focus
+enters it by a click or a key, before that click lands, a frame inside an open shadow root and one
+whose page is still loading among them. A frame's next page is heard as it begins, before its load,
+so a form sent inside a frame is followed to the page it brings.
 
-In a frame that is not heard, after a press on the page, a view that arrives can take focus from a
-control the visitor moved to by pointer or tap inside the frame, and a press inside the frame brings
-no focus to the view it opens. A page with such a frame, or one whose frames load slowly, keeps the
-element that had focus as its press was made and calls `moveFocus` as the view arrives, with that
-element as `from`, rather than `focusOnArrival`, so focus moves only where the visitor has not moved
-it since.
+A frame of another origin, one sandboxed without `allow-same-origin` and one inside a closed shadow
+root show the page no document, so nothing inside them is heard. Where focus enters one after a
+press on the page, by a click, a key, the page's script or the frame's own, the press is cleared, so
+a view that arrives leaves focus in the field the visitor moved to inside the frame, as it does in a
+heard frame where they typed, and a press inside such a frame brings no focus to the view it opens.
+The visitor stays where they were, and the view is there when they read on. A frame of the page's
+origin held inside one of another origin is heard once focus first comes in from the page, and a
+page script's `click()` in a frame's page before its load, where focus never entered the frame, is
+not heard. A mousedown on a frame's scrollbar leaves the press standing in Chromium and Safari, as a
+scroll on the page does. Since a heading that takes no focus is not read out, a page whose views can
+arrive while focus is in a frame says each view's arrival on the [status line](#status-line) as
+well.
 
 What decides a first draw is `focusOnArrival(heading, { from })` from `./controls`, which a page
 without React calls as each view draws, and with `changed` as a view already drawn changes on a

@@ -6,8 +6,8 @@ import { isElement, isOff } from './find.js';
  * of sight or come back, the focus the kit last handed back, what the browser hands focus back to
  * as each dialog closes, and the forms the kit checks with the steppers in them. It is the one
  * module of the controls that does something as it loads, adding the listeners that note inputs on
- * the page and in each frame of its own origin, and the page going out of sight, so the package
- * names it in `sideEffects`. A plain value is written only here, and what another module writes is
+ * the page and in each frame of its own origin, focus entering a frame, a frame's page going and the
+ * page going out of sight, so the package names it in `sideEffects`. A plain value is written only here, and what another module writes is
  * held in an object or a map. No entry of the package names this module, so a page imports it only
  * through `./controls`.
  */
@@ -84,7 +84,7 @@ export const press: { at: number | null } = { at: null };
 export let inputs = 0;
 const heard = (event: Event) => {
     if (event.type === 'load') {
-        hearIn(event.target);
+        sweep((event.target as Partial<HTMLIFrameElement> | null)?.contentWindow);
         return;
     }
     if (event.type === 'keydown') {
@@ -97,37 +97,157 @@ const heard = (event: Event) => {
     } else press.at = presses(event) ? performance.now() : null;
     inputs += 1;
 };
+/** Clears a standing press as a key that moves focus does, so a later input is not handed back. */
+const clear = () => {
+    press.at = null;
+    inputs += 1;
+};
+
+/** The document a window shows, where it is of the page's own origin, read in a try. */
+const docIn = (win: Window | null | undefined): Document | null => {
+    try {
+        return win?.document ?? null;
+    } catch {
+        return null;
+    }
+};
 
 /**
- * Hears the inputs made in a document and the load of each frame in it, then hears each frame of
- * the page's own origin the document holds, so the page and its frames, at any depth through such
- * frames, are heard as they are found, and a frame's page as it loads. A press or a key inside such
- * a frame counts as one on the page does. Nothing is heard inside a frame of another origin, which
- * shows no document, or in any frame it holds, inside a frame within a shadow root, whose load goes
- * no further than that root, or in a frame's page before its load, where the module did not find
- * the frame showing that page as it loaded, as with a frame added later or one that goes on to
- * another page. The DOM ignores a listener added again with the same type, callback and capture, so
- * a document is heard once however often it is reached, a document written again with `open()`,
- * which loses its listeners, is heard again at its load, and a frame that leaves the page or loads
- * another page takes its document's listeners with it.
+ * What has focus, read from the page down: followed into each shadow root that holds it, and into
+ * each frame of the page's own origin that has it, an object showing a document among them, to the
+ * control focused inside the frame or to the frame's body where nothing is. A frame of another
+ * origin shows nothing inside, so focus there reads as the frame, and a closed shadow root as its
+ * host. A frame's own record is read only while focus is in the frame, so a control it last focused
+ * is never taken for focus once a visitor has moved on. Kept as it is wherever the kit stores where
+ * focus was, and compared and judged only through `seen`. It sits here, beside the presses, so the
+ * module that hears them reads focus by the one reader without the rest of the focus module.
+ */
+export const deepActive = (): Element | null => {
+    let active = document.activeElement;
+    for (
+        let next;
+        (next =
+            active?.shadowRoot?.activeElement ??
+            docIn((active as Partial<HTMLIFrameElement> | null)?.contentWindow)?.activeElement);
+    )
+        active = next;
+    return active;
+};
+
+/**
+ * Hears the inputs made in a document and the load of each frame in it, the blur of its window and,
+ * for a frame's window, its page going. A press or a key inside a frame counts as one on the page
+ * does. The DOM ignores a listener added again with the same type, callback and capture, so a
+ * document and a window are heard once however often they are reached, a document written again
+ * with `open()`, which loses its listeners, is heard again at its load, and a frame that leaves the
+ * page or loads another page takes its document's listeners with it.
  */
 const hear = (doc: Document) => {
     for (const type of ['keydown', 'click', 'submit', 'load'])
         doc.addEventListener(type, heard, true);
-    for (const frame of doc.querySelectorAll('iframe, frame, object')) hearIn(frame);
+    const win = doc.defaultView;
+    if (!win) return;
+    win.addEventListener('blur', entered);
+    if (win !== window) win.addEventListener('pagehide', next);
 };
-/** Hears the document a frame shows, where it shows a document of the page's own origin. */
-const hearIn = (frame: EventTarget | null) => {
-    const inner = (frame as Partial<HTMLIFrameElement> | null)?.contentDocument;
-    if (inner?.nodeType === 9) hear(inner);
+/**
+ * Hears a window's document where it is of the page's own origin, and each window under it, so the
+ * page and every frame of its own origin in its window tree are heard as they are found, at any
+ * depth and through a frame of another origin too, an object and a frame element as an iframe is.
+ * Nothing is heard inside a frame of another origin, which shows no document.
+ */
+const sweep = (win: Window | null | undefined) => {
+    if (!win) return;
+    const doc = docIn(win);
+    if (doc) hear(doc);
+    for (let i = 0; i < win.length; i += 1) sweep(win[i]);
+};
+
+/**
+ * Hears a frame's document and the document of each frame around it, out to the page, and returns
+ * whether any of those frames sits in a shadow root, where the walk of the window tree misses it.
+ */
+const hearOut = (inner: Document): boolean => {
+    let missed = false;
+    for (let doc: Document | undefined = inner; doc && doc !== document;) {
+        sweep(doc.defaultView);
+        const frame: Element | null | undefined = doc.defaultView?.frameElement;
+        missed ||= frame?.getRootNode() !== frame?.ownerDocument;
+        doc = frame?.ownerDocument;
+    }
+    return missed;
+};
+/**
+ * Follows focus as it enters a frame, from the window that lost it. A read that ends inside a frame
+ * of the page's own origin hears that frame and each around it, and one that ends on a body of the
+ * window that lost focus, which Firefox reads during the blur, is read again a task later. Where the
+ * read ends on a frame that shows no document, or on an element of that window that is no body, as
+ * a closed shadow root's host is, focus sits in a frame nothing can hear while the page has focus,
+ * so the press is cleared rather than left standing. A frame inside a shadow root is the one the
+ * walk of the window tree misses, so where the read had to wait a task to find one, a click in it
+ * may have come first and gone unheard, and the press is cleared as it is heard. Returns whether it
+ * is done.
+ */
+const follow = (from: Window, late: boolean): boolean => {
+    const at = deepActive();
+    if (!at) return true;
+    const own = at.ownerDocument;
+    const inner = (at as Partial<HTMLIFrameElement>).contentWindow;
+    if (inner === undefined && own.defaultView !== from) {
+        if (hearOut(own) && late) clear();
+        return true;
+    }
+    if (inner === undefined && at.localName === 'body') return false;
+    sweep(inner);
+    if (!docIn(inner) && document.hasFocus()) clear();
+    return true;
+};
+/**
+ * A heard window losing focus while the page keeps it, which is focus entering a frame, on a click
+ * or a key, ahead of the frame's click. The window tree is walked at once, so a frame in it is heard
+ * before that click, and focus is followed into a frame the walk does not reach, as one inside a
+ * shadow root is, in a microtask, or in a task where Firefox still reads the body. Focus leaving the
+ * browser window, where the page has focus no more, clears nothing.
+ */
+const entered = (event: Event) => {
+    if (!document.hasFocus()) return;
+    sweep(window);
+    const from = event.currentTarget as Window;
+    queueMicrotask(() => {
+        if (!follow(from, false)) setTimeout(() => follow(from, true));
+    });
+};
+/**
+ * A heard frame's page going, as a form sent inside it or a new address takes it on. No event hands
+ * the page the next document before its load, so the frame's window is read a task at a time, for a
+ * short while, until it shows another document, which is heard at once. A page going into the back
+ * and forward cache keeps its listeners and is passed over, a frame taken from the page ends the
+ * reads, and a next page of another origin, which shows no document, clears the press where focus
+ * reads as that frame.
+ */
+const next = (event: Event) => {
+    if ((event as PageTransitionEvent).persisted) return;
+    const win = event.currentTarget as Window;
+    const old = docIn(win);
+    let tries = 0;
+    const read = () => {
+        if (win.closed) return;
+        const doc = docIn(win);
+        if (!doc) {
+            const at = deepActive() as Partial<HTMLIFrameElement> | null;
+            if (at?.contentWindow === win && document.hasFocus()) clear();
+        } else if (doc !== old) sweep(win);
+        else if ((tries += 1) < 20) setTimeout(read);
+    };
+    setTimeout(read);
 };
 
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
-// view is heard and a request made before the page went out of sight is known. It notes inputs and
-// frames loading, on the page and in each frame of its own origin, and each time the page goes out
-// of sight or comes back, and nothing else.
+// view is heard and a request made before the page went out of sight is known. It notes inputs,
+// frames loading, focus entering a frame and a frame's page going, on the page and in each frame of
+// its own origin, and each time the page goes out of sight or comes back, and nothing else.
 if (typeof document !== 'undefined') {
-    hear(document);
+    sweep(window);
     document.addEventListener('visibilitychange', () => {
         sightChanges += 1;
     });

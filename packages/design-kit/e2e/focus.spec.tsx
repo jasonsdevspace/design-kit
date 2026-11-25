@@ -1,8 +1,12 @@
+import { once } from 'node:events';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
+
 import { expect, type Page, test } from '@playwright/test';
 
 import { bundle } from './bundle.js';
 import { leaksOf, listenersOn, openCounted } from './leaks.js';
-import { frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
+import { box, frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
 
 /*
  * Focus moved once a change is drawn, by `moveFocus` and through React's `useFocusAfterDraw` and
@@ -13,9 +17,12 @@ import { frames, ORIGIN, servePage, stillClock, tabKey } from './page.js';
  * dropped, one asked while the page was out of sight, or before it went, dropped, a view that joins
  * views asked before the page went out of sight landed, and a view's heading focused when its key
  * changes but never as the page first draws. A press inside a frame of the page's own origin, one
- * added inside a frame, loaded again, still loading or written by the page among them, or inside an
- * object, brings focus to the view it opens, a key inside one leaves no press of the page's
- * standing, a keydown with no key counts for nothing, and a frame's document is heard once. A
+ * added inside a frame, loaded again, still loading, added after the page's load, in its next page
+ * before that page's load or written by the page among them, or inside an object, brings focus to
+ * the view it opens, a key inside one leaves no press of the page's standing, focus entering a
+ * frame inside a shadow root, a frame of another origin or a frame that went on to one leaves no
+ * press of the page's standing either, with no page error, a keydown with no key counts for
+ * nothing, and a frame's document is heard once. A
  * request still waiting as its component unmounts lands, from a row removed at once, after an
  * await, from a timer or in a transition, from a transition an urgent update overtook, on its
  * fallback where the transition draws its target, and from a component an `Activity` hides, unless
@@ -1051,31 +1058,16 @@ test('takes a keydown with no key, as autofill sends, for no input and throws no
     expect(errors).toEqual([]);
 });
 
-/** The page a frame or an object shows, with a control and a picture the server holds back. */
+/** The page a frame shows, with a control and a picture the server holds back. */
 const NOTES = '<!doctype html><title>Notes</title><button type="button" id="later">Later</button>';
 
-for (const how of [
-    'a frame of the page still loading',
-    'an object in the page',
-    'a frame the page writes',
-] as const)
+for (const how of ['a frame of the page still loading', 'a frame the page writes'] as const)
     test(`focuses a view's heading as it arrives, brought by a press inside ${how}`, async ({
         page,
-        browserName,
     }) => {
-        test.skip(
-            how === 'an object in the page' && browserName === 'firefox',
-            "Firefox shows no page a test's route serves in an object."
-        );
         await stillClock(page.clock);
         const slow = how === 'a frame of the page still loading';
-        const holder = how === 'an object in the page' ? 'object' : 'iframe';
-        const shown =
-            how === 'an object in the page'
-                ? '<object data="/notes.html" type="text/html" title="Notes"></object>'
-                : slow
-                  ? '<iframe title="Notes" src="/notes.html"></iframe>'
-                  : '';
+        const shown = slow ? '<iframe title="Notes" src="/notes.html"></iframe>' : '';
         // The frame's page and its picture are the page's routes, which come before the context's.
         await page.route('**/held.png', () => undefined);
         await page.route('**/notes.html', (route) =>
@@ -1094,7 +1086,7 @@ window.bring = () => {
         focusOnArrival('scores');
     }, 1000);
 };
-if (${String(how === 'a frame the page writes')}) {
+if (${String(!slow)}) {
     const frame = document.createElement('iframe');
     frame.title = 'Notes';
     document.body.append(frame);
@@ -1110,24 +1102,20 @@ window.ready = true;`,
         await page.waitForFunction(() => 'ready' in window);
         await expect
             .poll(() =>
-                page.evaluate(
-                    (selector) =>
-                        Boolean(
-                            document
-                                .querySelector<HTMLIFrameElement>(selector)
-                                ?.contentDocument?.querySelector('#later')
-                        ),
-                    holder
+                page.evaluate(() =>
+                    Boolean(
+                        document.querySelector('iframe')?.contentDocument?.querySelector('#later')
+                    )
                 )
             )
             .toBe(true);
-        const loading = await page.evaluate((selector) => {
-            const inner = document.querySelector<HTMLIFrameElement>(selector)?.contentDocument;
+        const loading = await page.evaluate(() => {
+            const inner = document.querySelector('iframe')?.contentDocument;
             const later = inner?.querySelector<HTMLElement>('#later');
             later?.addEventListener('click', (window as unknown as { bring: () => void }).bring);
             later?.focus();
             return inner?.readyState !== 'complete';
-        }, holder);
+        });
         expect(loading).toBe(slow);
         await page.keyboard.press('Enter');
         await page.clock.runFor(1100);
@@ -1135,3 +1123,336 @@ window.ready = true;`,
         await page.clock.runFor(100);
         await expect(page.locator('#scores')).toBeFocused();
     });
+
+test("focuses a view's heading as it arrives, brought by a press inside an object showing a page of the page's origin", async ({
+    page,
+}) => {
+    // Firefox loads an object's page past a test's routes, so a server of the test's own serves
+    // it, at the origin the page is served from.
+    const server = createServer((_, response) => {
+        response.setHeader('content-type', 'text/html');
+        response.end(NOTES);
+    });
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const { port } = server.address() as AddressInfo;
+    try {
+        await stillClock(page.clock);
+        const origin = `http://127.0.0.1:${String(port)}`;
+        // The page's route, which comes before the context's, sends the object's page to the server.
+        await page.route('**/notes.html', (route) => route.continue());
+        await servePage(page.context(), {
+            origin,
+            title: 'Focus',
+            body:
+                '<h2 id="scores" tabindex="-1" hidden>Scores</h2>' +
+                '<object data="/notes.html" type="text/html" title="Notes"></object>',
+            script: `import { focusOnArrival } from './controls.js';
+window.bring = () => {
+    setTimeout(() => {
+        document.querySelector('#scores').hidden = false;
+        focusOnArrival('scores');
+    }, 1000);
+};
+window.ready = true;`,
+        });
+        await page.goto(`${origin}/`);
+        await page.waitForFunction(() => 'ready' in window);
+        await expect
+            .poll(() =>
+                page.evaluate(() =>
+                    Boolean(
+                        document
+                            .querySelector<HTMLObjectElement>('object')
+                            ?.contentDocument?.querySelector('#later')
+                    )
+                )
+            )
+            .toBe(true);
+        // Firefox lists no frame for an object, so the press is made where the button is drawn.
+        const at = await page.evaluate(() => {
+            const shown = document.querySelector<HTMLObjectElement>('object');
+            const later = shown?.contentDocument?.querySelector('#later');
+            later?.addEventListener('click', () => {
+                (window as unknown as { bring: () => void }).bring();
+            });
+            const outer = shown?.getBoundingClientRect();
+            const inner = later?.getBoundingClientRect();
+            return outer && inner
+                ? {
+                      x: outer.x + inner.x + inner.width / 2,
+                      y: outer.y + inner.y + inner.height / 2,
+                  }
+                : null;
+        });
+        if (!at) throw new Error("expected the object's button to be drawn");
+        await page.mouse.click(at.x, at.y);
+        await page.clock.runFor(1100);
+        await expect(page.locator('#scores')).toBeVisible();
+        await page.clock.runFor(100);
+        await expect(page.locator('#scores')).toBeFocused();
+    } finally {
+        server.close();
+    }
+});
+
+/**
+ * A frame's page with a field, a control that brings the view and a picture the server holds back,
+ * so the page is still loading as the visitor presses in it.
+ */
+const HELD =
+    '<!doctype html><title>Notes</title><input id="note" aria-label="Note">' +
+    '<button type="button" id="later">Later</button><img src="/held.png" alt="">' +
+    "<script>document.querySelector('#later').addEventListener('click', () => top.bring());</script>";
+
+/** A frame's page with a form that brings the view as it is sent to a page of another origin. */
+const SENDS =
+    '<!doctype html><title>Card</title><form action="https://other.test/check">' +
+    '<input id="card" aria-label="Card"><button id="send">Send</button></form>' +
+    "<script>document.querySelector('form').addEventListener('submit', () => top.bring());</script>";
+
+/** A page of another origin with a field, as a payment field or a bank's check is. */
+const FAR = '<!doctype html><title>Check</title><input id="code" aria-label="Code">';
+
+/**
+ * A page with a button that brings a view a second after its press, the frames given, the pages
+ * they show served by the page's routes, and a host with an open shadow root holding a frame with
+ * a field, as a widget drawn in a shadow root holds a frame, and one with a closed root holding
+ * another, which the page keeps a hold of for the test to reach. The view names its heading by the
+ * element, since an id is looked for where focus was, which in that frame is the shadow root. The
+ * page's own load waits on a picture that never comes, so the test goes to the page without waiting
+ * for it.
+ */
+const openWithFrames = async (page: Page, frames = '') => {
+    await stillClock(page.clock);
+    await page.route('**/held.png', () => undefined);
+    await page.route('**/notes.html', (route) =>
+        route.fulfill({ contentType: 'text/html', body: HELD })
+    );
+    await page.route('**/card.html', (route) =>
+        route.fulfill({ contentType: 'text/html', body: SENDS })
+    );
+    await page.route('https://other.test/**', (route) =>
+        route.fulfill({ contentType: 'text/html', body: FAR })
+    );
+    await servePage(page.context(), {
+        title: 'Focus',
+        body:
+            '<button type="button" id="bring">Bring the scores</button>' +
+            '<h2 id="scores" tabindex="-1" hidden>Scores</h2><div id="host"></div>' +
+            '<div id="shut"></div>' +
+            frames,
+        script: `import { focusOnArrival } from './controls.js';
+window.bring = () => {
+    setTimeout(() => {
+        document.querySelector('#scores').hidden = false;
+        focusOnArrival(document.querySelector('#scores'));
+    }, 1000);
+};
+document.querySelector('#bring').addEventListener('click', window.bring);
+const shadowed = document.createElement('iframe');
+shadowed.title = 'Widget';
+shadowed.srcdoc = '<input id=widget aria-label=Widget>';
+const closed = document.createElement('iframe');
+closed.title = 'Closed';
+closed.srcdoc = '<input id=shut aria-label=Shut>';
+const loaded = Promise.all(
+    [shadowed, closed].map((frame) => new Promise((done) => frame.addEventListener('load', done, { once: true })))
+);
+document.querySelector('#host').attachShadow({ mode: 'open' }).append(shadowed);
+document.querySelector('#shut').attachShadow({ mode: 'closed' }).append(closed);
+window.shut = closed;
+await loaded;
+window.ready = true;`,
+    });
+    await page.goto(`${ORIGIN}/`, { waitUntil: 'commit' });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** Lets the view arrive a second after the press that brought it, and its request land. */
+const arrive = async (page: Page) => {
+    await page.clock.runFor(1100);
+    await expect(page.locator('#scores')).toBeVisible();
+    await page.clock.runFor(100);
+};
+
+/** The page's errors, gathered from now on. */
+const errorsOf = (page: Page): string[] => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    return errors;
+};
+
+test('leaves focus in a field of a frame inside a shadow root the visitor clicked and typed in after a press on the page, as the view arrives', async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    await press(page, '#bring');
+    const widget = page.frameLocator('#host iframe').locator('#widget');
+    await widget.click();
+    await page.keyboard.type('A');
+    await arrive(page);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(widget).toBeFocused();
+});
+
+test('never takes focus from a field of a frame inside a shadow root pressed with no pause after a press on the page', async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    await press(page, '#bring');
+    const widget = page.frameLocator('#host iframe').locator('#widget');
+    const { x, y, width, height } = await box(widget, 'the field in the frame');
+    await page.mouse.move(x + width / 2, y + height / 2);
+    // Down and up with nothing between, so the click comes as soon after focus enters as it can.
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(widget).toBeFocused();
+    await arrive(page);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(widget).toBeFocused();
+});
+
+test('leaves focus in a field of a frame inside a closed shadow root the visitor clicked into after a press on the page, as the view arrives', async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    await press(page, '#bring');
+    // Playwright reaches no frame inside a closed root, so the press is made where the field is.
+    const at = await page.evaluate(() => {
+        const frame = (window as unknown as { shut: HTMLIFrameElement }).shut;
+        const outer = frame.getBoundingClientRect();
+        const inner = frame.contentDocument?.querySelector('#shut')?.getBoundingClientRect();
+        return inner
+            ? { x: outer.x + inner.x + inner.width / 2, y: outer.y + inner.y + inner.height / 2 }
+            : null;
+    });
+    if (!at) throw new Error('expected the field in the closed root to be drawn');
+    await page.mouse.click(at.x, at.y);
+    const inClosed = () =>
+        page.evaluate(() => {
+            const frame = (window as unknown as { shut: HTMLIFrameElement }).shut;
+            return (
+                frame.contentDocument?.activeElement?.id === 'shut' &&
+                frame.contentDocument.hasFocus()
+            );
+        });
+    expect(await inClosed()).toBe(true);
+    await arrive(page);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    expect(await inClosed()).toBe(true);
+});
+
+test("focuses a view's heading as it arrives, brought by a press in a frame the page added after its load, whose page is still loading", async ({
+    page,
+}) => {
+    await openWithFrames(page);
+    await page.evaluate(() => {
+        const frame = document.createElement('iframe');
+        frame.title = 'Notes';
+        frame.src = '/notes.html';
+        document.body.append(frame);
+    });
+    const later = page.frameLocator('iframe[title="Notes"]').locator('#later');
+    await expect(later).toBeAttached();
+    expect(
+        await page.evaluate(
+            () =>
+                document.querySelector<HTMLIFrameElement>('iframe[title="Notes"]')?.contentDocument
+                    ?.readyState
+        )
+    ).not.toBe('complete');
+    await later.click();
+    await arrive(page);
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+test("focuses a view's heading as it arrives, brought by a press in a frame's next page before its load, with focus in the frame", async ({
+    page,
+}) => {
+    await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
+    const frame = page.frameLocator('iframe[title="Card"]');
+    await expect(frame.locator('#card')).toBeAttached();
+    // Focus stays in the frame as it goes on, so no move of focus brings the next page to the page.
+    await frame.locator('#card').focus();
+    await page.evaluate(() => {
+        const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Card"]');
+        if (frame?.contentWindow) frame.contentWindow.location.href = '/notes.html';
+    });
+    const later = frame.locator('#later');
+    await expect(later).toBeAttached();
+    // The frame's next page is read a task after it goes, and the visitor presses a moment later.
+    await page.clock.runFor(10);
+    expect(
+        await page.evaluate(() => {
+            const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Card"]');
+            return {
+                focused: document.activeElement === frame,
+                loading: frame?.contentDocument?.readyState !== 'complete',
+            };
+        })
+    ).toEqual({ focused: true, loading: true });
+    await later.click();
+    await arrive(page);
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
+test('leaves focus in a frame of another origin the visitor clicked into after a press on the page, as the view arrives', async ({
+    page,
+}) => {
+    await openWithFrames(page, '<iframe title="Pay" src="https://other.test/pay"></iframe>');
+    const code = page.frameLocator('iframe[title="Pay"]').locator('#code');
+    await expect(code).toBeAttached();
+    await press(page, '#bring');
+    await code.click();
+    await arrive(page);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(code).toBeFocused();
+});
+
+test('leaves focus in a frame whose form went on to a page of another origin with focus inside, as the view the submit brought arrives', async ({
+    page,
+}) => {
+    const errors = errorsOf(page);
+    await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
+    const frame = page.frameLocator('iframe[title="Card"]');
+    await frame.locator('#card').click();
+    await page.keyboard.type('4');
+    await frame.locator('#send').click();
+    const code = frame.locator('#code');
+    await expect(code).toBeAttached();
+    // The frame's next page is read a task after it goes.
+    await page.clock.runFor(10);
+    await code.click();
+    await arrive(page);
+    await expect(page.locator('#scores')).not.toBeFocused();
+    await expect(code).toBeFocused();
+    expect(errors).toEqual([]);
+});
+
+test('raises no error for a frame taken from the page while its next page is read', async ({
+    page,
+}) => {
+    const errors = errorsOf(page);
+    await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
+    await expect(page.frameLocator('iframe[title="Card"]').locator('#card')).toBeAttached();
+    await page.evaluate(() => {
+        const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Card"]');
+        if (frame?.contentWindow) frame.contentWindow.location.href = '/notes.html';
+    });
+    await expect(page.frameLocator('iframe[title="Card"]').locator('#later')).toBeAttached();
+    await page.evaluate(() => document.querySelector('iframe[title="Card"]')?.remove());
+    await page.clock.runFor(100);
+    expect(errors).toEqual([]);
+});
+
+test('raises no error as the page is left and gone back to', async ({ page }) => {
+    const errors = errorsOf(page);
+    await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
+    await expect(page.frameLocator('iframe[title="Card"]').locator('#card')).toBeAttached();
+    await page.goto(`${ORIGIN}/away`, { waitUntil: 'commit' });
+    await page.goBack({ waitUntil: 'commit' });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.clock.runFor(100);
+    expect(errors).toEqual([]);
+});
