@@ -64,18 +64,20 @@ Each of these runs in CI on every pull request, and a finding fails the pull req
 ## Checked by hand
 
 The tests here run no screen reader, real phone or Windows contrast theme, so these were checked by
-hand on November 16, 2026, on the system and browser versions current that day, and each worked.
+hand on the system and browser versions current on the day each was walked, and each worked.
 
-- **Screen readers.** The toast, the copy button, the stepper, the status line, the dialog and the
-  sheet, the tabs, the field with a button and the tiles were walked with NVDA 2026.3 in Firefox and
-  in Chrome on Windows, VoiceOver on macOS, on an iPhone 18 Pro and on a 14-inch iPad Pro, and
-  TalkBack on a Pixel 10. The status line spoke the same words twice when they were put in twice, in
-  NVDA and in VoiceOver on iOS.
-- **Phones.** On the iPhone and the Pixel, each held on its side, a page kept clear of the notch,
-  the on-screen keyboard left a field with a button and a sheet usable, and at twice the text size
-  nothing was cut off.
-- **A Windows contrast theme.** A tile's edge, a quiet Close's focus ring and a tab row's rule each
-  showed.
+- **Screen readers.** On November 16, 2026, the toast, the copy button, the stepper, the status
+  line, the dialog and the sheet, the tabs, the field with a button and the tiles were walked with
+  NVDA 2026.3 in Firefox and in Chrome on Windows, VoiceOver on macOS, on an iPhone 18 Pro and on a
+  14-inch iPad Pro, and TalkBack on a Pixel 10. The status line spoke the same words twice when they
+  were put in twice, in NVDA and in VoiceOver on iOS.
+- **Phones.** That day, on the iPhone and the Pixel, each held on its side, a page kept clear of the
+  notch, the on-screen keyboard left a field with a button and a sheet usable, and at twice the text
+  size nothing was cut off.
+- **A Windows contrast theme.** That day, a tile's edge, a quiet Close's focus ring and a tab row's
+  rule each showed.
+- **Phones with 0.9.4.** On November 25, 2026, every component and control on the site was walked
+  with VoiceOver on an iPhone and TalkBack on a Pixel phone, and each was read as it should be.
 
 ## Where it works
 
