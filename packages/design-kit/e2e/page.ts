@@ -120,7 +120,8 @@ export const writePage = async (
  * runs and the page has storage of its own: the kit's sheets and any rules of the page's own after
  * them, the controls as a module, and the page's own script, if it has one, after the body. Given a
  * page, it goes to it, so the viewport and any stand-in clock are set first. Given a browser
- * context, it serves every tab the context opens, each going to the origin itself.
+ * context, it serves every tab the context opens, each going to the origin itself. It serves the
+ * test origin unless given another, as a server of a test's own that the page shares.
  */
 export const servePage = async (
     target: Page | BrowserContext,
@@ -133,6 +134,7 @@ export const servePage = async (
         theme,
         dir,
         headers,
+        origin = ORIGIN,
     }: {
         readonly title: string;
         readonly body: string;
@@ -142,6 +144,7 @@ export const servePage = async (
         readonly theme?: 'light' | 'dark';
         readonly dir?: 'ltr' | 'rtl';
         readonly headers?: Readonly<Record<string, string>>;
+        readonly origin?: string;
     }
 ): Promise<void> => {
     const files: Readonly<Record<string, readonly [string, string]>> = {
@@ -155,12 +158,12 @@ export const servePage = async (
         `<link rel="stylesheet" href="/kit.css"></head><body>${body}` +
         (script === undefined ? '' : '<script type="module" src="/page.js"></script>') +
         '</body></html>';
-    await target.route(`${ORIGIN}/**`, (route) => {
+    await target.route(`${origin}/**`, (route) => {
         const path = new URL(route.request().url()).pathname;
         const [served, contentType] = files[path] ?? [html, 'text/html'];
         return route.fulfill({ body: served, contentType, ...(headers ? { headers } : {}) });
     });
-    if ('goto' in target) await target.goto(`${ORIGIN}/`);
+    if ('goto' in target) await target.goto(`${origin}/`);
 };
 
 /** The computed values of the properties named, on the element the locator finds. */

@@ -45,8 +45,9 @@ Option C. `ThemeSwitch`, `CopyButton` and `CopyStatus` draw the markup, and `att
 `chooseTheme` saves and draws a choice from anywhere on the page. The markup is hidden until it is
 attached, so a visitor without script meets no control that does nothing. Nothing runs when the
 module is imported but listeners for keys, clicks and submits, in a page, on its document and since
-0.9.4 on that of each frame of its own origin, with one on each of those documents for a frame's
-load, as record 19 has it, which note whether the visitor's last input was a press for
+0.9.4 on that of each frame of its own origin it reaches, with one on each of those documents for a
+frame's load, one on the window of each for focus entering a frame and, on a frame's, one for its
+page going, as record 19 has it, which note whether the visitor's last input was a press for
 `focusOnArrival`, so the press that brings a page's first view is heard, and since 0.9.4 one for the
 page going out of sight or coming back, which drops a focus request made while the page is out of
 sight or before it goes. Since 0.9.4 the controls ship in parts: `dist/controls.js`, the file
@@ -217,6 +218,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | F8 reaching a toast's action, as record 29 has it, with too little room left             | 22,498 bytes   | 735 bytes       | 22.75 KB   |
 | 0.9.4   | Focus read through frames by one view, with too little room left                         | 23,164 bytes   | 667 bytes       | 23.5 KB    |
 | 0.9.4   | The pieces and the hooks reading focus inside a frame, with too little room left         | 23,426 bytes   | 678 bytes       | 23.75 KB   |
+| 0.9.4   | A frame heard as focus enters and its next page, with too little room left               | 23,956 bytes   | 668 bytes       | 24.25 KB   |
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331
@@ -258,6 +260,9 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes | 678 bytes       | 10 KB      |
 | 0.9.4   | The module imported bare | Presses in a frame, with too little room left   | 868 bytes   | 680 bytes       | 1.75 KB    |
 | 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,163 bytes | 680 bytes       | 3 KB       |
+| 0.9.4   | The module imported bare | Frames on entry, with too little room left      | 1,433 bytes | 668 bytes       | 2.25 KB    |
+| 0.9.4   | `attachTable` alone      | Frames on entry, with too little room left      | 2,699 bytes | 668 bytes       | 3.5 KB     |
+| 0.9.4   | `attachForm` alone       | Frames on entry, with too little room left      | 9,908 bytes | 668 bytes       | 10.5 KB    |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

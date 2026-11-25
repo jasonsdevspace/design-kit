@@ -1,13 +1,15 @@
 import { isElement, rootOf } from './find.js';
-import { handed } from './state.js';
+import { deepActive, handed } from './state.js';
 import type { AttachOptions } from './teardown.js';
 
+export { deepActive };
+
 /*
- * How the controls move focus and hand it back: what has focus, read from the page down through
- * shadow roots and frames of the page's own origin, the walk that
- * focuses the first place that takes it, and the one rule by which a piece closing or leaving hands
- * focus back. No entry of the package names this module, so a page imports it only through
- * `./controls`.
+ * How the controls move focus and hand it back: the one view of focus read from the page down
+ * through shadow roots and frames of the page's own origin, by the reader the state module holds
+ * and this module gives again, the walk that focuses the first place that takes it, and the one
+ * rule by which a piece closing or leaving hands focus back. No entry of the package names this
+ * module, so a page imports it only through `./controls`.
  */
 
 /**
@@ -208,26 +210,5 @@ export const activeOf = (): Element | null => activeIn(document) ?? null;
 const activeIn = (root: DocumentOrShadowRoot | null | undefined): Element | null | undefined => {
     let active = root?.activeElement;
     while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
-    return active;
-};
-
-/**
- * What has focus, read from the page down: followed into each shadow root that holds it, and into
- * each frame of the page's own origin that has it, an object showing a document among them, to the
- * control focused inside the frame or to the frame's body where nothing is. A frame of another
- * origin shows nothing inside, so focus there reads as the frame. A frame's own record is read only
- * while focus is in the frame, so a control it last focused is never taken for focus once a visitor
- * has moved on. Kept as it is wherever the kit stores where focus was, and compared and judged only
- * through `seen`.
- */
-export const deepActive = (): Element | null => {
-    let active = document.activeElement;
-    for (
-        let next;
-        (next =
-            active?.shadowRoot?.activeElement ??
-            (active as Partial<HTMLIFrameElement> | null)?.contentDocument?.activeElement);
-    )
-        active = next;
     return active;
 };

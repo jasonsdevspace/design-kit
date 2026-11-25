@@ -285,10 +285,10 @@ follow by area.
 
 - **What the kit costs a page.** The three sheets, gzipped without their comments, are held by a
   test to 13.25 KB, and the theme script goes inline in the page's head. A page that attaches a
-  control loads the controls too, which a test holds, as a bundler sends every function, to 23.75 KB
+  control loads the controls too, which a test holds, as a bundler sends every function, to 24.25 KB
   gzipped without their comments, and the theme script to 1 KB of its own. The controls ship in
   parts, so a bundler sends a page only what it imports, and tests hold the entry imported with no
-  names to 1.75 KB, `attachTable` alone to 3 KB and `attachForm` alone to 10 KB. The package npm
+  names to 2.25 KB, `attachTable` alone to 3.5 KB and `attachForm` alone to 10.5 KB. The package npm
   publishes is 132 KB packed, the sheets and modules a page loads together with the README, the
   types and the tokens in the design tokens format, which it never does. [The
   record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its

@@ -49,6 +49,7 @@ export const WEBKIT: Engine = {
     dated: 'A date or a time field, which Safari never counts as focused by the keyboard.',
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
     seen: "Focus read through frames, by each engine's record of focus in a frame.",
+    'frame-scrollbar': "A press on a frame's scrollbar, which takes no focus in Safari either.",
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
