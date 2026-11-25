@@ -326,10 +326,10 @@ const useAfterCommit = (landsAtUnmount: boolean): AfterCommit => {
  * made late, taking focus only from the page's body, whatever `from` it was given, and only where
  * its target is in sight, so one whose target an `Activity` hides with the component is held until
  * it shows. A late request still finds an id, its target's or a fallback's, in the root where focus
- * was as it was asked, or where the `from` it was given is. Focus has most often fallen to the
- * page's body by then, so a widget drawn inside a shadow root passes `from`, an element still in
- * that root, to find its own control, and with no `from` an id is found there only while focus is
- * still in that root.
+ * was as it was asked, or where the `from` it was given is, then in each root around it out to the
+ * page. Focus has most often fallen to the page's body by then, so a widget drawn inside a shadow
+ * root passes `from`, an element still in that root, to find its own control, and with no `from` an
+ * id is found there only while focus is still in that root.
  */
 export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);

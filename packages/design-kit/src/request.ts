@@ -1,4 +1,4 @@
-import { byId, isOff } from './find.js';
+import { byIdOutward, isOff } from './find.js';
 import {
     deepActive,
     focusFirst,
@@ -21,12 +21,13 @@ import { teardown } from './teardown.js';
 
 /**
  * A place to focus, or nothing where it is an id with no element yet or a control marked off. An id
- * is looked for in the root of the element given, as where focus was when it was asked for.
+ * is looked for in the root of the element given, as where focus was when it was asked for, then in
+ * each root around it out to that element's document.
  */
 const placeOf = (target: FocusTarget, near?: Node | null): Element | null => {
     const place =
         typeof target === 'string'
-            ? byId(near, target)
+            ? byIdOutward(near, target)
             : typeof target === 'function'
               ? target()
               : (target ?? null);

@@ -25,6 +25,18 @@ export const rootOf = (node: Node | null | undefined): Document | ShadowRoot => 
 export const byId = (near: Node | null | undefined, id: string): Element | null =>
     rootOf(near).getElementById(id);
 
+/**
+ * The element an id names in the root a node lives in, else in each root around it, out through
+ * the hosts to the document the node sits in, so a focus request asked from a widget's shadow root
+ * finds the widget's own element first and one of the page around it after.
+ */
+export const byIdOutward = (near: Node | null | undefined, id: string): Element | null => {
+    for (let root = rootOf(near); ; root = rootOf(root.host)) {
+        const found = root.getElementById(id);
+        if (found || !('host' in root)) return found;
+    }
+};
+
 export const CHOICE = 'input[type="checkbox"], input[type="radio"]';
 
 /** The ids an element's attribute names, in order. */
