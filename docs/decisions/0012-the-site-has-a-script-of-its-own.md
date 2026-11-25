@@ -1,6 +1,7 @@
 # 12. The site has a script of its own, from its own path, beside the kit's theme script
 
-**Status:** accepted, amended by record 13, from which the switch and the copy buttons now come
+**Status:** accepted, amended by record 13, from which the switch and the copy buttons now come,
+and whose controls in parts since 0.9.4 bring the kit's code the examples use to their page alone
 
 ## Context
 
@@ -78,15 +79,16 @@ preview by where it starts and ends. Each copy's label names its theme with no s
 the page's theme picks the label as it picks the colors.
 
 The behavior page's examples are a script of their own, `src/behavior-script.ts`, which that page
-alone loads beside the site's script, so no other page downloads the examples' own code. The kit's
-form, busy button and focus request, which only the examples use, stay in the script every page
-loads. The kit ships its controls as one module, and a bundler keeps a module whole in one file,
-the one every page shares. A second copy of the controls for the behavior page alone would move
-them, and was rejected, since it would double the state the module keeps, its record of what is
-attached and its listeners for focus requests, so a request made through one copy would not be
-seen by the other. Those functions leave the other pages' script once the kit ships its controls in
-parts a bundler can split. The build writes the examples' file under the assets folder, so the
-policy allows it as it allows the site's script.
+alone loads beside the site's script, so no other page downloads the examples' own code. Since 0.9.4
+the kit ships its controls in parts, a module for each piece with the state they share in one module
+of its own, as record 13 has it, so the bundler sends the kit's form, busy button and focus
+requests, which only the examples use, to the behavior page alone, and every page reads one copy of
+the shared state from the script they all load. Up to 0.9.3 the controls were one module, which a
+bundler keeps whole in the file every page shares, so those functions came to every page. A second
+copy of the controls for the behavior page alone would have moved them, and was rejected, since it
+would double the state the module keeps, its record of what is attached and its listeners for focus
+requests, so a request made through one copy would not be seen by the other. The build writes the
+examples' file under the assets folder, so the policy allows it as it allows the site's script.
 
 The policy allows scripts from the site's assets folder at the origin GitHub Pages serves it from,
 `https://jasonsdevspace.com/design-kit/assets/`, beside the theme script's hash. A policy can name a
@@ -157,8 +159,9 @@ The paths are in `packages/site`.
   that ends on a preview taken for no tap, and nothing added to the keyboard's path until a tap
   brings the note.
 - `bench/lighthouse.ts` holds every page, with the switch in its strip, to its layout shift gate.
-- `e2e/site.spec.ts` also finds the words the behavior page's examples say in the scripts the
-  behavior page downloads and in no other page's.
+- `e2e/site.spec.ts` also finds the words the behavior page's examples say, and the kit's default
+  words for a refused form and a busy button, in the scripts the behavior page downloads and in no
+  other page's.
 - `bench/lighthouse.ts` also holds each page's script and its sheets, gzipped, to the budgets in
   `src/budgets.ts`, measured over the files the build wrote. `src/budgets.test.ts` finds the scripts
   a page loads or preloads and the sheets it links counted, however their tags are written, a file

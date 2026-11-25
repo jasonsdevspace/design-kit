@@ -324,7 +324,7 @@ for (const path of PAGES) {
         expect(refused).toEqual([]);
     });
 
-    test(`${path} downloads the code of the behavior page's examples only where it shows them`, async ({
+    test(`${path} downloads the code only the behavior page's examples use only where it shows them`, async ({
         page,
     }) => {
         // Every script the page asks for, the files its own script imports among them, each read
@@ -343,8 +343,15 @@ for (const path of PAGES) {
         );
         const code = bodies.join('\n');
         expect(code).not.toBe('');
-        // Words only the examples say, each from a different example.
-        for (const mark of ['The rule was saved.', 'The players are back.', 'Product loaded.']) {
+        // Words only the examples say, each from a different example, and the kit's default words
+        // for a refused form and a busy button, whose code only the examples use.
+        for (const mark of [
+            'The rule was saved.',
+            'The players are back.',
+            'Product loaded.',
+            'fields need attention.',
+            'Saving.',
+        ]) {
             expect(code.includes(mark), mark).toBe(path === `${BASE}behavior/`);
         }
     });
@@ -1058,6 +1065,32 @@ test.describe('the behavior page', () => {
         await expect(page.locator('#rule-form [aria-invalid="true"]')).toHaveCount(0);
     });
 
+    test('draws the refused form as a plain form, its Save rule a field space under the field above', async ({
+        page,
+    }) => {
+        await page.goto(BEHAVIOR);
+        const form = page.locator('#rule-form');
+        await expect(form).not.toHaveAttribute('class');
+        const save = page.getByRole('button', { name: 'Save rule' });
+        await expect(save).toBeVisible();
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            const { gap, space } = await form.evaluate((element) => {
+                const fields = element.querySelectorAll(':scope > .dk-field');
+                const last = fields[fields.length - 1]?.getBoundingClientRect();
+                const row = element.querySelector(':scope > .dk-actions')?.getBoundingClientRect();
+                const probe = document.createElement('div');
+                probe.style.blockSize = 'var(--dk-space-4)';
+                element.append(probe);
+                const measured = probe.getBoundingClientRect().height;
+                probe.remove();
+                return { gap: (row?.top ?? 0) - (last?.bottom ?? 0), space: measured };
+            });
+            expect(space, String(width)).toBeGreaterThan(0);
+            expect(Math.abs(gap - space), String(width)).toBeLessThanOrEqual(0.5);
+        }
+    });
+
     test('holds the busy button off while it saves, says its words once the wait has passed, then the result', async ({
         page,
     }) => {
@@ -1266,6 +1299,55 @@ test.describe('the controls page', () => {
             .locator('[role="alert"], [data-busy], [aria-busy="true"]')
             .evaluateAll((all) => all.filter((each) => each.closest('[inert]') === null).length);
         expect(acting).toBe(0);
+    });
+});
+
+test.describe('the controls page, with its values to read but not change', () => {
+    test("starts the read-only stepper's value where the other values start, at their height", async ({
+        page,
+    }) => {
+        await page.goto('/design-kit/controls/');
+        const copy = page
+            .locator('.site-state')
+            .filter({ hasText: 'Values to read but not change' })
+            .locator('.site-copy:not([inert])');
+        for (const width of [390, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            const drawn = await copy.evaluate((element) =>
+                ['.dk-value', '.dk-input[readonly]', '.dk-stepper-value[readonly]'].map(
+                    (selector) => {
+                        const control = element.querySelector<HTMLElement>(selector);
+                        if (!control) throw new Error(`no ${selector} to measure`);
+                        const box = control.getBoundingClientRect();
+                        const style = getComputedStyle(control);
+                        return {
+                            selector,
+                            // Where its first letter or figure starts, past its edge and padding.
+                            start:
+                                box.left +
+                                parseFloat(style.borderLeftWidth) +
+                                parseFloat(style.paddingLeft),
+                            align: style.textAlign,
+                            height: box.height,
+                        };
+                    }
+                )
+            );
+            const [value, input, stepper] = drawn;
+            expect(stepper?.align, String(width)).not.toBe('center');
+            expect(
+                Math.abs((stepper?.start ?? 0) - (input?.start ?? 0)),
+                String(width)
+            ).toBeLessThanOrEqual(0.5);
+            expect(
+                Math.abs((stepper?.start ?? 0) - (value?.start ?? 0)),
+                String(width)
+            ).toBeLessThanOrEqual(0.5);
+            expect(
+                Math.abs((stepper?.height ?? 0) - (input?.height ?? 0)),
+                String(width)
+            ).toBeLessThanOrEqual(0.5);
+        }
     });
 });
 

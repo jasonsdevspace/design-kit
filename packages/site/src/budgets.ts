@@ -21,10 +21,13 @@ export interface Budget {
 const KB = 1024;
 
 /** The script every page loads but the behavior page, which loads its own examples' code too. */
-export const SCRIPT_BUDGET = 15.5 * KB;
+export const SCRIPT_BUDGET = 13.5 * KB;
 
-/** The behavior page's script: every page's, and the code of the examples it alone shows. */
-export const BEHAVIOR_SCRIPT_BUDGET = 17 * KB;
+/**
+ * The behavior page's script: every page's, the code of the examples it alone shows, and the kit's
+ * form, busy button and focus requests, which only those examples use.
+ */
+export const BEHAVIOR_SCRIPT_BUDGET = 19.75 * KB;
 
 /** The kit's sheets and the site's own, which every page loads as one file. */
 export const STYLE_BUDGET = 14 * KB;

@@ -33,14 +33,15 @@ for (const line of document.querySelectorAll<HTMLElement>('main .site-behavior .
  */
 const ruleForm = document.querySelector<HTMLFormElement>('main #rule-form');
 const ruleSave = document.querySelector<HTMLButtonElement>('main #rule-save');
+const ruleActions = ruleSave?.closest<HTMLElement>('.dk-actions');
 const ruleLine = ruleForm && lineOf(ruleForm);
-if (ruleForm && ruleSave && ruleLine) {
+if (ruleForm && ruleSave && ruleActions && ruleLine) {
     const sayRule = attachStatus(ruleLine);
     attachForm(ruleForm, { status: ruleLine });
     // Shown and on only once the kit checks the form, since a hidden submit is still the one Enter
     // in a field presses, and the browser would send the form to the address bar.
     ruleSave.disabled = false;
-    ruleSave.hidden = false;
+    ruleActions.hidden = false;
     ruleForm.addEventListener('submit', (event) => {
         event.preventDefault();
         sayRule('The rule was saved.');
