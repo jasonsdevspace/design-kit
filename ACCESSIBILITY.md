@@ -76,8 +76,8 @@ hand on the system and browser versions current on the day each was walked, and 
   size nothing was cut off.
 - **A Windows contrast theme.** That day, a tile's edge, a quiet Close's focus ring and a tab row's
   rule each showed.
-- **Phones with 0.9.4.** On November 25, 2026, every component and control on the site was walked
-  with VoiceOver on an iPhone and TalkBack on a Pixel phone, and each was read as it should be.
+- **Screen readers on phones with 0.9.4.** On November 25, 2026, every component and control on
+  the site was walked with VoiceOver on an iPhone and TalkBack on a Pixel phone.
 
 ## Where it works
 
