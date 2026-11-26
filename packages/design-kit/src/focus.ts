@@ -195,13 +195,23 @@ export const framesOf = (control: Element | null, doc: Document | null): [Elemen
 
 /**
  * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
- * for in the shadow root the element sits in, then in the document it sits in, the page's or a
- * frame's.
+ * for from the element out: in each root, the shadow root it sits in first, the body of an app
+ * frame around it in that root, then that root's main content, then on out through the root's
+ * host, so a widget's own main content comes before the app frame around the widget, and a piece
+ * inside a widget in an app that is itself a component finds the app's body. Last, the main
+ * content of the document it sits in, the page's or a frame's.
  */
-export const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-    rootOf(element).querySelector('main') ??
-    element.ownerDocument.querySelector('main');
+export const homeOf = (element: Element): Element | null => {
+    for (let at: Element | null = element; at;) {
+        const body = at.closest('.dk-app')?.querySelector('.dk-app-body');
+        if (body) return body;
+        const root = rootOf(at);
+        const main = root.querySelector('main');
+        if (main) return main;
+        at = root.nodeType === 11 ? (root as ShadowRoot).host : null;
+    }
+    return element.ownerDocument.querySelector('main');
+};
 
 /**
  * How focus is moved after a change, and the signal that calls the request off. A request asked as
