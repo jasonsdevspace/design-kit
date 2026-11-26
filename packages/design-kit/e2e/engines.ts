@@ -45,6 +45,10 @@ export const WEBKIT: Engine = {
             'keeps a frame with no dock and no tab bar clear of the home indicator',
             "keeps the bar's rule in sight over a toast at twice the text size on a narrow phone",
             "sets a toast above the dock and clear of the body's last line, with a dock of one row and of two",
+            'draws the skip link below the top safe area and past the side one',
+            'gives a pictured frame drawn taller than what it holds the room in its body, its bars at its foot',
+            'draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place and clear of no safe area, 390 by 800',
+            'draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place and clear of no safe area, 1280 by 500',
         ],
     },
     tabbar: {
@@ -71,7 +75,6 @@ export const WEBKIT: Engine = {
             'has no audit findings in the dark theme, shown and not',
             'returns the one function it showed with when attached again',
             'prints no toast, shown or not',
-            'works for a toast copied from a template and attached before the page takes it in',
         ],
     },
     dialog: {
@@ -81,7 +84,6 @@ export const WEBKIT: Engine = {
             'takes the options it is attached with again, and keeps them when attached again with none',
             'has no audit findings in the light theme, open',
             'has no audit findings in the dark theme, open',
-            'works for a dialog copied from a template and attached before the page takes it in',
         ],
     },
     close: {
@@ -129,8 +131,7 @@ export const WEBKIT: Engine = {
         reason: "Where focus goes after a real press, built around Safari's way.",
         except: [
             'refuses a button that names no panel, saying what it needs',
-            'works for a button and panel copied from a template and attached before the page takes them in',
-            'attaching and letting go \u203a leaves a button attached again alone when what was returned before is detached',
+            'attaching and letting go › leaves a button attached again alone when what was returned before is detached',
         ],
     },
     attach: {
@@ -154,7 +155,7 @@ export const WEBKIT: Engine = {
         ],
     },
     pieces: {
-        reason: "How the theme switch's choices open and close by pointer and by tap.",
+        reason: 'How a pressing thumb and a pointer change the pieces, the theme switch collapsed in a strip, and the focus rings Safari draws.',
         tests: [
             "collapses to its name and one button naming the choice in a demo's strip narrower than 20rem",
             "keeps the row of three choices in a demo's strip at 20rem and wider, and outside the strip at any width",
@@ -190,10 +191,10 @@ export const WEBKIT: Engine = {
     empty: {
         reason: 'Focus back on the search field as the list comes back.',
         tests: [
-            'the saved games \u203a waits for typing to stop, then says the search matches nothing and names it',
-            'the saved games \u203a brings the list back with focus on the search when Clear is pressed by Enter',
-            'the saved games \u203a brings the list back with focus on the search when Clear is pressed by a pointer',
-            'the saved games \u203a brings the list back when the search is emptied in the field itself',
+            'the saved games › waits for typing to stop, then says the search matches nothing and names it',
+            'the saved games › brings the list back with focus on the search when Clear is pressed by Enter',
+            'the saved games › brings the list back with focus on the search when Clear is pressed by a pointer',
+            'the saved games › brings the list back when the search is emptied in the field itself',
         ],
     },
     hero: "A heading broken between words only, by each engine's line breaks.",
@@ -203,32 +204,16 @@ export const WEBKIT: Engine = {
         except: [
             'marks every field not in error so before anything is submitted',
             'names a field without the mark its label hides from a screen reader',
-            'counts a group of radios with no set around it once, and a box alone in a section as its own field',
             "gives an error the page drew for a field the kit's words, and puts the page's back once it passes",
-            "takes the kit's errors away as the form is reset",
-            'leaves a stepper that speaks through a say of its own unsaid on a refused submit',
-            "takes a stepper's words back from a line of the page's it was given, on a refused submit",
             "takes away the mark a stepper put back once its form's attach is taken down",
             'takes away the mark of a stepper taken down before its form, once both are down',
             'leaves the mark a later check of its form set on a stepper that outlived the first',
             'keeps the mark of a stepper taken down and attached again on the same value',
             "counts a page's own set of boxes of different names once",
-            'says the form is cleared on a reset that takes an error away from a field tied to it from outside',
-            'says the form is cleared once on a reset that takes its error from a field the page marked invalid',
             'gives fields with no id errors of their own',
             'lets a field marked off pass, since no one could put it right',
             "draws a field's error after its hint, and describes it after the hint",
             "lets the form's own attach take over the check from a part attached first",
-            "a stepper in a form refused through attachForm \u203a says the refusal alone where a stepper's error shows and another field is named",
-            "a stepper in a form refused through useFormRefusal \u203a says the refusal alone where a stepper's error shows and another field is named",
-            "a stepper in a form refused through attachForm \u203a says the form is cleared once on a reset that takes a stepper's refused error away",
-            "a stepper in a form refused through useFormRefusal \u203a says the form is cleared once on a reset that takes a stepper's refused error away",
-            'a stepper in a form refused through attachForm \u203a says nothing on a reset with no error showing',
-            'a stepper in a form refused through useFormRefusal \u203a says nothing on a reset with no error showing',
-            'a stepper in a form refused through attachForm \u203a says the form is cleared on a reset after a refusal only a stepper made, put right since',
-            'a stepper in a form refused through useFormRefusal \u203a says the form is cleared on a reset after a refusal only a stepper made, put right since',
-            'a stepper in a form refused through attachForm \u203a says nothing on a reset after a refusal and a submit that passed',
-            'a stepper in a form refused through useFormRefusal \u203a says nothing on a reset after a refusal and a submit that passed',
         ],
     },
     shadow: 'Focus handed back inside a shadow root, from where Safari leaves it.',
@@ -239,7 +224,6 @@ export const WEBKIT: Engine = {
         reason: "The hooks under StrictMode, whose second run meets each engine's focus and events.",
         except: [
             "keeps words said in a part's first effect on the provider's line through the second run",
-            'says a busy notice, the end of a progress and a refusal once each',
         ],
     },
     busy: {
@@ -256,14 +240,13 @@ export const WEBKIT: Engine = {
             "draws its dots in the system's gray in forced colors",
             'draws no dots on a busy button not yet drawn off, as on its accent fill',
             'keeps its dots clear of its words and its icon, every button its resting size',
-            'in React \u203a saves once for a double press, and says it is saving only while it is',
+            'in React › saves once for a double press, and says it is saving only while it is',
         ],
     },
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: {
         reason: 'Where focus is after a refusal and a reset, which Safari sets its own way.',
         except: [
-            "says the form is cleared where a reset takes away the kit's errors",
             'says nothing on a reset with no refusal standing, and the form is cleared on one after the page refused',
         ],
     },
@@ -294,7 +277,7 @@ export const FIREFOX: Engine = {
             "draws its dots in the system's gray in forced colors",
             'draws no dots on a busy button not yet drawn off, as on its accent fill',
             'keeps its dots clear of its words and its icon, every button its resting size',
-            'in React \u203a saves once for a double press, and says it is saving only while it is',
+            'in React › saves once for a double press, and says it is saving only while it is',
         ],
     },
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
@@ -324,32 +307,16 @@ export const FIREFOX: Engine = {
         except: [
             'marks every field not in error so before anything is submitted',
             'names a field without the mark its label hides from a screen reader',
-            'counts a group of radios with no set around it once, and a box alone in a section as its own field',
             "gives an error the page drew for a field the kit's words, and puts the page's back once it passes",
-            "takes the kit's errors away as the form is reset",
-            'leaves a stepper that speaks through a say of its own unsaid on a refused submit',
-            "takes a stepper's words back from a line of the page's it was given, on a refused submit",
             "takes away the mark a stepper put back once its form's attach is taken down",
             'takes away the mark of a stepper taken down before its form, once both are down',
             'leaves the mark a later check of its form set on a stepper that outlived the first',
             'keeps the mark of a stepper taken down and attached again on the same value',
             "counts a page's own set of boxes of different names once",
-            'says the form is cleared on a reset that takes an error away from a field tied to it from outside',
-            'says the form is cleared once on a reset that takes its error from a field the page marked invalid',
             'gives fields with no id errors of their own',
             'lets a field marked off pass, since no one could put it right',
             "draws a field's error after its hint, and describes it after the hint",
             "lets the form's own attach take over the check from a part attached first",
-            "a stepper in a form refused through attachForm \u203a says the refusal alone where a stepper's error shows and another field is named",
-            "a stepper in a form refused through useFormRefusal \u203a says the refusal alone where a stepper's error shows and another field is named",
-            "a stepper in a form refused through attachForm \u203a says the form is cleared once on a reset that takes a stepper's refused error away",
-            "a stepper in a form refused through useFormRefusal \u203a says the form is cleared once on a reset that takes a stepper's refused error away",
-            'a stepper in a form refused through attachForm \u203a says nothing on a reset with no error showing',
-            'a stepper in a form refused through useFormRefusal \u203a says nothing on a reset with no error showing',
-            'a stepper in a form refused through attachForm \u203a says the form is cleared on a reset after a refusal only a stepper made, put right since',
-            'a stepper in a form refused through useFormRefusal \u203a says the form is cleared on a reset after a refusal only a stepper made, put right since',
-            'a stepper in a form refused through attachForm \u203a says nothing on a reset after a refusal and a submit that passed',
-            'a stepper in a form refused through useFormRefusal \u203a says nothing on a reset after a refusal and a submit that passed',
         ],
     },
     shadow: 'Focus handed back inside a shadow root.',
@@ -363,14 +330,12 @@ export const FIREFOX: Engine = {
             'has no audit findings in the dark theme, shown and not',
             'returns the one function it showed with when attached again',
             'prints no toast, shown or not',
-            'works for a toast copied from a template and attached before the page takes it in',
         ],
     },
     strict: {
         reason: "The hooks under StrictMode, whose second run meets each engine's focus and events.",
         except: [
             "keeps words said in a part's first effect on the provider's line through the second run",
-            'says a busy notice, the end of a progress and a refusal once each',
         ],
     },
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
@@ -381,21 +346,18 @@ export const FIREFOX: Engine = {
             'takes the options it is attached with again, and keeps them when attached again with none',
             'has no audit findings in the light theme, open',
             'has no audit findings in the dark theme, open',
-            'works for a dialog copied from a template and attached before the page takes it in',
         ],
     },
     panel: {
         reason: "Focus handed back as the panel closes, to an SVG link too, by each engine's focus.",
         except: [
             'refuses a button that names no panel, saying what it needs',
-            'works for a button and panel copied from a template and attached before the page takes them in',
-            'attaching and letting go \u203a leaves a button attached again alone when what was returned before is detached',
+            'attaching and letting go › leaves a button attached again alone when what was returned before is detached',
         ],
     },
     form: {
         reason: "Where focus is after a refusal, and a field's error drawn again while it stands.",
         except: [
-            "says the form is cleared where a reset takes away the kit's errors",
             'says nothing on a reset with no refusal standing, and the form is cleared on one after the page refused',
         ],
     },
@@ -429,7 +391,8 @@ export const specsOf = (engine: Engine): string[] =>
 const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** The start of what Playwright filters a test by in a spec: its file, as the project lists it. */
-const fileOf = (name: string): string => `design-kit/e2e/${escaped(name)}\\.spec\\.tsx? `;
+const fileOf = (name: string): string =>
+    `design-kit[\\\\/]e2e[\\\\/]${escaped(name)}\\.spec\\.tsx? `;
 
 /** A test of a spec, by its title after its describes, which Playwright joins with spaces. */
 const testOf = (name: string, title: string): RegExp =>

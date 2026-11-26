@@ -72,40 +72,42 @@ type Suite = {
     readonly suites?: readonly Suite[];
 };
 
-/**
- * Every test of the kit's specs each project runs, read from Playwright's own list, so the names
- * the engine lists give are held to the tests as the config filters them.
- */
-const listed = new Map<string, Listed[]>();
-beforeAll(() => {
-    const report = JSON.parse(
-        execFileSync('npx', ['playwright', 'test', '--list', '--reporter=json'], {
-            cwd: new URL('..', import.meta.url),
-            encoding: 'utf8',
-            maxBuffer: 64 * 1024 * 1024,
-        })
-    ) as { readonly suites: readonly Suite[] };
-    const walk = (suite: Suite, path: readonly string[]) => {
-        for (const spec of suite.specs ?? []) {
-            const name = /design-kit\/e2e\/([^/]+)\.spec\.tsx?$/.exec(spec.file)?.[1];
-            if (name === undefined) continue;
-            for (const { projectName } of spec.tests) {
-                const tests = listed.get(projectName) ?? [];
-                tests.push({ spec: name, title: [...path, spec.title].join(' › ') });
-                listed.set(projectName, tests);
-            }
-        }
-        // A file's own suite adds nothing to a title, and each describe in it adds its own.
-        for (const inner of suite.suites ?? []) walk(inner, [...path, inner.title]);
-    };
-    for (const file of report.suites) walk(file, []);
-}, 120_000);
-
-/** The tests of a spec, by their titles, as Chromium runs every one. */
-const titlesOf = (spec: string): string[] =>
-    (listed.get('chromium') ?? []).filter((test) => test.spec === spec).map(({ title }) => title);
-
 describe('the tests an engine list names', () => {
+    /**
+     * Every test of the kit's specs each project runs, read from Playwright's own list, so the names
+     * the engine lists give are held to the tests as the config filters them.
+     */
+    const listed = new Map<string, Listed[]>();
+    beforeAll(() => {
+        const report = JSON.parse(
+            execFileSync('npx', ['playwright', 'test', '--list', '--reporter=json'], {
+                cwd: new URL('..', import.meta.url),
+                encoding: 'utf8',
+                maxBuffer: 64 * 1024 * 1024,
+            })
+        ) as { readonly suites: readonly Suite[] };
+        const walk = (suite: Suite, path: readonly string[]) => {
+            for (const spec of suite.specs ?? []) {
+                const name = /design-kit\/e2e\/([^/]+)\.spec\.tsx?$/.exec(spec.file)?.[1];
+                if (name === undefined) continue;
+                for (const { projectName } of spec.tests) {
+                    const tests = listed.get(projectName) ?? [];
+                    tests.push({ spec: name, title: [...path, spec.title].join(' › ') });
+                    listed.set(projectName, tests);
+                }
+            }
+            // A file's own suite adds nothing to a title, and each describe in it adds its own.
+            for (const inner of suite.suites ?? []) walk(inner, [...path, inner.title]);
+        };
+        for (const file of report.suites) walk(file, []);
+    }, 120_000);
+
+    /** The tests of a spec, by their titles, as Chromium runs every one. */
+    const titlesOf = (spec: string): string[] =>
+        (listed.get('chromium') ?? [])
+            .filter((test) => test.spec === spec)
+            .map(({ title }) => title);
+
     for (const [name, engine, project] of [
         ['WebKit', WEBKIT, 'webkit'],
         ['Firefox', FIREFOX, 'firefox'],
@@ -119,6 +121,19 @@ describe('the tests an engine list names', () => {
                     .map((title) => `${spec} › ${title}`);
             });
             expect(unknown).toEqual([]);
+        });
+
+        it(`leave each spec they name some test to run, for ${name}`, () => {
+            const empty = Object.entries(engine)
+                .filter(([spec, run]) =>
+                    typeof run === 'string'
+                        ? false
+                        : 'tests' in run
+                          ? run.tests.length === 0
+                          : titlesOf(spec).every((title) => run.except.includes(title))
+                )
+                .map(([spec]) => spec);
+            expect(empty).toEqual([]);
         });
 
         it(`are the tests the engine runs, no more and no fewer, for ${name}`, () => {
