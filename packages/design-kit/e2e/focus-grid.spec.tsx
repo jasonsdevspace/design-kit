@@ -638,10 +638,6 @@ const CLOSED_HOST =
 const CLOSED_PRESS =
     'A press inside a closed shadow root reaches the page as a press on its host, which is no control.';
 
-/** Focus read from the page down stops at a frame of another origin. */
-const THROUGH_OTHER =
-    "Focus in a frame of the page's origin inside one of another origin is read from the page down, which stops at the frame of another origin.";
-
 /** A square that fails: the wrong answer its cause gives, and the cause. */
 type Failing = { readonly gives: ByEngine; readonly because: string };
 
@@ -657,13 +653,6 @@ const FAILING: Squares<Failing> = {
             gives: { chromium: 'host/c', firefox: 'host/c', webkit: 'main' },
             because: CLOSED_PRESS,
         },
-    },
-    'ours in other': {
-        panel: { gives: 'xo/xi', because: THROUGH_OTHER },
-        toast: { gives: { chromium: 'xo', webkit: 'xo', firefox: 'main' }, because: THROUGH_OTHER },
-        readOnly: { gives: 'xo/xi, marked, down hidden', because: THROUGH_OTHER },
-        takeDown: { gives: 'xo/xi', because: THROUGH_OTHER },
-        dialogGone: { gives: 'xo', because: THROUGH_OTHER },
     },
 };
 

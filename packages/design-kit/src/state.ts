@@ -162,14 +162,43 @@ export const deepActive = (near?: Node | null): Element | null => {
     const closed = new Map<Element, ShadowRoot>();
     for (const root of closedAround(near)) closed.set(root.host, root);
     let active = document.activeElement;
-    for (
-        let next;
-        (next =
-            (active?.shadowRoot ?? (active ? closed.get(active) : undefined))?.activeElement ??
-            docIn((active as Partial<HTMLIFrameElement> | null)?.contentWindow)?.activeElement);
-    )
-        active = next;
+    for (let next; (next = beneath(active, closed));) active = next;
     return active;
+};
+
+/**
+ * What has focus one level beneath an element that holds it: inside its shadow root, an open one or
+ * a closed one around the reader's node, or inside the frame it shows, and where that frame is of
+ * another origin, inside a frame of the page's origin it holds that has focus.
+ */
+const beneath = (
+    active: Element | null,
+    closed: ReadonlyMap<Element, ShadowRoot>
+): Element | null | undefined => {
+    const root = active?.shadowRoot ?? (active ? closed.get(active) : undefined);
+    if (root?.activeElement) return root.activeElement;
+    const win = (active as Partial<HTMLIFrameElement> | null)?.contentWindow;
+    if (!win) return undefined;
+    return (docIn(win) ?? focusedOwnIn(win))?.activeElement;
+};
+
+/**
+ * The document of the page's origin that has focus inside a frame of another origin, found through
+ * the frames it holds, which the page reaches by their windows though it cannot read the frame's own
+ * document, at any depth, through frames of other origins too.
+ */
+const focusedOwnIn = (win: Window): Document | null => {
+    for (let index = 0; index < win.length; index += 1) {
+        const child = win[index];
+        if (!child) continue;
+        const doc = docIn(child);
+        if (doc ? doc.hasFocus() : false) return doc;
+        if (!doc) {
+            const deeper = focusedOwnIn(child);
+            if (deeper) return deeper;
+        }
+    }
+    return null;
 };
 
 /**

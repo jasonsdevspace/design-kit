@@ -40,11 +40,33 @@ export const seen = (element: Element | null, doc: Document = document): Element
     if (!element || (element.ownerDocument === doc && isBlank(element))) return null;
     let at = element;
     while (!within(doc, at.ownerDocument)) {
-        const frame = at.ownerDocument.defaultView?.frameElement;
+        const frame = at.ownerDocument.defaultView?.frameElement ?? frameAcross(at, doc);
         if (!frame) break;
         at = frame;
     }
     return at;
+};
+
+/**
+ * The frame of the document given that holds an element's window through a frame of another
+ * origin, whose element the window cannot name: found by climbing the element's windows to the one
+ * the document's window holds, then the frame in the document, in an open shadow root too, that
+ * shows it.
+ */
+const frameAcross = (element: Element, doc: Document): Element | null => {
+    const top = doc.defaultView;
+    let win: Window | null = element.ownerDocument.defaultView;
+    while (win && win.parent !== win && win.parent !== top) win = win.parent;
+    if (win?.parent !== top) return null;
+    const search = (root: Document | ShadowRoot): Element | null => {
+        for (const element of root.querySelectorAll('*')) {
+            if ((element as Partial<HTMLIFrameElement>).contentWindow === win) return element;
+            const inner = element.shadowRoot && search(element.shadowRoot);
+            if (inner) return inner;
+        }
+        return null;
+    };
+    return search(doc);
 };
 
 /**
