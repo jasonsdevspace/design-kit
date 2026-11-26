@@ -94,8 +94,11 @@ export const holds = (place: Element, node: Node | null): boolean => {
     return !!inside;
 };
 
-/** A place focus may be handed to, or a function that gives more of them when it is reached. */
-type Place = Element | null | undefined | (() => readonly Element[]);
+/**
+ * A place focus may be handed to, or a function that gives more of them when it is reached, one at a
+ * time where the walk that finds them is long.
+ */
+type Place = Element | null | undefined | (() => Iterable<Element>);
 
 /** The place the last walk focused, so a handback keeps it as a piece around it reads it. */
 let taken: Element | null = null;

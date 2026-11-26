@@ -1224,19 +1224,23 @@ test.describe('Escape', () => {
 });
 
 test.describe('where focus goes', () => {
-    test('searches the page for what follows the panel only where no button takes focus', async ({
+    test('walks the page for what follows the panel only where no button takes focus', async ({
         page,
         browserName,
     }) => {
         await open(page);
-        // Every search of the whole page the page's script makes, counted from here on.
+        // Every element the walk for what follows the panel reads, counted from here on by its
+        // check of whether the element takes focus.
         await page.evaluate(() => {
             const counted = window as unknown as { searches: number };
             counted.searches = 0;
-            const search = document.querySelectorAll.bind(document);
-            document.querySelectorAll = (selectors: string) => {
-                counted.searches += 1;
-                return search(selectors);
+            const proto = Element.prototype as unknown as {
+                matches: (this: Element, selectors: string) => boolean;
+            };
+            const matches = proto.matches;
+            proto.matches = function (this: Element, selectors: string) {
+                if (selectors.includes('iframe, embed')) counted.searches += 1;
+                return matches.call(this, selectors);
             };
         });
         const searches = () =>
@@ -1249,7 +1253,7 @@ test.describe('where focus goes', () => {
         await expect(panel(page)).toBeHidden();
         await expect(button(page)).toBeFocused();
         expect(await searches()).toBe(0);
-        // With both of the panel's buttons off, focus goes to what follows it, which only a search
+        // With both of the panel's buttons off, focus goes to what follows it, which only a walk
         // of the page finds.
         await page.evaluate(() => {
             for (const id of ['#tips-button', '#tips-again'])
@@ -1264,7 +1268,11 @@ test.describe('where focus goes', () => {
         });
         await expect(panel(page)).toBeHidden();
         await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
-        expect(await searches()).toBe(1);
+        // The walk stops at the first stop that takes focus, so it reads only part of the page.
+        expect(await searches()).toBeGreaterThan(0);
+        expect(await searches()).toBeLessThan(
+            await page.evaluate(() => document.querySelectorAll('*').length)
+        );
     });
 
     test('moves focus to what follows the panel where no button that names it is left', async ({

@@ -222,6 +222,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | The pieces and the hooks reading focus inside a frame, with too little room left         | 23,426 bytes   | 678 bytes       | 23.75 KB   |
 | 0.9.4   | A frame heard as focus enters and its next page, with too little room left               | 23,956 bytes   | 668 bytes       | 24.25 KB   |
 | 0.9.5   | A panel found from its button's root and heard on a closed shadow root                   | 24,863 bytes   | 675 bytes       | 25 KB      |
+| 0.9.5   | What follows a panel walked in the order the page draws it, with too little room left    | 25,728 bytes   | 653 bytes       | 26 KB      |
 
 Every 0.9.4 row of these tables is measured at the commit on main that set its budget, the controls
 from the package laid out as npm ships it, each with one median, the upper of the middle two costs
