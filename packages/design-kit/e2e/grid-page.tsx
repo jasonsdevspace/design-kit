@@ -38,8 +38,8 @@ const PATIENCE = 10_000;
 
 /**
  * Waits for an element's load, and fails with the name given on an error or past the patience. A
- * stylesheet's link fires an error where its sheet fails, while a frame fires none for a failed
- * page, so a frame's failure shows as the patience running out.
+ * stylesheet's link fires an error where its sheet fails, while a frame fires load for a page that
+ * failed too, so a frame's failure shows in what waits on its page.
  */
 const loadOf = (target: EventTarget, name: string): Promise<void> =>
     new Promise((done, fail) => {
