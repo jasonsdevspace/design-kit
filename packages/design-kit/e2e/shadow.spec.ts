@@ -1104,6 +1104,9 @@ test('lands a useFocusAfterDraw request inside a closed shadow root, and leaves 
     await expect.poll(() => focusedInClosed(page)).toBe('target');
     await pressInClosed(page, 'ask');
     expect(await focusedInClosed(page)).toBe('second');
+    // Still there some frames later, so a request that lands late fails too.
+    await frames(page, 10);
+    expect(await focusedInClosed(page)).toBe('second');
     expect(errors).toEqual([]);
 });
 
@@ -1116,5 +1119,33 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its key c
     await expect.poll(() => focusedInClosed(page)).toBe('heading');
     await pressInClosed(page, 'next');
     expect(await focusedInClosed(page)).toBe('other');
+    await frames(page, 10);
+    expect(await focusedInClosed(page)).toBe('other');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the first field in error of a useFormRefusal form inside a closed shadow root, and leaves focus where it moved there before a refusal lands', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    // A field's own failed submit by Enter, with nothing moved.
+    await pressInClosed(page, 'name');
+    await expect.poll(() => focusedInClosed(page)).toBe('seat');
+    // The page's refusal, asked by a button that moves focus to another field once the errors draw.
+    await pressInClosed(page, 'refuse-move');
+    expect(await focusedInClosed(page)).toBe('other-field');
+    await frames(page, 10);
+    expect(await focusedInClosed(page)).toBe('other-field');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the next row inside a closed shadow root as a row removes itself and asks for it', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInClosed(page, 'remove-one');
+    await expect.poll(() => focusedInClosed(page)).toBe('remove-two');
     expect(errors).toEqual([]);
 });
