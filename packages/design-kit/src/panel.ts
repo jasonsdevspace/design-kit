@@ -1,13 +1,13 @@
 import { byIdOutward, FOCUSABLE, isElement, isOff, rootOf } from './find.js';
-import { handBack, homeOf, mayHandBack } from './focus.js';
+import { handBack, holds, homeOf, mayHandBack } from './focus.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
 /*
  * The panels a button opens and closes, with the buttons attached, the visitor's last place, and
  * the listeners on each document every panel in it shares, added with the first button attached in
- * it and taken off with the last. A panel's state is kept by the root that holds it, the document or
- * a shadow root, so a panel inside a widget's shadow root and one of the page that share an id stay
- * apart. No entry of the package names this module, so a page imports it only through
+ * it and taken off with the last. A panel's state is kept by the root that holds it, the document
+ * or a shadow root, so a panel inside a widget's shadow root and one of the page that share an id
+ * stay apart. No entry of the package names this module, so a page imports it only through
  * `./controls`.
  */
 
@@ -30,12 +30,20 @@ const panelIdOf = (button: Element): string =>
 type Scope = Document | ShadowRoot;
 
 /**
- * The root a node lives in, where one with no window, as a template's copy or a parsed document is
- * before the page puts it in, counts as the page's, which takes it in.
+ * The root a node lives in, where a document with no window, as a template's copy has or a parsed
+ * document is before the page takes it in, counts as the page's.
  */
 const scopeOfNode = (node: Node): Scope => {
     const root = rootOf(node);
     return root.nodeType === 9 && !(root as Document).defaultView ? document : root;
+};
+
+/** The shadow root a node lives in where that root is closed, which the page cannot read into. */
+const closedRootOf = (node: Node): ShadowRoot | null => {
+    const root = rootOf(node);
+    return root.nodeType === 11 && (root as ShadowRoot).mode === 'closed'
+        ? (root as ShadowRoot)
+        : null;
 };
 
 /** The root each attached button's panel was last found in, kept for a button that leaves it. */
@@ -43,12 +51,12 @@ const settled = new WeakMap<Element, Scope>();
 
 /**
  * The root that holds the panel a button names: where its id is found from the button's own root
- * out through each host to the document, as a focus request finds an id, so a panel drawn beside its
- * button inside a shadow root is found there, and one of the page from a button inside a widget.
- * Where no element has the id yet, the button's own root, where a panel drawn later is looked for.
- * A button that has left the page keeps the root it was last read in, so its takedown clears the
- * state there, and where the root changes, as a panel the page draws after its button, the panel's
- * state moves with it, so it is never kept in two roots.
+ * out through each host to the document, as a focus request finds an id, so a panel drawn beside
+ * its button inside a shadow root is found there, and one of the page from a button inside a
+ * widget. Where no element has the id yet, the button's own root, where a panel drawn later is
+ * looked for. A button that has left the page keeps the root it was last read in, so its takedown
+ * clears the state there, and where the root changes, as it does for a panel the page draws after
+ * its button, the panel's state moves with it, so it is never kept in two roots.
  */
 const scopeOf = (button: Element): Scope => {
     const held = settled.get(button);
@@ -56,10 +64,18 @@ const scopeOf = (button: Element): Scope => {
     const id = panelIdOf(button);
     const scope = scopeOfNode(byIdOutward(button, id) ?? button);
     if (held && held !== scope) {
+        // Only what this button holds moves: the panel it opened, and the mark that the panel has
+        // started where no other attached button still names it there, so a page's own panel
+        // with the same id keeps its state as a widget draws its own.
         const opener = lastIn(held).get(id);
-        if (opener && !lastIn(scope).has(id)) lastIn(scope).set(id, opener);
-        lastIn(held).delete(id);
-        if (startedIn(held).delete(id)) startedIn(scope).add(id);
+        if (opener === button) {
+            if (!lastIn(scope).has(id)) lastIn(scope).set(id, opener);
+            lastIn(held).delete(id);
+        }
+        const namedThere = [...openers.keys()].some(
+            (other) => other !== button && panelIdOf(other) === id && settled.get(other) === held
+        );
+        if (!namedThere && startedIn(held).delete(id)) startedIn(scope).add(id);
     }
     settled.set(button, scope);
     return scope;
@@ -118,7 +134,7 @@ const followingOf = (panel: Element): (HTMLElement | SVGElement)[] => {
  */
 const openers = new Map<HTMLButtonElement, Document>();
 
-/** Every attached button that names the panel the root given holds, in the document's order. */
+/** Every attached button that names the panel the root given holds, in the order they are drawn. */
 const openersOf = (id: string, scope: Scope): HTMLButtonElement[] =>
     [...openers.keys()]
         .filter(
@@ -154,7 +170,7 @@ const lastIn = (scope: Scope) =>
 
 /**
  * The panels a button has started, so a button attached later follows the panel as it is, kept for
- * each document as the buttons that opened them are.
+ * each root as the buttons that opened them are.
  */
 const startedPanels = new WeakMap<Scope, Set<string>>();
 const startedIn = (scope: Scope) => heldIn(startedPanels, scope, () => new Set<string>());
@@ -230,8 +246,8 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  * and that last press was a link in the panel to a place on this page outside it, it goes there
  * instead. Otherwise it goes to the button given, the one pressed or the one that opened the panel,
  * else the first attached button that names it and takes focus, else the first thing after the
- * panel the keyboard reaches by Tab, past the host of a shadow root it sits in too, else the body of
- * the app's frame or the page's main content.
+ * panel the keyboard reaches by Tab, past the host of a shadow root it sits in too, else the body
+ * of the app's frame or the page's main content.
  */
 const showPanel = (scope: Scope, id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = scope.getElementById(id);
@@ -241,7 +257,10 @@ const showPanel = (scope: Scope, id: string, open: boolean, by?: HTMLButtonEleme
     if (!open) lastIn(scope).delete(id);
     if (!panel) return;
     takeFocus(panel);
-    const held = mayHandBack(panel, lastPath.includes(panel));
+    // Inside a closed shadow root the page reads focus as the host, so the root's own reading
+    // tells whether focus is in the panel.
+    const inside = closedRootOf(panel)?.activeElement;
+    const held = inside ? holds(panel, inside) : mayHandBack(panel, lastPath.includes(panel));
     panel.hidden = !open;
     if (open || !held) return;
     handBack(
@@ -270,8 +289,9 @@ const onPanelPress = (event: Event): void => {
         lastWasPress = true;
     }
     const at = path.filter(isElement);
-    // The innermost attached button the press is in, or the innermost Close, read through a
-    // component's open shadow root, so a button of the component's own inside either counts as it.
+    // The innermost attached button the press is in, or a button inside the innermost Close, read
+    // through a component's open shadow root, so a button of the component's own inside either
+    // counts as it.
     const closeAt = at.findIndex((element) => element.classList.contains('dk-close'));
     const button = at.find(
         (element, index): element is HTMLButtonElement =>
@@ -362,8 +382,8 @@ const openPanelAt = (
  * of its own. Those checks read where the key was pressed, inside a page's own component where the
  * component's shadow root is open, and the component's host among them. A panel and its button
  * inside an open shadow root are read there too, and an element that shares a panel's id in another
- * root closes nothing. A panel's button that is off does not close its own panel, and Escape goes on
- * to a panel around it.
+ * root closes nothing. A panel's button that is off does not close its own panel, and Escape goes
+ * on to a panel around it.
  */
 const onPanelKey = (event: KeyboardEvent): void => {
     const target = event.target;
@@ -401,17 +421,41 @@ const letGo = (doc: Document): boolean => {
         if (!held.defaultView) {
             openers.delete(button);
             if (![...openers.values()].includes(held)) listen(held, false);
+            holdClosed(button, false);
         }
     return ![...openers.values()].includes(doc);
 };
 
+/**
+ * The closed shadow root each attached button sits in, which hears the presses, the focus and the
+ * Escape of the panels in it, since the page sees each of them there only as one on the host. Its
+ * listeners are added with the first button attached in it and taken off with the last, as a
+ * document's are. An open root is never listened on, since its events reach the document whole,
+ * and a press heard twice would turn the panel back.
+ */
+const closedOpeners = new Map<HTMLButtonElement, ShadowRoot>();
+
+/**
+ * Holds the closed shadow root a button sits in as it is attached, listening there where no button
+ * there had yet, or lets go of it as the button is, and of its listeners once no button there is
+ * held.
+ */
+const holdClosed = (button: HTMLButtonElement, on: boolean): void => {
+    const root = on ? closedRootOf(button) : closedOpeners.get(button);
+    if (!root) return;
+    closedOpeners.delete(button);
+    const held = [...closedOpeners.values()].includes(root);
+    if (on) closedOpeners.set(button, root);
+    if (!held) listen(root, on);
+};
+
 /** Adds the listeners every panel in a document shares to it, or takes them off. */
-const listen = (doc: Document, on: boolean): void => {
+const listen = (target: Scope, on: boolean): void => {
     const how = on ? 'addEventListener' : 'removeEventListener';
-    doc[how]('focusin', onPanelFocus, true);
-    doc[how]('click', onPanelPress, true);
-    doc[how]('pointerdown', onPanelDown, true);
-    doc[how]('keydown', onPanelKey as EventListener);
+    target[how]('focusin', onPanelFocus, true);
+    target[how]('click', onPanelPress, true);
+    target[how]('pointerdown', onPanelDown, true);
+    target[how]('keydown', onPanelKey as EventListener);
 };
 
 /**
@@ -428,10 +472,12 @@ const listen = (doc: Document, on: boolean): void => {
  * document, so one drawn again keeps working and one beside its button inside an open shadow root
  * opens there, and a button drawn again works once it is attached. Listeners on the document the
  * button sits in as it is attached, a frame's where the page attaches it inside one, hear the
- * presses, the focus and the Escape of every panel in it, inside its open shadow roots too, and come
- * off once every button attached in it is taken down, and focus is read from the page down, so
- * focus inside the frame counts as in its panel. A panel's id must be the only one in its root.
- * Attached again, a button returns what it returned first.
+ * presses, the focus and the Escape of every panel in it, inside its open shadow roots too, and
+ * come off once every button attached in it is taken down, and focus is read from the page down, so
+ * focus inside the frame counts as in its panel. A button inside a closed shadow root is heard on
+ * that root too, since the page sees a press, focus or a key there only as one on the host. A
+ * panel's id must be the only one in its root. Attached again, a button returns what it returned
+ * first.
  *
  * Its `signal` takes the button down as `detach` does, and a signal already aborted attaches
  * nothing, though a button with no aria-controls throws under it as under any other. A button taken
@@ -469,6 +515,7 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     };
     down.add(() => {
         openers.delete(opener);
+        holdClosed(opener, false);
         // A button let go no longer follows its panel, so it says it opens nothing rather than a
         // state it no longer keeps.
         opener.setAttribute('aria-expanded', 'false');
@@ -493,6 +540,7 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
     keep(attachedPanels, opener, down, control);
     if (letGo(doc)) listen(doc, true);
     openers.set(opener, doc);
+    holdClosed(opener, true);
     // Safari focuses a pressed button only where it has a tabindex, so the kit gives one where the
     // page set none, and keeps any the page set, such as a toolbar's that moves among its buttons.
     if (!opener.hasAttribute('tabindex')) opener.tabIndex = 0;

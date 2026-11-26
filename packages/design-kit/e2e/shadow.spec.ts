@@ -363,6 +363,71 @@ document.querySelector('main').insertAdjacentHTML('beforeend', '<div id="help"><
     await expect(page.locator('#widget').getByRole('button', { name: 'Help' })).toBeFocused();
 });
 
+test("leaves the page's open panel to its own button as a widget draws a panel with its id after attaching its button", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `attachPanel(document.querySelector('#page-tips'));
+document.querySelector('#page-tips').click();
+root.innerHTML = '<button type="button" id="widget-tips" aria-expanded="false" aria-controls="tips">Widget tips</button>';
+// The widget's button is attached before the widget draws its own panel, so it first finds the page's.
+attachPanel(root.querySelector('#widget-tips'));
+const panel = document.createElement('div');
+panel.id = 'tips';
+panel.hidden = true;
+panel.textContent = "The widget's tips";
+root.append(panel);`,
+        '<button type="button" id="page-tips" aria-expanded="false" aria-controls="tips">Page tips</button><div id="tips" hidden><a href="#deal">How to deal</a></div>'
+    );
+    await expect(page.locator('main > #tips')).toBeVisible();
+    await page.getByRole('link', { name: 'How to deal' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('main > #tips')).toBeHidden();
+    await expect(page.locator('#page-tips')).toBeFocused();
+    await expect(page.locator('#page-tips')).toHaveAttribute('aria-expanded', 'false');
+});
+
+test("opens a widget's panel inside a closed shadow root by a press on its button, and closes it by Escape", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
+root.innerHTML = \`<button type="button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div id="tips" hidden><a href="#deal">How to deal</a></div>\`;
+attachPanel(root.querySelector('#opener'));
+window.opener = root.querySelector('#opener');
+window.tips = root.querySelector('#tips');
+window.link = root.querySelector('a');
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    type Closed = { opener: HTMLButtonElement; tips: HTMLElement; link: HTMLElement };
+    const shown = () => page.evaluate(() => !(window as unknown as Closed).tips.hidden);
+    // Pressed by pointer at the button's middle, since no locator reaches into a closed root.
+    const box = await page.evaluate(() => {
+        const { left, top, width, height } = (
+            window as unknown as Closed
+        ).opener.getBoundingClientRect();
+        return { x: left + width / 2, y: top + height / 2 };
+    });
+    await page.mouse.click(box.x, box.y);
+    await expect.poll(shown).toBe(true);
+    expect(
+        await page.evaluate(() =>
+            (window as unknown as Closed).opener.getAttribute('aria-expanded')
+        )
+    ).toBe('true');
+    await page.evaluate(() => {
+        (window as unknown as Closed).link.focus();
+    });
+    await page.keyboard.press('Escape');
+    await expect.poll(shown).toBe(false);
+});
+
 /** Shows a message on the toast a page has attached, with no action. */
 const showToast = (page: Page, words: string) =>
     page.evaluate((said) => {

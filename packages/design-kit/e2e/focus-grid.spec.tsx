@@ -626,7 +626,7 @@ type Failing = { readonly gives: ByEngine; readonly because: string };
  */
 const FAILING: Squares<Failing> = {
     closed: {
-        panel: { gives: 'never opened', because: CLOSED_PRESS },
+        panel: { gives: 'main', because: CLOSED_OWN },
         toast: { gives: 'main', because: CLOSED_HOST },
         readOnly: { gives: 'body, marked, down hidden', because: CLOSED_OWN },
         takeDown: { gives: 'body', because: CLOSED_OWN },

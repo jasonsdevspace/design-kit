@@ -194,15 +194,19 @@ A dialog in a frame makes only that frame inert, so a page that needs the whole 
 dialog on the page. A panel's button keeps the document it was attached in, the page's where that
 document has no window, as a template's copy has before the page takes it in, the listeners every
 panel shares are added to each document that holds an attached button and taken off with the last
-button in it or once that document has lost its window, and the panel's id, its buttons, the button
-that opened it and whether it has started are kept for each document, so a panel of the page and one
-of a frame that share an id stay apart. The stepper and a group of cells read focus through `seen`
-for the document they sit in, the page's where it has no window, so a stepper keeps a button with
-focus shown as its value turns read only and hands focus to its value or itself in the frame as it
-is taken down, and a group hands focus on where focus fell to the frame's body. The form, the group
-and a table's frame tell a control by its name and an element by its node type rather than by the
-page's classes. Each stays in the document it was attached in, so a page that moves one into another
-takes it down and attaches it again.
+button in it or once that document has lost its window, and on a closed shadow root that holds an
+attached button, since the page sees a press, focus or a key there only as one on the host, and the
+panel's id, its buttons, the button that opened it and whether it has started are kept for each root
+that holds a panel, a document or a shadow root, found from the button's own root out through each
+host, so a panel of the page and one of a frame or of a widget's shadow root that share an id stay
+apart. A screen reader follows `aria-controls` only within one root, so a button that names a panel
+in another root is heard with its expanded state alone. The stepper and a group of cells read focus
+through `seen` for the document they sit in, the page's where it has no window, so a stepper keeps a
+button with focus shown as its value turns read only and hands focus to its value or itself in the
+frame as it is taken down, and a group hands focus on where focus fell to the frame's body. The
+form, the group and a table's frame tell a control by its name and an element by its node type
+rather than by the page's classes. Each stays in the document it was attached in, so a page that
+moves one into another takes it down and attaches it again.
 
 A focus request reads focus once, as it is asked, and keeps two views of that one read: the element
 as the deep reader gives it, or the one a page passes as `from`, as the dialog and the toast keep a
@@ -395,6 +399,14 @@ The path is in `packages/design-kit`.
   button. `e2e/panel.spec.ts` finds a panel of the page leaving focus in a frame whose blank space a
   visitor clicked, handing focus to its button from a control in a frame it holds, and a panel in a
   frame inside a frame handing focus to its button.
+- `e2e/shadow.spec.ts`, in Chromium, WebKit and Firefox, opens a widget's own panel beside its
+  button inside an open shadow root and closes it by its corner Close and by Escape with focus back
+  on its button, the page's panel with the same id untouched, hands focus on past the widget to the
+  page's next control where its button is off, starts a panel open as a button drawn again says
+  once the one before it left the widget, closes by Escape a page's panel a widget's button opened
+  before the page drew it, leaves the page's open panel to its own button as a widget draws a panel
+  with its id after attaching its button, and opens and closes by Escape a panel inside a closed
+  shadow root.
 - `e2e/seen.spec.ts`, in Chromium, WebKit and Firefox, reads `seen` as a pure function over a page
   with a frame, a frame inside it, a frame beside it and a frame taken from the page, for an asker
   in each, and finds a kept place reading the same as the element, and the walk going on past a
