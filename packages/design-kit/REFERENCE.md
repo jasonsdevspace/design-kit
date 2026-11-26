@@ -51,6 +51,7 @@ each piece live in both themes.
         - [Moving focus in React](#moving-focus-in-react)
         - [A request as its component unmounts](#a-request-as-its-component-unmounts)
         - [Focus on arrival](#focus-on-arrival)
+    - [Where focus can be](#where-focus-can-be)
     - [A part of the page that is loading](#a-part-of-the-page-that-is-loading)
     - [Progress](#progress)
 - [Content pages](#content-pages)
@@ -2360,6 +2361,36 @@ export const Round = ({ round }: { readonly round: number }) => {
     return <h2 ref={heading}>Round {round}</h2>;
 };
 ```
+
+### Where focus can be
+
+The pieces read focus wherever a visitor can put it: on the page, in an open shadow root, in a frame
+of the page's origin, a frame inside a shadow root and a shadow root inside a frame among them, in a
+frame loading its next page, and in a frame of another origin, as near as the page can reach. A
+dialog and a toast hand focus back to a control in each of those places, `moveFocus` lands from one,
+`focusOnArrival` focuses a view's heading after a press on one, and a press a visitor moves on from
+into a field there leaves them in it. A panel, a stepper going read only or taken down, a form's
+refusal, a grid of cells, a table's pinned column and `useFocusAfterDraw` read focus rightly when
+the page draws them in one of those places. That holds in Chromium, Firefox and Safari.
+
+Some places stay out of reach, since a page sees focus inside a closed shadow root as its host and
+sees nothing inside a frame of another origin:
+
+- A toast on the page hands focus back to the host of a closed shadow root, which takes no focus,
+  so focus goes on to the main content. A press inside a closed shadow root reaches the page as a
+  press on its host, which is no control, so the view it brings takes no focus.
+- A dialog or a toast hands focus back to a frame of another origin rather than to the control in
+  it, and Firefox, which will not focus such a frame from a key, takes a toast dismissed by Enter on
+  to the main content. A press inside such a frame is never heard, so the view it brings takes no
+  focus. A page cannot draw a piece inside one.
+
+Two more places are read short of where focus is. A stepper, a form's refusal and
+`useFocusAfterDraw` drawn inside a closed shadow root read focus there as the root's host, in
+Chromium and Firefox for `useFocusAfterDraw`, so focus drops from the stepper's button and the
+field in error loses focus to the main content. Focus inside a frame of the page's origin held by
+one of another origin is read from the page down, which stops at the frame of another origin, so a
+panel and a stepper drawn there, a toast, and a dialog in Chromium and Safari leave focus short of
+the control that had it.
 
 ### A part of the page that is loading
 
