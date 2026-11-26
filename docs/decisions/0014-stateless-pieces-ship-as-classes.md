@@ -31,9 +31,9 @@ reads for it, as record 6 has it for a control: `aria-selected="true"` on a tab,
 link among pages, or `aria-pressed="true"` on a toggle, each drawn alike. A page that writes a row
 with `role="tablist"` runs the tabs pattern's keys itself, as the site does. Since 0.9.0
 `attachRoving` from `./controls`, or `useRoving` in React, runs those keys in the page's place, as
-this record's status sets out, and the chosen tab stays the page's. The reference shows the markup
-for each, generated from the examples module as every other block is, so the reference and the
-browser tests cannot drift from each other.
+this record's status and record 20 set out, and the chosen tab stays the page's. The reference
+shows the markup for each, generated from the examples module as every other block is, so the
+reference and the browser tests cannot drift from each other.
 
 ## Consequences
 
