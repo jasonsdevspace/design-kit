@@ -15,9 +15,8 @@ const PORT = 4180;
 const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
- * Set by CI's Chromium shards where a change touches neither the site nor the lockfile, which the
- * site's tests against its pinned release can find nothing new in, as scripts/site-tests.mjs
- * decides. Those runs leave the site's specs out, and build and serve no site, since only the
+ * Set by CI's Chromium shards where a change touches nothing the site's tests against its pinned
+ * release read, which they can find nothing new in, as scripts/site-tests.mjs decides. Those runs leave the site's specs out, and build and serve no site, since only the
  * site's tests open it. The site's tests over the commit's kit run in a job of their own regardless.
  */
 const SKIP_SITE = process.env['SKIP_SITE'] === '1';
@@ -25,7 +24,7 @@ const SKIP_SITE = process.env['SKIP_SITE'] === '1';
 export default defineConfig({
     testDir: 'packages',
     testMatch: '*/e2e/*.spec.{ts,tsx}',
-    testIgnore: SKIP_SITE ? 'site/**' : [],
+    testIgnore: SKIP_SITE ? /[\\/]packages[\\/]site[\\/]/ : [],
     fullyParallel: true,
     forbidOnly: Boolean(process.env['CI']),
     retries: process.env['CI'] ? 1 : 0,
