@@ -335,7 +335,12 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
-            const { from, page } = focusWas(options?.from);
+            // Read through the target where it is an element, the one target that is an object,
+            // into a closed root it sits in.
+            const { from, page } = focusWas(
+                options?.from,
+                typeof target === 'object' ? target : null
+            );
             // Where focus was as the page sees it, read as the request is asked, since a late request
             // is made with no place focus was, which is where `moveFocus` would look for an id. An
             // id is looked for from there by the same walk `moveFocus` takes, in that root and then
@@ -407,7 +412,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
-        from.current = focusWas().from;
+        from.current = focusWas(undefined, heading.current).from;
     // Asks once for each key, since the effect runs again only when the key changes: as the view
     // first draws, by whether a press brought it, and as its key changes, whatever the last input,
     // since the page changes it on a press. The request is called off as the effect is cleaned up,
@@ -483,10 +488,10 @@ export const useFormRefusal = <Form extends HTMLElement>(
     const refuseThrough = useCallback(
         (pick: () => Refuse | undefined): Refuse =>
             (asked) => {
-                const { from } = focusWas(asked?.from);
+                const { from } = focusWas(asked?.from, [...refusers.keys()].at(-1));
                 return afterCommit(() => pick()?.({ from }) ?? (() => undefined));
             },
-        [afterCommit]
+        [afterCommit, refusers]
     );
     // The page's own refusal goes through the newest form attached, and each form's own failed
     // submit through that form.

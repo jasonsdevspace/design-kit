@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { Toast } from '../src/react.js';
+import { bundle } from './bundle.js';
 import { frames, hearing, servePage, stillClock, tabKey } from './page.js';
 
 /*
@@ -1055,4 +1056,37 @@ window.ready = true;`,
     await page.waitForFunction(() => 'ready' in window);
     await expect(page.locator('#heading')).toBeFocused();
     expect(errors).toEqual([]);
+});
+
+test('leaves focus where it moved inside a closed shadow root before a useFocusAfterDraw request there lands', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div></main>',
+        script: await bundle('closed-hooks-page.tsx'),
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const inRoot = (id: string) =>
+        page.evaluate(
+            (given) =>
+                (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement?.id ===
+                given,
+            id
+        );
+    await page.waitForFunction(
+        () => !!(window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')
+    );
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await page.evaluate(
+        () =>
+            new Promise((done) => {
+                requestAnimationFrame(() => requestAnimationFrame(done));
+            })
+    );
+    expect(await inRoot('second')).toBe(true);
 });
