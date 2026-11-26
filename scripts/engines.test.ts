@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { matchesGlob } from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -79,16 +80,30 @@ describe('the tests an engine list names', () => {
      */
     const listed = new Map<string, Listed[]>();
     beforeAll(() => {
-        const report = JSON.parse(
-            execFileSync('npx', ['playwright', 'test', '--list', '--reporter=json'], {
+        // Playwright's own script, run by this Node, so no shell is needed on any system, and what
+        // it said is shown where the listing fails, as it does on a spec that cannot load.
+        const cli = createRequire(import.meta.url).resolve('@playwright/test/cli');
+        let output: string;
+        try {
+            output = execFileSync(process.execPath, [cli, 'test', '--list', '--reporter=json'], {
                 cwd: new URL('..', import.meta.url),
                 encoding: 'utf8',
                 maxBuffer: 64 * 1024 * 1024,
-            })
-        ) as { readonly suites: readonly Suite[] };
+                stdio: ['ignore', 'pipe', 'pipe'],
+            });
+        } catch (error) {
+            const { stderr, stdout } = error as { stderr?: string; stdout?: string };
+            throw new Error(
+                `Playwright could not list the tests:\n${stderr ?? ''}${stdout ?? ''}`,
+                {
+                    cause: error,
+                }
+            );
+        }
+        const report = JSON.parse(output) as { readonly suites: readonly Suite[] };
         const walk = (suite: Suite, path: readonly string[]) => {
             for (const spec of suite.specs ?? []) {
-                const name = /design-kit\/e2e\/([^/]+)\.spec\.tsx?$/.exec(spec.file)?.[1];
+                const name = /design-kit[\\/]e2e[\\/]([^\\/]+)\.spec\.tsx?$/.exec(spec.file)?.[1];
                 if (name === undefined) continue;
                 for (const { projectName } of spec.tests) {
                     const tests = listed.get(projectName) ?? [];
@@ -116,11 +131,23 @@ describe('the tests an engine list names', () => {
             const unknown = Object.entries(engine).flatMap(([spec, run]) => {
                 if (typeof run === 'string') return [];
                 const titles = new Set(titlesOf(spec));
-                return ('tests' in run ? run.tests : run.except)
+                return ('tests' in run ? [...run.tests, ...run.except] : run.except)
                     .filter((title) => !titles.has(title))
                     .map((title) => `${spec} › ${title}`);
             });
             expect(unknown).toEqual([]);
+        });
+
+        it(`sort every test of a spec run in part into those it runs or those it leaves out, once, for ${name}`, () => {
+            const unsorted = Object.entries(engine).flatMap(([spec, run]) => {
+                if (typeof run === 'string' || !('tests' in run)) return [];
+                const sorted = [...run.tests, ...run.except];
+                return [
+                    ...titlesOf(spec).filter((title) => !sorted.includes(title)),
+                    ...sorted.filter((title, index) => sorted.indexOf(title) !== index),
+                ].map((title) => `${spec} › ${title}`);
+            });
+            expect(unsorted).toEqual([]);
         });
 
         it(`leave each spec they name some test to run, for ${name}`, () => {

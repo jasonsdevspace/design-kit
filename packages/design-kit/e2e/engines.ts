@@ -2,20 +2,27 @@
  * The specs that run in WebKit and in Firefox as well as in Chromium, each named with the reason it
  * runs there, and with the tests the reason covers where it covers fewer than all. A spec whose
  * every test is about what the engine does its own way runs whole. One whose reason covers a few
- * names them, and one whose reason covers all but a few, the kit's own words, marks and options
- * that no engine draws or orders its own way, names those it leaves out, so a test added to it runs
- * in the engine until it is named. A spec left out runs in Chromium alone. The names, of specs and
+ * names them and every test it leaves out, so a test added to it is sorted into one or the other,
+ * and one whose reason covers all but a few, the kit's own words, marks and options that no engine
+ * draws or orders its own way, names those it leaves out, so a test added to it runs in the engine
+ * until it is named. A spec left out runs in Chromium alone. The names, of specs and
  * of tests, are checked against the files by scripts/engines.test.ts, so a name typed wrong fails
  * there rather than matching nothing.
  */
 
 /**
- * Why a spec runs in an engine: every test in it, the tests named, as each test's title is written
- * after its describes and their ` › `, or every test but those named.
+ * Why a spec runs in an engine: every test in it, the tests named and every other named as left
+ * out, each test's title written after its describes and their ` › `, or every test but those
+ * named.
  */
 export type Run =
     | string
-    | { readonly reason: string; readonly tests: readonly string[] }
+    | {
+          readonly reason: string;
+          readonly tests: readonly string[];
+          /** Every other test of the spec, so a test added to it is sorted into one or the other. */
+          readonly except: readonly string[];
+      }
     | { readonly reason: string; readonly except: readonly string[] };
 
 /** A spec's name, the file's without `.spec.ts` or `.spec.tsx`, and why it runs in the engine. */
@@ -49,6 +56,36 @@ export const WEBKIT: Engine = {
             'gives a pictured frame drawn taller than what it holds the room in its body, its bars at its foot',
             'draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place and clear of no safe area, 390 by 800',
             'draws a pictured frame and a pictured page that ends in a tab bar at what they hold, their bars in place and clear of no safe area, 1280 by 500',
+            "keeps a floating toast's place to itself: over pinned cells, taking taps around the toast, and not on paper",
+        ],
+        except: [
+            "has one top heading, the bar's title",
+            'is a column of 28rem in the middle of a wide screen, and the full width of a phone',
+            'wraps a long title at a large text size, and cuts nothing off',
+            "gives the title the bar's whole width under its action on a phone at twice the text size",
+            "draws the skip link where the strip's links start on a page with a tab bar, 390 wide",
+            "draws the skip link where the strip's links start on a page with a tab bar, 1440 wide",
+            "draws the skip link where the strip's links start on a page with an app's frame, 1440 wide",
+            'prints as long and as wide as what it holds, with the body whole',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            'holds every control in an app to the target on a wide screen, and leaves the rest of a page as it was',
+            "leaves a demo's strip as it is on a page that ends in a tab bar",
+            "draws the toast's close button at the target both ways on a wide screen, in a frame or not",
+            'breaks a title of one long word inside the bar on a 320px phone at twice the text size',
+            "draws a raised panel on the raised ground, lifted by the resting shadow or the page's own, in the light theme",
+            "draws a raised panel on the raised ground, lifted by the resting shadow or the page's own, in the dark theme",
+            "pads a panel alike at every width in an app's frame, and by the page's width outside one",
+            "pads the frame's bar, body, toast and dock by a phone's step on a 320px phone at twice the text size",
+            "pads the frame's sides by a phone's step at the default text size",
+            "starts the skip link where the frame's words start, on a 320px phone at twice the text size",
+            "keeps a panel in an app's frame to a phone's padding at twice the text size",
+            'keeps a pinned column and a code block apart from a raised panel on grounds of their own',
+            'gives a piece the ground of the nearest container that holds it, however they nest',
+            "draws a panel's title as a heading as it draws it as a paragraph, so either reads alike",
+            'draws a content page the same with a picture of an app and its toast as without one',
+            "draws a page with an app's frame of its own as an app's, a picture of another beside it or not",
+            "draws a dialog as an app's where it sits inside a frame or beside one, and as a content page's set apart from it",
         ],
     },
     tabbar: {
@@ -66,6 +103,18 @@ export const WEBKIT: Engine = {
             'scrolls what the keyboard reaches clear of the bar on a page 320px wide that doubles its root size',
             'scrolls with the page on a phone at twice the text size, where its labels wrap further',
             'scrolls with the page on a screen too short to give it a row of its own',
+            "draws a link's focus ring inside the bar, where the screen's edge would cut it",
+        ],
+        except: [
+            'tells the current link apart by its weight and a line, forced colors included',
+            'draws one line in forced colors, over the current link, in a system color',
+            "shares a phone's narrowest width evenly, from two links to five",
+            'wraps a long label at a doubled text size, and grows to hold it',
+            'draws every link at the larger target or taller, with its icon over its label',
+            "is the app's column in the middle of a wide screen, with the page held to it",
+            'does not print, and leaves a page as long and as wide as what it holds',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
         ],
     },
     toast: {
@@ -92,6 +141,16 @@ export const WEBKIT: Engine = {
             "opens a dialog on its first answer, meets the Close after the title's question, and closes by it with no script",
             "names a panel's Close for what it closes, and draws a closed dialog with a Close not at all",
         ],
+        except: [
+            'sets a quiet Close in the top corner of a dialog and a panel, at the target and clear of the title, 320 wide at 1 times the text',
+            'sets a quiet Close in the top corner of a dialog and a panel, at the target and clear of the title, 320 wide at 2 times the text',
+            'sets a quiet Close in the top corner of a dialog and a panel, at the target and clear of the title, 1280 wide at 1 times the text',
+            'sets a quiet Close in the top corner of a dialog and a panel, at the target and clear of the title, 1280 wide at 2 times the text',
+            "pads a dialog on a page with an app by a phone's step at every width, its Close on its title's line",
+            'keeps the Close drawn in forced colors, its × in the text and its ring on focus',
+            'has no audit findings with a Close in the corner, in the light theme',
+            'has no audit findings with a Close in the corner, in the dark theme',
+        ],
     },
     stepper: "A number field's inner room, and a press by pointer that gives no focus.",
     'stepper-takedown': "Where focus goes as a stepper is taken down, which is each engine's own.",
@@ -111,6 +170,15 @@ export const WEBKIT: Engine = {
             'refuses an element that is in no frame, rather than attach nothing',
             'moves the frame once a step, where the browser would leave it, under a narrow pinned column',
         ],
+        except: [
+            'shades the edges a frame scrolls toward, and neither end once it is in view',
+            "hides the start's shade under a pinned column, and shades the end beside it",
+            "shades a frame on a ground of its own with no band of the page's ground",
+            'shades the frame for a visitor who asks for less motion too',
+            'shades no edge of a frame whose table fits, nor any in forced colors',
+            'fits a five column table of a word and four short figures on a 320px phone, in a content page',
+            "fits a five column table of a word and four short figures on a 320px phone, in an app's frame",
+        ],
     },
     icon: "How an svg's stroke is drawn.",
     rows: {
@@ -125,6 +193,48 @@ export const WEBKIT: Engine = {
             "underlines a tile's title under a pressing thumb, on a phone where nothing hovers",
             "keeps a tile's whole ring in view as the keyboard scrolls an app's body to it",
             'flows tiles into columns on a wide page, one column on a phone, in reading order for the keyboard',
+        ],
+        except: [
+            'draws a rule between rows and none after the last, in both themes and forced colors',
+            'draws each row at the target, and the larger target in a tall list',
+            'wraps a long title, and keeps the end beside its first line',
+            'lines a row of one line up in the middle of its height, and its figures in one width',
+            'says how many rows a list holds, and draws an empty list not at all',
+            "moves a row's group of buttons under its text on a 320px phone at twice the text size, the title on one line",
+            "moves a row's group of buttons under its text on a 390px phone at twice the text size, the title on one line",
+            "keeps a row's group of buttons beside twelve characters of text on a 390px phone at the default size",
+            "keeps a row's group inside the narrowest phone at twice the text size and the wider spacing",
+            "keeps a row's picture beside its title with a group at twice the text size",
+            'has no audit findings for a list of seats in the light theme',
+            'has no audit findings for a list of seats in the dark theme',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            "starts a row's words on the column's line in what pads, and keeps it inside a bare page",
+            'draws a row of one line at the target tall, no taller',
+            "keeps a row's end inside the row on a 320px phone at twice the text size",
+            'draws each tile on the ground its page sets, with an edge and a gap in place of the rule',
+            'draws a tile on the surface with no ground set and no shadow, unless the page sets its own',
+            "draws no tile's shadow in forced colors, a page's own included",
+            "keeps a tile's edge in forced colors, in the system's link color",
+            'draws an empty list of tiles not at all',
+            'keeps a tile at the larger target, its detail wrapping inside it at twice the text size',
+            "wraps a tile's long detail pretty, so its last line holds more than one word",
+            'has no audit findings for a list of tiles in the light theme',
+            'has no audit findings for a list of tiles in the dark theme',
+            "holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on the page's grounds in the light theme",
+            "holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on the surface in the light theme",
+            "holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on the page's grounds in the dark theme",
+            "holds a tile's words at 4.5 to 1 and its sign and ring at 3 to 1, on the surface in the dark theme",
+            "starts a tile's words on the line a raised panel's start on above it, on a wide page",
+            "starts a tile's words on the line a raised panel's start on above it, on a phone",
+            "starts a tile's words on the line a raised panel's start on above it, on an app's frame",
+            "sets a tile's title in an explainer at the body size, as a panel's title there",
+            'starts every title on one line beside a picture, in a row and a tile, with the ring clear of it',
+            'starts each title, and each picture, on one line across tiles in columns, a short tile beside a tall one',
+            'keeps tiles in one column on the narrowest phone at twice the text size and the wider spacing, a word cut off nowhere',
+            "keeps every word of a tile whole in a plain and a raised panel on the narrowest phone at twice the text size, a panel and a tile holding the card's inset",
+            "steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the light theme",
+            "steps a tile's ground off a plain panel to the page's, and off a raised one to the card's, in the dark theme",
         ],
     },
     panel: {
@@ -153,6 +263,24 @@ export const WEBKIT: Engine = {
             'leaves a copy button taken away mid-press hidden, at Copy, and silent once the clipboard answers',
             'says what a press did but selects nothing when its source changed before the clipboard answered',
         ],
+        except: [
+            'keeps both controls hidden where no script attaches them',
+            'says what sits where the switch would be, only to a visitor without script',
+            'shows the saved choice, then saves and draws a new one, with nothing the policy refuses',
+            'saves once a choice made on a switch attached twice',
+            'shows one choice on every switch, one attached through the element that holds it',
+            'hides a switch again once it is taken away',
+            'shows the choice saved meanwhile on a switch attached again after every switch was taken away',
+            'draws a choice the page holds on a switch attached again after every switch was taken away',
+            'attaches one element as a copy button though it was attached as a switch first',
+            'copies from the new source and speaks on the new line when attached again with them, its word back to Copy',
+            'puts a copy button back to Copy, hidden, when it is taken away mid-message',
+            'reads the switch by its name, and describes it by its note',
+            'ignores a theme that is no choice, as plain JavaScript can pass',
+            'leaves a theme switch with no choices hidden and unattached, to be attached once they are drawn',
+            'keeps a choice the browser will not save drawn over one another tab saves',
+            "says a screen's messages on its own status line, the same words twice, with no element added",
+        ],
     },
     pieces: {
         reason: 'How a pressing thumb and a pointer change the pieces, the theme switch collapsed in a strip, and the focus rings Safari draws.',
@@ -163,6 +291,29 @@ export const WEBKIT: Engine = {
             "draws the switch's own ring, on the chosen word, in the focus color",
             "changes a resting pill, a resting tab and the site's brand under a pressing thumb, where nothing hovers",
             'underlines a pill and a tab under a press in forced colors, where their color is replaced',
+            'rings in the accent a part of the page sets, where the page sets no focus color',
+        ],
+        except: [
+            'marks the chosen theme by an edge in the accent, not by its ground alone',
+            'keeps every word in place as the choice moves',
+            'makes each choice the field height tall, and a thumb wide and tall on a phone',
+            'wraps its choices in a narrow column at a large text size, rather than scroll them away',
+            'keeps its name and choices on one row at the usual text size, phone to wide',
+            'draws a chip that never reads as a control, and marks the current page by weight',
+            "marks the chosen tab by the page's text over an accent line, and by the system's selection in forced colors, the others on the rule's line",
+            'draws a tab, a link among pages and a toggle alike, chosen or not',
+            'keeps every tab in place as the choice moves',
+            "keeps the chosen link's line on the rule when a neighbor's words wrap",
+            'stands every tab on a line when the row wraps, in both themes and forced colors',
+            "lays a tab row on its container's rule, the chosen line over it, and a plain row as it was",
+            "makes each tab the strip's height, and a thumb wide and tall on a phone",
+            'cuts no word off the pill, the copy button or the switch under the wider spacing a visitor may set',
+            'draws an eyebrow in caps at the caption size in the muted text, tracked, with no margin of its own',
+            'keeps the copy button as wide as its longest word, whichever word shows',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            "draws every chosen thing's words in forced colors, on the system's selection",
+            "rings every chosen thing in the system's text in forced colors, the theme word too",
         ],
     },
     'buttongrid-columns':
@@ -179,12 +330,36 @@ export const WEBKIT: Engine = {
             'draws the list and marks the callout empty again when Try again works',
             'mounts the callout empty and out of sight beside the loading line',
         ],
+        except: [
+            'stays whole on a 320px phone at twice the text size',
+            'stays whole under wider text spacing',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            'has no audit findings in forced colors',
+        ],
     },
     stack: {
         reason: "The list role Safari drops with a list's markers.",
         tests: [
             'draws a stack on a list with no marker, indent or room of its own',
             "writes the list's role in the example, which Safari drops with the markers",
+        ],
+        except: [
+            "spaces a pair, a heading's stack and its list at their steps",
+            'spaces a plain stack at the step of what holds it, and a stack in a pair at the pair step',
+            'keeps a named step under a title and under a page section heading',
+            'gives a step class alone nothing, and a stack outside any container only its named step',
+            'adds no step for a hidden piece in a plain stack',
+            'adds no step for a hidden piece in a dk-stack-pair stack',
+            'adds no step for a hidden piece in a dk-stack-heading stack',
+            'stays whole on a 320px phone at twice the text size, a wrapped pair at its step',
+            'keeps its steps between the pieces under wider text spacing',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            'has no audit findings in forced colors',
+            'holds a field and a callout in its form to the measure in a wide stack, a page or a band, and a field a page, a dialog or a popover widens to its column',
+            'ends a callout beside a field with no form where the fields end, and runs one with no field beside it the column',
+            'ends a callout beside a field with no form where the fields end, and runs one with no field beside it the column, without :has()',
         ],
     },
     split: "A long first word broken at a phone's width, by each engine's line breaks.",
@@ -195,6 +370,19 @@ export const WEBKIT: Engine = {
             'the saved games › brings the list back with focus on the search when Clear is pressed by Enter',
             'the saved games › brings the list back with focus on the search when Clear is pressed by a pointer',
             'the saved games › brings the list back when the search is emptied in the field itself',
+        ],
+        except: [
+            'draws no ground and no edge, its words where a row title starts in a page',
+            'starts its words where a row title does at a bare edge too',
+            'is not live, so it is read where it is',
+            'draws its words muted at the body size and a plain button under them',
+            'stays whole on a 320px phone at twice the text size',
+            'stays whole under wider text spacing',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
+            'has no audit findings in forced colors',
+            'the saved games › says how many games match a search that finds some',
+            'the saved games › has no audit findings with the empty state drawn',
         ],
     },
     hero: "A heading broken between words only, by each engine's line breaks.",
@@ -242,6 +430,13 @@ export const WEBKIT: Engine = {
             'keeps its dots clear of its words and its icon, every button its resting size',
             'in React › saves once for a double press, and says it is saving only while it is',
         ],
+        except: [
+            'holds its look and says nothing for a fast save',
+            'drops its words where the work ends after the wait but before they are said',
+            'says its words again for a busy that ends and starts again at once',
+            'holds its look for the wait in forced colors too',
+            'in React › says nothing late for a save that ends just after the wait',
+        ],
     },
     hooks: "Each hook letting go of an element swapped, through each engine's events.",
     form: {
@@ -279,6 +474,13 @@ export const FIREFOX: Engine = {
             'keeps its dots clear of its words and its icon, every button its resting size',
             'in React › saves once for a double press, and says it is saving only while it is',
         ],
+        except: [
+            'holds its look and says nothing for a fast save',
+            'drops its words where the work ends after the wait but before they are said',
+            'says its words again for a busy that ends and starts again at once',
+            'holds its look for the wait in forced colors too',
+            'in React › says nothing late for a save that ends just after the wait',
+        ],
     },
     stepper: 'A number field keeps its spin buttons unless `appearance: textfield` takes them.',
     'stepper-takedown': "Where focus goes as a stepper is taken down, which is each engine's own.",
@@ -296,6 +498,18 @@ export const FIREFOX: Engine = {
             'shades no edge of a frame whose table fits, nor any in forced colors',
             'fits a five column table of a word and four short figures on a 320px phone, in a content page',
             "fits a five column table of a word and four short figures on a 320px phone, in an app's frame",
+        ],
+        except: [
+            'brings a link the frame cuts off fully into view when the keyboard reaches it',
+            'brings a link out from under a pinned column wider than the room kept for it',
+            'brings a link out from under a pinned column in a table inside a frame the page attached',
+            'brings a link into view the same way in a table that reads right to left',
+            'brings a link cut by no more than a target into view without script',
+            'lets the frame go, leaving a link under the pinned column to the browser',
+            'shows the first words of a link wider than the room, either way a table reads',
+            'leaves a link a pointer presses to the browser, and the press lands',
+            'refuses an element that is in no frame, rather than attach nothing',
+            'moves the frame once a step, where the browser would leave it, under a narrow pinned column',
         ],
     },
     icon: "How an svg's stroke is drawn.",
@@ -374,6 +588,26 @@ export const FIREFOX: Engine = {
             'scrolls what the keyboard reaches clear of the bar on a page 320px wide that doubles its root size',
             'scrolls what takes focus clear of the bar, so the bar never covers it',
             'scrolls what takes focus clear of a bar whose labels take two lines',
+            "is the last row of an app's frame, clear of the home indicator once, and the keyboard's last stops",
+            "draws a link's focus ring inside the bar, where the screen's edge would cut it",
+        ],
+        except: [
+            'stays at the bottom of the screen while the page scrolls, and on a page shorter than the screen',
+            'clears the home indicator, by the bottom safe area token',
+            "scrolls the page's last line clear of the bar",
+            'tells the current link apart by its weight and a line, forced colors included',
+            'draws one line in forced colors, over the current link, in a system color',
+            'takes no placing of its own in a wrapper, so a frame clears the home indicator once',
+            "shares a phone's narrowest width evenly, from two links to five",
+            'wraps a long label at a doubled text size, and grows to hold it',
+            'draws every link at the larger target or taller, with its icon over its label',
+            "is the app's column in the middle of a wide screen, with the page held to it",
+            'scrolls with the page on a phone at twice the text size, where its labels wrap further',
+            'scrolls with the page on a screen too short to give it a row of its own',
+            'stays as tall as the screen on a page with padding of its own',
+            'does not print, and leaves a page as long and as wide as what it holds',
+            'has no audit findings in the light theme',
+            'has no audit findings in the dark theme',
         ],
     },
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
@@ -394,9 +628,12 @@ const escaped = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\
 const fileOf = (name: string): string =>
     `design-kit[\\\\/]e2e[\\\\/]${escaped(name)}\\.spec\\.tsx? `;
 
-/** A test of a spec, by its title after its describes, which Playwright joins with spaces. */
+/**
+ * A test of a spec, by its title after its describes, which Playwright joins with spaces, and any
+ * tags it ends in.
+ */
 const testOf = (name: string, title: string): RegExp =>
-    new RegExp(`${fileOf(name)}${escaped(title.split(' › ').join(' '))}$`);
+    new RegExp(`${fileOf(name)}${escaped(title.split(' › ').join(' '))}(?: @\\S+)*$`);
 
 /**
  * What a project filters its tests by, from the engine's list: each spec that runs whole or but for
@@ -412,7 +649,7 @@ export const filtersOf = (
         if (typeof run !== 'string' && 'tests' in run)
             grep.push(...run.tests.map((title) => testOf(name, title)));
         else grep.push(new RegExp(fileOf(name)));
-        if (typeof run !== 'string' && 'except' in run)
+        if (typeof run !== 'string' && !('tests' in run))
             grepInvert.push(...run.except.map((title) => testOf(name, title)));
     }
     return { grep, grepInvert };
