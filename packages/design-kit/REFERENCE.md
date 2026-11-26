@@ -4473,15 +4473,17 @@ them where they are. Where focus goes back and the visitor's last press was a li
 place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
 that place instead. Where the button that opened the panel takes no focus, focus goes to the first
 other attached button that names it, else the first thing after the panel the keyboard reaches by
-Tab, past the host of a shadow root the panel sits in to the page after it too, else the app frame's
-body or the page's main content. Safari focuses a pressed button only where it has a tabindex, so
-the kit writes `tabindex="0"` on an attached button and the corner Close, and `tabindex="-1"` on the
-panel, so a press anywhere in it leaves focus in it, and on the place a link sends focus to, each
-where the page set none, and keeps a tabindex the page set. A panel the page draws again while it is
-open takes them as a press in it begins. A page closes a panel from a press's `click`, since a close
-from its `pointerdown` comes before the browser moves focus for the press. A panel no button opens
-is closed by the page's own script, which moves focus to what comes after the panel, or to the
-heading before it where nothing follows.
+Tab, in the order the page draws it, so a control slotted into a widget after its panel and one
+inside a following widget's open shadow root come in their turn, past the host of a shadow root the
+panel sits in to the page after it too, else the app frame's body or the page's main content. Safari
+focuses a pressed button only where it has a tabindex, so the kit writes `tabindex="0"` on an
+attached button and the corner Close, and `tabindex="-1"` on the panel, so a press anywhere in it
+leaves focus in it, and on the place a link sends focus to, each where the page set none, and keeps
+a tabindex the page set. A panel the page draws again while it is open takes them as a press in it
+begins. A page closes a panel from a press's `click`, since a close from its `pointerdown` comes
+before the browser moves focus for the press. A panel no button opens is closed by the page's own
+script, which moves focus to what comes after the panel, or to the heading before it where nothing
+follows.
 
 ## What the package exports
 

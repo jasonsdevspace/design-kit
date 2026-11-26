@@ -107,23 +107,52 @@ const drawnBefore = (one: Node, other: Node): boolean => {
 };
 
 /**
- * The elements the keyboard reaches by Tab after a panel, in its own root and then after each host
- * around it, out to the document, so focus goes on past a widget to the page after it.
+ * The children of an element as the page draws them: what a slot is drawn with, its own children
+ * where nothing is assigned to it, and the children of an open shadow root in place of its host's.
+ */
+const drawnChildrenOf = (element: Element): readonly Element[] => {
+    if (element.localName === 'slot') {
+        const assigned = (element as HTMLSlotElement).assignedElements({ flatten: true });
+        return assigned.length > 0 ? assigned : [...element.children];
+    }
+    return [...(element.shadowRoot ?? element).children];
+};
+
+/**
+ * Where an element is drawn: the element that holds it as the page draws it and its siblings there,
+ * the slot it is drawn in, its parent, or the host of the shadow root it sits at the top of, a closed
+ * one included, since the walk climbs from the element itself.
+ */
+const drawnIn = (element: Element): readonly [Element, readonly Element[]] | undefined => {
+    const slot = element.assignedSlot;
+    if (slot) return [slot, drawnChildrenOf(slot)];
+    const parent = element.parentNode;
+    if (parent?.nodeType === 11)
+        return [(parent as ShadowRoot).host, [...(parent as ShadowRoot).children]];
+    return element.parentElement
+        ? [element.parentElement, drawnChildrenOf(element.parentElement)]
+        : undefined;
+};
+
+/**
+ * The elements the keyboard reaches by Tab after a panel, in the order the page draws them: what
+ * follows the panel where it is drawn, then what follows each element around it, out to the
+ * document, through a slot to what is slotted into it and into a following widget's open shadow
+ * root, so focus goes on past a widget to the page after it.
  */
 const followingOf = (panel: Element): (HTMLElement | SVGElement)[] => {
     const after: (HTMLElement | SVGElement)[] = [];
-    for (let anchor: Element = panel; ;) {
-        const root = rootOf(anchor);
-        const from = anchor;
-        after.push(
-            ...[...root.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
-                (next) =>
-                    next.tabIndex >= 0 &&
-                    from.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
-            )
-        );
-        if (root.nodeType !== 11) return after;
-        anchor = (root as ShadowRoot).host;
+    const take = (element: Element) => {
+        if (element.matches(FOCUSABLE) && (element as HTMLElement | SVGElement).tabIndex >= 0)
+            after.push(element as HTMLElement | SVGElement);
+        for (const child of drawnChildrenOf(element)) take(child);
+    };
+    for (let at: Element = panel; ;) {
+        const drawn = drawnIn(at);
+        if (!drawn) return after;
+        const [around, siblings] = drawn;
+        for (const sibling of siblings.slice(siblings.indexOf(at) + 1)) take(sibling);
+        at = around;
     }
 };
 
@@ -246,8 +275,9 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  * and that last press was a link in the panel to a place on this page outside it, it goes there
  * instead. Otherwise it goes to the button given, the one pressed or the one that opened the panel,
  * else the first attached button that names it and takes focus, else the first thing after the
- * panel the keyboard reaches by Tab, past the host of a shadow root it sits in too, else the body
- * of the app's frame or the page's main content.
+ * panel the keyboard reaches by Tab, in the order the page draws it, through slots and open shadow
+ * roots, past the host of a shadow root it sits in too, else the body of the app's frame or the
+ * page's main content.
  */
 const showPanel = (scope: Scope, id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = scope.getElementById(id);

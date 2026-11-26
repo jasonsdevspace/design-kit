@@ -320,6 +320,62 @@ attachPanel(root.querySelector('#opener'));`,
     await expect(page.locator('#after')).toBeFocused();
 });
 
+/** A widget's panel and button with a slot after the panel, for the page's own controls. */
+const SLOTTED = `root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div><slot></slot>\`;
+attachPanel(root.querySelector('#opener'));`;
+
+/** Opens the widget's panel, marks its button off and closes it by its Close. */
+const closeWithButtonOff = async (page: Page) => {
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+};
+
+test("hands focus on to the page's button slotted into the widget after its panel, as its panel closes with its button off", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"><button type="button" id="slotted">Slotted after the panel</button></div><button type="button" id="after">After the widget</button></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('#slotted')).toBeFocused();
+});
+
+test("hands focus on into a following widget's open shadow root, as a panel closes with its button off", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div><div id="next-widget"></div><button type="button" id="after">After both widgets</button></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+document.querySelector('#next-widget').attachShadow({ mode: 'open' }).innerHTML =
+    '<p>The next widget</p><button type="button" id="inside">Inside the next widget</button>';
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('#next-widget').locator('#inside')).toBeFocused();
+});
+
 test("starts a widget's panel as a button drawn again says, once the one before it left the widget and was taken down", async ({
     page,
 }) => {
