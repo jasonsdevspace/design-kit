@@ -308,7 +308,7 @@ type Column = {
     readonly key: Key;
     /** Drawn in the place, so a place the page cannot draw in cannot hold it. */
     readonly inPlace: boolean;
-    /** Reaches into the place from the page, so a place the page cannot draw in holds it no more. */
+    /** Reaches into the place from the page, so a place the page cannot draw in skips it too. */
     readonly reaches?: true;
     /** Draws the piece and puts focus where the square starts, before the frame goes on. */
     readonly start: (square: Square) => Promise<void>;
