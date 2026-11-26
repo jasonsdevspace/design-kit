@@ -9,13 +9,13 @@ import { frames, ORIGIN, servePage, tabKey } from './page.js';
  * Every place focus can be, against every piece that reads it. Each row is a place, built by
  * grid-page.tsx: the page, a frame of the page's origin, a frame of another origin, an open and a
  * closed shadow root, a frame inside an open shadow root, an open shadow root inside a frame, a
- * frame of the page's origin inside one of another origin, a frame whose next page has not
- * arrived, and a frame that has loaded its next page. Each column is a piece or a focus request.
- * One that remembers where focus was, as a dialog and a toast do, is drawn on the page, and one
- * that reads focus inside itself, as a stepper or a grid of cells does, is drawn in the place. A
- * column puts focus on a control in the place, the place's frame goes on to its next page where
- * it has one, and the piece acts. Each square states where focus should end, or what the piece
- * should do, a square that cannot be drawn says why, and a square that fails gives the wrong
+ * frame of the page's origin inside one of another origin, a frame whose next page has not arrived,
+ * a frame that has loaded its next page, and a frame the page takes away. Each column is a piece or
+ * a focus request. One that remembers where focus was, as a dialog and a toast do, is drawn on the
+ * page, and one that reads focus inside itself, as a stepper or a grid of cells does, is drawn in
+ * the place. A column puts focus on a control in the place, the place's frame goes on to its next
+ * page where it has one, and the piece acts. Each square states where focus should end, or what the
+ * piece should do, a square that cannot be drawn says why, and a square that fails gives the wrong
  * answer its cause predicts.
  */
 
@@ -308,6 +308,8 @@ type Column = {
     readonly key: Key;
     /** Drawn in the place, so a place the page cannot draw in cannot hold it. */
     readonly inPlace: boolean;
+    /** Reaches into the place from the page, so a place the page cannot draw in holds it no more. */
+    readonly reaches?: true;
     /** Draws the piece and puts focus where the square starts, before the frame goes on. */
     readonly start: (square: Square) => Promise<void>;
     /** What the piece or the visitor does once the frame has gone on. */
@@ -340,8 +342,9 @@ const COLUMNS: readonly Column[] = [
     {
         name: 'a dialog whose opener the page removes hands focus to the main content',
         key: 'dialogGone',
-        // The page reaches into the place to remove the opener, so the place must be one it can draw in.
-        inPlace: true,
+        inPlace: false,
+        // The page reaches into the place to remove the opener, so the place is one it can draw in.
+        reaches: true,
         start: async (square) => {
             // Opened from the field that has focus, which the page then removes.
             await focusOn(square, 'typed');
@@ -678,7 +681,10 @@ for (const [row, words, path] of ROWS) {
     test.describe(`with focus ${words}`, () => {
         for (const column of COLUMNS) {
             test(column.name, async ({ page, browserName }) => {
-                test.skip(column.inPlace && UNDRAWN[row] !== undefined, UNDRAWN[row]);
+                test.skip(
+                    (column.inPlace || column.reaches === true) && UNDRAWN[row] !== undefined,
+                    UNDRAWN[row]
+                );
                 const square: Square = { page, row, browserName, at: (name) => `${path}${name}` };
                 const failing = FAILING[row]?.[column.key];
                 const gives = inEngine(failing?.gives, browserName);

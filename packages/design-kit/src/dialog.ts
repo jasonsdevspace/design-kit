@@ -111,13 +111,14 @@ const openerOf = (from: DialogOpener | undefined, doc: Document): Element | null
  * React's hands over, since a browser that gives a pressed button no focus leaves nothing else, or
  * else what had focus. Where nothing had focus, or that no longer takes focus, focus goes where
  * `returnTo` says, and then to each frame the opener sat inside as the dialog opened, the innermost
- * first, so an opener that went with the page its frame left hands focus to that frame. A
- * `moveFocus` request asked in the task that closes it, takes it away or takes it down lands in
- * place of the opener, since a request takes focus the kit, or the browser as the dialog closes,
- * hands back after it was asked as free. Focus the page moves elsewhere in that task stays, while
- * focus it puts back on what had focus as the dialog opened counts as the browser's handback. One
- * asked in an earlier task lands only where its frame comes after the close, so a page that awaits
- * before closing asks again just before it closes.
+ * first, so an opener that went with the page its frame left hands focus to that frame, and last to
+ * the app frame's body or the main content, the opener's document's before the dialog's, where
+ * nothing nearer takes focus. A `moveFocus` request asked in the task that closes it, takes it away
+ * or takes it down lands in place of the opener, since a request takes focus the kit, or the
+ * browser as the dialog closes, hands back after it was asked as free. Focus the page moves
+ * elsewhere in that task stays, while focus it puts back on what had focus as the dialog opened
+ * counts as the browser's handback. One asked in an earlier task lands only where its frame comes
+ * after the close, so a page that awaits before closing asks again just before it closes.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -203,7 +204,16 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // frame left, focus goes to that frame, as near as the page can reach, and the app frame's
         // body or the main content comes last, where nothing nearer takes focus.
         if (back)
-            handBack(opener, settings.returnTo?.(), restoring.get(dialog), ...via, homeOf(dialog));
+            handBack(
+                opener,
+                settings.returnTo?.(),
+                restoring.get(dialog),
+                ...via,
+                // The opener's own document first, the page's where a dialog inside a frame was
+                // opened from it, then the dialog's.
+                opener ? homeOf(opener) : null,
+                homeOf(dialog)
+            );
         opener = null;
         via = [];
         restoring.delete(dialog);

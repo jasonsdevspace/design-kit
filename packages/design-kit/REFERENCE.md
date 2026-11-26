@@ -2379,8 +2379,8 @@ Once a frame has loaded its next page, the control that had focus in it has gone
 left, so a toast hands focus back to the frame, and so does a dialog whose `returnTo` gives nothing
 that takes focus, and a view that arrives leaves the visitor in it. Where the page takes a frame
 away while a dialog or a toast is open, or removes the control a dialog was opened from, they hand
-focus to the main content, or to the frame the control sat in while that frame is still on the
-page.
+focus to the frame the control sat in while that frame is still on the page, and otherwise to the
+app frame's body or the main content.
 
 A page sees focus inside a closed shadow root as the root's host. A dialog, `moveFocus`, a view that
 arrives after the visitor moves into a field there, a grid of cells, a table's pinned column, a
@@ -4273,22 +4273,26 @@ remember. Called otherwise, it takes the element to return to, or remembers what
 nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
 goes to what `returnTo` gives, and then to each frame the opener sat inside as the dialog opened,
 the innermost first, so an opener that went with the page its frame left hands focus to that frame,
-and last to the app frame's body or the page's main content, as every piece does where nothing
-nearer takes focus. Since such a frame is of the page's origin, `returnTo` can give a place in its
-next page, such as its heading, which is nearer than the frame, and that is why it comes first. A
-page that has somewhere more useful for focus, such as the next field after a Save, asks for it with
-`moveFocus` in the task that closes the dialog, whether that task closes it, takes it from the page
-or takes it down, and focus goes there rather than to the opener. Focus the page moves elsewhere in
-that task stays where it put it, while focus it puts back on what had focus as the dialog opened
-counts as the browser's handing it back. A request asked in an earlier task, such as before an
-awaited save, lands only where its frame comes after the dialog closes, so a page that awaits before
-closing asks again just before it closes. It also closes the dialog on a tap on the scrim around it,
-one that starts and ends there so a drag out of the dialog closes nothing. A dialog the page
-attaches inside a frame of its own origin that it drives hands focus back as it does on the page, to
-an opener in the frame or on the page, and stays in the document it was attached in, so a page that
-moves it into another takes it down and attaches it again. A dialog in a frame makes only that frame
-inert, so Tab past its last control and a screen reader's reading keys reach the page around it, and
-a page that needs the whole view held opens the dialog on the page.
+and last to the app frame's body or the main content, the page's before the dialog's own where a
+dialog inside a frame was opened from the page, where that takes focus, as the skip link's
+`tabindex="-1"` lets it, as every piece does where nothing nearer takes focus. A dialog whose answer
+removes what opened it, such as a Delete that takes its row, gives `returnTo` the next row's control
+or the list's heading, so focus stays where the visitor was working rather than going to the main
+content. Since such a frame is of the page's origin, `returnTo` can give a place in its next page,
+such as its heading, which is nearer than the frame, and that is why it comes first. A page that has
+somewhere more useful for focus, such as the next field after a Save, asks for it with `moveFocus`
+in the task that closes the dialog, whether that task closes it, takes it from the page or takes it
+down, and focus goes there rather than to the opener. Focus the page moves elsewhere in that task
+stays where it put it, while focus it puts back on what had focus as the dialog opened counts as the
+browser's handing it back. A request asked in an earlier task, such as before an awaited save, lands
+only where its frame comes after the dialog closes, so a page that awaits before closing asks again
+just before it closes. It also closes the dialog on a tap on the scrim around it, one that starts
+and ends there so a drag out of the dialog closes nothing. A dialog the page attaches inside a frame
+of its own origin that it drives hands focus back as it does on the page, to an opener in the frame
+or on the page, and stays in the document it was attached in, so a page that moves it into another
+takes it down and attaches it again. A dialog in a frame makes only that frame inert, so Tab past
+its last control and a screen reader's reading keys reach the page around it, and a page that needs
+the whole view held opens the dialog on the page.
 
 A dialog that must be answered is attached with `{ stay: true }`, and then stays open on Escape, a
 phone's Back and the scrim. That is held by the dialog's `closedby` attribute, which Chrome reads

@@ -1013,3 +1013,85 @@ window.ready = true;`,
     await expect(page.getByRole('dialog', { name: 'End the game now?' })).toBeHidden();
     await expect(opener).toBeFocused();
 });
+
+/** A dialog that asks before a round is deleted, with one answer that closes it. */
+const CONFIRM =
+    '<dialog class="dk-dialog" id="confirm" aria-labelledby="confirm-title"><h2 class="dk-dialog-title" id="confirm-title">Delete the round?</h2>' +
+    '<form method="dialog" class="dk-dialog-actions"><button type="submit" class="dk-button">Keep it</button></form></dialog>';
+
+test('hands focus to the main content without scrolling the page, where the page removed what opened it', async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await servePage(page, {
+        title: 'Rounds',
+        body: `<main tabindex="-1" id="home"><h1>Rounds</h1>${Array.from(
+            { length: 40 },
+            (_, index) => `<p>Round ${String(index + 1)} was played.</p>`
+        ).join(
+            ''
+        )}<button type="button" class="dk-button" id="delete">Delete round 40</button>${Array.from(
+            { length: 40 },
+            (_, index) => `<p>Round ${String(index + 41)} is to come.</p>`
+        ).join('')}</main>${CONFIRM}`,
+        script: `import { attachDialog } from './controls.js';
+const ask = attachDialog(document.querySelector('#confirm'));
+document.querySelector('#delete').addEventListener('click', ask);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    // The rows after the button keep the page as tall once it goes, so only focus could scroll it.
+    await page.locator('#delete').click();
+    await expect(page.getByRole('dialog', { name: 'Delete the round?' })).toBeVisible();
+    const before = await page.evaluate(() => window.scrollY);
+    expect(before).toBeGreaterThan(0);
+    await page.evaluate(() => document.querySelector('#delete')?.remove());
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Delete the round?' })).toBeHidden();
+    await expect(page.locator('#home')).toBeFocused();
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
+});
+
+test("hands focus to the app frame's body as a dialog opened with nothing focused closes", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Welcome',
+        body: `<div class="dk-app"><main class="dk-app-body" id="app-body" tabindex="0"><h1>Welcome</h1></main></div>${CONFIRM}`,
+        script: `import { attachDialog } from './controls.js';
+window.ask = attachDialog(document.querySelector('#confirm'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.evaluate(() => {
+        (window as unknown as { ask: () => void }).ask();
+    });
+    await expect(page.getByRole('dialog', { name: 'Delete the round?' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Delete the round?' })).toBeHidden();
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
+test("hands focus to the page's main content, not the frame's, where a dialog inside a frame was opened from the page's control the page removed", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Rounds',
+        body: `<main tabindex="-1" id="home"><h1>Rounds</h1><button type="button" class="dk-button" id="delete">Delete the round</button><iframe title="Round" srcdoc="<!doctype html><title>Round</title><link rel=stylesheet href=/kit.css><main tabindex=-1 id=frame-home><p>Round 3</p></main>${CONFIRM.replaceAll('"', '')}"></iframe></main>`,
+        script: `import { attachDialog } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.title !== 'Round')
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+const ask = attachDialog(frame.contentDocument.querySelector('#confirm'));
+document.querySelector('#delete').addEventListener('click', ask);
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#delete').click();
+    const dialog = page.frameLocator('iframe').getByRole('dialog', { name: 'Delete the round?' });
+    await expect(dialog).toBeVisible();
+    await page.evaluate(() => document.querySelector('#delete')?.remove());
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('#home')).toBeFocused();
+});
