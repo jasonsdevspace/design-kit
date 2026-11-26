@@ -141,9 +141,18 @@ describe('the words the prose check refuses', () => {
     it.each(['for now leaves', 'for now skips', 'not implementedly'])(
         'passes %j, which only starts like a process artifact',
         (words) => {
-            expect(rules('a.ts', `// The cache ${words} stale rows\n`)).toEqual([]);
+            expect(rules('a.ts', `// The tide ${words} the rocks bare\n`)).toEqual([]);
         }
     );
+
+    it.each([
+        'For now, skipping the check',
+        'for now, leaving it',
+        'for now skipped',
+        'for now left',
+    ])('refuses %j, a phrase that takes an ending', (words) => {
+        expect(rules('a.ts', `// ${words}\n`)).toEqual(['a.ts:1  process artifact']);
+    });
 
     it.each([
         'issue 12',
