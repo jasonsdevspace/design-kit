@@ -1,4 +1,4 @@
-import { byIdOutward, isOff } from './find.js';
+import { byIdOutward, drawnBefore, isOff } from './find.js';
 import {
     deepActive,
     focusFirst,
@@ -9,7 +9,7 @@ import {
     seen,
     seenNow,
 } from './focus.js';
-import { handed, inputs, press, restoring, sightChanges } from './state.js';
+import { handed, inputs, liftedFor, press, restoring, sightChanges } from './state.js';
 import { teardown } from './teardown.js';
 
 /*
@@ -115,8 +115,10 @@ const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined
     const { from, page } = asked;
     const was = comparedOf(asked);
     const doc = was?.ownerDocument ?? document;
-    const now = seenNow(doc);
-    const view = (element: Element | null) => seen(element, doc);
+    const now = seenNow(doc, from);
+    // Each place kept by another reading is lifted out of closed roots the request's own node is
+    // not inside, so it compares in the same view as focus read through that node.
+    const view = (element: Element | null) => seen(liftedFor(element, from), doc);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
     // Focus on what had it as a dialog opened is free while that dialog is closed and its close
@@ -244,11 +246,9 @@ export const focusOnArrival = (
                 const place = placeOf(view.heading, view.asked.page ?? view.asked.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
-            places.sort((one, other) =>
-                one.place.compareDocumentPosition(other.place) & Node.DOCUMENT_POSITION_PRECEDING
-                    ? 1
-                    : -1
-            );
+            // In the order the page draws them, through shadow roots, since the browser orders nodes
+            // of different trees as it chooses.
+            places.sort((one, other) => (drawnBefore(one.place, other.place) ? -1 : 1));
             const [first] = places;
             if (first) land(first.place, first.view.fallbacks, first.view.asked);
             else {

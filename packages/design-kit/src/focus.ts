@@ -47,8 +47,12 @@ export const seen = (element: Element | null, doc: Document = document): Element
     return at;
 };
 
-/** What has focus as a piece in the document given sees it, read from the page down. */
-export const seenNow = (doc?: Document): Element | null => seen(deepActive(), doc);
+/**
+ * What has focus as a piece in the document given sees it, read from the page down, and into each
+ * closed shadow root around the node given, which a piece holds.
+ */
+export const seenNow = (doc?: Document, near?: Node | null): Element | null =>
+    seen(deepActive(near), doc);
 
 /**
  * The document a piece reads focus in: the one its element sits in, or the page's where that one
@@ -60,7 +64,7 @@ export const docOf = (element: Element): Document =>
 /** Whether focus is on the element given, as a piece in the element's document sees it. */
 export const isFocused = (element: Element): boolean => {
     const doc = docOf(element);
-    return seenNow(doc) === seen(element, doc);
+    return seenNow(doc, element) === seen(element, doc);
 };
 
 /**
@@ -68,8 +72,8 @@ export const isFocused = (element: Element): boolean => {
  * focus, read from the page down, kept as it is so a control inside a nested frame is reached, but
  * a blank body as the piece sees it, so one of another frame is kept as that frame.
  */
-export const placeNow = (doc: Document): Element | null => {
-    const raw = deepActive();
+export const placeNow = (doc: Document, near?: Node | null): Element | null => {
+    const raw = deepActive(near);
     return raw && isBlank(raw) ? seen(raw, doc) : raw;
 };
 
@@ -93,6 +97,9 @@ export const holds = (place: Element, node: Node | null): boolean => {
 /** A place focus may be handed to, or a function that gives more of them when it is reached. */
 type Place = Element | null | undefined | (() => readonly Element[]);
 
+/** The place the last walk focused, so a handback keeps it as a piece around it reads it. */
+let taken: Element | null = null;
+
 /**
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
@@ -110,11 +117,14 @@ const tryFocus = (place: Element | null | undefined): boolean | undefined => {
         isBlank(place)
     )
         return undefined;
-    const before = deepActive();
+    const before = deepActive(place);
     (place as HTMLElement).focus({ preventScroll: place.matches('.dk-app-body') });
-    const now = deepActive();
+    const now = deepActive(place);
     const at = (element: Element | null) => seen(element, place.ownerDocument);
-    if (holds(place, now) && (at(now) !== at(before) || place === at(before))) return true;
+    if (holds(place, now) && (at(now) !== at(before) || place === at(before))) {
+        taken = place;
+        return true;
+    }
     // Focus that fell to a blank body, the page's or a frame's, is no move of the page's.
     return now && now !== before && !isBlank(now) ? false : undefined;
 };
@@ -155,7 +165,7 @@ export const focusFirst = (...places: readonly Place[]): boolean => {
  * hides.
  */
 export const mayHandBack = (piece: Element, had: boolean): boolean => {
-    const at = seenNow(piece.ownerDocument);
+    const at = seenNow(piece.ownerDocument, piece);
     return at ? holds(piece, at) : had;
 };
 
@@ -167,7 +177,7 @@ export const mayHandBack = (piece: Element, had: boolean): boolean => {
  */
 export const handBack = (...places: readonly Place[]): boolean => {
     if (!focusFirst(...places)) return false;
-    handed.to = deepActive();
+    handed.to = deepActive(taken);
     handed.at = performance.now();
     return true;
 };
