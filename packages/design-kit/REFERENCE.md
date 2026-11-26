@@ -1804,6 +1804,14 @@ it to as the dialog closed. A stepper hands it back only where focus is on one o
 hides. Either way, focus a page sets in the abort's own task stays, and a `moveFocus` asked in that
 task still lands. A control slotted into a piece drawn inside a shadow root counts as in the piece.
 
+Where nothing nearer takes focus, a piece hands it to the body of an app frame around it or a main
+content, tried in order from the piece out through the page as it is drawn, through the slot an
+element is drawn in and the host of each shadow root: the body of each app frame it is in, each
+main content it is in, and as the walk leaves a shadow root, that root's main content, out to the
+document's. One that takes no focus, as a main content with no tabindex, is passed over for the
+next. So a widget's own main content comes before the app frame around the widget, and a piece
+inside a widget in an app a component draws, or slotted into one, finds the app's body.
+
 Each place a piece hands focus back to can be any HTML or SVG element that takes focus, such as a
 link in an inline chart, and one that is hidden, inert or disabled is passed over for the next. A
 control marked off with `aria-disabled` still takes focus, so it is passed over only where a piece

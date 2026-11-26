@@ -320,6 +320,94 @@ attachPanel(root.querySelector('#opener'));`,
     await expect(page.locator('#after')).toBeFocused();
 });
 
+test("hands focus to the app frame's body around a widget as its panel closes with nothing nearer, where the app is a component", async ({
+    page,
+}) => {
+    // An app drawn by a component of its own, its frame inside the component's shadow root, and a
+    // widget in the app's body with a panel in its own shadow root, and nothing after the panel.
+    await servePage(page, {
+        title: 'Shop',
+        body: '<div id="shell"></div>',
+        script: `import { attachPanel } from './controls.js';
+const shell = document.querySelector('#shell').attachShadow({ mode: 'open' });
+shell.innerHTML = '<link rel="stylesheet" href="/kit.css"><div class="dk-app"><main class="dk-app-body" id="app-body" tabindex="0"><div id="widget"></div></main></div>';
+const root = shell.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div>\`;
+attachPanel(root.querySelector('#opener'));
+window.root = root;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
+/** An app drawn by a component, with a widget in the app's body, drawn as the case gives. */
+const openApp = async (page: Page, shell: string, light = '') => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<div id="shell">${light}</div>`,
+        script: `import { attachPanel } from './controls.js';
+const shell = document.querySelector('#shell').attachShadow({ mode: 'open' });
+shell.innerHTML = ${JSON.stringify(shell)};
+const root = (shell.querySelector('#widget') ?? document.querySelector('#widget')).attachShadow({ mode: 'open' });
+root.innerHTML = \`<link rel="stylesheet" href="/kit.css">\${window.own ?? ''}
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div>\`;
+attachPanel(root.querySelector('#opener'));
+window.root = root;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** Opens the widget's panel, marks its button off and closes it by its Close, with nothing after it. */
+const closeWithNothingNearer = async (page: Page) => {
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+};
+
+const APP =
+    '<link rel="stylesheet" href="/kit.css"><div class="dk-app"><main class="dk-app-body" id="app-body" tabindex="0">';
+
+test("hands focus to the app frame's body around a widget slotted into an app a component draws", async ({
+    page,
+}) => {
+    await openApp(page, `${APP}<slot></slot></main></div>`, '<div id="widget"></div>');
+    await closeWithNothingNearer(page);
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
+test("passes over a widget's own main content that takes no focus to the app frame's body around it", async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        (window as unknown as { own: string }).own = '<main id="own">The widget</main>';
+    });
+    await openApp(page, `${APP}<div id="widget"></div></main></div>`);
+    await closeWithNothingNearer(page);
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
 test("starts a widget's panel as a button drawn again says, once the one before it left the widget and was taken down", async ({
     page,
 }) => {

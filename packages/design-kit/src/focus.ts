@@ -194,14 +194,38 @@ export const framesOf = (control: Element | null, doc: Document | null): [Elemen
 };
 
 /**
- * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
- * for in the shadow root the element sits in, then in the document it sits in, the page's or a
- * frame's.
+ * Where focus goes when nothing nearer takes it, as every place in order, so one that refuses
+ * focus, as a main with no tabindex does, passes to the next: from the element out through the
+ * page as it is drawn, through the slot an element is drawn in and the host of each shadow root,
+ * the body of each app frame it is in and each main content it is in, and as the walk leaves a
+ * root, that root's main content. So a widget's own main content comes before the app frame around
+ * the widget, a piece inside a widget in an app a component draws, or slotted into one, finds the
+ * app's body, and the walk ends at the main content of the document the element sits in, the
+ * page's or a frame's.
  */
-export const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-    rootOf(element).querySelector('main') ??
-    element.ownerDocument.querySelector('main');
+export const homeOf =
+    (element: Element): (() => readonly Element[]) =>
+    () => {
+        const homes: Element[] = [];
+        const add = (home: Element | null | undefined) => {
+            if (home && !homes.includes(home)) homes.push(home);
+        };
+        let at: Element | null = element;
+        while (at) {
+            if (at.matches('.dk-app')) add(at.querySelector(':scope > .dk-app-body'));
+            if (at.matches('main')) add(at);
+            // The host is read from a shadow root alone, since a document's named form or frame
+            // called host would answer for it.
+            const parent: Node | null = at.parentNode;
+            const up: Element | null =
+                at.assignedSlot ??
+                at.parentElement ??
+                (parent?.nodeType === 11 ? (parent as ShadowRoot).host : null);
+            if (!up || rootOf(up) !== rootOf(at)) add(rootOf(at).querySelector('main'));
+            at = up;
+        }
+        return homes;
+    };
 
 /**
  * How focus is moved after a change, and the signal that calls the request off. A request asked as
