@@ -588,7 +588,7 @@ const ANSWERS: Squares<ByEngine> = {
         toast: { chromium: 'x', webkit: 'x', firefox: 'main' },
         arrival: { chromium: 'x/c', firefox: 'x/c', webkit: 'x' },
     },
-    arrived: { toast: 'fa', press: 'fa' },
+    arrived: { dialog: 'fa', toast: 'fa', press: 'fa' },
 };
 
 /** Why a piece cannot be drawn in a place, for a column drawn in it. */
@@ -611,10 +611,6 @@ const CLOSED_OWN = "A piece inside a closed shadow root reads focus there as the
 /** Focus read from the page down stops at a frame of another origin. */
 const THROUGH_OTHER =
     "Focus in a frame of the page's origin inside one of another origin is read from the page down, which stops at the frame of another origin.";
-
-/** A dialog whose opener's page has gone hands focus to the body. */
-const DIALOG_GONE =
-    "A dialog whose opener went with the page a frame left hands focus to the page's body, not to the frame.";
 
 /** A square that fails: the wrong answer its cause gives, and the cause. */
 type Failing = { readonly gives: ByEngine; readonly because: string };
@@ -645,7 +641,6 @@ const FAILING: Squares<Failing> = {
         readOnly: { gives: 'xo/xi, marked, down hidden', because: THROUGH_OTHER },
         takeDown: { gives: 'xo/xi', because: THROUGH_OTHER },
     },
-    arrived: { dialog: { gives: 'body', because: DIALOG_GONE } },
 };
 
 for (const [row, words, path] of ROWS) {
