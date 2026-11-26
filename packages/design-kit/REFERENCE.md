@@ -4432,12 +4432,14 @@ through the hosts to the document, as a focus request finds an id, so a widget's
 button inside an open shadow root opens there, and a page's panel opens from a button inside a
 widget. Each panel is kept by the root that holds it, so a widget's panel and the page's with the
 same id stay apart, and an element of one root that shares a panel's id in another closes nothing. A
-panel's id must be the only one in its root, so a page that shows markup its visitors wrote prefixes
-or strips the ids in it. A panel whose button the page attaches inside a frame of its own origin
-that it drives, other than one held inside a frame of another origin, as [Where focus can
-be](#where-focus-can-be) has it, works in that frame's document as it does on the page, and the
-button stays in the document it was attached in, so a page that moves it into another takes it down
-and attaches it again.
+screen reader follows `aria-controls` only within one root, so a button that names a panel in
+another root opens it but is heard with its expanded state alone, and a widget keeps its panel
+beside its button. A panel's id must be the only one in its root, so a page that shows markup its
+visitors wrote prefixes or strips the ids in it. A panel whose button the page attaches inside a
+frame of its own origin that it drives, other than one held inside a frame of another origin, as
+[Where focus can be](#where-focus-can-be) has it, works in that frame's document as it does on the
+page, and the button stays in the document it was attached in, so a page that moves it into another
+takes it down and attaches it again.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
 as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches
@@ -4465,14 +4467,15 @@ them where they are. Where focus goes back and the visitor's last press was a li
 place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
 that place instead. Where the button that opened the panel takes no focus, focus goes to the first
 other attached button that names it, else the first thing after the panel the keyboard reaches by
-Tab, else the app frame's body or the page's main content. Safari focuses a pressed button only
-where it has a tabindex, so the kit writes `tabindex="0"` on an attached button and the corner
-Close, and `tabindex="-1"` on the panel, so a press anywhere in it leaves focus in it, and on the
-place a link sends focus to, each where the page set none, and keeps a tabindex the page set. A
-panel the page draws again while it is open takes them as a press in it begins. A page closes a
-panel from a press's `click`, since a close from its `pointerdown` comes before the browser moves
-focus for the press. A panel no button opens is closed by the page's own script, which moves focus
-to what comes after the panel, or to the heading before it where nothing follows.
+Tab, past the host of a shadow root the panel sits in to the page after it too, else the app frame's
+body or the page's main content. Safari focuses a pressed button only where it has a tabindex, so
+the kit writes `tabindex="0"` on an attached button and the corner Close, and `tabindex="-1"` on the
+panel, so a press anywhere in it leaves focus in it, and on the place a link sends focus to, each
+where the page set none, and keeps a tabindex the page set. A panel the page draws again while it is
+open takes them as a press in it begins. A page closes a panel from a press's `click`, since a close
+from its `pointerdown` comes before the browser moves focus for the press. A panel no button opens
+is closed by the page's own script, which moves focus to what comes after the panel, or to the
+heading before it where nothing follows.
 
 ## What the package exports
 

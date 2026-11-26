@@ -38,14 +38,78 @@ const scopeOfNode = (node: Node): Scope => {
     return root.nodeType === 9 && !(root as Document).defaultView ? document : root;
 };
 
+/** The root each attached button's panel was last found in, kept for a button that leaves it. */
+const settled = new WeakMap<Element, Scope>();
+
 /**
  * The root that holds the panel a button names: where its id is found from the button's own root
  * out through each host to the document, as a focus request finds an id, so a panel drawn beside its
  * button inside a shadow root is found there, and one of the page from a button inside a widget.
  * Where no element has the id yet, the button's own root, where a panel drawn later is looked for.
+ * A button that has left the page keeps the root it was last read in, so its takedown clears the
+ * state there, and where the root changes, as a panel the page draws after its button, the panel's
+ * state moves with it, so it is never kept in two roots.
  */
-const scopeOf = (button: Element): Scope =>
-    scopeOfNode(byIdOutward(button, panelIdOf(button)) ?? button);
+const scopeOf = (button: Element): Scope => {
+    const held = settled.get(button);
+    if (held && !button.isConnected) return held;
+    const id = panelIdOf(button);
+    const scope = scopeOfNode(byIdOutward(button, id) ?? button);
+    if (held && held !== scope) {
+        const opener = lastIn(held).get(id);
+        if (opener && !lastIn(scope).has(id)) lastIn(scope).set(id, opener);
+        lastIn(held).delete(id);
+        if (startedIn(held).delete(id)) startedIn(scope).add(id);
+    }
+    settled.set(button, scope);
+    return scope;
+};
+
+/** The node and each shadow host around it, out to the document, the node first. */
+const outward = (node: Node): readonly Node[] => {
+    const chain: Node[] = [node];
+    for (let root = rootOf(node); root.nodeType === 11; root = rootOf((root as ShadowRoot).host))
+        chain.push((root as ShadowRoot).host);
+    return chain;
+};
+
+/**
+ * Whether one node comes before another as the page draws them, through shadow roots, compared
+ * where the two first share a root, a host before what its shadow root holds, since the browser
+ * orders nodes of different trees as it chooses.
+ */
+const drawnBefore = (one: Node, other: Node): boolean => {
+    const mine = outward(one);
+    const theirs = outward(other);
+    for (const [index, at] of mine.entries())
+        for (const them of theirs)
+            if (rootOf(at) === rootOf(them))
+                return at === them
+                    ? index === 0
+                    : !!(at.compareDocumentPosition(them) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return false;
+};
+
+/**
+ * The elements the keyboard reaches by Tab after a panel, in its own root and then after each host
+ * around it, out to the document, so focus goes on past a widget to the page after it.
+ */
+const followingOf = (panel: Element): (HTMLElement | SVGElement)[] => {
+    const after: (HTMLElement | SVGElement)[] = [];
+    for (let anchor: Element = panel; ;) {
+        const root = rootOf(anchor);
+        const from = anchor;
+        after.push(
+            ...[...root.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
+                (next) =>
+                    next.tabIndex >= 0 &&
+                    from.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
+            )
+        );
+        if (root.nodeType !== 11) return after;
+        anchor = (root as ShadowRoot).host;
+    }
+};
 
 /**
  * Every attached button not let go, with the document it was attached in, kept apart from the page
@@ -60,9 +124,7 @@ const openersOf = (id: string, scope: Scope): HTMLButtonElement[] =>
         .filter(
             (button) => button.isConnected && panelIdOf(button) === id && scopeOf(button) === scope
         )
-        .sort((one, other) =>
-            one.compareDocumentPosition(other) & Node.DOCUMENT_POSITION_PRECEDING ? 1 : -1
-        );
+        .sort((one, other) => (drawnBefore(one, other) ? -1 : 1));
 
 /**
  * Where the visitor's place last was, the path of the last focus that moved or of their last
@@ -168,7 +230,8 @@ const jumpFrom = (panel: HTMLElement): HTMLElement | SVGElement | null => {
  * and that last press was a link in the panel to a place on this page outside it, it goes there
  * instead. Otherwise it goes to the button given, the one pressed or the one that opened the panel,
  * else the first attached button that names it and takes focus, else the first thing after the
- * panel the keyboard reaches by Tab, else the body of the app's frame or the page's main content.
+ * panel the keyboard reaches by Tab, past the host of a shadow root it sits in too, else the body of
+ * the app's frame or the page's main content.
  */
 const showPanel = (scope: Scope, id: string, open: boolean, by?: HTMLButtonElement): void => {
     const panel = scope.getElementById(id);
@@ -186,12 +249,7 @@ const showPanel = (scope: Scope, id: string, open: boolean, by?: HTMLButtonEleme
         ...[by, ...buttons].filter((button) => !isOff(button)),
         // Looked for only once the place a link went to and every button has refused focus, since
         // it reads every element of the page that takes focus.
-        () =>
-            [...scope.querySelectorAll<HTMLElement | SVGElement>(FOCUSABLE)].filter(
-                (next) =>
-                    next.tabIndex >= 0 &&
-                    panel.compareDocumentPosition(next) === Node.DOCUMENT_POSITION_FOLLOWING
-            ),
+        () => followingOf(panel),
         homeOf(panel)
     );
 };
@@ -211,11 +269,17 @@ const onPanelPress = (event: Event): void => {
         lastPath = path;
         lastWasPress = true;
     }
-    const button = path.find(
-        (node): node is HTMLButtonElement => isElement(node) && node.localName === 'button'
+    const at = path.filter(isElement);
+    // The innermost attached button the press is in, or the innermost Close, read through a
+    // component's open shadow root, so a button of the component's own inside either counts as it.
+    const closeAt = at.findIndex((element) => element.classList.contains('dk-close'));
+    const button = at.find(
+        (element, index): element is HTMLButtonElement =>
+            element.localName === 'button' &&
+            (attachedPanels.has(element as HTMLButtonElement) || index < closeAt)
     );
     if (!button) return;
-    if (attachedPanels.has(button)) {
+    if (attachedPanels.has(button) && (closeAt < 0 || at.indexOf(button) < closeAt)) {
         if (!isOff(button))
             showPanel(
                 scopeOf(button),
@@ -225,13 +289,15 @@ const onPanelPress = (event: Event): void => {
             );
         return;
     }
-    const panel = button.closest('.dk-close')?.parentElement;
+    const panel = at[closeAt]?.parentElement;
     const id = panel?.id;
     if (!panel || !id) return;
     const scope = scopeOfNode(panel);
     if (scope.getElementById(id) !== panel) return;
+    // Read before the root's state, so state a button kept in another root has moved here.
+    const named = openersOf(id, scope);
     const last = lastIn(scope);
-    if (last.has(id) || openersOf(id, scope).length) showPanel(scope, id, false, last.get(id));
+    if (last.has(id) || named.length) showPanel(scope, id, false, last.get(id));
 };
 
 /** Where focus moves, kept always, so an older place never outlives what followed it. */
@@ -279,6 +345,9 @@ const openPanelAt = (
         return lastIn(scope).has(id) ? { scope, id } : null;
     }
     const scope = scopeOfNode(place);
+    // The buttons that name it are read first, so a panel's state its button kept in another root,
+    // as one the page drew after its button, has moved here.
+    if (place.id) openersOf(place.id, scope);
     return lastIn(scope).has(place.id) && scope.getElementById(place.id) === place
         ? { scope, id: place.id }
         : null;

@@ -264,10 +264,103 @@ window.ready = true;`,
         'aria-expanded',
         'false'
     );
+    // Escape inside the widget's panel closes it alone and hands focus back to its button.
+    await widget.getByRole('button', { name: 'Widget tips' }).click();
+    await widget.getByRole('button', { name: "Close the widget's tips" }).focus();
+    await page.keyboard.press('Escape');
+    await expect(widget.getByRole('heading', { name: "The widget's tips" })).toBeHidden();
+    await expect(widget.getByRole('button', { name: 'Widget tips' })).toBeFocused();
     // The page's own button opens the page's panel alone.
     await page.locator('#page-tips').click();
     await expect(pagePanel).toBeVisible();
     await expect(widget.getByRole('heading', { name: "The widget's tips" })).toBeHidden();
+});
+
+/** A page with a widget whose open shadow root holds a panel's button, drawn by the script given. */
+const openWidget = async (page: Page, script: string, after = '') => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1><div id="widget"></div>${after}</main>`,
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+window.attachPanel = attachPanel;
+${script}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+type Widget = {
+    root: ShadowRoot;
+    attachPanel: (button: HTMLButtonElement) => { detach: () => void };
+};
+
+test("hands focus on past a widget to the page's next control as its panel closes with its button off", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div>\`;
+attachPanel(root.querySelector('#opener'));`,
+        '<button type="button" id="after">After the widget</button>'
+    );
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+    await expect(page.locator('#after')).toBeFocused();
+});
+
+test("starts a widget's panel as a button drawn again says, once the one before it left the widget and was taken down", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `root.innerHTML = \`<button type="button" id="first" aria-expanded="false" aria-controls="tips">Tips</button>
+<div id="tips" hidden><a href="#deal">How to deal</a></div>\`;
+window.first = attachPanel(root.querySelector('#first'));`
+    );
+    await page.evaluate(() => {
+        const { root, attachPanel } = window as unknown as Widget;
+        const first = root.querySelector<HTMLButtonElement>('#first');
+        first?.remove();
+        (window as unknown as { first: { detach: () => void } }).first.detach();
+        const again = root.ownerDocument.createElement('button');
+        Object.assign(again, { type: 'button', id: 'again', textContent: 'Tips' });
+        again.setAttribute('aria-expanded', 'true');
+        again.setAttribute('aria-controls', 'tips');
+        root.prepend(again);
+        attachPanel(again);
+    });
+    await expect(page.locator('#widget').getByRole('link', { name: 'How to deal' })).toBeVisible();
+    await expect(page.locator('#widget').getByRole('button', { name: 'Tips' })).toHaveAttribute(
+        'aria-expanded',
+        'true'
+    );
+});
+
+test("closes by Escape a page's panel opened from a widget's button before the page drew it", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `root.innerHTML = '<button type="button" id="help-button" aria-expanded="true" aria-controls="help">Help</button>';
+attachPanel(root.querySelector('#help-button'));
+document.querySelector('main').insertAdjacentHTML('beforeend', '<div id="help"><a href="#start">Start here</a></div>');`
+    );
+    await page.getByRole('link', { name: 'Start here' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#help')).toBeHidden();
+    await expect(page.locator('#widget').getByRole('button', { name: 'Help' })).toBeFocused();
 });
 
 /** Shows a message on the toast a page has attached, with no action. */
