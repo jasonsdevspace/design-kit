@@ -472,3 +472,35 @@ test('shades no edge of a frame whose table fits, nor any in forced colors', asy
         );
     }
 });
+
+/** A record table of a word and four figures of up to three digits, as an app's records draw it. */
+const RECORDS = `<p class="dk-table-title" id="records">Records</p>
+<div class="dk-table-scroll" role="region" aria-labelledby="records" tabindex="0">
+<table class="dk-table" aria-labelledby="records">
+<thead><tr><th scope="col">Game</th><th scope="col" class="dk-table-number">Played</th><th scope="col" class="dk-table-number">Won</th><th scope="col" class="dk-table-number">Best</th><th scope="col" class="dk-table-number">Average</th></tr></thead>
+<tbody>
+<tr><th scope="row">Flip 7</th><td class="dk-table-number">2</td><td class="dk-table-number">1</td><td class="dk-table-number">229</td><td class="dk-table-number">116</td></tr>
+<tr><th scope="row">Skyjo</th><td class="dk-table-number">32</td><td class="dk-table-number">14</td><td class="dk-table-number">108</td><td class="dk-table-number">32</td></tr>
+</tbody></table></div>`;
+
+for (const [where, body] of [
+    ['a content page', `<main class="dk-page"><h1>Records</h1>${RECORDS}</main>`],
+    [
+        "an app's frame",
+        `<div class="dk-app"><header class="dk-app-bar"><h1 class="dk-app-title">Records</h1></header><main class="dk-app-body">${RECORDS}</main></div>`,
+    ],
+] as const)
+    test(`fits a five column table of a word and four short figures on a 320px phone, in ${where}`, async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 320, height: 700 });
+        await servePage(page, { title: 'Records', body });
+        const region = page.getByRole('region', { name: 'Records' });
+        const widths = await region.evaluate((element) => ({
+            scroll: element.scrollWidth,
+            client: element.clientWidth,
+        }));
+        expect(widths.scroll, 'the table is no wider than its frame').toBeLessThanOrEqual(
+            widths.client
+        );
+    });
