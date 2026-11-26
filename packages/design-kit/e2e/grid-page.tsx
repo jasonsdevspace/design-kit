@@ -177,6 +177,16 @@ const build = async (row: string): Promise<Place> => {
             return leaving(spot, 'fl', '/held', false);
         case 'arrived':
             return leaving(spot, 'fa', '/next', true);
+        case 'removed': {
+            const frame = await frameIn(spot, 'fr');
+            return {
+                holder: holderIn(frame.contentDocument as Document),
+                leave: () => {
+                    frame.remove();
+                    return Promise.resolve();
+                },
+            };
+        }
         default:
             throw new Error(`no place named ${row}`);
     }
@@ -303,6 +313,10 @@ const grid = {
         await place.leave?.();
     },
     named,
+    /** Takes the element named from the place, as a page removes a control. */
+    remove: (name: string): void => {
+        named(name).remove();
+    },
     /** Whether the element named is drawn in the place yet. */
     has: (name: string): boolean => place.holder?.querySelector(`[data-name="${name}"]`) !== null,
     /** Opens the page's dialog from the field in the place, or from nothing where it is out of reach. */

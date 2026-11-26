@@ -4,6 +4,7 @@ import {
     framesOf,
     handBack,
     holds,
+    homeOf,
     isBlank,
     mayHandBack,
     placeNow,
@@ -198,9 +199,11 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // What the browser handed focus to as the dialog closed comes after returnTo, so where the
         // opener has gone and nothing else takes focus, that place counts as handed back, and a
         // request asked in the task that closed the dialog still lands. The frames around the
-        // opener come last, the innermost first, so where the opener went with the page its frame
-        // left, focus goes to that frame, as near as the page can reach.
-        if (back) handBack(opener, settings.returnTo?.(), restoring.get(dialog), ...via);
+        // opener come after it, the innermost first, so where the opener went with the page its
+        // frame left, focus goes to that frame, as near as the page can reach, and the app frame's
+        // body or the main content comes last, where nothing nearer takes focus.
+        if (back)
+            handBack(opener, settings.returnTo?.(), restoring.get(dialog), ...via, homeOf(dialog));
         opener = null;
         via = [];
         restoring.delete(dialog);

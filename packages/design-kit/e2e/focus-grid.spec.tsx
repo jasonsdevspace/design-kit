@@ -34,6 +34,7 @@ const ROWS = [
     ['ours in other', "in a frame of the page's origin inside one of another origin", 'xo/xi/'],
     ['loading', 'in a frame whose next page has not arrived', 'fl/'],
     ['arrived', 'in a frame that has loaded its next page', 'fa/'],
+    ['removed', 'in a frame the page takes away', 'fr/'],
 ] as const;
 
 type Row = (typeof ROWS)[number][0];
@@ -179,6 +180,8 @@ const located = (page: Page, row: Row, name: string): Locator | null => {
             return page.frameLocator('iframe[name="fl"]').locator(named);
         case 'arrived':
             return page.frameLocator('iframe[name="fa"]').locator(named);
+        case 'removed':
+            return page.frameLocator('iframe[name="fr"]').locator(named);
     }
 };
 
@@ -281,6 +284,7 @@ const drawn = (page: Page, name: string): Promise<unknown> =>
 
 type Key =
     | 'dialog'
+    | 'dialogGone'
     | 'panel'
     | 'toast'
     | 'readOnly'
@@ -332,6 +336,24 @@ const COLUMNS: readonly Column[] = [
             await expect(page.locator('#ask')).toBeHidden();
         },
         expected: ({ at }) => at('typed'),
+    },
+    {
+        name: 'a dialog whose opener the page removes hands focus to the main content',
+        key: 'dialogGone',
+        // The page reaches into the place to remove the opener, so the place must be one it can draw in.
+        inPlace: true,
+        start: async (square) => {
+            // Opened from the field that has focus, which the page then removes.
+            await focusOn(square, 'typed');
+            await call(square.page, 'ask');
+            await expect(square.page.locator('#ask')).toBeVisible();
+        },
+        act: async ({ page }) => {
+            await call(page, 'remove', 'typed');
+            await page.keyboard.press('Escape');
+            await expect(page.locator('#ask')).toBeHidden();
+        },
+        expected: () => 'main',
     },
     {
         name: 'a panel hands focus back to its button',
@@ -589,12 +611,20 @@ const ANSWERS: Squares<ByEngine> = {
         arrival: { chromium: 'x/c', firefox: 'x/c', webkit: 'x' },
     },
     arrived: { dialog: 'fa', toast: 'fa', press: 'fa' },
+    // The visitor's field went with the frame, and no press stands, so focus stays where it fell.
+    removed: { dialog: 'main', toast: 'main', press: 'body' },
+    // A frame the opener sat in is nearer than the main content while it is still on the page.
+    frame: { dialogGone: 'f' },
+    'frame in shadow': { dialogGone: 'host/fs' },
+    'shadow in frame': { dialogGone: 'sf' },
+    loading: { dialogGone: 'fl' },
 };
 
 /** Why a piece cannot be drawn in a place, for a column drawn in it. */
 const UNDRAWN: Readonly<Partial<Record<Row, string>>> = {
     other: 'The page cannot draw a piece inside a frame of another origin.',
     arrived: 'A piece drawn in a frame goes with the page the frame leaves.',
+    removed: 'A piece drawn in a frame goes with the frame the page takes away.',
 };
 
 /** Record 19's limit: focus inside a closed shadow root reads as its host to the page. */
@@ -640,6 +670,7 @@ const FAILING: Squares<Failing> = {
         toast: { gives: { chromium: 'xo', webkit: 'xo', firefox: 'main' }, because: THROUGH_OTHER },
         readOnly: { gives: 'xo/xi, marked, down hidden', because: THROUGH_OTHER },
         takeDown: { gives: 'xo/xi', because: THROUGH_OTHER },
+        dialogGone: { gives: 'xo', because: THROUGH_OTHER },
     },
 };
 
