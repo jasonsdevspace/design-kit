@@ -1656,7 +1656,10 @@ test('raises no error as the page is left and gone back to', async ({ page }) =>
     const errors = errorsOf(page);
     await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
     await expect(page.frameLocator('iframe[title="Card"]').locator('#card')).toBeAttached();
-    await page.goto(`${ORIGIN}/away`, { waitUntil: 'commit' });
+    // The page left goes at the commit, but Chromium is still attaching the next page then, and a
+    // goBack asked before it is attached fails with no active page. The next page's document is
+    // parsed only once it is attached, while its load waits on a picture that never comes.
+    await page.goto(`${ORIGIN}/away`, { waitUntil: 'domcontentloaded' });
     await page.goBack({ waitUntil: 'commit' });
     await page.waitForFunction(() => 'ready' in window);
     await page.clock.runFor(100);
