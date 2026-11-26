@@ -195,11 +195,11 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
         if (dialog.open) return;
-        // What the browser handed focus to as the dialog closed comes last, so where the opener
-        // has gone and nothing else takes focus, that place counts as handed back, and a request
-        // asked in the task that closed the dialog still lands.
-        // The frames around the opener come after, the innermost first, so where the opener went
-        // with the page its frame left, focus goes to that frame, as near as the page can reach.
+        // What the browser handed focus to as the dialog closed comes after returnTo, so where the
+        // opener has gone and nothing else takes focus, that place counts as handed back, and a
+        // request asked in the task that closed the dialog still lands. The frames around the
+        // opener come last, the innermost first, so where the opener went with the page its frame
+        // left, focus goes to that frame, as near as the page can reach.
         if (back) handBack(opener, settings.returnTo?.(), restoring.get(dialog), ...via);
         opener = null;
         via = [];
@@ -211,7 +211,12 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         opener = openerOf(from, dialog.ownerDocument);
         // Read as the dialog opens, since a frame that loads its next page leaves the opener's old
         // document with no window to find them by.
+        // A frame around the dialog's own document is no nearer to the opener than the dialog is,
+        // so it is left out, as where the opener sits on a framed page and the dialog in a frame of
+        // that page.
+        const [around] = framesOf(dialog, null);
         [via] = framesOf(opener, dialog.ownerDocument);
+        via = via.filter((frame) => !around.includes(frame));
         // Where nothing had focus, the browser hands it nowhere as the dialog closes.
         // A blank body of another document, the page's around a frame, is nothing to hand back to.
         const before = placeNow(dialog.ownerDocument);

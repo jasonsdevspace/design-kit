@@ -178,9 +178,10 @@ export type FocusTarget = Element | string | (() => Element | null) | null | und
 /**
  * The frames a control sits inside, from its own document out to the one given, the innermost
  * first, read through each document's window while it has one, and whether that walk reached the
- * document given, which it does not for a control on the page or in another frame than the toast's.
+ * document given, which it does not for a control on the page or in a frame beside that document.
+ * Given no document, it walks out as far as each window's frame can be read.
  */
-export const framesOf = (control: Element | null, doc: Document): [Element[], boolean] => {
+export const framesOf = (control: Element | null, doc: Document | null): [Element[], boolean] => {
     const via: Element[] = [];
     let at = control?.ownerDocument;
     while (at && at !== doc) {
