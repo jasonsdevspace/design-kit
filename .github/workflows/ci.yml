@@ -17,9 +17,9 @@ on:
 permissions:
     contents: read
 
-# Every job reads the cache of installed dependencies and none writes it, but the install jobs
-# below, so no job that runs a test, a lint or a build holds a token that can write what main's
-# runs restore. A release calls this workflow with no cache at all.
+# Every job reads the cache of installed dependencies and none writes it, so no job that runs a
+# test, a lint or a build holds a token that can write what main's runs restore. The dependencies
+# workflow alone writes it. A release calls this workflow reading the cache, which asks no more.
 cache-mode: read
 
 # A newer push to a pull request supersedes the run in progress. Runs on main wait their turn, so a
@@ -30,93 +30,6 @@ concurrency:
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-    # The one job that writes the installed dependencies the Ubuntu jobs restore, on a push to main
-    # alone, and runs nothing but the install, so no dependency's code runs while it can write.
-    dependencies:
-        name: Keep installed dependencies
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        runs-on: ubuntu-26.04
-        timeout-minutes: 10
-        cache-mode: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  persist-credentials: false
-
-            - name: Set up Node
-              id: node
-              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-              with:
-                  node-version-file: .nvmrc
-
-            - name: Restore installed dependencies
-              id: deps
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
-
-            # Without their install scripts, as record 1 says.
-            - name: Install dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
-              run: npm ci --ignore-scripts
-
-            # Kept straight after the install, before anything else can touch it.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
-
-    # The same for the WebKit shards on their Mac runners, whose dependencies differ by system.
-    dependencies-mac:
-        name: Keep installed dependencies on a Mac
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        runs-on: macos-26
-        timeout-minutes: 10
-        cache-mode: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-              with:
-                  persist-credentials: false
-
-            - name: Set up Node
-              id: node
-              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-              with:
-                  node-version-file: .nvmrc
-
-            - name: Restore installed dependencies
-              id: deps
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
-
-            # Without their install scripts, as record 1 says.
-            - name: Install dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
-              run: npm ci --ignore-scripts
-
-            # Kept straight after the install, before anything else can touch it.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
-
     verify:
         name: Lint, test and build
         runs-on: ubuntu-26.04

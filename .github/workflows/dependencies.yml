@@ -1,0 +1,103 @@
+name: Dependencies
+
+# The only workflow that writes the cache of installed dependencies CI's jobs restore, on a push to
+# main alone, so a pull request never writes it. Its jobs run nothing but the install, without its
+# scripts, so no dependency's code runs while a job can write what main's runs restore.
+on:
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+
+cache-mode: write
+
+# One run for main at a time, the later waiting, so two never save the same key at once.
+concurrency:
+    group: dependencies
+    cancel-in-progress: false
+
+jobs:
+    # The installed dependencies the Ubuntu jobs restore, and npm's downloads beside them.
+    dependencies:
+        name: Keep installed dependencies
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              id: node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              run: npm ci --ignore-scripts
+
+            # Kept straight after the install, before anything else can touch it.
+            - name: Keep installed dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: ${{ steps.deps.outputs.cache-primary-key }}
+
+    # The same for the WebKit shards on their Mac runners, whose dependencies differ by system.
+    dependencies-mac:
+        name: Keep installed dependencies on a Mac
+        runs-on: macos-26
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              id: node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              run: npm ci --ignore-scripts
+
+            # Kept straight after the install, before anything else can touch it.
+            - name: Keep installed dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: ${{ steps.deps.outputs.cache-primary-key }}
