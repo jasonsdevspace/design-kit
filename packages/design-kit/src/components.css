@@ -1829,9 +1829,11 @@
     }
 
     /*
-     * On a phone the cells keep a step closer to each other, so a table of a word and four short
-     * figures fits a 320px screen at the usual text size rather than scrolling a few pixels and
-     * cutting its last figure under the shade. The outer cells keep no padding, as below.
+     * At 48rem wide or less the cells keep a step closer to each other, so a table of a word and four
+     * short figures fits a 320px phone at the usual text size rather than scrolling a few pixels and
+     * cutting its last figure under the shade. Paper, narrower than that, takes the closer step too,
+     * where a figure that cannot scroll is less likely to break. The outer cells keep no padding, as
+     * below.
      */
     @media (width <= 48rem) {
         :where(.dk-table th, .dk-table td) {
