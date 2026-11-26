@@ -2377,8 +2377,8 @@ shadow root never open, since the panel is looked for by its id in the document 
 That holds in Chromium, Firefox and WebKit.
 
 Once a frame has loaded its next page, the control that had focus in it has gone with the page it
-left, so a toast hands focus back to the frame, and a view that arrives leaves the visitor in it. A
-dialog opened from a control there hands focus to the page's body instead.
+left, so a dialog or a toast hands focus back to the frame, and a view that arrives leaves the
+visitor in it.
 
 A page sees focus inside a closed shadow root as the root's host. A dialog, `moveFocus`, a view
 that arrives after the visitor moves into a field there, a grid of cells, a table's pinned column, a
@@ -4268,7 +4268,9 @@ press that opened it, from a listener on the button, on a part of the page that 
 React, it finds the button the press landed on, since Safari gives a clicked button no focus to
 remember. Called otherwise, it takes the element to return to, or remembers what had focus. Where
 nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
-goes to what `returnTo` gives. A page that has somewhere more useful for focus, such as the next
+goes to what `returnTo` gives, and then to each frame the opener sat inside as the dialog opened,
+the innermost first, so an opener that went with the page its frame left hands focus to that frame.
+A page that has somewhere more useful for focus, such as the next
 field after a Save, asks for it with `moveFocus` in the task that closes the dialog, whether that
 task closes it, takes it from the page or takes it down, and focus goes there rather than to the
 opener. Focus the page moves elsewhere in that task stays where it put it, while focus it puts back

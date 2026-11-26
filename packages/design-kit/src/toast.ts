@@ -1,5 +1,5 @@
 import { isOff } from './find.js';
-import { deepActive, handBack, holds, homeOf, mayHandBack, placeNow } from './focus.js';
+import { deepActive, framesOf, handBack, holds, homeOf, mayHandBack, placeNow } from './focus.js';
 import { claimLine, hush, releaseLine, say } from './line.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
 
@@ -152,23 +152,6 @@ const clearOf = (element: HTMLElement, control: Element, via: readonly Element[]
         height < card.top - rise
     )
         control.scrollIntoView({ block: 'nearest' });
-};
-
-/**
- * The frames a control sits inside, from its own document out to the one given, the innermost
- * first, read through each document's window while it has one, and whether that walk reached the
- * document given, which it does not for a control on the page or in another frame than the toast's.
- */
-const framesOf = (control: Element | null, doc: Document): [Element[], boolean] => {
-    const via: Element[] = [];
-    let at = control?.ownerDocument;
-    while (at && at !== doc) {
-        const frame = at.defaultView?.frameElement;
-        if (!frame) break;
-        via.push(frame);
-        at = frame.ownerDocument;
-    }
-    return [via, at === doc];
 };
 
 /**

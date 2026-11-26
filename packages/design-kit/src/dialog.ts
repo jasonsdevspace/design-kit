@@ -1,5 +1,14 @@
 import { FOCUSABLE, isElement } from './find.js';
-import { deepActive, handBack, holds, isBlank, mayHandBack, placeNow, seen } from './focus.js';
+import {
+    deepActive,
+    framesOf,
+    handBack,
+    holds,
+    isBlank,
+    mayHandBack,
+    placeNow,
+    seen,
+} from './focus.js';
 import { restore } from './marks.js';
 import { restoring } from './state.js';
 import { type AttachOptions, join, keep, type Kept, teardown } from './teardown.js';
@@ -100,12 +109,14 @@ const openerOf = (from: DialogOpener | undefined, doc: Document): Element | null
  * That is the element the press that opened it landed on, found from the event a page's listener or
  * React's hands over, since a browser that gives a pressed button no focus leaves nothing else, or
  * else what had focus. Where nothing had focus, or that no longer takes focus, focus goes where
- * `returnTo` says. A `moveFocus` request asked in the task that closes it, takes it away or takes
- * it down lands in place of the opener, since a request takes focus the kit, or the browser as the
- * dialog closes, hands back after it was asked as free. Focus the page moves elsewhere in that task
- * stays, while focus it puts back on what had focus as the dialog opened counts as the browser's
- * handback. One asked in an earlier task lands only where its frame comes after the close, so a
- * page that awaits before closing asks again just before it closes.
+ * `returnTo` says, and then to each frame the opener sat inside as the dialog opened, the innermost
+ * first, so an opener that went with the page its frame left hands focus to that frame. A
+ * `moveFocus` request asked in the task that closes it, takes it away or takes it down lands in
+ * place of the opener, since a request takes focus the kit, or the browser as the dialog closes,
+ * hands back after it was asked as free. Focus the page moves elsewhere in that task stays, while
+ * focus it puts back on what had focus as the dialog opened counts as the browser's handback. One
+ * asked in an earlier task lands only where its frame comes after the close, so a page that awaits
+ * before closing asks again just before it closes.
  *
  * A dialog that must be answered is attached to stay, and then stays open on Escape, a phone's Back
  * and the scrim, by the closedby attribute where the browser reads it, since one that limits how
@@ -139,6 +150,8 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     };
     set(options ?? {});
     let opener: Element | null = null;
+    // The frames the opener sits inside, from its own document out, the innermost first.
+    let via: Element[] = [];
     let startedOutside = false;
     const outside = (event: MouseEvent) => {
         if (event.target !== dialog) return false;
@@ -185,14 +198,20 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // What the browser handed focus to as the dialog closed comes last, so where the opener
         // has gone and nothing else takes focus, that place counts as handed back, and a request
         // asked in the task that closed the dialog still lands.
-        if (back) handBack(opener, settings.returnTo?.(), restoring.get(dialog));
+        // The frames around the opener come after, the innermost first, so where the opener went
+        // with the page its frame left, focus goes to that frame, as near as the page can reach.
+        if (back) handBack(opener, settings.returnTo?.(), restoring.get(dialog), ...via);
         opener = null;
+        via = [];
         restoring.delete(dialog);
     };
     dialog.addEventListener('close', () => onClose(handsBack()), { signal });
     const open: OpenDialog = (from) => {
         if (dialog.open || signal.aborted) return;
         opener = openerOf(from, dialog.ownerDocument);
+        // Read as the dialog opens, since a frame that loads its next page leaves the opener's old
+        // document with no window to find them by.
+        [via] = framesOf(opener, dialog.ownerDocument);
         // Where nothing had focus, the browser hands it nowhere as the dialog closes.
         // A blank body of another document, the page's around a frame, is nothing to hand back to.
         const before = placeNow(dialog.ownerDocument);
