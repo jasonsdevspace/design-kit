@@ -2893,7 +2893,10 @@ scrolls in its frame instead. A header gives its unit in words a screen reader s
 A frame holds to the measure as the prose does, so a table wider than 34rem scrolls on a wide screen
 too. A table is in the small text, with each row ruled in the line color. Its column headers are the
 muted text at medium weight, and a row's header is at medium weight too. The outer cells keep no
-padding on their outer side, so the table's text lines up with the prose around it. Figures sit to
+padding on their outer side, so the table's text lines up with the prose around it. At 48rem wide
+or less the cells keep a step closer to each other, so a table of a word and four figures of up to
+three digits, with headers as long as "Average", fits a 320px phone at the usual text size, on a
+content page and in an app's frame, and a wider one scrolls in its frame. Figures sit to
 the right and on screen never wrap, while text in a cell wraps and keeps its first line level with
 the rest of its row. On screen code in a cell stays on one line, hyphens and spaces alike, so a
 token's name never breaks after `--dk-`, and a long expression scrolls the frame as a wide table
