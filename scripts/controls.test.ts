@@ -45,9 +45,10 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * the stepper, the form, the grid, the table and the React hooks reading focus inside a frame did,
  * and again once hearing a frame as focus enters it and its next page as it begins did, and for
  * 0.9.5 once a panel found from its button's root and heard on a closed shadow root took them past
- * 24.25 KB.
+ * 24.25 KB, and again once what follows a panel walked in the order the page draws it took them
+ * past 25 KB.
  */
-const BUDGET = 25 * 1024;
+const BUDGET = 26 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
