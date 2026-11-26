@@ -2412,7 +2412,13 @@ frames the page reaches by their windows, though it cannot read the frame of ano
 so the reader finds the inner frame that has focus and reads on inside it, and an element there is
 seen at the page's level as the frame of another origin that holds it. A dialog, a toast, a panel, a
 stepper, `moveFocus`, a press there, and a form's refusal, a grid of cells, a table's pinned column,
-a theme switch and the React hooks drawn there work as they do on the page.
+a theme switch and the React hooks drawn there work as they do on the page. The inner frame that has
+focus is told by its document's own word, which every document gives as false while the browser's
+window itself has no focus, as when another app is in front, so then focus there reads as the frame
+of another origin until the window has focus again. The inner frame that has focus is told by its
+document's own word, which every document gives as false while the browser's window itself has no
+focus, as when another app is in front, so then focus there reads as the frame of another origin
+until the window has focus again.
 
 ### A part of the page that is loading
 
