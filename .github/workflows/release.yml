@@ -20,6 +20,11 @@ on:
 permissions:
     contents: read
 
+# A release's own jobs use no cache, so nothing a run on main kept reaches what it publishes. Its
+# checks read the cache, as CI does, and the job among them that packs the release installs
+# afresh from the lockfile.
+cache-mode: none
+
 # One release run for a tag at a time, so a tag pushed again while its run is still going never
 # publishes beside it.
 concurrency:
@@ -92,6 +97,7 @@ jobs:
     checks:
         name: CI
         needs: agree
+        cache-mode: read
         uses: ./.github/workflows/ci.yml
         permissions:
             contents: read

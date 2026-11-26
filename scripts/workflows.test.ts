@@ -602,9 +602,9 @@ describe('the workflows', () => {
         expect(naming).toEqual([]);
     });
 
-    // Ubuntu, but for CI's jobs that draw in WebKit, on a Mac, where it needs no system packages.
-    // Firefox starts on what the Ubuntu image has, which leaves the Mac runners an account may use
-    // at once to WebKit's shards.
+    // Ubuntu, but for CI's jobs that draw in WebKit, on a Mac, where it needs no system packages,
+    // and the job that keeps their installed dependencies. Firefox starts on what the Ubuntu image
+    // has, which leaves the Mac runners an account may use at once to WebKit's shards.
     it('run every job on a named image, with a name and a time limit of its own', () => {
         const unready = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
@@ -616,7 +616,9 @@ describe('the workflows', () => {
                         !/^ {8}name: \S/m.test(body) ||
                         !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
                         !(
-                            path === '.github/workflows/ci.yml' && id === 'webkit'
+                            (path === '.github/workflows/ci.yml' && id === 'webkit') ||
+                            (path === '.github/workflows/dependencies.yml' &&
+                                id === 'dependencies-mac')
                                 ? /^ {8}runs-on: macos-26\s*$/m
                                 : /^ {8}runs-on: ubuntu-26\.04\s*$/m
                         ).test(body)
@@ -656,6 +658,121 @@ describe('the workflows', () => {
             expect(body, engine).toContain('SHARDS: ${{ strategy.job-total }}');
             expect(body, engine).toContain(`--project ${engine} --shard "$SHARD/$SHARDS"`);
         }
+    });
+
+    // The dependencies workflow alone writes the cache of installed dependencies, on a push to main
+    // alone, and its jobs run nothing but the install. Every CI job reads it and installs afresh on
+    // a miss, the jobs that build what is published or deployed always install afresh, and a
+    // release reads it only in the checks it calls, which ask for no more than that, so the run
+    // starts.
+    describe('the cache of installed dependencies', () => {
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        const release = workflows.get('.github/workflows/release.yml') ?? '';
+        const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
+        const jobs = jobsOf(ci);
+        const WRITERS = ['dependencies', 'dependencies-mac'];
+        const FRESH = ['floor', 'site'];
+        const KEY =
+            /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
+        const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
+        const stepTexts = (body: string) => stepsOf(body).map(({ text }) => text);
+        const at = (steps: readonly string[], pattern: RegExp) =>
+            steps.findIndex((text) => pattern.test(text));
+        const RESTORE = /uses: actions\/cache\/restore@[0-9a-f]{40}\b/;
+        const SAVE = /uses: actions\/cache\/save@[0-9a-f]{40}\b/;
+        const INSTALL = /\bnpm ci\b/;
+
+        it('reads it in CI and on the site pages, and in a release only in the checks it calls', () => {
+            expect(ci).toMatch(/^cache-mode: read\s*$/m);
+            // A called workflow that asks for more than its caller allows never starts.
+            expect(ci).not.toMatch(/cache-mode: (?:write|write-only)\b/);
+            expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
+                /^cache-mode: read\s*$/m
+            );
+            expect(release).toMatch(/^cache-mode: none\s*$/m);
+            const checks = jobsOf(release).find(({ body }) =>
+                /^ {8}uses: \.\/\.github\/workflows\/ci\.yml\s*$/m.test(body)
+            );
+            expect(checks?.body ?? '').toMatch(/^ {8}cache-mode: read\s*$/m);
+        });
+
+        it('writes it from the dependencies workflow alone, on a push to main, straight after the install', () => {
+            const writing = [...workflows].flatMap(([path, text]) =>
+                /^cache-mode: (?:write|write-only)\b/m.test(text)
+                    ? jobsOf(text).map(({ id }) => `${path} ${id}`)
+                    : jobsOf(text)
+                          .filter(
+                              ({ body }) =>
+                                  /^ {8}cache-mode: (?:write|write-only)\b/m.test(body) ||
+                                  SAVE.test(body)
+                          )
+                          .map(({ id }) => `${path} ${id}`)
+            );
+            expect(writing.sort()).toEqual(
+                WRITERS.map((id) => `.github/workflows/dependencies.yml ${id}`).sort()
+            );
+            expect(writer).toMatch(/^on:\n {4}push:\n {8}branches: \[main\]\n\n/m);
+            for (const id of WRITERS) {
+                const body = jobsOf(writer).find((job) => job.id === id)?.body ?? '';
+                const steps = stepTexts(body);
+                const install = at(steps, INSTALL);
+                expect(install, id).toBeGreaterThan(at(steps, RESTORE));
+                expect(at(steps, SAVE), id).toBe(install + 1);
+                expect(steps[at(steps, SAVE)], id).toMatch(
+                    /key: \$\{\{ steps\.deps\.outputs\.cache-primary-key \}\}/
+                );
+                expect(steps[at(steps, SAVE)], id).toMatch(PATHS);
+                expect(steps[at(steps, RESTORE)], id).toMatch(KEY);
+                // Nothing but the install runs in it.
+                expect(
+                    steps.filter((text) => /^\s*(?:- )?run:/m.test(text)),
+                    id
+                ).toHaveLength(1);
+            }
+        });
+
+        it('restores it before each other install, keyed on the system, Node and the lockfile, and installs only on a miss', () => {
+            const unready = jobs
+                .filter(({ id, body }) => INSTALL.test(body) && !FRESH.includes(id))
+                .flatMap(({ id, body }) => {
+                    const steps = stepTexts(body);
+                    const restore = at(steps, RESTORE);
+                    const install = at(steps, INSTALL);
+                    const problems: string[] = [];
+                    if (
+                        !/^\s+id: node\s*$/m.test(
+                            steps[at(steps, /uses: actions\/setup-node@/)] ?? ''
+                        )
+                    )
+                        problems.push('names no Node version for its key');
+                    if (restore < 0 || restore > install)
+                        problems.push('restores nothing before it installs');
+                    else {
+                        if (!/^\s+id: deps\s*$/m.test(steps[restore] ?? ''))
+                            problems.push('reads no hit');
+                        if (!KEY.test(steps[restore] ?? ''))
+                            problems.push('keys its restore on something else');
+                        if (!PATHS.test(steps[restore] ?? ''))
+                            problems.push('restores other paths');
+                    }
+                    if (!/if: steps\.deps\.outputs\.cache-hit != 'true'/.test(steps[install] ?? ''))
+                        problems.push('installs on a hit');
+                    return problems.map((problem) => `${id} ${problem}`);
+                });
+            expect(jobs.filter(({ body }) => INSTALL.test(body)).length).toBeGreaterThan(
+                FRESH.length
+            );
+            expect(unready).toEqual([]);
+        });
+
+        it('installs afresh where a job builds what is published or deployed', () => {
+            for (const id of FRESH) {
+                const body = jobs.find((job) => job.id === id)?.body ?? '';
+                expect(body, id).toMatch(INSTALL);
+                expect(body, id).not.toMatch(RESTORE);
+                expect(body, id).not.toMatch(/cache-hit/);
+            }
+        });
     });
 
     // The WebKit shards name their workers, and the job's comment says why.

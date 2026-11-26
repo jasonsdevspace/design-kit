@@ -17,6 +17,11 @@ on:
 permissions:
     contents: read
 
+# Every job reads the cache of installed dependencies and none writes it, so no job that runs a
+# test, a lint or a build holds a token that can write what main's runs restore. The dependencies
+# workflow alone writes it. A release calls this workflow reading the cache, which asks no more.
+cache-mode: read
+
 # A newer push to a pull request supersedes the run in progress. Runs on main wait their turn, so a
 # run that has handed the site to Pages is never canceled, which would leave the deployment
 # pending.
@@ -36,13 +41,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # npm ci installs from the lockfile without comparing it with each workspace's
@@ -95,13 +114,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # Only the browser is downloaded, not the system libraries, within a time of its own,
@@ -151,13 +184,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # Only the browser is downloaded, not the system libraries, within a time of its own,
@@ -223,9 +270,9 @@ jobs:
     # its engine too. On a Mac, where WebKit runs on what the image already has: on Ubuntu it needs
     # system packages from a mirror that has been slow enough to run a job out of time. In shards,
     # each on a runner of its own, as many as the matrix lists, one more than Chromium takes, set
-    # while each shard ran one worker and two came close to the time limit. They are the only jobs
-    # on a Mac, so they stay within the Mac runners an account may use at once and none waits for
-    # another.
+    # while each shard ran one worker and two came close to the time limit. They and the job that
+    # keeps their dependencies on a push to main are the only jobs on a Mac, so they stay within the
+    # Mac runners an account may use at once and none waits for another.
     webkit:
         name: Browser tests in WebKit, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
@@ -241,13 +288,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # Started once, so a browser that cannot start fails this step rather than a test.
@@ -303,13 +364,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # Only the browser is downloaded, not the system libraries, and started once, so a
@@ -357,13 +432,27 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
+              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
             # Without their install scripts, as record 1 says.
             - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
 
             # The audit drives Playwright's Chromium, installed as the browser tests install it.
@@ -397,7 +486,8 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # Without their install scripts, as record 1 says.
+            # Without their install scripts, as record 1 says, and afresh from the lockfile, which
+            # npm checks each package against, since this job builds what is published or deployed.
             - name: Install dependencies
               run: npm ci --ignore-scripts
 
@@ -519,7 +609,8 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # Without their install scripts, as record 1 says.
+            # Without their install scripts, as record 1 says, and afresh from the lockfile, which
+            # npm checks each package against, since this job builds what is published or deployed.
             - name: Install dependencies
               run: npm ci --ignore-scripts
 
