@@ -170,8 +170,13 @@ const build = async (row: string): Promise<Place> => {
             frame.name = 'xo';
             frame.title = 'xo';
             frame.src = 'https://other.test/holder';
+            // The kit hears the inner frame at the outer frame's load, which can come after the inner
+            // frame's page is complete, so the place is built once both have happened.
+            const done = loadOf(frame, 'the frame of another origin');
             spot.append(frame);
-            return { holder: holderIn(await innerOf(frame.contentWindow as Window)) };
+            const inner = await innerOf(frame.contentWindow as Window);
+            await done;
+            return { holder: holderIn(inner) };
         }
         case 'loading':
             return leaving(spot, 'fl', '/held', false);
