@@ -2305,8 +2305,9 @@ Views first drawn by one press land together, and the first in the page takes fo
 title is heard before a section of it. Where one of them sits inside a shadow root and another
 outside it, the browser orders the two as it chooses, which can differ between engines, so the first
 in the page may not be the one that takes focus. Focus a view placed itself as it drew, as a field
-with autofocus does, is never taken. Where focus was is read inside a shadow root too, so a press on
-a widget's own button there brings focus to the heading.
+with autofocus does, is never taken. Where focus was is read inside an open shadow root too, so a
+press on a widget's own button there brings focus to the heading, and a press inside a closed one
+does not, as [Where focus can be](#where-focus-can-be) has it.
 
 The presses and keys heard are the page's and those inside each frame of the page's own origin the
 page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
@@ -2364,33 +2365,44 @@ export const Round = ({ round }: { readonly round: number }) => {
 
 ### Where focus can be
 
-The pieces read focus wherever a visitor can put it: on the page, in an open shadow root, in a frame
-of the page's origin, a frame inside a shadow root and a shadow root inside a frame among them, in a
-frame loading its next page, and in a frame of another origin, as near as the page can reach. A
-dialog and a toast hand focus back to a control in each of those places, `moveFocus` lands from one,
-`focusOnArrival` focuses a view's heading after a press on one, and a press a visitor moves on from
-into a field there leaves them in it. A panel, a stepper going read only or taken down, a form's
-refusal, a grid of cells, a table's pinned column and `useFocusAfterDraw` read focus rightly when
-the page draws them in one of those places. That holds in Chromium, Firefox and Safari.
+The pieces read focus on the page, in an open shadow root, in a frame of the page's origin, in a
+frame inside an open shadow root, in an open shadow root inside a frame, and in a frame whose next
+page has not yet arrived. In each of those places a dialog and a toast hand focus back to the
+control that had it, `moveFocus` lands, `focusOnArrival` focuses a view's heading after a press
+there, and a view that arrives after the visitor moves on from a press into a field there leaves
+them in it. A stepper going read only or taken down, a form's refusal, a grid of cells, a table's
+pinned column, a theme switch and the React hooks, drawn in any of those places, work there as they
+do on the page, and so does a panel drawn in a frame. A panel and its button drawn together inside a
+shadow root never open, since the panel is looked for by its id in the document the button sits in.
+That holds in Chromium, Firefox and WebKit.
 
-Some places stay out of reach, since a page sees focus inside a closed shadow root as its host and
-sees nothing inside a frame of another origin:
+Once a frame has loaded its next page, the control that had focus in it has gone with the page it
+left, so a toast hands focus back to the frame, and a view that arrives leaves the visitor in it. A
+dialog opened from a control there hands focus to the page's body instead.
 
-- A toast on the page hands focus back to the host of a closed shadow root, which takes no focus,
-  so focus goes on to the main content. A press inside a closed shadow root reaches the page as a
-  press on its host, which is no control, so the view it brings takes no focus.
-- A dialog or a toast hands focus back to a frame of another origin rather than to the control in
-  it, and Firefox, which will not focus such a frame from a key, takes a toast dismissed by Enter on
-  to the main content. A press inside such a frame is never heard, so the view it brings takes no
-  focus. A page cannot draw a piece inside one.
+A page sees focus inside a closed shadow root as the root's host. A dialog, `moveFocus`, a view
+that arrives after the visitor moves into a field there, a grid of cells, a table's pinned column, a
+theme switch opened by a key and `useRoving` work there as they do on the page, and so does
+`useArrivalFocus` in WebKit. A toast on the page hands focus back to the host, which takes no focus,
+so focus goes on to the main content. A press inside the root reaches the page as a press on its
+host, which is no control, so the view it brings takes no focus, and a theme switch opened by a
+press there in WebKit can close again at once. A stepper, a form's refusal, `useFocusAfterDraw`,
+`useFormRefusal` and, in Chromium and Firefox, `useArrivalFocus`, drawn inside the root, read focus
+there as the host too: the stepper's button loses focus as its value turns read only, focus falls to
+the page's body as the stepper is taken down, and focus goes to the main content rather than to the
+field in error or the control asked for.
 
-Two more places are read short of where focus is. A stepper, a form's refusal and
-`useFocusAfterDraw` drawn inside a closed shadow root read focus there as the root's host, in
-Chromium and Firefox for `useFocusAfterDraw`, so focus drops from the stepper's button and the
-field in error loses focus to the main content. Focus inside a frame of the page's origin held by
-one of another origin is read from the page down, which stops at the frame of another origin, so a
-panel and a stepper drawn there, a toast, and a dialog in Chromium and Safari leave focus short of
-the control that had it.
+A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
+frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,
+takes a toast dismissed by Enter on to the main content. A press inside the frame is never heard,
+so the view it brings takes no focus, while `moveFocus` still lands and a view that arrives after
+the visitor moves into a field there leaves them in it. A page cannot draw a piece inside one.
+
+Focus inside a frame of the page's origin held by a frame of another origin is read from the page
+down, which stops at the frame of another origin. A dialog, `moveFocus` and a press there, and a
+form's refusal, a grid of cells, a table's pinned column, a theme switch and the React hooks drawn
+there, work as they do on the page. A toast hands focus back to the outer frame, or in Firefox to
+the main content, and a panel or a stepper drawn there leaves focus on the inner frame's body.
 
 ### A part of the page that is loading
 
@@ -3357,8 +3369,9 @@ focus goes to it, and leaves it there, so a script can focus the box while the t
 by. A tabindex the page gave the box is kept, and the box draws the kit's focus ring where the
 browser shows focus. Where the box refuses focus too, the tabindex it was given goes again at once,
 and focus goes on to the app frame's body or the page's main content, as it does from a toast, a
-dialog or a panel. A stepper the page attaches inside a frame of its own origin that it drives reads
-focus there as it does on the page, so a button that has focus as its value turns read only stays
+dialog or a panel. A stepper the page attaches inside a frame of its own origin that it drives,
+other than one held inside a frame of another origin, as [Where focus can
+be](#where-focus-can-be) has it, reads focus there as it does on the page, so a button that has focus as its value turns read only stays
 until focus leaves it, and a takedown hands focus to the value or the box in the frame, and where
 both refuse it, to the frame's own app frame body or main content.
 
@@ -4413,8 +4426,9 @@ component that marks its host as an open combobox keeps its Escape. Inside a clo
 panel sees only the host. An element inside a component's shadow tree that shares a panel's id
 closes nothing, since only the page's own elements name a panel. A panel's id must be the only one
 in its document, so a page that shows markup its visitors wrote prefixes or strips the ids in it. A
-panel whose button the page attaches inside a frame of its own origin that it drives works in that
-frame's document as it does on the page, and the button stays in the document it was attached in, so
+panel whose button the page attaches inside a frame of its own origin that it drives, other than one
+held inside a frame of another origin, as [Where focus can be](#where-focus-can-be) has it, works in
+that frame's document as it does on the page, and the button stays in the document it was attached in, so
 a page that moves it into another takes it down and attaches it again.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
