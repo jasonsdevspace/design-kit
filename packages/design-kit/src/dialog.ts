@@ -190,7 +190,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     // piece hands it back by. Focus a request or the page has put anywhere else stays.
     const handsBack = () =>
         seen(restoring.get(dialog) ?? null, dialog.ownerDocument) ===
-            seen(deepActive(), dialog.ownerDocument) || mayHandBack(dialog, true);
+            seen(deepActive(dialog), dialog.ownerDocument) || mayHandBack(dialog, true);
     const onClose = (back: boolean) => {
         // The browser fires close a moment after the dialog closes, so one that arrives once the
         // dialog is open again belongs to an earlier closing and leaves this opening's opener be.
@@ -226,7 +226,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         // A Close in the corner never takes focus as the dialog opens, which it would where nothing
         // in the dialog asks for focus, as when React's autoFocus writes no attribute.
         const close = dialog.querySelector(':scope > .dk-close');
-        if (close && holds(close, deepActive())) moveOffClose(dialog, close);
+        if (close && holds(close, deepActive(dialog))) moveOffClose(dialog, close);
     };
     // A dialog let go while open closes, so the page behind is no longer inert, and focus goes back
     // at once, open or closed in the same task, since the close event that would hand it back comes

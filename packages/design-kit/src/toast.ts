@@ -462,7 +462,7 @@ export const attachToast = (element: HTMLElement, options?: AttachOptions): Show
             // is kept apart for the handback.
             queueMicrotask(() => {
                 if (!element.isConnected) leftWith ||= focused;
-                focused = element.isConnected && holds(element, deepActive());
+                focused = element.isConnected && holds(element, deepActive(element));
                 wait();
             });
         },

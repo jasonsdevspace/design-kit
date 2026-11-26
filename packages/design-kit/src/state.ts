@@ -124,13 +124,24 @@ const docIn = (win: Window | null | undefined): Document | null => {
  * is never taken for focus once a visitor has moved on. Kept as it is wherever the kit stores where
  * focus was, and compared and judged only through `seen`. It sits here, beside the presses, so the
  * module that hears them reads focus by the one reader without the rest of the focus module.
+ *
+ * Given a node a piece holds, the reader also follows focus into each closed shadow root around
+ * that node, which the piece reaches through the node though the page cannot, so a piece drawn
+ * inside a closed root reads focus there as it does in an open one.
  */
-export const deepActive = (): Element | null => {
+export const deepActive = (near?: Node | null): Element | null => {
+    const closed = new Map<Element, ShadowRoot>();
+    for (
+        let root = near?.getRootNode();
+        root?.nodeType === 11;
+        root = (root as ShadowRoot).host.getRootNode()
+    )
+        closed.set((root as ShadowRoot).host, root as ShadowRoot);
     let active = document.activeElement;
     for (
         let next;
         (next =
-            active?.shadowRoot?.activeElement ??
+            (active?.shadowRoot ?? (active ? closed.get(active) : undefined))?.activeElement ??
             docIn((active as Partial<HTMLIFrameElement> | null)?.contentWindow)?.activeElement);
     )
         active = next;

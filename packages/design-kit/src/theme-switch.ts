@@ -193,7 +193,7 @@ export const attachThemeSwitch = (element: HTMLElement, options?: AttachOptions)
     let pressedHere = false;
     /** Closes the choices where they are, and keeps focus on the switch if it was in them. */
     const closeHere = () => {
-        const held = holds(group, seenNow(docOf(group)));
+        const held = holds(group, seenNow(docOf(group), group));
         close(false);
         if (held) button?.focus({ preventScroll: true });
     };

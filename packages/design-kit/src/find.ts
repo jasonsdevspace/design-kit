@@ -142,3 +142,28 @@ export const fieldName = (field: Element): string => {
  * `*|href` matching an SVG link's `xlink:href` too.
  */
 export const FOCUSABLE = 'a[*|href], button, input, select, textarea, summary, [tabindex]';
+
+/** The node and each shadow host around it, out to the document, the node first. */
+const outward = (node: Node): readonly Node[] => {
+    const chain: Node[] = [node];
+    for (let root = rootOf(node); root.nodeType === 11; root = rootOf((root as ShadowRoot).host))
+        chain.push((root as ShadowRoot).host);
+    return chain;
+};
+
+/**
+ * Whether one node comes before another as the page draws them, through shadow roots, compared
+ * where the two first share a root, a host before what its shadow root holds, since the browser
+ * orders nodes of different trees as it chooses.
+ */
+export const drawnBefore = (one: Node, other: Node): boolean => {
+    const mine = outward(one);
+    const theirs = outward(other);
+    for (const [index, at] of mine.entries())
+        for (const them of theirs)
+            if (rootOf(at) === rootOf(them))
+                return at === them
+                    ? index === 0
+                    : !!(at.compareDocumentPosition(them) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return false;
+};

@@ -1,4 +1,4 @@
-import { byIdOutward, isOff } from './find.js';
+import { byIdOutward, drawnBefore, isOff } from './find.js';
 import {
     deepActive,
     focusFirst,
@@ -115,7 +115,7 @@ const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined
     const { from, page } = asked;
     const was = comparedOf(asked);
     const doc = was?.ownerDocument ?? document;
-    const now = seenNow(doc);
+    const now = seenNow(doc, from);
     const view = (element: Element | null) => seen(element, doc);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
@@ -244,11 +244,9 @@ export const focusOnArrival = (
                 const place = placeOf(view.heading, view.asked.page ?? view.asked.from);
                 return place?.isConnected ? [{ view, place }] : [];
             });
-            places.sort((one, other) =>
-                one.place.compareDocumentPosition(other.place) & Node.DOCUMENT_POSITION_PRECEDING
-                    ? 1
-                    : -1
-            );
+            // In the order the page draws them, through shadow roots, since the browser orders nodes
+            // of different trees as it chooses.
+            places.sort((one, other) => (drawnBefore(one.place, other.place) ? -1 : 1));
             const [first] = places;
             if (first) land(first.place, first.view.fallbacks, first.view.asked);
             else {

@@ -605,9 +605,6 @@ const CLOSED_HOST =
 const CLOSED_PRESS =
     'A press inside a closed shadow root reaches the page as a press on its host, which is no control.';
 
-/** A piece drawn inside a closed shadow root reads focus there as the root's host. */
-const CLOSED_OWN = "A piece inside a closed shadow root reads focus there as the root's host.";
-
 /** Focus read from the page down stops at a frame of another origin. */
 const THROUGH_OTHER =
     "Focus in a frame of the page's origin inside one of another origin is read from the page down, which stops at the frame of another origin.";
@@ -622,18 +619,11 @@ type Failing = { readonly gives: ByEngine; readonly because: string };
  */
 const FAILING: Squares<Failing> = {
     closed: {
-        panel: { gives: 'main', because: CLOSED_OWN },
         toast: { gives: 'main', because: CLOSED_HOST },
-        readOnly: { gives: 'body, marked, down hidden', because: CLOSED_OWN },
-        takeDown: { gives: 'body', because: CLOSED_OWN },
-        form: { gives: 'main', because: CLOSED_OWN },
         arrival: {
             gives: { chromium: 'host/c', firefox: 'host/c', webkit: 'main' },
             because: CLOSED_PRESS,
         },
-        focusAfterDraw: { gives: 'main', because: CLOSED_OWN },
-        arrivalHook: { gives: { chromium: 'main', firefox: 'main' }, because: CLOSED_OWN },
-        refusalHook: { gives: 'main', because: CLOSED_OWN },
     },
     'ours in other': {
         panel: { gives: 'xo/xi', because: THROUGH_OTHER },

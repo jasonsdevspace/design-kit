@@ -646,3 +646,101 @@ test('leaves a panel open on Escape in a component in it that marks its host as 
     await expect(page.locator('main > #share')).toBeVisible();
     await expect(friend).toBeFocused();
 });
+
+/** A widget whose shadow root is closed, kept on the window for the test, as its own script holds it. */
+const openClosed = async (page: Page, inner: string, script: string, body = '') => {
+    await page.setViewportSize({ width: 300, height: 700 });
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1 id="page-heading" tabindex="-1">Shop</h1>${body}<div id="widget"></div></main>`,
+        script: `import { attachThemeSwitch, focusOnArrival, moveFocus } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
+root.innerHTML = ${JSON.stringify(`<link rel="stylesheet" href="/kit.css">${inner}`)};
+window.closedRoot = root;
+${script}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** What has focus inside the closed root, by its id, or nothing. */
+const closedActive = (page: Page) =>
+    page.evaluate(
+        () => (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement?.id ?? null
+    );
+
+/** Presses the element of the closed root with the id given, by pointer, at its middle. */
+const pressClosed = async (page: Page, id: string) => {
+    const { x, y } = await page.evaluate((given) => {
+        const element = (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById(
+            given
+        ) as HTMLElement;
+        const { left, top, width, height } = element.getBoundingClientRect();
+        return { x: left + width / 2, y: top + height / 2 };
+    }, id);
+    await page.mouse.click(x, y);
+};
+
+test("lands a request a widget's own button in a closed shadow root asks with itself as where focus was", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        '<button type="button" id="ask">Ask</button><input id="field" aria-label="Field">',
+        `const ask = root.getElementById('ask');
+ask.addEventListener('click', () => moveFocus(root.getElementById('field'), { from: ask }));`
+    );
+    // Focused by the widget's own script first, as a keyboard would, so the press starts from it.
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('field');
+});
+
+test("focuses the page's heading before a widget's after it, where one press brings both views", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        '<h2 id="widget-heading" tabindex="-1">The widget</h2>',
+        `document.querySelector('#bring').addEventListener('click', () => {
+    // The widget's view is asked first, so only the order the page draws them puts the page's first.
+    focusOnArrival(root.getElementById('widget-heading'), {});
+    focusOnArrival(document.querySelector('#page-heading'), {});
+});`,
+        '<button type="button" id="bring">Bring both</button>'
+    );
+    await page.locator('#bring').click();
+    await expect(page.locator('#page-heading')).toBeFocused();
+});
+
+test('opens a theme switch inside a closed shadow root by a press, with focus on the chosen choice', async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        `<div class="dk-strip-tools"><div class="dk-theme-switch" hidden><span class="dk-theme-switch-name" id="theme-name">Theme</span>
+<button type="button" class="dk-theme-switch-button" id="theme-button" aria-labelledby="theme-name theme-button" aria-expanded="false" aria-controls="theme-choices">System</button>
+<div class="dk-theme-switch-choices" id="theme-choices" role="radiogroup" aria-labelledby="theme-name">${[
+            'system',
+            'light',
+            'dark',
+        ]
+            .map(
+                (value) =>
+                    `<label class="dk-theme-switch-choice"><input type="radio" name="theme" value="${value}" id="${value}"><span>${value}</span></label>`
+            )
+            .join('')}</div></div></div>`,
+        `attachThemeSwitch(root.querySelector('.dk-theme-switch'));`
+    );
+    await pressClosed(page, 'theme-button');
+    await expect.poll(() => closedActive(page)).toBe('system');
+    expect(
+        await page.evaluate(() =>
+            (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+                .getElementById('theme-button')
+                ?.getAttribute('aria-expanded')
+        )
+    ).toBe('true');
+});
