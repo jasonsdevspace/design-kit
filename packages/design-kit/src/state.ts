@@ -116,6 +116,35 @@ const docIn = (win: Window | null | undefined): Document | null => {
 };
 
 /**
+ * The shadow roots around a node, out to its document, a plain fragment ending the walk since it has
+ * no host.
+ */
+const closedAround = (near: Node | null | undefined): ShadowRoot[] => {
+    const roots: ShadowRoot[] = [];
+    for (
+        let root = near?.getRootNode();
+        root?.nodeType === 11 && (root as Partial<ShadowRoot>).host;
+        root = (root as ShadowRoot).host.getRootNode()
+    )
+        roots.push(root as ShadowRoot);
+    return roots;
+};
+
+/**
+ * An element as the reader given the node sees it: lifted out of each closed shadow root that is not
+ * around that node, to the root's host, as the page sees it, so a place kept by one reading and
+ * focus read by another compare in the same view.
+ */
+export const liftedFor = (element: Element | null, near?: Node | null): Element | null => {
+    if (!element) return null;
+    const open = new Set(closedAround(near));
+    let lifted = element;
+    for (const root of closedAround(element))
+        if (root.mode === 'closed' && !open.has(root)) lifted = root.host;
+    return lifted;
+};
+
+/**
  * What has focus, read from the page down: followed into each shadow root that holds it, and into
  * each frame of the page's own origin that has it, an object showing a document among them, to the
  * control focused inside the frame or to the frame's body where nothing is. A frame of another
@@ -124,13 +153,19 @@ const docIn = (win: Window | null | undefined): Document | null => {
  * is never taken for focus once a visitor has moved on. Kept as it is wherever the kit stores where
  * focus was, and compared and judged only through `seen`. It sits here, beside the presses, so the
  * module that hears them reads focus by the one reader without the rest of the focus module.
+ *
+ * Given a node a piece holds, the reader also follows focus into each closed shadow root around
+ * that node, which the piece reaches through the node though the page cannot, so a piece drawn
+ * inside a closed root reads focus there as it does in an open one.
  */
-export const deepActive = (): Element | null => {
+export const deepActive = (near?: Node | null): Element | null => {
+    const closed = new Map<Element, ShadowRoot>();
+    for (const root of closedAround(near)) closed.set(root.host, root);
     let active = document.activeElement;
     for (
         let next;
         (next =
-            active?.shadowRoot?.activeElement ??
+            (active?.shadowRoot ?? (active ? closed.get(active) : undefined))?.activeElement ??
             docIn((active as Partial<HTMLIFrameElement> | null)?.contentWindow)?.activeElement);
     )
         active = next;

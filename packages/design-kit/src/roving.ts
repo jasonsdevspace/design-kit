@@ -232,7 +232,7 @@ export const attachRoving = (group: HTMLElement, options?: RovingOptions): (() =
             // Focus fell where the group's document reads nothing, or its body that a visitor can
             // type in, which is where focus goes from a cell taken out of an editable page.
             const doc = docOf(group);
-            const at = seenNow(doc);
+            const at = seenNow(doc, group);
             const fell = at === null || at === doc.body;
             if (holding === gone && fell && next) next.focus();
         }

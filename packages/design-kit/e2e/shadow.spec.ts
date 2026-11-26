@@ -320,6 +320,94 @@ attachPanel(root.querySelector('#opener'));`,
     await expect(page.locator('#after')).toBeFocused();
 });
 
+test("hands focus to the app frame's body around a widget as its panel closes with nothing nearer, where the app is a component", async ({
+    page,
+}) => {
+    // An app drawn by a component of its own, its frame inside the component's shadow root, and a
+    // widget in the app's body with a panel in its own shadow root, and nothing after the panel.
+    await servePage(page, {
+        title: 'Shop',
+        body: '<div id="shell"></div>',
+        script: `import { attachPanel } from './controls.js';
+const shell = document.querySelector('#shell').attachShadow({ mode: 'open' });
+shell.innerHTML = '<link rel="stylesheet" href="/kit.css"><div class="dk-app"><main class="dk-app-body" id="app-body" tabindex="0"><div id="widget"></div></main></div>';
+const root = shell.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div>\`;
+attachPanel(root.querySelector('#opener'));
+window.root = root;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
+/** An app drawn by a component, with a widget in the app's body, drawn as the case gives. */
+const openApp = async (page: Page, shell: string, light = '') => {
+    await servePage(page, {
+        title: 'Shop',
+        body: `<div id="shell">${light}</div>`,
+        script: `import { attachPanel } from './controls.js';
+const shell = document.querySelector('#shell').attachShadow({ mode: 'open' });
+shell.innerHTML = ${JSON.stringify(shell)};
+const root = (shell.querySelector('#widget') ?? document.querySelector('#widget')).attachShadow({ mode: 'open' });
+root.innerHTML = \`<link rel="stylesheet" href="/kit.css">\${window.own ?? ''}
+<button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">Tips</h2><div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet">Close the tips</button></div></div>\`;
+attachPanel(root.querySelector('#opener'));
+window.root = root;
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** Opens the widget's panel, marks its button off and closes it by its Close, with nothing after it. */
+const closeWithNothingNearer = async (page: Page) => {
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeVisible();
+    await page.evaluate(() => {
+        (window as unknown as Widget).root
+            .querySelector('#opener')
+            ?.setAttribute('aria-disabled', 'true');
+    });
+    await widget.getByRole('button', { name: 'Close the tips' }).click();
+    await expect(widget.getByRole('heading', { name: 'Tips' })).toBeHidden();
+};
+
+const APP =
+    '<link rel="stylesheet" href="/kit.css"><div class="dk-app"><main class="dk-app-body" id="app-body" tabindex="0">';
+
+test("hands focus to the app frame's body around a widget slotted into an app a component draws", async ({
+    page,
+}) => {
+    await openApp(page, `${APP}<slot></slot></main></div>`, '<div id="widget"></div>');
+    await closeWithNothingNearer(page);
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
+test("passes over a widget's own main content that takes no focus to the app frame's body around it", async ({
+    page,
+}) => {
+    await page.addInitScript(() => {
+        (window as unknown as { own: string }).own = '<main id="own">The widget</main>';
+    });
+    await openApp(page, `${APP}<div id="widget"></div></main></div>`);
+    await closeWithNothingNearer(page);
+    await expect(page.locator('#app-body')).toBeFocused();
+});
+
 /** A widget's panel and button with a slot after the panel, for the page's own controls. */
 const SLOTTED = `root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
 <button type="button" class="dk-button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
@@ -764,4 +852,207 @@ test('leaves a panel open on Escape in a component in it that marks its host as 
     await frames(page);
     await expect(page.locator('main > #share')).toBeVisible();
     await expect(friend).toBeFocused();
+});
+
+/** A widget whose shadow root is closed, kept on the window for the test, as its own script holds it. */
+const openClosed = async (page: Page, inner: string, script: string, body = '') => {
+    await page.setViewportSize({ width: 300, height: 700 });
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1 id="page-heading" tabindex="-1">Shop</h1>${body}<div id="widget"></div></main>`,
+        script: `import { attachDialog, attachPanel, attachThemeSwitch, focusOnArrival, moveFocus } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
+root.innerHTML = ${JSON.stringify(`<link rel="stylesheet" href="/kit.css">${inner}`)};
+window.closedRoot = root;
+${script}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+};
+
+/** What has focus inside the closed root, by its id, or nothing. */
+const closedActive = (page: Page) =>
+    page.evaluate(
+        () => (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement?.id ?? null
+    );
+
+/** Presses the element of the closed root with the id given, by pointer, at its middle. */
+const pressClosed = async (page: Page, id: string) => {
+    const { x, y } = await page.evaluate((given) => {
+        const element = (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById(
+            given
+        ) as HTMLElement;
+        const { left, top, width, height } = element.getBoundingClientRect();
+        return { x: left + width / 2, y: top + height / 2 };
+    }, id);
+    await page.mouse.click(x, y);
+};
+
+test("lands a request a widget's own button in a closed shadow root asks with itself as where focus was", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        '<button type="button" id="ask">Ask</button><input id="field" aria-label="Field">',
+        `const ask = root.getElementById('ask');
+ask.addEventListener('click', () => moveFocus(root.getElementById('field'), { from: ask }));`
+    );
+    // Focused by the widget's own script first, as a keyboard would, so the press starts from it.
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('field');
+});
+
+test("focuses the page's heading before a widget's after it, where one press brings both views", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        '<h2 id="widget-heading" tabindex="-1">The widget</h2>',
+        `document.querySelector('#bring').addEventListener('click', () => {
+    // The widget's view is asked first, so only the order the page draws them puts the page's first.
+    focusOnArrival(root.getElementById('widget-heading'), {});
+    focusOnArrival(document.querySelector('#page-heading'), {});
+});`,
+        '<button type="button" id="bring">Bring both</button>'
+    );
+    await page.locator('#bring').click();
+    await expect(page.locator('#page-heading')).toBeFocused();
+});
+
+test('opens a theme switch inside a closed shadow root by a press, with focus on the chosen choice', async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        `<div class="dk-strip-tools"><div class="dk-theme-switch" hidden><span class="dk-theme-switch-name" id="theme-name">Theme</span>
+<button type="button" class="dk-theme-switch-button" id="theme-button" aria-labelledby="theme-name theme-button" aria-expanded="false" aria-controls="theme-choices">System</button>
+<div class="dk-theme-switch-choices" id="theme-choices" role="radiogroup" aria-labelledby="theme-name">${[
+            'system',
+            'light',
+            'dark',
+        ]
+            .map(
+                (value) =>
+                    `<label class="dk-theme-switch-choice"><input type="radio" name="theme" value="${value}" id="${value}"><span>${value}</span></label>`
+            )
+            .join('')}</div></div></div>`,
+        `attachThemeSwitch(root.querySelector('.dk-theme-switch'));`
+    );
+    await pressClosed(page, 'theme-button');
+    await expect.poll(() => closedActive(page)).toBe('system');
+    expect(
+        await page.evaluate(() =>
+            (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+                .getElementById('theme-button')
+                ?.getAttribute('aria-expanded')
+        )
+    ).toBe('true');
+});
+
+const DIALOG = (actions: string) =>
+    `<button type="button" id="opener">Edit</button><button type="button" id="row">The new row</button>
+<dialog class="dk-dialog" id="edit" aria-labelledby="edit-title"><h2 class="dk-dialog-title" id="edit-title" tabindex="-1">Edit the round</h2>${actions}</dialog>`;
+
+test("lands a request a dialog's own button in a closed shadow root asks with itself as where focus was, as it closes the dialog", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        DIALOG('<button type="button" id="save" autofocus>Save</button>'),
+        `const dialog = root.getElementById('edit');
+const ask = attachDialog(dialog);
+root.getElementById('opener').addEventListener('click', ask);
+const save = root.getElementById('save');
+save.addEventListener('click', () => {
+    moveFocus(root.getElementById('row'), { from: save });
+    dialog.close();
+});`
+    );
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+            .getElementById('opener')
+            ?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('save');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('row');
+});
+
+test('moves focus off the corner Close to the first field of a dialog in a closed shadow root as it opens', async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        DIALOG(
+            '<div class="dk-close"><button type="button" class="dk-button" id="close" autofocus>Close</button></div><input id="first" aria-label="First"><input id="second" aria-label="Second">'
+        ),
+        `const ask = attachDialog(root.getElementById('edit'));
+root.getElementById('opener').addEventListener('click', ask);`
+    );
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+            .getElementById('opener')
+            ?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('first');
+});
+
+test("lands a page's request after a panel in a closed shadow root hands focus back to its button", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        `<button type="button" class="dk-button" id="opener" aria-expanded="true" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips"><a href="#deal" id="deal">How to deal</a></div>`,
+        `window.tips = attachPanel(root.getElementById('opener'));
+document.querySelector('#ask').addEventListener('click', () => {
+    moveFocus('page-heading');
+    window.tips.set(false);
+});`,
+        '<button type="button" id="ask">Ask</button>'
+    );
+    await page.locator('#ask').click();
+    await expect(page.locator('#page-heading')).toBeFocused();
+});
+
+test("focuses a title the page slots into a widget before the widget's own heading after it, where one press brings both", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><button type="button" id="bring">Bring both</button><div id="widget"><h2 id="title" tabindex="-1" slot="title">The title</h2></div></main>',
+        script: `import { focusOnArrival } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = '<slot name="title"></slot><h3 id="section" tabindex="-1">A section</h3>';
+document.querySelector('#bring').addEventListener('click', () => {
+    focusOnArrival(root.getElementById('section'), {});
+    focusOnArrival(document.querySelector('#title'), {});
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#bring').click();
+    await expect(page.locator('#title')).toBeFocused();
+});
+
+test('raises no error for a request whose where focus was sits in a fragment', async ({ page }) => {
+    const errors: Error[] = [];
+    page.on('pageerror', (error) => errors.push(error));
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1 id="heading" tabindex="-1">Shop</h1></main>',
+        script: `import { moveFocus } from './controls.js';
+const kept = document.createDocumentFragment();
+kept.append(document.createElement('button'));
+moveFocus('heading', { from: kept.firstElementChild });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await expect(page.locator('#heading')).toBeFocused();
+    expect(errors).toEqual([]);
 });

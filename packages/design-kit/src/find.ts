@@ -142,3 +142,47 @@ export const fieldName = (field: Element): string => {
  * `*|href` matching an SVG link's `xlink:href` too.
  */
 export const FOCUSABLE = 'a[*|href], button, input, select, textarea, summary, [tabindex]';
+
+/**
+ * Where a node is drawn: the slot it is assigned to, its parent, the host of the shadow root it sits
+ * at the top of, a closed one included, or for a document's root element the frame that shows it,
+ * where the page can reach that frame.
+ */
+const drawnParent = (node: Node): Node | null => {
+    const slot = (node as Partial<Element>).assignedSlot;
+    if (slot) return slot;
+    const parent = node.parentNode;
+    if (parent?.nodeType === 11) return (parent as Partial<ShadowRoot>).host ?? null;
+    if (parent?.nodeType === 9) return (parent as Document).defaultView?.frameElement ?? null;
+    return parent;
+};
+
+/** The node and each node it is drawn in, out to the page, the page's first. */
+const drawnPath = (node: Node): Node[] => {
+    const path: Node[] = [];
+    for (let at: Node | null = node; at; at = drawnParent(at)) path.unshift(at);
+    return path;
+};
+
+/**
+ * Whether one node comes before another as the page draws them, through slots, shadow roots and
+ * frames of the page's origin, compared where the two are first drawn apart: a node before what is
+ * drawn inside it, what a shadow root holds before a host's children no slot draws, and otherwise
+ * by their order in the tree they share, since the browser orders nodes of different trees as it
+ * chooses.
+ */
+export const drawnBefore = (one: Node, other: Node): boolean => {
+    const mine = drawnPath(one);
+    const theirs = drawnPath(other);
+    if (mine[0] !== theirs[0]) return false;
+    let at = 0;
+    while (at < mine.length && at < theirs.length && mine[at] === theirs[at]) at += 1;
+    const a = mine[at];
+    const b = theirs[at];
+    if (!a) return b !== undefined;
+    if (!b) return false;
+    const inA = a.getRootNode();
+    const inB = b.getRootNode();
+    if (inA !== inB) return (inA as Partial<ShadowRoot>).host === mine[at - 1];
+    return !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+};

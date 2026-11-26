@@ -126,13 +126,17 @@ the hosts to the page's document, in one walk from the one read of focus, so a w
 over the same id on the page and a widget's button that asks for a heading in the page's markup
 finds it. A frame inside a shadow root starts the walk in that root, and focus inside a closed
 shadow root reads as its host, so with no `from` the walk starts in the root the host sits in and
-finds no id inside the closed root. Looking in the page's document first was turned down, since it
-let the page's id win over the widget's own. The cost is that a widget's id missing from its own
-root as the request lands, one the widget has not drawn yet, finds an element of the page that
-shares it, where the request fell back before. A late request from `useFocusAfterDraw` looks an id
-up by the same walk, from where focus was as it was asked. The walk ends at the root that is no
-shadow root, told by its node type, since a document's named elements answer for `'host' in` it, so
-a page with a form named host held the walk forever.
+finds no id inside the closed root. A piece that holds an element inside a closed root reads focus
+inside that root through it, so a request given such an element as `from`, a stepper, a form's
+refusal, a panel, a theme switch and the hooks there compare focus where it is rather than at the
+host, and views brought by one press are ordered as the page draws them, through shadow roots.
+Looking in the page's document first was turned down, since it let the page's id win over the
+widget's own. The cost is that a widget's id missing from its own root as the request lands, one the
+widget has not drawn yet, finds an element of the page that shares it, where the request fell back
+before. A late request from `useFocusAfterDraw` looks an id up by the same walk, from where focus
+was as it was asked. The walk ends at the root that is no shadow root, told by its node type, since
+a document's named elements answer for `'host' in` it, so a page with a form named host held the
+walk forever.
 
 ## Decision
 

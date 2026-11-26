@@ -1804,6 +1804,14 @@ it to as the dialog closed. A stepper hands it back only where focus is on one o
 hides. Either way, focus a page sets in the abort's own task stays, and a `moveFocus` asked in that
 task still lands. A control slotted into a piece drawn inside a shadow root counts as in the piece.
 
+Where nothing nearer takes focus, a piece hands it to the body of an app frame around it or a main
+content, tried in order from the piece out through the page as it is drawn, through the slot an
+element is drawn in and the host of each shadow root: the body of each app frame it is in, each
+main content it is in, and as the walk leaves a shadow root, that root's main content, out to the
+document's. One that takes no focus, as a main content with no tabindex, is passed over for the
+next. So a widget's own main content comes before the app frame around the widget, and a piece
+inside a widget in an app a component draws, or slotted into one, finds the app's body.
+
 Each place a piece hands focus back to can be any HTML or SVG element that takes focus, such as a
 link in an inline chart, and one that is hidden, inert or disabled is passed over for the next. A
 control marked off with `aria-disabled` still takes focus, so it is passed over only where a piece
@@ -2233,12 +2241,12 @@ request lands is looked for in the page ahead of the fallbacks, so a widget asks
 may not have drawn yet by passing the element or a function that returns it, not its id. Focus
 inside a closed shadow root reads as its host, so a request asked there with no `from` looks from
 the root the host sits in and finds no id inside the closed root. A widget in a closed root passes
-its own control as an element, not as an id, and leaves `from` out, since a request it asks with its
-own control as `from` is dropped while focus stays on that control, which reads as the host. The
-form's refusal, a stepper and progress find the errors, hints and labels they read in their own
-element's root alone. A panel is found from its button's root outward, as an id is here, and listens
-on the document the button sits in. `activeOf()` from `./controls` returns what has focus, followed
-into each shadow root that holds it, for a page that asks later and passes `from` itself.
+its own control as an element, not as an id, and may give its own control as `from`, which the
+request reads inside the closed root, so it lands while focus stays on that control. The form's
+refusal, a stepper and progress find the errors, hints and labels they read in their own element's
+root alone. A panel is found from its button's root outward, as an id is here, and listens on the
+document the button sits in. `activeOf()` from `./controls` returns what has focus, followed into
+each shadow root that holds it, for a page that asks later and passes `from` itself.
 
 A request keeps where focus was inside a frame of the page's own origin as well, and compares where
 focus is as the document it was in sees it, while that document is still the one its frame shows: a
@@ -2302,12 +2310,12 @@ after the press, as a view a poll brings. A row of tabs' panels take no focus on
 tab keeps focus as its panel changes, so they leave the hook out.
 
 Views first drawn by one press land together, and the first in the page takes focus, so a view's
-title is heard before a section of it. Where one of them sits inside a shadow root and another
-outside it, the browser orders the two as it chooses, which can differ between engines, so the first
-in the page may not be the one that takes focus. Focus a view placed itself as it drew, as a field
-with autofocus does, is never taken. Where focus was is read inside an open shadow root too, so a
-press on a widget's own button there brings focus to the heading, and a press inside a closed one
-does not, as [Where focus can be](#where-focus-can-be) has it.
+title is heard before a section of it. They are ordered as the page draws them, through shadow
+roots, so where one of them sits inside a shadow root and another outside it, the first in the page
+takes focus in every engine. Focus a view placed itself as it drew, as a field with autofocus does,
+is never taken. Where focus was is read inside an open shadow root too, so a press on a widget's own
+button there brings focus to the heading, and a press inside a closed one does not, as [Where focus
+can be](#where-focus-can-be) has it.
 
 The presses and keys heard are the page's and those inside each frame of the page's own origin the
 page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
@@ -2377,20 +2385,21 @@ root. That holds in Chromium, Firefox and WebKit.
 
 Once a frame has loaded its next page, the control that had focus in it has gone with the page it
 left, so a toast hands focus back to the frame, and so does a dialog whose `returnTo` gives nothing
-that takes focus, and a view that arrives leaves the visitor in it.
+that takes focus, and a view that arrives leaves the visitor in it. Where the page takes a frame
+away while a dialog or a toast is open, or removes the control a dialog was opened from, they hand
+focus to the frame the control sat in while that frame is still on the page, and otherwise to the
+app frame's body or the main content.
 
-A page sees focus inside a closed shadow root as the root's host. A dialog, `moveFocus`, a view that
-arrives after the visitor moves into a field there, a grid of cells, a table's pinned column, a
-theme switch opened by a key and `useRoving` work there as they do on the page, and so does
-`useArrivalFocus` in WebKit. A toast on the page hands focus back to the host, which takes no focus,
-so focus goes on to the main content. A press inside the root reaches the page as a press on its
-host, which is no control, so the view it brings takes no focus, and a theme switch opened by a
-press there in WebKit can close again at once. A panel there opens and closes, since the kit listens
-on a closed root its button sits in. A stepper, a panel, a form's refusal, `useFocusAfterDraw`,
-`useFormRefusal` and, in Chromium and Firefox, `useArrivalFocus`, drawn inside the root, read focus
-there as the host too: the stepper's button loses focus as its value turns read only, focus falls to
-the page's body as the stepper is taken down, and focus goes to the main content rather than to the
-panel's button, the field in error or the control asked for.
+A page sees focus inside a closed shadow root as the root's host, while a piece drawn inside the
+root reads focus there through the element it holds. So a dialog, `moveFocus`, a view that arrives
+after the visitor moves into a field there, a panel, a stepper going read only or taken down, a
+form's refusal, a grid of cells, a table's pinned column, a theme switch and `useRoving` drawn
+inside the root work there as they do on the page, and so do `useFocusAfterDraw`, `useFormRefusal`
+and `useArrivalFocus`, though a visitor who moves to another control inside the root before one of
+them lands is read as still where they were, since a hook reads where focus was with no element of
+its own. A toast on the page hands focus back to the host, which takes no focus, so focus goes on to
+the main content, and a press inside the root reaches the page as a press on its host, which is no
+control, so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,
@@ -4269,9 +4278,14 @@ React, it finds the button the press landed on, since Safari gives a clicked but
 remember. Called otherwise, it takes the element to return to, or remembers what had focus. Where
 nothing had focus, or what it returns to is gone from the page by the time the dialog closes, focus
 goes to what `returnTo` gives, and then to each frame the opener sat inside as the dialog opened,
-the innermost first, so an opener that went with the page its frame left hands focus to that frame.
-Since such a frame is of the page's origin, `returnTo` can give a place in its next page, such as
-its heading, which is nearer than the frame, and that is why it comes first. A page that has
+the innermost first, so an opener that went with the page its frame left hands focus to that frame,
+and last to the app frame's body or the main content, the page's before the dialog's own where a
+dialog inside a frame was opened from the page, where that takes focus, as the skip link's
+`tabindex="-1"` lets it, as every piece does where nothing nearer takes focus. A dialog whose answer
+removes what opened it, such as a Delete that takes its row, gives `returnTo` the next row's control
+or the list's heading, so focus stays where the visitor was working rather than going to the main
+content. Since such a frame is of the page's origin, `returnTo` can give a place in its next page,
+such as its heading, which is nearer than the frame, and that is why it comes first. A page that has
 somewhere more useful for focus, such as the next field after a Save, asks for it with `moveFocus`
 in the task that closes the dialog, whether that task closes it, takes it from the page or takes it
 down, and focus goes there rather than to the opener. Focus the page moves elsewhere in that task

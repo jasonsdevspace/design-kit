@@ -47,8 +47,12 @@ export const seen = (element: Element | null, doc: Document = document): Element
     return at;
 };
 
-/** What has focus as a piece in the document given sees it, read from the page down. */
-export const seenNow = (doc?: Document): Element | null => seen(deepActive(), doc);
+/**
+ * What has focus as a piece in the document given sees it, read from the page down, and into each
+ * closed shadow root around the node given, which a piece holds.
+ */
+export const seenNow = (doc?: Document, near?: Node | null): Element | null =>
+    seen(deepActive(near), doc);
 
 /**
  * The document a piece reads focus in: the one its element sits in, or the page's where that one
@@ -60,7 +64,7 @@ export const docOf = (element: Element): Document =>
 /** Whether focus is on the element given, as a piece in the element's document sees it. */
 export const isFocused = (element: Element): boolean => {
     const doc = docOf(element);
-    return seenNow(doc) === seen(element, doc);
+    return seenNow(doc, element) === seen(element, doc);
 };
 
 /**
@@ -68,8 +72,8 @@ export const isFocused = (element: Element): boolean => {
  * focus, read from the page down, kept as it is so a control inside a nested frame is reached, but
  * a blank body as the piece sees it, so one of another frame is kept as that frame.
  */
-export const placeNow = (doc: Document): Element | null => {
-    const raw = deepActive();
+export const placeNow = (doc: Document, near?: Node | null): Element | null => {
+    const raw = deepActive(near);
     return raw && isBlank(raw) ? seen(raw, doc) : raw;
 };
 
@@ -96,6 +100,9 @@ export const holds = (place: Element, node: Node | null): boolean => {
  */
 type Place = Element | null | undefined | (() => Iterable<Element>);
 
+/** The place the last walk focused, so a handback keeps it as a piece around it reads it. */
+let taken: Element | null = null;
+
 /**
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
@@ -113,11 +120,14 @@ const tryFocus = (place: Element | null | undefined): boolean | undefined => {
         isBlank(place)
     )
         return undefined;
-    const before = deepActive();
+    const before = deepActive(place);
     (place as HTMLElement).focus({ preventScroll: place.matches('.dk-app-body') });
-    const now = deepActive();
+    const now = deepActive(place);
     const at = (element: Element | null) => seen(element, place.ownerDocument);
-    if (holds(place, now) && (at(now) !== at(before) || place === at(before))) return true;
+    if (holds(place, now) && (at(now) !== at(before) || place === at(before))) {
+        taken = place;
+        return true;
+    }
     // Focus that fell to a blank body, the page's or a frame's, is no move of the page's.
     return now && now !== before && !isBlank(now) ? false : undefined;
 };
@@ -158,7 +168,7 @@ export const focusFirst = (...places: readonly Place[]): boolean => {
  * hides.
  */
 export const mayHandBack = (piece: Element, had: boolean): boolean => {
-    const at = seenNow(piece.ownerDocument);
+    const at = seenNow(piece.ownerDocument, piece);
     return at ? holds(piece, at) : had;
 };
 
@@ -170,7 +180,7 @@ export const mayHandBack = (piece: Element, had: boolean): boolean => {
  */
 export const handBack = (...places: readonly Place[]): boolean => {
     if (!focusFirst(...places)) return false;
-    handed.to = deepActive();
+    handed.to = deepActive(taken);
     handed.at = performance.now();
     return true;
 };
@@ -197,14 +207,38 @@ export const framesOf = (control: Element | null, doc: Document | null): [Elemen
 };
 
 /**
- * Where focus goes when nothing nearer takes it, the app frame's body or the main content, looked
- * for in the shadow root the element sits in, then in the document it sits in, the page's or a
- * frame's.
+ * Where focus goes when nothing nearer takes it, as every place in order, so one that refuses
+ * focus, as a main with no tabindex does, passes to the next: from the element out through the
+ * page as it is drawn, through the slot an element is drawn in and the host of each shadow root,
+ * the body of each app frame it is in and each main content it is in, and as the walk leaves a
+ * root, that root's main content. So a widget's own main content comes before the app frame around
+ * the widget, a piece inside a widget in an app a component draws, or slotted into one, finds the
+ * app's body, and the walk ends at the main content of the document the element sits in, the
+ * page's or a frame's.
  */
-export const homeOf = (element: Element): Element | null =>
-    element.closest('.dk-app')?.querySelector('.dk-app-body') ??
-    rootOf(element).querySelector('main') ??
-    element.ownerDocument.querySelector('main');
+export const homeOf =
+    (element: Element): (() => readonly Element[]) =>
+    () => {
+        const homes: Element[] = [];
+        const add = (home: Element | null | undefined) => {
+            if (home && !homes.includes(home)) homes.push(home);
+        };
+        let at: Element | null = element;
+        while (at) {
+            if (at.matches('.dk-app')) add(at.querySelector(':scope > .dk-app-body'));
+            if (at.matches('main')) add(at);
+            // The host is read from a shadow root alone, since a document's named form or frame
+            // called host would answer for it.
+            const parent: Node | null = at.parentNode;
+            const up: Element | null =
+                at.assignedSlot ??
+                at.parentElement ??
+                (parent?.nodeType === 11 ? (parent as ShadowRoot).host : null);
+            if (!up || rootOf(up) !== rootOf(at)) add(rootOf(at).querySelector('main'));
+            at = up;
+        }
+        return homes;
+    };
 
 /**
  * How focus is moved after a change, and the signal that calls the request off. A request asked as
