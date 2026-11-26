@@ -602,9 +602,9 @@ describe('the workflows', () => {
         expect(naming).toEqual([]);
     });
 
-    // Ubuntu, but for CI's jobs that draw in WebKit, on a Mac, where it needs no system packages.
-    // Firefox starts on what the Ubuntu image has, which leaves the Mac runners an account may use
-    // at once to WebKit's shards.
+    // Ubuntu, but for CI's jobs that draw in WebKit, on a Mac, where it needs no system packages,
+    // and the job that keeps their installed dependencies. Firefox starts on what the Ubuntu image
+    // has, which leaves the Mac runners an account may use at once to WebKit's shards.
     it('run every job on a named image, with a name and a time limit of its own', () => {
         const unready = [...workflows].flatMap(([path, text]) =>
             jobsOf(text)
@@ -616,7 +616,8 @@ describe('the workflows', () => {
                         !/^ {8}name: \S/m.test(body) ||
                         !/^ {8}timeout-minutes: \d+\s*$/m.test(body) ||
                         !(
-                            path === '.github/workflows/ci.yml' && id === 'webkit'
+                            path === '.github/workflows/ci.yml' &&
+                            (id === 'webkit' || id === 'dependencies-mac')
                                 ? /^ {8}runs-on: macos-26\s*$/m
                                 : /^ {8}runs-on: ubuntu-26\.04\s*$/m
                         ).test(body)
@@ -658,44 +659,108 @@ describe('the workflows', () => {
         }
     });
 
-    // Each CI job restores the dependencies a push to main installed before, keyed on the runner,
-    // Node and the lockfile, installs only on a miss, and keeps what it installed only from a push to
-    // main, so a pull request's run never writes what main's runs restore.
-    it('restore installed dependencies in CI, written from a push to main alone', () => {
-        const jobs = jobsOf(workflows.get('.github/workflows/ci.yml') ?? '').filter(({ body }) =>
-            /\bnpm ci\b/.test(body)
-        );
-        expect(jobs.length).toBeGreaterThan(0);
-        const unready = jobs.flatMap(({ id, body }) => {
-            const steps = stepsOf(body).map(({ text }) => text);
-            const restore = steps.findIndex((text) =>
-                /uses: actions\/cache\/restore@[0-9a-f]{40}\b/.test(text)
+    // The install jobs alone write the cache of installed dependencies, on a push to main alone, and
+    // run nothing but the install. Every other CI job reads it and installs afresh on a miss, the
+    // jobs that build what is published or deployed always install afresh, and a release turns the
+    // cache off for every job it runs, the checks it calls included.
+    describe('the cache of installed dependencies', () => {
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        const jobs = jobsOf(ci);
+        const WRITERS = ['dependencies', 'dependencies-mac'];
+        const FRESH = ['floor', 'site'];
+        const KEY =
+            /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
+        const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
+        const stepTexts = (body: string) => stepsOf(body).map(({ text }) => text);
+        const at = (steps: readonly string[], pattern: RegExp) =>
+            steps.findIndex((text) => pattern.test(text));
+        const RESTORE = /uses: actions\/cache\/restore@[0-9a-f]{40}\b/;
+        const SAVE = /uses: actions\/cache\/save@[0-9a-f]{40}\b/;
+        const INSTALL = /\bnpm ci\b/;
+
+        it('reads the cache in CI, reads it on the site pages and turns it off in a release', () => {
+            expect(ci).toMatch(/^cache-mode: read\s*$/m);
+            expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
+                /^cache-mode: read\s*$/m
             );
-            const install = steps.findIndex((text) => /\bnpm ci\b/.test(text));
-            const save = steps.findIndex((text) =>
-                /uses: actions\/cache\/save@[0-9a-f]{40}\b/.test(text)
+            expect(workflows.get('.github/workflows/release.yml') ?? '').toMatch(
+                /^cache-mode: none\s*$/m
             );
-            const problems: string[] = [];
-            if (restore < 0 || restore > install)
-                problems.push('restores nothing before it installs');
-            else if (
-                !/key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}/.test(
-                    steps[restore] ?? ''
-                )
-            )
-                problems.push('keys its restore on something else');
-            if (!/if: steps\.deps\.outputs\.cache-hit != 'true'/.test(steps[install] ?? ''))
-                problems.push('installs on a hit');
-            if (
-                save < install ||
-                !/if: steps\.deps\.outputs\.cache-hit != 'true' && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/.test(
-                    steps[save] ?? ''
-                )
-            )
-                problems.push('keeps its install from a run that is not a push to main');
-            return problems.map((problem) => `${id} ${problem}`);
         });
-        expect(unready).toEqual([]);
+
+        it('writes it from the install jobs alone, on a push to main, straight after the install', () => {
+            const writing = [...workflows].flatMap(([path, text]) =>
+                jobsOf(text)
+                    .filter(({ body }) => /^ {8}cache-mode: write/m.test(body) || SAVE.test(body))
+                    .map(({ id }) => `${path} ${id}`)
+            );
+            expect(writing).toEqual(WRITERS.map((id) => `.github/workflows/ci.yml ${id}`));
+            for (const id of WRITERS) {
+                const body = jobs.find((job) => job.id === id)?.body ?? '';
+                const steps = stepTexts(body);
+                expect(body, id).toMatch(
+                    /^ {8}if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'\s*$/m
+                );
+                expect(body, id).toMatch(/^ {8}cache-mode: write\s*$/m);
+                const install = at(steps, INSTALL);
+                expect(at(steps, SAVE), id).toBe(install + 1);
+                expect(steps[at(steps, SAVE)], id).toMatch(
+                    /key: \$\{\{ steps\.deps\.outputs\.cache-primary-key \}\}/
+                );
+                expect(steps[at(steps, SAVE)], id).toMatch(PATHS);
+                // Nothing but the install runs in it.
+                expect(
+                    steps.filter(
+                        (text) =>
+                            /^\s*- (?:name: [^\n]*\n\s+)?run:/m.test(text) || /\n\s+run:/.test(text)
+                    ).length,
+                    id
+                ).toBe(1);
+            }
+        });
+
+        it('restores it before each other install, keyed on the system, Node and the lockfile, and installs only on a miss', () => {
+            const unready = jobs
+                .filter(({ id, body }) => INSTALL.test(body) && !FRESH.includes(id))
+                .flatMap(({ id, body }) => {
+                    const steps = stepTexts(body);
+                    const restore = at(steps, RESTORE);
+                    const install = at(steps, INSTALL);
+                    const problems: string[] = [];
+                    if (
+                        !/^\s+id: node\s*$/m.test(
+                            steps[at(steps, /uses: actions\/setup-node@/)] ?? ''
+                        )
+                    )
+                        problems.push('names no Node version for its key');
+                    if (restore < 0 || restore > install)
+                        problems.push('restores nothing before it installs');
+                    else {
+                        if (!/^\s+id: deps\s*$/m.test(steps[restore] ?? ''))
+                            problems.push('reads no hit');
+                        if (!KEY.test(steps[restore] ?? ''))
+                            problems.push('keys its restore on something else');
+                        if (!PATHS.test(steps[restore] ?? ''))
+                            problems.push('restores other paths');
+                    }
+                    if (!/if: steps\.deps\.outputs\.cache-hit != 'true'/.test(steps[install] ?? ''))
+                        problems.push('installs on a hit');
+                    return problems.map((problem) => `${id} ${problem}`);
+                });
+            expect(jobs.filter(({ body }) => INSTALL.test(body)).length).toBeGreaterThan(
+                FRESH.length
+            );
+            expect(unready).toEqual([]);
+        });
+
+        it('installs afresh where a job builds what is published or deployed', () => {
+            for (const id of FRESH) {
+                const body = jobs.find((job) => job.id === id)?.body ?? '';
+                expect(body, id).toMatch(INSTALL);
+                expect(body, id).not.toMatch(RESTORE);
+                expect(body, id).not.toMatch(/cache-hit/);
+            }
+        });
     });
 
     it('find a gate that stops checking a job it needs', () => {

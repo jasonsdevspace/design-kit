@@ -20,6 +20,9 @@ on:
 permissions:
     contents: read
 
+# These jobs run the site's dependencies, so they read the cache and never write it.
+cache-mode: read
+
 # One run at a time, and a run that has started finishes, so no branch is pushed without its pull
 # request. A newer push still cancels a run that is waiting its turn, which loses nothing, since
 # each run compares the pin with the record rather than with the commit before.

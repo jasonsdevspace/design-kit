@@ -17,6 +17,11 @@ on:
 permissions:
     contents: read
 
+# Every job reads the cache of installed dependencies and none writes it, but the install jobs
+# below, so no job that runs a test, a lint or a build holds a token that can write what main's
+# runs restore. A release calls this workflow with no cache at all.
+cache-mode: read
+
 # A newer push to a pull request supersedes the run in progress. Runs on main wait their turn, so a
 # run that has handed the site to Pages is never canceled, which would leave the deployment
 # pending.
@@ -25,6 +30,93 @@ concurrency:
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+    # The one job that writes the installed dependencies the Ubuntu jobs restore, on a push to main
+    # alone, and runs nothing but the install, so no dependency's code runs while it can write.
+    dependencies:
+        name: Keep installed dependencies
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        cache-mode: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              id: node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              run: npm ci --ignore-scripts
+
+            # Kept straight after the install, before anything else can touch it.
+            - name: Keep installed dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: ${{ steps.deps.outputs.cache-primary-key }}
+
+    # The same for the WebKit shards on their Mac runners, whose dependencies differ by system.
+    dependencies-mac:
+        name: Keep installed dependencies on a Mac
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        runs-on: macos-26
+        timeout-minutes: 10
+        cache-mode: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              id: node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+
+            - name: Restore installed dependencies
+              id: deps
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
+
+            # Without their install scripts, as record 1 says.
+            - name: Install dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              run: npm ci --ignore-scripts
+
+            # Kept straight after the install, before anything else can touch it.
+            - name: Keep installed dependencies
+              if: steps.deps.outputs.cache-hit != 'true'
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: |
+                      node_modules
+                      packages/*/node_modules
+                  key: ${{ steps.deps.outputs.cache-primary-key }}
+
     verify:
         name: Lint, test and build
         runs-on: ubuntu-26.04
@@ -42,8 +134,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -57,17 +150,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # npm ci installs from the lockfile without comparing it with each workspace's
             # manifest, so a field changed in a package.json, such as its engines, can leave the
@@ -125,8 +207,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -140,17 +223,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # Only the browser is downloaded, not the system libraries, within a time of its own,
             # and started once so a library the runner image lacks fails this step rather than a
@@ -205,8 +277,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -220,17 +293,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # Only the browser is downloaded, not the system libraries, within a time of its own,
             # and started once so a library the runner image lacks fails this step rather than a
@@ -295,8 +357,9 @@ jobs:
     # its engine too. On a Mac, where WebKit runs on what the image already has: on Ubuntu it needs
     # system packages from a mirror that has been slow enough to run a job out of time. In shards,
     # each on a runner of its own, as many as the matrix lists, one more than Chromium takes, since
-    # a Mac draws slower and two came close to the time limit. They are the only jobs on a Mac, so
-    # they stay within the Mac runners an account may use at once and none waits for another.
+    # a Mac draws slower and two came close to the time limit. They and the job that keeps their
+    # dependencies on a push to main are the only jobs on a Mac, so they stay within the Mac runners
+    # an account may use at once and none waits for another.
     webkit:
         name: Browser tests in WebKit, shard ${{ matrix.shard }} of ${{ strategy.job-total }}
         runs-on: macos-26
@@ -318,8 +381,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -333,17 +397,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # Started once, so a browser that cannot start fails this step rather than a test.
             - name: Install WebKit
@@ -401,8 +454,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -416,17 +470,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # Only the browser is downloaded, not the system libraries, and started once, so a
             # library the runner image lacks fails this step rather than a test.
@@ -479,8 +522,9 @@ jobs:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
+            # The installed dependencies the install job kept from main, for this system, its
+            # architecture, Node and the lockfile, so only a miss installs here. This job reads the
+            # cache and never writes it.
             - name: Restore installed dependencies
               id: deps
               uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -494,17 +538,6 @@ jobs:
             - name: Install dependencies
               if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # The audit drives Playwright's Chromium, installed as the browser tests install it.
             - name: Install Chromium
@@ -532,38 +565,15 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
-              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
-            - name: Restore installed dependencies
-              id: deps
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
-
-            # Without their install scripts, as record 1 says.
+            # Without their install scripts, as record 1 says, and afresh from the lockfile, which
+            # npm checks each package against, since this job builds what is published or deployed.
             - name: Install dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             # Packing runs the package's build, which is how the published package is made. Its
             # checksum is a job output, which no other job in the run can change, unlike the
@@ -678,38 +688,15 @@ jobs:
                   persist-credentials: false
 
             - name: Set up Node
-              id: node
               uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version-file: .nvmrc
                   cache: 'npm'
 
-            # The installed dependencies, restored where a push to main installed them before on
-            # this runner, with this Node and this lockfile, so only a miss installs.
-            - name: Restore installed dependencies
-              id: deps
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: deps-${{ runner.os }}-${{ runner.arch }}-node-${{ steps.node.outputs.node-version }}-${{ hashFiles('package-lock.json') }}
-
-            # Without their install scripts, as record 1 says.
+            # Without their install scripts, as record 1 says, and afresh from the lockfile, which
+            # npm checks each package against, since this job builds what is published or deployed.
             - name: Install dependencies
-              if: steps.deps.outputs.cache-hit != 'true'
               run: npm ci --ignore-scripts
-
-            # Kept from a push to main alone, so a pull request's run never writes what main's runs
-            # restore.
-            - name: Keep installed dependencies
-              if: steps.deps.outputs.cache-hit != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      node_modules
-                      packages/*/node_modules
-                  key: ${{ steps.deps.outputs.cache-primary-key }}
 
             - name: Build the site
               run: npm run site

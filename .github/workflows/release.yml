@@ -20,6 +20,10 @@ on:
 permissions:
     contents: read
 
+# A release installs afresh from the lockfile in every job, the checks it calls included, so no
+# cache a run on main kept reaches what it publishes.
+cache-mode: none
+
 # One release run for a tag at a time, so a tag pushed again while its run is still going never
 # publishes beside it.
 concurrency:
