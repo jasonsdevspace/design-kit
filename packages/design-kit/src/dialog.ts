@@ -65,7 +65,7 @@ const moveOffClose = (dialog: HTMLDialogElement, close: Element): void => {
             continue;
         }
         next.focus();
-        if (deepActive() === next) return;
+        if (deepActive(dialog) === next) return;
     }
     const title = dialog.querySelector<HTMLElement>('.dk-dialog-title');
     if (!title) return;
@@ -87,7 +87,7 @@ const moveOffClose = (dialog: HTMLDialogElement, close: Element): void => {
  * The element focus goes back to, from what the page handed over, an element or an event of the
  * page's or of a frame's, else what had focus.
  */
-const openerOf = (from: DialogOpener | undefined, doc: Document): Element | null => {
+const openerOf = (from: DialogOpener | undefined, doc: Document, near: Node): Element | null => {
     const found = isElement(from)
         ? from
         : from
@@ -97,7 +97,7 @@ const openerOf = (from: DialogOpener | undefined, doc: Document): Element | null
           : null;
     if (found && !isBlank(found)) return found;
     // A blank body, where nothing has focus, is no opener, so focus goes where returnTo says.
-    return placeNow(doc);
+    return placeNow(doc, near);
 };
 
 /**
@@ -208,7 +208,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
     dialog.addEventListener('close', () => onClose(handsBack()), { signal });
     const open: OpenDialog = (from) => {
         if (dialog.open || signal.aborted) return;
-        opener = openerOf(from, dialog.ownerDocument);
+        opener = openerOf(from, dialog.ownerDocument, dialog);
         // Read as the dialog opens, since a frame that loads its next page leaves the opener's old
         // document with no window to find them by.
         // A frame around the dialog's own document is no nearer to the opener than the dialog is,
@@ -219,7 +219,7 @@ export const attachDialog = (dialog: HTMLDialogElement, options?: DialogOptions)
         via = via.filter((frame) => !around.includes(frame));
         // Where nothing had focus, the browser hands it nowhere as the dialog closes.
         // A blank body of another document, the page's around a frame, is nothing to hand back to.
-        const before = placeNow(dialog.ownerDocument);
+        const before = placeNow(dialog.ownerDocument, dialog);
         if (before && !isBlank(before)) restoring.set(dialog, before);
         else restoring.delete(dialog);
         dialog.showModal();

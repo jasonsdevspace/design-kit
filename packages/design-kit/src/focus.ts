@@ -72,8 +72,8 @@ export const isFocused = (element: Element): boolean => {
  * focus, read from the page down, kept as it is so a control inside a nested frame is reached, but
  * a blank body as the piece sees it, so one of another frame is kept as that frame.
  */
-export const placeNow = (doc: Document): Element | null => {
-    const raw = deepActive();
+export const placeNow = (doc: Document, near?: Node | null): Element | null => {
+    const raw = deepActive(near);
     return raw && isBlank(raw) ? seen(raw, doc) : raw;
 };
 
@@ -97,6 +97,9 @@ export const holds = (place: Element, node: Node | null): boolean => {
 /** A place focus may be handed to, or a function that gives more of them when it is reached. */
 type Place = Element | null | undefined | (() => readonly Element[]);
 
+/** The place the last walk focused, so a handback keeps it as a piece around it reads it. */
+let taken: Element | null = null;
+
 /**
  * Tries one place of a walk: true where it took focus, false where a page's own listener moved
  * focus elsewhere as it was tried, which ends the walk, and nothing where the place is no element
@@ -106,9 +109,6 @@ type Place = Element | null | undefined | (() => readonly Element[]);
  * that loaded its page again, is passed over. A frame that takes focus with nothing focused inside
  * it counts as taken.
  */
-/** The place the last walk focused, so a handback keeps it as a piece around it reads it. */
-let taken: Element | null = null;
-
 const tryFocus = (place: Element | null | undefined): boolean | undefined => {
     if (
         !place?.ownerDocument.defaultView ||

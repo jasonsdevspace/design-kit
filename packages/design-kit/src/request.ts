@@ -9,7 +9,7 @@ import {
     seen,
     seenNow,
 } from './focus.js';
-import { handed, inputs, press, restoring, sightChanges } from './state.js';
+import { handed, inputs, liftedFor, press, restoring, sightChanges } from './state.js';
 import { teardown } from './teardown.js';
 
 /*
@@ -116,7 +116,9 @@ const land = (target: FocusTarget, fallbacks: readonly FocusTarget[] | undefined
     const was = comparedOf(asked);
     const doc = was?.ownerDocument ?? document;
     const now = seenNow(doc, from);
-    const view = (element: Element | null) => seen(element, doc);
+    // Each place kept by another reading is lifted out of closed roots the request's own node is
+    // not inside, so it compares in the same view as focus read through that node.
+    const view = (element: Element | null) => seen(liftedFor(element, from), doc);
     // A dialog taken from the page with no takedown hands nothing back, so its place goes.
     for (const [dialog] of restoring) if (!dialog.isConnected) restoring.delete(dialog);
     // Focus on what had it as a dialog opened is free while that dialog is closed and its close

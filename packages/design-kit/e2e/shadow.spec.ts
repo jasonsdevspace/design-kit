@@ -653,7 +653,7 @@ const openClosed = async (page: Page, inner: string, script: string, body = '') 
     await servePage(page, {
         title: 'Shop',
         body: `<main><h1 id="page-heading" tabindex="-1">Shop</h1>${body}<div id="widget"></div></main>`,
-        script: `import { attachThemeSwitch, focusOnArrival, moveFocus } from './controls.js';
+        script: `import { attachDialog, attachPanel, attachThemeSwitch, focusOnArrival, moveFocus } from './controls.js';
 const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
 root.innerHTML = ${JSON.stringify(`<link rel="stylesheet" href="/kit.css">${inner}`)};
 window.closedRoot = root;
@@ -743,4 +743,109 @@ test('opens a theme switch inside a closed shadow root by a press, with focus on
                 ?.getAttribute('aria-expanded')
         )
     ).toBe('true');
+});
+
+const DIALOG = (actions: string) =>
+    `<button type="button" id="opener">Edit</button><button type="button" id="row">The new row</button>
+<dialog class="dk-dialog" id="edit" aria-labelledby="edit-title"><h2 class="dk-dialog-title" id="edit-title" tabindex="-1">Edit the round</h2>${actions}</dialog>`;
+
+test("lands a request a dialog's own button in a closed shadow root asks with itself as where focus was, as it closes the dialog", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        DIALOG('<button type="button" id="save" autofocus>Save</button>'),
+        `const dialog = root.getElementById('edit');
+const ask = attachDialog(dialog);
+root.getElementById('opener').addEventListener('click', ask);
+const save = root.getElementById('save');
+save.addEventListener('click', () => {
+    moveFocus(root.getElementById('row'), { from: save });
+    dialog.close();
+});`
+    );
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+            .getElementById('opener')
+            ?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('save');
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('row');
+});
+
+test('moves focus off the corner Close to the first field of a dialog in a closed shadow root as it opens', async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        DIALOG(
+            '<div class="dk-close"><button type="button" class="dk-button" id="close" autofocus>Close</button></div><input id="first" aria-label="First"><input id="second" aria-label="Second">'
+        ),
+        `const ask = attachDialog(root.getElementById('edit'));
+root.getElementById('opener').addEventListener('click', ask);`
+    );
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+            .getElementById('opener')
+            ?.focus();
+    });
+    await page.keyboard.press('Enter');
+    await expect.poll(() => closedActive(page)).toBe('first');
+});
+
+test("lands a page's request after a panel in a closed shadow root hands focus back to its button", async ({
+    page,
+}) => {
+    await openClosed(
+        page,
+        `<button type="button" class="dk-button" id="opener" aria-expanded="true" aria-controls="tips">Tips</button>
+<div class="dk-panel" id="tips"><a href="#deal" id="deal">How to deal</a></div>`,
+        `window.tips = attachPanel(root.getElementById('opener'));
+document.querySelector('#ask').addEventListener('click', () => {
+    moveFocus('page-heading');
+    window.tips.set(false);
+});`,
+        '<button type="button" id="ask">Ask</button>'
+    );
+    await page.locator('#ask').click();
+    await expect(page.locator('#page-heading')).toBeFocused();
+});
+
+test("focuses a title the page slots into a widget before the widget's own heading after it, where one press brings both", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><button type="button" id="bring">Bring both</button><div id="widget"><h2 id="title" tabindex="-1" slot="title">The title</h2></div></main>',
+        script: `import { focusOnArrival } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = '<slot name="title"></slot><h3 id="section" tabindex="-1">A section</h3>';
+document.querySelector('#bring').addEventListener('click', () => {
+    focusOnArrival(root.getElementById('section'), {});
+    focusOnArrival(document.querySelector('#title'), {});
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#bring').click();
+    await expect(page.locator('#title')).toBeFocused();
+});
+
+test('raises no error for a request whose where focus was sits in a fragment', async ({ page }) => {
+    const errors: Error[] = [];
+    page.on('pageerror', (error) => errors.push(error));
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1 id="heading" tabindex="-1">Shop</h1></main>',
+        script: `import { moveFocus } from './controls.js';
+const kept = document.createDocumentFragment();
+kept.append(document.createElement('button'));
+moveFocus('heading', { from: kept.firstElementChild });
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await expect(page.locator('#heading')).toBeFocused();
+    expect(errors).toEqual([]);
 });
