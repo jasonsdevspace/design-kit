@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-import { FIREFOX, specsOf, WEBKIT } from './packages/design-kit/e2e/engines.js';
+import { filtersOf, FIREFOX, specsOf, WEBKIT } from './packages/design-kit/e2e/engines.js';
 
 /*
  * The sheets, the theme script and the components in a real browser, since only a browser resolves
@@ -54,11 +54,17 @@ export default defineConfig({
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
         // The pieces Safari draws its own way, in its engine too.
-        { name: 'webkit', testMatch: specsOf(WEBKIT), use: { ...devices['Desktop Safari'] } },
+        {
+            name: 'webkit',
+            testMatch: specsOf(WEBKIT),
+            ...filtersOf(WEBKIT),
+            use: { ...devices['Desktop Safari'] },
+        },
         // The pieces Firefox draws its own way, in its engine too.
         {
             name: 'firefox',
             testMatch: specsOf(FIREFOX),
+            ...filtersOf(FIREFOX),
             use: {
                 ...devices['Desktop Firefox'],
                 launchOptions: {
