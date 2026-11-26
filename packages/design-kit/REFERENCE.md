@@ -2395,11 +2395,13 @@ root reads focus there through the element it holds. So a dialog, `moveFocus`, a
 after the visitor moves into a field there, a panel, a stepper going read only or taken down, a
 form's refusal, a grid of cells, a table's pinned column, a theme switch and `useRoving` drawn
 inside the root work there as they do on the page, and so do `useFocusAfterDraw`, `useFormRefusal`
-and `useArrivalFocus`, which read where focus was through their target, their form or their heading,
-so a visitor who moves to another control inside the root before one of them lands is left there. A
-toast on the page hands focus back to the host, which takes no focus, so focus goes on to the main
-content, and a press inside the root reaches the page as a press on its host, which is no control,
-so the view it brings takes no focus.
+and `useArrivalFocus`, which read where focus was through their target where it is an element, as a
+widget in a closed root names its own control, the form a refusal is for, or their heading once it
+is drawn, so a visitor who moves to another control inside the root before one of them lands is left
+there. As a view first draws its heading is not drawn yet, so `useArrivalFocus` reads where focus
+was then as the host. A toast on the page hands focus back to the host, which takes no focus, so
+focus goes on to the main content, and a press inside the root reaches the page as a press on its
+host, which is no control, so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,

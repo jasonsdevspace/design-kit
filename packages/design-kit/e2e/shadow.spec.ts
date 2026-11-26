@@ -1058,29 +1058,28 @@ window.ready = true;`,
     expect(errors).toEqual([]);
 });
 
-test('leaves focus where it moved inside a closed shadow root before a useFocusAfterDraw request there lands', async ({
-    page,
-}) => {
-    test.setTimeout(120_000);
+/** Opens the page of hooks inside a closed shadow root, with the errors it raises. */
+const openClosedHooks = async (page: Page): Promise<Error[]> => {
+    const errors: Error[] = [];
+    page.on('pageerror', (error) => errors.push(error));
     await servePage(page, {
         title: 'Shop',
         body: '<main><h1>Shop</h1><div id="widget"></div></main>',
         script: await bundle('closed-hooks-page.tsx'),
     });
-    await page.waitForFunction(() => 'ready' in window);
-    const inRoot = (id: string) =>
-        page.evaluate(
-            (given) =>
-                (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement?.id ===
-                given,
-            id
-        );
     await page.waitForFunction(
-        () => !!(window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')
+        () =>
+            'ready' in window &&
+            !!(window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('next')
     );
-    await page.evaluate(() => {
-        (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById('ask')?.focus();
-    });
+    return errors;
+};
+
+/** Presses the button of the closed root with the id given, by Enter, and waits two frames. */
+const pressInClosed = async (page: Page, id: string) => {
+    await page.evaluate((given) => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot.getElementById(given)?.focus();
+    }, id);
     await page.keyboard.press('Enter');
     await page.evaluate(
         () =>
@@ -1088,5 +1087,34 @@ test('leaves focus where it moved inside a closed shadow root before a useFocusA
                 requestAnimationFrame(() => requestAnimationFrame(done));
             })
     );
-    expect(await inRoot('second')).toBe(true);
+};
+
+/** What has focus inside the closed root, by its id. */
+const focusedInClosed = (page: Page) =>
+    page.evaluate(
+        () => (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement?.id ?? null
+    );
+
+test('lands a useFocusAfterDraw request inside a closed shadow root, and leaves focus where it moved there before the request lands', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInClosed(page, 'ask-only');
+    await expect.poll(() => focusedInClosed(page)).toBe('target');
+    await pressInClosed(page, 'ask');
+    expect(await focusedInClosed(page)).toBe('second');
+    expect(errors).toEqual([]);
+});
+
+test('focuses a useArrivalFocus heading inside a closed shadow root as its key changes, and leaves focus where it moved there first', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInClosed(page, 'next-only');
+    await expect.poll(() => focusedInClosed(page)).toBe('heading');
+    await pressInClosed(page, 'next');
+    expect(await focusedInClosed(page)).toBe('other');
+    expect(errors).toEqual([]);
 });
