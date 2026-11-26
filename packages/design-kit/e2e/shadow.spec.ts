@@ -357,6 +357,69 @@ window.ready = true;`,
     await expect(page.locator('#slotted')).toBeFocused();
 });
 
+test('hands focus on to the control after a panel slotted through two widgets, never one before it', async ({
+    page,
+}) => {
+    // The page slots a button and the widget into an outer widget, whose shadow root passes its
+    // slot on into an inner widget's slot, and nothing follows the widget there.
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="outer"><button type="button" id="before">Before the panel</button><div id="widget"></div></div><button type="button" id="after">After both</button></main>',
+        script: `import { attachPanel } from './controls.js';
+const outer = document.querySelector('#outer').attachShadow({ mode: 'open' });
+outer.innerHTML = '<div id="inner"><slot></slot></div>';
+outer.querySelector('#inner').attachShadow({ mode: 'open' }).innerHTML = '<p>Inner</p><slot></slot>';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('#after')).toBeFocused();
+});
+
+test('stops at a following widget whose closed shadow root takes focus for it, as a panel closes with its button off', async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div><pay-field id="pay"></pay-field><button type="button" id="after">After the field</button></main>',
+        script: `import { attachPanel } from './controls.js';
+customElements.define('pay-field', class extends HTMLElement {
+    constructor() {
+        super();
+        this.attachShadow({ mode: 'closed', delegatesFocus: true }).innerHTML =
+            '<label>Card <input id="card"></label>';
+    }
+});
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('#pay')).toBeFocused();
+});
+
+test('stops at a frame that follows the panel, as Tab does, as a panel closes with its button off', async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div><iframe title="Map" srcdoc="<p>A map</p>"></iframe><button type="button" id="after">After the map</button></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('iframe')).toBeFocused();
+});
+
 test("hands focus on into a following widget's open shadow root, as a panel closes with its button off", async ({
     page,
 }) => {

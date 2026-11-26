@@ -1239,7 +1239,7 @@ test.describe('where focus goes', () => {
             };
             const matches = proto.matches;
             proto.matches = function (this: Element, selectors: string) {
-                if (selectors.includes('[tabindex]')) counted.searches += 1;
+                if (selectors.includes('iframe, embed')) counted.searches += 1;
                 return matches.call(this, selectors);
             };
         });
@@ -1268,7 +1268,11 @@ test.describe('where focus goes', () => {
         });
         await expect(panel(page)).toBeHidden();
         await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
+        // The walk stops at the first stop that takes focus, so it reads only part of the page.
         expect(await searches()).toBeGreaterThan(0);
+        expect(await searches()).toBeLessThan(
+            await page.evaluate(() => document.querySelectorAll('*').length)
+        );
     });
 
     test('moves focus to what follows the panel where no button that names it is left', async ({

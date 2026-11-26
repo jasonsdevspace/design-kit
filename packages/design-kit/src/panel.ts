@@ -107,8 +107,9 @@ const drawnBefore = (one: Node, other: Node): boolean => {
 };
 
 /**
- * The children of an element as the page draws them: what a slot is drawn with, its own children
- * where nothing is assigned to it, and the children of an open shadow root in place of its host's.
+ * The children of an element as the page draws them: what a slot is drawn with, flattened through
+ * slots within it, its own children where nothing is assigned to it, and the children of an open
+ * shadow root in place of its host's.
  */
 const drawnChildrenOf = (element: Element): readonly Element[] => {
     if (element.localName === 'slot') {
@@ -120,12 +121,16 @@ const drawnChildrenOf = (element: Element): readonly Element[] => {
 
 /**
  * Where an element is drawn: the element that holds it as the page draws it and its siblings there,
- * the slot it is drawn in, its parent, or the host of the shadow root it sits at the top of, a closed
- * one included, since the walk climbs from the element itself.
+ * the slot it is assigned to, with a slot assigned on into another kept as itself, its parent, or
+ * the host of the shadow root it sits at the top of, a closed one included, since the walk climbs
+ * from the element itself.
  */
 const drawnIn = (element: Element): readonly [Element, readonly Element[]] | undefined => {
     const slot = element.assignedSlot;
-    if (slot) return [slot, drawnChildrenOf(slot)];
+    if (slot) {
+        const assigned = slot.assignedElements();
+        return [slot, assigned.length > 0 ? assigned : [...slot.children]];
+    }
     const parent = element.parentNode;
     if (parent?.nodeType === 11)
         return [(parent as ShadowRoot).host, [...(parent as ShadowRoot).children]];
@@ -135,23 +140,45 @@ const drawnIn = (element: Element): readonly [Element, readonly Element[]] | und
 };
 
 /**
- * The elements the keyboard reaches by Tab after a panel, in the order the page draws them: what
- * follows the panel where it is drawn, then what follows each element around it, out to the
- * document, through a slot to what is slotted into it and into a following widget's open shadow
- * root, so focus goes on past a widget to the page after it.
+ * What Tab stops at: the controls a press focuses too, and frames, embedded content, image map
+ * links, media with controls and editable regions. A scroll container some browsers stop at is left
+ * out, since only its layout says whether it scrolls.
  */
-const followingOf = (panel: Element): (HTMLElement | SVGElement)[] => {
-    const after: (HTMLElement | SVGElement)[] = [];
-    const take = (element: Element) => {
-        if (element.matches(FOCUSABLE) && (element as HTMLElement | SVGElement).tabIndex >= 0)
-            after.push(element as HTMLElement | SVGElement);
-        for (const child of drawnChildrenOf(element)) take(child);
+const STOPS = `${FOCUSABLE}, iframe, embed, object, area[href], audio[controls], video[controls], [contenteditable]:not([contenteditable="false"])`;
+
+/** Whether nothing inside an element is drawn for Tab to reach, read from its attributes alone. */
+const passedOver = (element: Element): boolean =>
+    element.hasAttribute('hidden') || element.hasAttribute('inert');
+
+/**
+ * Each stop Tab reaches after a panel, in the order the page draws it, given one at a time so the
+ * walk ends at the first that takes focus: what follows the panel where it is drawn, then what
+ * follows each element around it, out to the document, through a slot to what is slotted into it
+ * and into a following widget's open shadow root. A custom element whose shadow root is closed is
+ * given itself, which takes focus where its root delegates it. A stop with a tabindex above 0 is
+ * one Tab reaches before the rest, so it is passed over.
+ */
+const followingOf = function* (panel: Element): Generator<Element> {
+    const take = function* (element: Element): Generator<Element> {
+        if (passedOver(element)) return;
+        if (
+            (element.matches(STOPS) && (element as HTMLElement).tabIndex === 0) ||
+            (element.localName.includes('-') && !element.shadowRoot)
+        )
+            yield element;
+        const children =
+            element.localName === 'details' && !(element as HTMLDetailsElement).open
+                ? [...element.children].filter((child) => child.localName === 'summary').slice(0, 1)
+                : drawnChildrenOf(element);
+        for (const child of children) yield* take(child);
     };
     for (let at: Element = panel; ;) {
         const drawn = drawnIn(at);
-        if (!drawn) return after;
+        if (!drawn) return;
         const [around, siblings] = drawn;
-        for (const sibling of siblings.slice(siblings.indexOf(at) + 1)) take(sibling);
+        const index = siblings.indexOf(at);
+        // An element not found where it is drawn takes nothing there, so the walk never goes back.
+        if (index >= 0) for (const sibling of siblings.slice(index + 1)) yield* take(sibling);
         at = around;
     }
 };

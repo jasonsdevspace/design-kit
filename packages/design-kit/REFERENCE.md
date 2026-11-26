@@ -4473,9 +4473,10 @@ them where they are. Where focus goes back and the visitor's last press was a li
 place on the same page outside it, one that opens no new tab and downloads nothing, focus goes to
 that place instead. Where the button that opened the panel takes no focus, focus goes to the first
 other attached button that names it, else the first thing after the panel the keyboard reaches by
-Tab, in the order the page draws it, so a control slotted into a widget after its panel and one
-inside a following widget's open shadow root come in their turn, past the host of a shadow root the
-panel sits in to the page after it too, else the app frame's body or the page's main content. Safari
+Tab, in the order the page draws it, so a control slotted into a widget after its panel, one inside
+a following widget's open shadow root, a following frame and a custom element whose closed shadow
+root takes focus for it come in their turn, past the host of a shadow root the panel sits in to the
+page after it too, else the app frame's body or the page's main content. Safari
 focuses a pressed button only where it has a tabindex, so the kit writes `tabindex="0"` on an
 attached button and the corner Close, and `tabindex="-1"` on the panel, so a press anywhere in it
 leaves focus in it, and on the place a link sends focus to, each where the page set none, and keeps
