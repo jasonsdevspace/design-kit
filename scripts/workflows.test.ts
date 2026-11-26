@@ -658,6 +658,46 @@ describe('the workflows', () => {
         }
     });
 
+    // Each CI job restores the dependencies a push to main installed before, keyed on the runner,
+    // Node and the lockfile, installs only on a miss, and keeps what it installed only from a push to
+    // main, so a pull request's run never writes what main's runs restore.
+    it('restore installed dependencies in CI, written from a push to main alone', () => {
+        const jobs = jobsOf(workflows.get('.github/workflows/ci.yml') ?? '').filter(({ body }) =>
+            /\bnpm ci\b/.test(body)
+        );
+        expect(jobs.length).toBeGreaterThan(0);
+        const unready = jobs.flatMap(({ id, body }) => {
+            const steps = stepsOf(body).map(({ text }) => text);
+            const restore = steps.findIndex((text) =>
+                /uses: actions\/cache\/restore@[0-9a-f]{40}\b/.test(text)
+            );
+            const install = steps.findIndex((text) => /\bnpm ci\b/.test(text));
+            const save = steps.findIndex((text) =>
+                /uses: actions\/cache\/save@[0-9a-f]{40}\b/.test(text)
+            );
+            const problems: string[] = [];
+            if (restore < 0 || restore > install)
+                problems.push('restores nothing before it installs');
+            else if (
+                !/key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}/.test(
+                    steps[restore] ?? ''
+                )
+            )
+                problems.push('keys its restore on something else');
+            if (!/if: steps\.deps\.outputs\.cache-hit != 'true'/.test(steps[install] ?? ''))
+                problems.push('installs on a hit');
+            if (
+                save < install ||
+                !/if: steps\.deps\.outputs\.cache-hit != 'true' && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/.test(
+                    steps[save] ?? ''
+                )
+            )
+                problems.push('keeps its install from a run that is not a push to main');
+            return problems.map((problem) => `${id} ${problem}`);
+        });
+        expect(unready).toEqual([]);
+    });
+
     it('find a gate that stops checking a job it needs', () => {
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
         expect(
