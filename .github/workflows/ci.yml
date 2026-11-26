@@ -108,10 +108,13 @@ jobs:
             matrix:
                 shard: [1, 2]
         steps:
+            # Two commits deep, so a pull request's merge and its base, its first parent, can be
+            # compared for the files it changes.
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   persist-credentials: false
+                  fetch-depth: 2
 
             - name: Set up Node
               id: node
@@ -146,6 +149,16 @@ jobs:
                   npx playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
+            # The site's tests against the release it pins run on a push and on a pull request that
+            # touches the site or the lockfile, the only changes they can find anything new in, as
+            # scripts/site-tests.mjs decides. The site's tests over this commit's kit run in a job
+            # of their own on every change.
+            - name: Whether the site's tests run here
+              id: site
+              env:
+                  EVENT: ${{ github.event_name }}
+              run: echo "tests=$(node scripts/site-tests.mjs "$EVENT")" >> "$GITHUB_OUTPUT"
+
             # The totals, and any test that failed, go to the run's summary from the JSON report.
             # The summary reports the tests and never decides them, so the step ends with their
             # status whether or not it could be written. Chromium alone here: the specs that run in
@@ -154,6 +167,7 @@ jobs:
               env:
                   SHARD: ${{ matrix.shard }}
                   SHARDS: ${{ strategy.job-total }}
+                  SKIP_SITE: ${{ steps.site.outputs.tests == 'skip' && '1' || '' }}
               run: |
                   rm -f playwright-results.json
                   status=0

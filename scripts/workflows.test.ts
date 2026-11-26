@@ -784,6 +784,38 @@ describe('the workflows', () => {
         expect(webkit).toMatch(/npm run e2e -- --project webkit\b[^\n]*--workers 2\b/);
     });
 
+    // The Chromium shards run the site's tests against its pinned release only where the site
+    // tests script says, which needs the pull request's merge and its base, and the site's tests
+    // over the commit's kit run on every change in a job of their own.
+    it('run the site tests against the pinned release where the script says, and over the kit always', () => {
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        const jobs = jobsOf(ci);
+        const chromium = jobs.find(({ id }) => id === 'chromium')?.body ?? '';
+        const steps = stepsOf(chromium).map(({ text }) => text);
+        const checkout = steps.find((text) => /uses: actions\/checkout@/.test(text)) ?? '';
+        expect(checkout).toMatch(/^\s+fetch-depth: 2\s*$/m);
+        const decide = steps.findIndex((text) =>
+            /node scripts\/site-tests\.mjs "\$EVENT"/.test(text)
+        );
+        const run = steps.findIndex((text) => /npm run e2e -- --project chromium\b/.test(text));
+        expect(decide).toBeGreaterThan(-1);
+        expect(steps[decide]).toMatch(/^\s+id: site\s*$/m);
+        expect(steps[decide]).toMatch(/EVENT: \$\{\{ github\.event_name \}\}/);
+        expect(run).toBeGreaterThan(decide);
+        expect(steps[run]).toMatch(
+            /SKIP_SITE: \$\{\{ steps\.site\.outputs\.tests == 'skip' && '1' \|\| '' \}\}/
+        );
+        const skipping = [...workflows].flatMap(([path, text]) =>
+            jobsOf(text)
+                .filter(({ body }) => /\bSKIP_SITE\b/.test(body))
+                .map(({ id }) => `${path} ${id}`)
+        );
+        expect(skipping).toEqual(['.github/workflows/ci.yml chromium']);
+        const siteKit = jobs.find(({ id }) => id === 'site-kit')?.body ?? '';
+        expect(siteKit).toMatch(/npx playwright test packages\/site --project chromium/);
+        expect(siteKit).not.toMatch(/^ {8}if:/m);
+    });
+
     it('find a gate that stops checking a job it needs', () => {
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
         expect(
