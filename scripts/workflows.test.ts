@@ -658,6 +658,16 @@ describe('the workflows', () => {
         }
     });
 
+    // Playwright's default of half the cores gives the Mac runner's three cores one worker, where
+    // the Ubuntu runners' four give two, so the WebKit shards name their workers.
+    it('run the WebKit shards with two workers on their Mac runners', () => {
+        const webkit =
+            jobsOf(workflows.get('.github/workflows/ci.yml') ?? '').find(
+                ({ id }) => id === 'webkit'
+            )?.body ?? '';
+        expect(webkit).toContain('--project webkit --shard "$SHARD/$SHARDS" --workers 2');
+    });
+
     it('find a gate that stops checking a job it needs', () => {
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
         expect(

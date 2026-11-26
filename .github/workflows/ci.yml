@@ -256,6 +256,9 @@ jobs:
                   npx playwright install webkit
                   node -e "require('@playwright/test').webkit.launch({ timeout: 30_000 }).then((b) => b.close())"
 
+            # Two workers, since Playwright's default of half the cores gives the Mac runner's three
+            # cores one, where the Ubuntu runners' four give two, and one left the WebKit shards the
+            # slowest jobs of the run, near their time limit.
             - name: Browser tests in WebKit
               env:
                   SHARD: ${{ matrix.shard }}
@@ -263,7 +266,7 @@ jobs:
               run: |
                   rm -f playwright-results.json
                   status=0
-                  npm run e2e -- --project webkit --shard "$SHARD/$SHARDS" || status=$?
+                  npm run e2e -- --project webkit --shard "$SHARD/$SHARDS" --workers 2 || status=$?
                   if [ -f playwright-results.json ]; then
                       node scripts/summary.mjs playwright playwright-results.json "Browser tests in WebKit, shard $SHARD of $SHARDS" "$status" ||
                           echo "The summary of the browser tests could not be written."
