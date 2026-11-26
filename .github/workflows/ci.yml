@@ -150,14 +150,21 @@ jobs:
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             # The site's tests against the release it pins run on a push and on a pull request that
-            # touches the site or the lockfile, the only changes they can find anything new in, as
-            # scripts/site-tests.mjs decides. The site's tests over this commit's kit run in a job
-            # of their own on every change.
+            # touches what they read, by the list scripts/site-tests.mjs keeps, the only changes
+            # they can find anything new in. The site's tests over this commit's kit run in a job
+            # of their own on every change. The run's summary says which, and why.
             - name: Whether the site's tests run here
               id: site
               env:
                   EVENT: ${{ github.event_name }}
-              run: echo "tests=$(node scripts/site-tests.mjs "$EVENT")" >> "$GITHUB_OUTPUT"
+              run: |
+                  tests="$(node scripts/site-tests.mjs "$EVENT")"
+                  echo "tests=$tests" >> "$GITHUB_OUTPUT"
+                  if [ "$tests" = skip ]; then
+                      echo "The site's tests against its pinned release skip here: this pull request touches nothing they read. They run over this commit's kit in a job of their own." >> "$GITHUB_STEP_SUMMARY"
+                  else
+                      echo "The site's tests against its pinned release run here: this is a $EVENT run, or a pull request that touches what they read." >> "$GITHUB_STEP_SUMMARY"
+                  fi
 
             # The totals, and any test that failed, go to the run's summary from the JSON report.
             # The summary reports the tests and never decides them, so the step ends with their

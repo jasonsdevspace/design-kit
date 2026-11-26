@@ -16,8 +16,9 @@ const ORIGIN = `http://localhost:${String(PORT)}`;
 
 /**
  * Set by CI's Chromium shards where a change touches nothing the site's tests against its pinned
- * release read, which they can find nothing new in, as scripts/site-tests.mjs decides. Those runs leave the site's specs out, and build and serve no site, since only the
- * site's tests open it. The site's tests over the commit's kit run in a job of their own regardless.
+ * release read, which they can find nothing new in, as scripts/site-tests.mjs decides. Those runs
+ * leave the site's specs out, and build and serve no site, since only the site's tests open it.
+ * The site's tests over the commit's kit run in a job of their own regardless.
  */
 const SKIP_SITE = process.env['SKIP_SITE'] === '1';
 

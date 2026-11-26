@@ -5,7 +5,8 @@
  * markup the site draws from the kit's own examples and React source in this repository. So they
  * can find something new only where a change touches what the site reads: the site itself, the
  * kit's source and examples it draws from, the test helper its specs share, the lockfile that
- * resolves the release, and the files that set how the tests run. They run on every push, which
+ * resolves the release, the settings its build and its code samples read, and the files that set
+ * how the tests run, the workflow's own steps among them. They run on every push, which
  * main and a release's tag are, and on a pull request that touches any of those. A pull request
  * that touches none of them, such as one changing only the kit's own specs, its docs or the
  * workflows, skips them here, and the site's tests over the commit's kit still run in a job of
@@ -51,7 +52,10 @@ export const SITE_INPUTS = [
     'package-lock.json',
     'package.json',
     '.nvmrc',
+    '.prettierrc.json',
+    'tsconfig.json',
     'playwright.config.ts',
+    '.github/workflows/ci.yml',
 ];
 
 /**
@@ -64,13 +68,19 @@ export const isSiteInput = (file) =>
     SITE_INPUTS.some((input) => (input.endsWith('/') ? file.startsWith(input) : file === input));
 
 /**
- * The files a pull request's merge changes against its base, or null where git cannot say.
+ * The files a pull request's merge changes against its base, in the folder given, or null where
+ * git cannot say. A file moved is listed under both its paths, so one moved out of the site still
+ * counts as the site's.
  *
+ * @param {string} [cwd]
  * @returns {string[] | null}
  */
-const changedFiles = () => {
+export const changedFiles = (cwd) => {
     try {
-        return execFileSync('git', ['diff', '--name-only', 'HEAD^1', 'HEAD'], { encoding: 'utf8' })
+        return execFileSync('git', ['diff', '--name-only', '--no-renames', 'HEAD^1', 'HEAD'], {
+            encoding: 'utf8',
+            ...(cwd === undefined ? {} : { cwd }),
+        })
             .split('\n')
             .filter(Boolean);
     } catch {
