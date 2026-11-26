@@ -316,6 +316,9 @@ What no fix reaches, each failing safe:
   not in `window.frames`, and its load stays inside the root. Entering it from the page only clears
   the press. The only spec work near it, whatwg/dom#1287, would report a root being attached, not
   open it.
+- A press inside a closed shadow root reaches the page as a press on its host, which is no control,
+  so the view it brings takes no focus, and a toast on the page that had focus inside one hands it
+  back to the host, which takes none, so it goes on to the main content.
 - In Firefox alone, a page script that moves focus to an element of the page just after focus enters
   a frame clears the press, since the read a task later ends on that element, which cannot be told
   from a closed shadow root's host.
@@ -348,6 +351,9 @@ What no fix reaches, each failing safe:
 
 The path is in `packages/design-kit`.
 
+- `e2e/focus-grid.spec.tsx`, in Chromium, WebKit and Firefox, runs each place focus can be against
+  each piece that reads it, with each square's answer, the places a page cannot draw in, and each
+  square that fails with the wrong answer its cause gives.
 - `e2e/panel.spec.ts`, in Chromium, WebKit and Firefox, holds each case of the rule: the Close by
   key and pointer, a Done of the page's own that closes at once, waits, turns itself off or is drawn
   away, a link or a router that moves focus before or after the close, a link to a place outside the

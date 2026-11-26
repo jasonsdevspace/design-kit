@@ -50,6 +50,7 @@ export const WEBKIT: Engine = {
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
     seen: "Focus read through frames, by each engine's record of focus in a frame.",
     'frame-scrollbar': "A press on a frame's scrollbar, which takes no focus in Safari either.",
+    'focus-grid': 'Every place focus can be against every piece that reads it, in each engine.',
 };
 
 /** What Firefox draws or does its own way, and what every engine does its own way. */
@@ -88,6 +89,7 @@ export const FIREFOX: Engine = {
     tabbar: 'What the keyboard reaches kept clear of the bar at a root size the page sets.',
     readonly: "A read-only value sized to its words, by each engine's field-sizing and line box.",
     seen: "Focus read through frames, by each engine's record of focus in a frame.",
+    'focus-grid': 'Every place focus can be against every piece that reads it, in each engine.',
 };
 
 /**
