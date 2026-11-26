@@ -226,6 +226,50 @@ window.ready = true;`,
     await expect(page.locator('#opener')).toBeFocused();
 });
 
+test("opens and closes a widget's own panel inside its shadow root, apart from the page's panel with its id", async ({
+    page,
+}) => {
+    const close = (name: string) =>
+        `<div class="dk-close"><button type="button" class="dk-button dk-button-text dk-button-quiet"><span aria-hidden="true">×</span><span class="dk-visually-hidden">Close ${name}</span></button></div>`;
+    await servePage(page, {
+        title: 'Shop',
+        body: `<main><h1>Shop</h1>
+<button type="button" class="dk-button" id="page-tips" aria-expanded="false" aria-controls="tips">Page tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">The page's tips</h2>${close("the page's tips")}</div>
+<div id="widget"></div></main>`,
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+root.innerHTML = \`<link rel="stylesheet" href="/kit.css">
+<button type="button" class="dk-button" id="widget-tips" aria-expanded="false" aria-controls="tips">Widget tips</button>
+<div class="dk-panel" id="tips" hidden><h2 class="dk-panel-title">The widget's tips</h2>${close("the widget's tips")}</div>\`;
+attachPanel(document.querySelector('#page-tips'));
+attachPanel(root.querySelector('#widget-tips'));
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const widget = page.locator('#widget');
+    const pagePanel = page.locator('main > #tips');
+    await widget.getByRole('button', { name: 'Widget tips' }).click();
+    await expect(widget.getByRole('heading', { name: "The widget's tips" })).toBeVisible();
+    await expect(widget.getByRole('button', { name: 'Widget tips' })).toHaveAttribute(
+        'aria-expanded',
+        'true'
+    );
+    await expect(pagePanel).toBeHidden();
+    await expect(page.locator('#page-tips')).toHaveAttribute('aria-expanded', 'false');
+    await widget.getByRole('button', { name: "Close the widget's tips" }).click();
+    await expect(widget.getByRole('heading', { name: "The widget's tips" })).toBeHidden();
+    await expect(widget.getByRole('button', { name: 'Widget tips' })).toBeFocused();
+    await expect(widget.getByRole('button', { name: 'Widget tips' })).toHaveAttribute(
+        'aria-expanded',
+        'false'
+    );
+    // The page's own button opens the page's panel alone.
+    await page.locator('#page-tips').click();
+    await expect(pagePanel).toBeVisible();
+    await expect(widget.getByRole('heading', { name: "The widget's tips" })).toBeHidden();
+});
+
 /** Shows a message on the toast a page has attached, with no action. */
 const showToast = (page: Page, words: string) =>
     page.evaluate((said) => {

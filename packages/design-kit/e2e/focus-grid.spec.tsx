@@ -612,10 +612,6 @@ const CLOSED_OWN = "A piece inside a closed shadow root reads focus there as the
 const THROUGH_OTHER =
     "Focus in a frame of the page's origin inside one of another origin is read from the page down, which stops at the frame of another origin.";
 
-/** A panel is looked for by its id in the document, so one inside a shadow root is never found. */
-const PANEL_IN_SHADOW =
-    'A panel is looked for by its id in the document its button sits in, so a panel inside a shadow root is never found and its button opens nothing.';
-
 /** A dialog whose opener's page has gone hands focus to the body. */
 const DIALOG_GONE =
     "A dialog whose opener went with the page a frame left hands focus to the page's body, not to the frame.";
@@ -629,9 +625,8 @@ type Failing = { readonly gives: ByEngine; readonly because: string };
  * run, the right one included, so the list is always the grid's state.
  */
 const FAILING: Squares<Failing> = {
-    open: { panel: { gives: 'never opened', because: PANEL_IN_SHADOW } },
     closed: {
-        panel: { gives: 'never opened', because: PANEL_IN_SHADOW },
+        panel: { gives: 'never opened', because: CLOSED_PRESS },
         toast: { gives: 'main', because: CLOSED_HOST },
         readOnly: { gives: 'body, marked, down hidden', because: CLOSED_OWN },
         takeDown: { gives: 'body', because: CLOSED_OWN },
@@ -644,7 +639,6 @@ const FAILING: Squares<Failing> = {
         arrivalHook: { gives: { chromium: 'main', firefox: 'main' }, because: CLOSED_OWN },
         refusalHook: { gives: 'main', because: CLOSED_OWN },
     },
-    'shadow in frame': { panel: { gives: 'never opened', because: PANEL_IN_SHADOW } },
     'ours in other': {
         panel: { gives: 'xo/xi', because: THROUGH_OTHER },
         toast: { gives: { chromium: 'xo', webkit: 'xo', firefox: 'main' }, because: THROUGH_OTHER },
