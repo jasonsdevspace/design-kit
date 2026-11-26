@@ -42,7 +42,7 @@ const SCANNED = new Set([
 const EM_DASH = String.fromCodePoint(0x2014);
 
 const PROCESS_ARTIFACTS =
-    /\b(TODO|FIXME|XXX|HACK|TBD)\b|coming soon|not implemented|waiting on|to be (decided|determined)|for now,? (leave|skip)/i;
+    /\b(TODO|FIXME|XXX|HACK|TBD)\b|\b(coming soon|not implemented|a?waiting on|to be (decided|determined)|for now,? (leave|skip))\b/i;
 
 const ISSUE_REFERENCES =
     /\b(issue|issues|ticket|tickets|pr|prs|pull request)s? ?#?\d+\b|\(#\d+\)|\bGH-\d+\b/i;
