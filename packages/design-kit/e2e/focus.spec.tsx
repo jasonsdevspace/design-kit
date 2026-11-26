@@ -1391,8 +1391,8 @@ const FAR = '<!doctype html><title>Check</title><input id="code" aria-label="Cod
  * field and a button that brings the view, as a widget drawn in a shadow root holds a frame, and
  * one with a closed root holding another, which the page keeps a hold of for the test to reach. The
  * view names its heading by the element, since an id is looked for where focus was, which in that
- * frame is the shadow root. The page's own load waits on a picture that never comes, so the test
- * goes to the page without waiting for it.
+ * frame is the shadow root. Where a frame shows notes.html, the page's own load waits on the picture
+ * it holds back, so the test goes to the page without waiting for its load.
  */
 const openWithFrames = async (page: Page, frames = '') => {
     await stillClock(page.clock);
@@ -1658,7 +1658,7 @@ test('raises no error as the page is left and gone back to', async ({ page }) =>
     await expect(page.frameLocator('iframe[title="Card"]').locator('#card')).toBeAttached();
     // The page left goes at the commit, but Chromium is still attaching the next page then, and a
     // goBack asked before it is attached fails with no active page. The next page's document is
-    // parsed only once it is attached, while its load waits on a picture that never comes.
+    // parsed only once it is attached, the first point that shows it.
     await page.goto(`${ORIGIN}/away`, { waitUntil: 'domcontentloaded' });
     await page.goBack({ waitUntil: 'commit' });
     await page.waitForFunction(() => 'ready' in window);
