@@ -1,9 +1,11 @@
 name: Release
 
-# Releases the package when a tag such as design-kit-v0.1.0 is pushed. The tag has to name a commit
-# on main, match the version in the package's package.json, and have an entry in its changelog
-# with no Unreleased entry left, and its changes folder may hold nothing but the README, not even a
-# link, or nothing is released. Every check CI runs, runs first.
+# Releases a package when its tag is pushed: the kit for a tag such as design-kit-v0.1.0, and the
+# prose check for one such as prose-check-v0.1.0, each apart from the other, from this one
+# workflow, so the rules a release keeps are written once. The tag has to name a commit on main,
+# match the version in its package's package.json, and have an entry in its changelog with no
+# Unreleased entry left, and the package's changes folder may hold nothing but the README, not
+# even a link, or nothing is released. Every check CI runs, runs first.
 #
 # The publish uses npm's trusted publishing: the workflow proves who it is with an OpenID Connect
 # token, so no npm token is stored anywhere, and each version carries provenance that links it to
@@ -11,11 +13,12 @@ name: Release
 # Jason promotes it on the package page, so a tag, a green run and a click are all needed before
 # anyone can install it, and nothing that happens in CI alone can change what "latest" points at.
 # A prerelease version, one with a hyphen, is staged under the "next" tag and marked as a
-# prerelease on GitHub.
+# prerelease on GitHub. Only the kit's release is recorded and marked as the repository's latest.
 on:
     push:
         tags:
             - 'design-kit-v*'
+            - 'prose-check-v*'
 
 permissions:
     contents: read
@@ -38,6 +41,7 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         outputs:
+            package: ${{ steps.version.outputs.package }}
             version: ${{ steps.version.outputs.version }}
             prerelease: ${{ steps.version.outputs.prerelease }}
         steps:
@@ -52,16 +56,24 @@ jobs:
               with:
                   node-version-file: .nvmrc
 
-            # The tag names the version, the package declares it, and the changelog explains it.
-            # All three have to agree, and the commit has to be on main, so nothing unreviewed is
-            # ever released.
+            # The tag's prefix names the package and the rest names the version, the package
+            # declares it, and the changelog explains it. All three have to agree, and the commit
+            # has to be on main, so nothing unreviewed is ever released.
             - name: Check tag, version, changelog and branch
               id: version
               env:
                   TAG: ${{ github.ref_name }}
               run: |
-                  dir=packages/design-kit
-                  version="${TAG#design-kit-v}"
+                  case "$TAG" in
+                      design-kit-v*) package=design-kit ;;
+                      prose-check-v*) package=prose-check ;;
+                      *)
+                          echo "$TAG names no package this workflow releases"
+                          exit 1
+                          ;;
+                  esac
+                  dir="packages/$package"
+                  version="${TAG#"$package"-v}"
                   declared=$(node -p "require('./$dir/package.json').version")
                   if [ "$version" != "$declared" ]; then
                       echo "the tag says $version but $dir/package.json says $declared"
@@ -85,6 +97,7 @@ jobs:
                       echo "the tagged commit is not on main"
                       exit 1
                   fi
+                  echo "package=$package" >> "$GITHUB_OUTPUT"
                   echo "version=$version" >> "$GITHUB_OUTPUT"
                   case "$version" in
                       *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
@@ -107,8 +120,8 @@ jobs:
     # The job that can publish does nothing else. It holds the token npm's trusted publishing asks
     # for, so it checks out only the Node version, restores no cache and installs nothing but a
     # pinned npm, without install scripts. What it publishes is the tarball CI packed and proved on
-    # the oldest supported Node, in a job with no more than read access, and only when its
-    # checksum is the one that job reported.
+    # the oldest supported Node for the package the tag names, in a job with no more than read
+    # access, and only when its checksum is the one that job reported.
     publish:
         name: Stage on npm
         needs: [agree, checks]
@@ -121,9 +134,11 @@ jobs:
             contents: read
             id-token: write
         env:
+            PACKAGE: ${{ needs.agree.outputs.package }}
             VERSION: ${{ needs.agree.outputs.version }}
             PRERELEASE: ${{ needs.agree.outputs.prerelease }}
-            SHA256: ${{ needs.checks.outputs.package-sha256 }}
+            # Each package's checksum from the job that proved it, and none for anything else.
+            SHA256: ${{ needs.agree.outputs.package == 'design-kit' && needs.checks.outputs.package-sha256 || needs.agree.outputs.package == 'prose-check' && needs.checks.outputs.prose-check-sha256 || '' }}
         steps:
             # The one file the job reads, for the Node the project names. No code is checked out,
             # so none can run.
@@ -164,7 +179,7 @@ jobs:
             - name: Download the packed package
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
-                  name: design-kit-package
+                  name: ${{ needs.agree.outputs.package }}-package
                   path: ${{ runner.temp }}/package
 
             # A version already on npm is left alone. A staged version is hidden from npm view
@@ -175,13 +190,14 @@ jobs:
             # failed.
             - name: Stage the version on npm with provenance
               run: |
-                  page="https://www.npmjs.com/package/@jasonsdevspace/design-kit/v/$VERSION"
-                  if npm view "@jasonsdevspace/design-kit@$VERSION" version >/dev/null 2>&1; then
+                  name="@jasonsdevspace/$PACKAGE"
+                  page="https://www.npmjs.com/package/$name/v/$VERSION"
+                  if npm view "$name@$VERSION" version >/dev/null 2>&1; then
                       echo "$VERSION is already on npm"
                       printf '### On npm\n\n[%s](%s) was already on npm, so nothing was staged.\n' "$VERSION" "$page" >> "$GITHUB_STEP_SUMMARY"
                       exit 0
                   fi
-                  tarball="$RUNNER_TEMP/package/jasonsdevspace-design-kit-$VERSION.tgz"
+                  tarball="$RUNNER_TEMP/package/jasonsdevspace-$PACKAGE-$VERSION.tgz"
                   if [ ! -f "$tarball" ]; then
                       echo "the packed package is not $VERSION"
                       ls "$RUNNER_TEMP/package"
@@ -197,11 +213,12 @@ jobs:
                   tag=latest
                   [ "$PRERELEASE" = "true" ] && tag=next
                   npm stage publish "$tarball" --provenance --access public --tag "$tag"
-                  printf '### Staged on npm\n\n`@jasonsdevspace/design-kit@%s` is staged under the `%s` tag with provenance, and goes live once it is promoted on npm. Its page will be [%s](%s).\n' "$VERSION" "$tag" "$page" "$page" >> "$GITHUB_STEP_SUMMARY"
+                  printf '### Staged on npm\n\n`%s@%s` is staged under the `%s` tag with provenance, and goes live once it is promoted on npm. Its page will be [%s](%s).\n' "$name" "$VERSION" "$tag" "$page" "$page" >> "$GITHUB_STEP_SUMMARY"
 
     # A release on GitHub with the changelog entry as its notes, so the tag has a page a reader can
     # land on. Left alone if it exists. Its own job, so writing to the repository and publishing
-    # to npm never share one.
+    # to npm never share one. The prose check's release is never marked Latest, which stays with
+    # the kit's newest, so the repository's page keeps pointing at the design kit.
     release:
         name: Release on GitHub
         needs: [agree, publish]
@@ -210,6 +227,7 @@ jobs:
         permissions:
             contents: write
         env:
+            PACKAGE: ${{ needs.agree.outputs.package }}
             VERSION: ${{ needs.agree.outputs.version }}
             PRERELEASE: ${{ needs.agree.outputs.prerelease }}
             TAG: ${{ github.ref_name }}
@@ -227,22 +245,28 @@ jobs:
               run: |
                   flags=()
                   [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
-                  package="$(jq -r .name packages/design-kit/package.json)"
-                  export NOTES_LEAD="The kit is [\`$package\`](https://www.npmjs.com/package/$package) on npm. Once this version is promoted there, install it with \`npm install $package@$VERSION\`."
-                  scripts/github-release.sh "$TAG" "$VERSION" packages/design-kit/CHANGELOG.md \
-                      "design-kit $VERSION" "${flags[@]}"
+                  [ "$PACKAGE" = "prose-check" ] && flags+=(--latest=false)
+                  name="$(jq -r .name "packages/$PACKAGE/package.json")"
+                  case "$PACKAGE" in
+                      design-kit) what="The kit" install="npm install $name@$VERSION" ;;
+                      *) what="The prose check" install="npm install --save-dev --save-exact $name@$VERSION" ;;
+                  esac
+                  export NOTES_LEAD="$what is [\`$name\`](https://www.npmjs.com/package/$name) on npm. Once this version is promoted there, install it with \`$install\`."
+                  scripts/github-release.sh "$TAG" "$VERSION" "packages/$PACKAGE/CHANGELOG.md" \
+                      "$PACKAGE $VERSION" "${flags[@]}"
 
-    # What the release weighs, recorded from the tagged commit, which is on main, so the commit the
-    # record names is one main keeps. A prerelease records nothing, since main's records describe
-    # what a demo installs. The site's pages are recorded by the site pages workflow when the site's
-    # pin moves, since at the tag the site still draws from the version before. This job runs the
-    # build and names no secret, so no token that can write and no key that mints one is on its
-    # runner, and the record leaves it as an artifact. A failure here
-    # does not fail the release, which is already staged.
+    # What the kit's release weighs, recorded from the tagged commit, which is on main, so the
+    # commit the record names is one main keeps. The prose check has no budget, so its release
+    # records nothing, and neither does a prerelease, since main's records describe what a demo
+    # installs. The site's pages are recorded by the site pages workflow when the site's pin moves,
+    # since at the tag the site still draws from the version before. This job runs the build and
+    # names no secret, so no token that can write and no key that mints one is on its runner, and
+    # the record leaves it as an artifact. A failure here does not fail the release, which is
+    # already staged.
     records:
         name: Record the release
         needs: [agree, publish]
-        if: needs.agree.outputs.prerelease != 'true'
+        if: needs.agree.outputs.package == 'design-kit' && needs.agree.outputs.prerelease != 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         continue-on-error: true
