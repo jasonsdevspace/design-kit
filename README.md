@@ -570,7 +570,7 @@ npm run bench:pages
 - `.github/` holds the contributing guide in `CONTRIBUTING.md`, the security policy in
   `SECURITY.md`, the issue templates for a piece of work, a parent issue and a bug in
   `ISSUE_TEMPLATE/`, the pull request template in `pull_request_template.md`, the README's mark and
-  picture in `readme/`, the weekly dependency and action updates in `dependabot.yml`, and CI and
+  picture in `readme/`, the monthly dependency and action updates in `dependabot.yml`, and CI and
   deploy, release and the pull request check in `workflows/`.
 
 </details>
