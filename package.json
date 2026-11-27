@@ -33,7 +33,7 @@
     "devDependencies": {
         "@axe-core/playwright": "^4.14.0",
         "@eslint/js": "^10.0.1",
-        "@jasonsdevspace/prose-check": "0.1.0",
+        "@jasonsdevspace/prose-check": "0.2.0",
         "@playwright/test": "^1.65.0",
         "@types/node": "^24.19.2",
         "@types/react": "^19.3.0",
