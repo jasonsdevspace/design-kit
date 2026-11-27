@@ -792,6 +792,8 @@ jobs:
                   tsc="$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc"
                   node "$tsc" --strict --noEmit --skipLibCheck false --target es2023 --module nodenext --moduleResolution nodenext uses.mts
                   node "$tsc" --strict --noEmit --skipLibCheck false --target es2023 --module preserve --moduleResolution bundler uses.mts
+                  # Removed, so the runs after this read only the files they were written with.
+                  rm uses.mts
 
             # The same tarball on the Node the project builds on, which the floor does not cover.
             - name: Set up the project's Node

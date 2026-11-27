@@ -460,10 +460,7 @@ describe('the workflows', () => {
         const publish = releaseJob('publish');
         expect(publish).toMatch(/name: \$\{\{ needs\.agree\.outputs\.package \}\}-package\s*$/m);
         expect(publish).toMatch(
-            /needs\.agree\.outputs\.package == 'design-kit' && needs\.checks\.outputs\.package-sha256/
-        );
-        expect(publish).toMatch(
-            /needs\.agree\.outputs\.package == 'prose-check' && needs\.checks\.outputs\.prose-check-sha256/
+            /^ {12}SHA256: \$\{\{ needs\.agree\.outputs\.package == 'design-kit' && needs\.checks\.outputs\.package-sha256 \|\| needs\.agree\.outputs\.package == 'prose-check' && needs\.checks\.outputs\.prose-check-sha256 \|\| '' \}\}$/m
         );
         expect(publish).toMatch(
             /"\$RUNNER_TEMP\/package\/jasonsdevspace-\$PACKAGE-\$VERSION\.tgz"/
@@ -476,7 +473,7 @@ describe('the workflows', () => {
 
     it('record only a release of the kit, so a prose check tag never reaches the records', () => {
         expect(releaseJob('records')).toMatch(
-            /^\s+if: .*needs\.agree\.outputs\.package == 'design-kit'/m
+            /^ {8}if: needs\.agree\.outputs\.package == 'design-kit' && needs\.agree\.outputs\.prerelease != 'true'$/m
         );
         expect(releaseJob('records-pull-request')).toMatch(/^\s+needs: \[agree, records\]\s*$/m);
         expect(releaseJob('records-pull-request')).toMatch(
@@ -788,7 +785,7 @@ describe('the workflows', () => {
             expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
                 /^cache-mode: read\s*$/m
             );
-            expect(releases.length).toBeGreaterThan(0);
+            expect(releases.length).toBe(1);
             for (const [path, text] of releases) {
                 expect(text, path).toMatch(/^cache-mode: none\s*$/m);
                 const checks = jobsOf(text).find(({ body }) =>
@@ -968,5 +965,83 @@ describe('the workflows', () => {
         const [quoted] = stepsOf("    - run: npx playwright install\n      timeout-minutes: '3'");
         if (!quoted) throw new Error('expected a step');
         expect(hasOwnTimeLimit(quoted)).toBe(true);
+    });
+});
+
+describe('the release workflow', () => {
+    const text = workflows.get('.github/workflows/release.yml') ?? '';
+    const jobs = jobsOf(text);
+    const job = (id: string) => jobs.find((found) => found.id === id)?.body ?? '';
+
+    it('grants only read access to the repository by default', () => {
+        expect(text).toMatch(/^permissions:\n {4}contents: read\n/m);
+    });
+
+    it('runs one release at a time for a tag, never cancelling one under way', () => {
+        expect(text).toMatch(
+            /^concurrency:\n {4}group: release-\$\{\{ github\.ref \}\}\n {4}cancel-in-progress: false\n/m
+        );
+    });
+
+    it('releases only a commit on main', () => {
+        expect(job('agree')).toMatch(
+            /^ {18}if ! git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main; then\n {22}echo "the tagged commit is not on main"\n {22}exit 1\n/m
+        );
+    });
+
+    it('holds the npm environment and its publishing token in the publish job alone', () => {
+        expect(
+            jobs.filter(({ body }) => /^ {8}environment: npm$/m.test(body)).map(({ id }) => id)
+        ).toEqual(['publish']);
+        expect(job('publish')).toMatch(
+            /^ {8}permissions:\n {12}contents: read\n {12}id-token: write\n/m
+        );
+    });
+
+    it('stages with provenance, under next for a version with a hyphen and latest otherwise', () => {
+        const publish = job('publish');
+        expect(publish).toMatch(
+            /^ {18}tag=latest\n {18}\[ "\$PRERELEASE" = "true" \] && tag=next\n {18}npm stage publish "\$tarball" --provenance --access public --tag "\$tag"$/m
+        );
+        expect(job('agree')).toMatch(
+            /^ {22}\*-\*\) echo "prerelease=true" >> "\$GITHUB_OUTPUT" ;;$/m
+        );
+    });
+
+    it('pins every action it uses to a full commit', () => {
+        const uses = [...text.matchAll(/^\s+(?:- )?uses: (\S+)/gm)].map((match) => match[1] ?? '');
+        expect(uses.length).toBeGreaterThan(0);
+        expect(uses.filter((use) => !use.startsWith('./') && !/@[0-9a-f]{40}$/.test(use))).toEqual(
+            []
+        );
+    });
+
+    it('checks out without keeping the token in the repository', () => {
+        const checkouts = stepsOf(text).filter(({ text: step }) =>
+            /uses: actions\/checkout@/.test(step)
+        );
+        expect(checkouts.length).toBeGreaterThan(0);
+        expect(
+            checkouts.filter(({ text: step }) => !/^\s+persist-credentials: false$/m.test(step))
+        ).toEqual([]);
+    });
+
+    it("marks the kit's GitHub release as the repository's latest, and never the prose check's", () => {
+        const step =
+            stepsOf(job('release')).find(({ text: found }) => /github-release\.sh/.test(found))
+                ?.text ?? '';
+        const flagLines = step
+            .split('\n')
+            .filter((line) => /^\s+(?:flags=|\[ "\$(?:PRERELEASE|PACKAGE)" = )/.test(line))
+            .map((line) => line.trim())
+            .join('\n');
+        expect(text.match(/--latest=false/g)?.length).toBe(1);
+        const flagsFor = (pkg: string) =>
+            spawnSync('bash', ['-c', `${flagLines}\nprintf '%s ' "\${flags[@]}"`], {
+                env: { PACKAGE: pkg, PRERELEASE: 'false', PATH: process.env.PATH ?? '' },
+                encoding: 'utf8',
+            }).stdout.trim();
+        expect(flagsFor('design-kit')).toBe('');
+        expect(flagsFor('prose-check')).toBe('--latest=false');
     });
 });
