@@ -74,7 +74,8 @@ const parsed = (json) => {
 };
 
 const main = () => {
-    const { merge, reason } = decide(parsed(process.env.UPDATED_DEPENDENCIES ?? ''));
+    const { UPDATED_DEPENDENCIES = '' } = process.env;
+    const { merge, reason } = decide(parsed(UPDATED_DEPENDENCIES));
     console.error(reason);
     console.log(`merge=${merge}`);
 };
