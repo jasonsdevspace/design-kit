@@ -59,11 +59,16 @@ A path of a kind the check does not read, such as the text itself, finds nothing
 ## How a fix reaches every repository
 
 The rules live here and nowhere else. A fix is made in this package, and a repository takes it by
-moving its exact pin to the version that holds it. The package is versioned on its own, so a
-release of the check never moves the design kit's version, and a release of the kit never moves the
-check's. A release is made from a tag of its own, `prose-check-vVERSION`, on a commit on main. Every
-check runs first, and the version is staged on npm with provenance and goes live once it is
-promoted there by hand, as the kit's are.
+moving its exact pin to the version that holds it. The package is versioned on its own, so a release
+of the check never moves the design kit's version, and a release of the kit never moves the check's.
+A release is made from a tag of its own, `prose-check-vVERSION`, on a commit on main. Every check
+runs first, and the version is staged on npm with provenance and goes live once it is promoted there
+by hand, as the kit's are.
+
+The first version is staged by hand from the tarball CI packed and proved on the oldest supported
+Node, since npm sets up trusted publishing only for a package that already exists. Trusted
+publishing is then set up in the same sitting as the next version's tag, which releases through the
+workflow from then on.
 
 ## Versions
 

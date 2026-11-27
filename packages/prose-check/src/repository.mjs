@@ -14,7 +14,7 @@ import { isScanned, proseProblems } from './rules.mjs';
  * @param {string} folder
  * @returns {string}
  */
-export const repositoryRoot = (folder) => {
+export function repositoryRoot(folder) {
     try {
         return execFileSync('git', ['rev-parse', '--show-toplevel'], {
             cwd: folder,
@@ -24,7 +24,7 @@ export const repositoryRoot = (folder) => {
     } catch {
         throw new Error(`${folder} is not inside a git repository`);
     }
-};
+}
 
 /**
  * A skipped path as a path from the top, with no leading `./` or `/` and no trailing slash, so a
@@ -42,7 +42,7 @@ const normalized = (path) => path.replace(/^(\.\/|\/)+/, '').replace(/\/+$/, '')
  * @param {string} root
  * @returns {string[]}
  */
-export const skippedIn = (root) => {
+export function skippedIn(root) {
     const file = join(root, 'package.json');
     if (!existsSync(file)) return [];
     /** @type {unknown} */
@@ -63,7 +63,7 @@ export const skippedIn = (root) => {
     if (!Array.isArray(skip) || !skip.every((path) => typeof path === 'string' && path !== ''))
         throw new Error('proseCheck.skip in package.json is a list of paths');
     return skip.map(normalized);
-};
+}
 
 /**
  * Whether a path is a skipped file or inside a skipped folder.
@@ -80,7 +80,7 @@ const skips = (path, skipped) => path === skipped || path.startsWith(`${skipped}
  * @param {string} root
  * @returns {string[]}
  */
-export const repositoryProblems = (root) => {
+export function repositoryProblems(root) {
     const skip = skippedIn(root);
     const listed = [
         ...new Set(
@@ -101,4 +101,4 @@ export const repositoryProblems = (root) => {
     return listed
         .filter((path) => isScanned(path) && !skip.some((skipped) => skips(path, skipped)))
         .flatMap((path) => proseProblems(path, readFileSync(join(root, path), 'utf8')));
-};
+}

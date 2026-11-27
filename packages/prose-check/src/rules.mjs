@@ -27,7 +27,9 @@ import { basename, extname } from 'node:path';
  *
  * @param {string} path
  */
-export const isDockerfile = (path) => /^Dockerfile(\..+)?$|\.Dockerfile$/.test(basename(path));
+export function isDockerfile(path) {
+    return /^Dockerfile(\..+)?$|\.Dockerfile$/.test(basename(path));
+}
 
 const SCANNED = new Set([
     '.ts',
@@ -93,8 +95,6 @@ const spellsGrey = (text) =>
             )
     );
 
-/** @typedef {{ index: number, text: string }} Segment */
-
 /**
  * How a comment starts, by the kind of file. A `#` starts one in a workflow,
  * a shell script or a Dockerfile, but in JavaScript it starts a private
@@ -116,7 +116,7 @@ const commentStart = (path) => {
  *
  * @param {string} path
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const commentsOf = (path, source) => {
     const comment = new RegExp(`^\\s*(?:${commentStart(path)})\\s?(.*?)(?:\\*\\/.*)?$`);
@@ -130,7 +130,7 @@ const commentsOf = (path, source) => {
  * Markdown body text, with fenced blocks, inline code and entities removed.
  *
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const proseOf = (source) => {
     let fenced = false;
@@ -160,7 +160,7 @@ const SHOWN_META =
  * sits beside the word before it. Line breaks are kept so line numbers match.
  *
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const pageTextOf = (source) =>
     source
@@ -184,29 +184,35 @@ const pageTextOf = (source) =>
  * @param {{ issues: boolean }} options
  * @returns {string[]}
  */
-export const problemsIn = (text, { issues }) =>
-    [
+export function problemsIn(text, { issues }) {
+    return [
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
         /[A-Za-z];/.test(text) && 'semicolon in prose',
         (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
     ].filter((rule) => typeof rule === 'string');
+}
 
 /**
  * Whether the check reads a file, by its kind.
  *
  * @param {string} path
  */
-export const isScanned = (path) => SCANNED.has(extname(path)) || isDockerfile(path);
+export function isScanned(path) {
+    return SCANNED.has(extname(path)) || isDockerfile(path);
+}
 
 /**
- * Every problem in one file, as `path:line  rule` with the line beneath.
+ * Every problem in one file, as `path:line  rule` with the line beneath. The path says what kind
+ * of text it is, so a pull request's or an issue's body goes in as `body.md`, and a path of a kind
+ * the check does not read finds nothing.
  *
- * @param {string} path
- * @param {string} source
+ * @param {string} path the file's path, which says what kind of text it is
+ * @param {string} source the file's text
+ * @param {string} [label] the name each problem is reported under, the path unless given
  * @returns {string[]}
  */
-export const proseProblems = (path, source, label = path) => {
+export function proseProblems(path, source, label = path) {
     const ext = extname(path);
     if (!isScanned(path)) return [];
     const isMarkdown = ext === '.md';
@@ -228,4 +234,4 @@ export const proseProblems = (path, source, label = path) => {
             problemsIn(text, { issues: !isMarkdown }).map((rule) => report(index, rule, text))
         ),
     ];
-};
+}
