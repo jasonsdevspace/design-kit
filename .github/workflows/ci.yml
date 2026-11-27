@@ -146,7 +146,7 @@ jobs:
             - name: Install Chromium
               timeout-minutes: 3
               run: |
-                  npx playwright install chromium
+                  npx --no-install playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             # The site's tests against the release it pins run on a push and on a pull request that
@@ -234,7 +234,7 @@ jobs:
             - name: Install Chromium
               timeout-minutes: 3
               run: |
-                  npx playwright install chromium
+                  npx --no-install playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             # The site draws the version of the kit it pins, so a change to the kit is not on the
@@ -251,7 +251,7 @@ jobs:
                   node scripts/check-site-kit.mjs "$kit"
                   rm -f playwright-results.json
                   status=0
-                  npx playwright test packages/site --project chromium || status=$?
+                  npx --no-install playwright test packages/site --project chromium || status=$?
                   if [ -f playwright-results.json ]; then
                       node scripts/summary.mjs playwright playwright-results.json "Site tests over this commit's kit" "$status" ||
                           echo "The summary of the site tests could not be written."
@@ -336,7 +336,7 @@ jobs:
             - name: Install WebKit
               timeout-minutes: 3
               run: |
-                  npx playwright install webkit
+                  npx --no-install playwright install webkit
                   node -e "require('@playwright/test').webkit.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             # Two workers, since Playwright's default of half the cores gives the Mac runner's three
@@ -413,7 +413,7 @@ jobs:
             - name: Install Firefox
               timeout-minutes: 3
               run: |
-                  npx playwright install firefox
+                  npx --no-install playwright install firefox
                   node -e "require('@playwright/test').firefox.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             - name: Browser tests in Firefox
@@ -480,7 +480,7 @@ jobs:
             - name: Install Chromium
               timeout-minutes: 3
               run: |
-                  npx playwright install chromium
+                  npx --no-install playwright install chromium
                   node -e "require('@playwright/test').chromium.launch({ timeout: 30_000 }).then((b) => b.close())"
 
             - name: Lighthouse audits
@@ -536,7 +536,7 @@ jobs:
             # The standard check of a published package's manifest: that its exports, types and
             # files point at what the tarball holds.
             - name: Check the package manifest
-              run: npx publint packages/design-kit
+              run: npx --no-install publint packages/design-kit
 
             # Written as an exact version, because setup-node given a range installs the newest
             # Node in it, the opposite of the oldest. The file is not committed, and its name is
