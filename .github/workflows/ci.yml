@@ -529,6 +529,10 @@ jobs:
                   fi
                   sum=$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)
                   echo "sha256=$sum" >> "$GITHUB_OUTPUT"
+                  # Printed too, so a tarball downloaded from the run can be checked against it.
+                  name=$(basename "${tarballs[0]}")
+                  echo "$name sha256 $sum"
+                  printf '### Packed\n\n`%s` sha256 `%s`\n' "$name" "$sum" >> "$GITHUB_STEP_SUMMARY"
 
             # The standard check of a published package's manifest: that its exports, types and
             # files point at what the tarball holds.
@@ -710,6 +714,10 @@ jobs:
                   fi
                   sum=$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)
                   echo "sha256=$sum" >> "$GITHUB_OUTPUT"
+                  # Printed too, so a tarball downloaded from the run can be checked against it.
+                  name=$(basename "${tarballs[0]}")
+                  echo "$name sha256 $sum"
+                  printf '### Packed\n\n`%s` sha256 `%s`\n' "$name" "$sum" >> "$GITHUB_STEP_SUMMARY"
 
             # That its exports, types, bin and files point at what the tarball holds.
             - name: Check the package manifest
