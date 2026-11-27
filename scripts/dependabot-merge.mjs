@@ -98,8 +98,8 @@ const sourceHoldOf = (name, { dependencyGroup, maintainerChanges }) => {
 const holdOf = (update) => {
     if (typeof update !== 'object' || update === null) return 'an update is not named';
     const fields = /** @type {Record<string, unknown>} */ (update);
-    const name =
-        typeof fields.dependencyName === 'string' ? fields.dependencyName : 'an unnamed dependency';
+    const { dependencyName } = fields;
+    const name = typeof dependencyName === 'string' ? dependencyName : 'an unnamed dependency';
     return sizeHoldOf(name, fields) ?? sourceHoldOf(name, fields);
 };
 
