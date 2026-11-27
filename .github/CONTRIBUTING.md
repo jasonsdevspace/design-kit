@@ -45,13 +45,15 @@ tests writes its changelog text in a file of its own under `packages/design-kit/
 README there says, rather than in `CHANGELOG.md`. Every check in CI passes before a pull request is
 merged, the browser tests and the Lighthouse audit among them.
 
-A Dependabot pull request merges by itself once its checks pass when every update in it moves a
-development dependency by a patch or a minor, or a runtime dependency by a patch, and it comes from
-one of the groups in `.github/dependabot.yml`. A runtime minor, a major, an action update or a
-security update waits for a person, since it can change what a visitor gets or what the build does.
-`scripts/dependabot-merge.mjs` holds the rule. The merge uses a token from the records app, whose
-client id and key are set as Dependabot secrets, since a run Dependabot starts cannot read the
-Actions secrets.
+A Dependabot pull request merges by itself once its required checks pass when every update in it
+moves a development dependency by a patch or a minor, or a runtime dependency of 1.0 or later by a
+patch, when it comes from one of the groups `scripts/dependabot-merge.mjs` names and no package in
+it has a new releaser, and when it changes nothing but package manifests and lockfiles. A runtime
+minor, a major, an action update or a security update waits for a person, since it can change what
+a visitor gets or what the build does. The script holds the rule. A push or a reopen by a person
+turns auto-merge off and leaves the pull request to them. The merge uses a token from the records
+app, whose client id and key are set as Dependabot secrets, since a run Dependabot starts cannot
+read the Actions secrets.
 
 ## Releasing
 
