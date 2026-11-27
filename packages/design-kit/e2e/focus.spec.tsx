@@ -1391,8 +1391,8 @@ const FAR = '<!doctype html><title>Check</title><input id="code" aria-label="Cod
  * field and a button that brings the view, as a widget drawn in a shadow root holds a frame, and
  * one with a closed root holding another, which the page keeps a hold of for the test to reach. The
  * view names its heading by the element, since an id is looked for where focus was, which in that
- * frame is the shadow root. The page's own load waits on a picture that never comes, so the test
- * goes to the page without waiting for it.
+ * frame is the shadow root. Where a frame shows notes.html, the page's own load waits on the picture
+ * it holds back, so the test goes to the page without waiting for its load.
  */
 const openWithFrames = async (page: Page, frames = '') => {
     await stillClock(page.clock);
@@ -1573,6 +1573,51 @@ test("focuses a view's heading as it arrives, brought by a press in a frame the 
     await expect(page.locator('#scores')).toBeFocused();
 });
 
+test("focuses a view's heading as it arrives, brought by a press in a frame of the page's origin inside one of another origin whose own load is still held", async ({
+    page,
+    browserName,
+}) => {
+    test.fail(
+        browserName === 'firefox',
+        'Firefox does not hear a press in a frame of the page origin inside one of another origin while that outer frame loads.'
+    );
+    await openWithFrames(page);
+    // The frame of another origin holds a frame of the page's origin and a picture that never
+    // comes, so its own load, where the kit hears the inner frame, is still to come as the press
+    // is made.
+    await page.route('https://other.test/holder', (route) =>
+        route.fulfill({
+            contentType: 'text/html',
+            body: `<!doctype html><title>Holder</title><iframe title="Inner" src="${ORIGIN}/inner"></iframe><img src="https://other.test/held.png" alt="">`,
+        })
+    );
+    await page.route('https://other.test/held.png', () => undefined);
+    await page.route(`${ORIGIN}/inner`, (route) =>
+        route.fulfill({
+            contentType: 'text/html',
+            body: '<!doctype html><title>Inner</title><button type="button" id="inner-bring">Bring the scores</button><script>document.querySelector("#inner-bring").addEventListener("click", () => top.bring());</script>',
+        })
+    );
+    await page.evaluate(() => {
+        const frame = document.createElement('iframe');
+        frame.title = 'Holder';
+        frame.src = 'https://other.test/holder';
+        frame.addEventListener('load', () => {
+            (window as unknown as { outerLoaded: boolean }).outerLoaded = true;
+        });
+        document.body.append(frame);
+    });
+    const inner = page
+        .frameLocator('iframe[title="Holder"]')
+        .frameLocator('iframe[title="Inner"]')
+        .locator('#inner-bring');
+    await expect(inner).toBeAttached();
+    expect(await page.evaluate(() => 'outerLoaded' in window)).toBe(false);
+    await inner.click();
+    await arrive(page);
+    await expect(page.locator('#scores')).toBeFocused();
+});
+
 test("focuses a view's heading as it arrives, brought by a press in a frame's next page before its load, with focus in the frame", async ({
     page,
 }) => {
@@ -1656,7 +1701,10 @@ test('raises no error as the page is left and gone back to', async ({ page }) =>
     const errors = errorsOf(page);
     await openWithFrames(page, '<iframe title="Card" src="/card.html"></iframe>');
     await expect(page.frameLocator('iframe[title="Card"]').locator('#card')).toBeAttached();
-    await page.goto(`${ORIGIN}/away`, { waitUntil: 'commit' });
+    // The page left goes at the commit, but Chromium is still attaching the next page then, and a
+    // goBack asked before it is attached fails with no active page. Its document is parsed only
+    // after its scripts come through the test's routes, by which time Chromium has long attached it.
+    await page.goto(`${ORIGIN}/away`, { waitUntil: 'domcontentloaded' });
     await page.goBack({ waitUntil: 'commit' });
     await page.waitForFunction(() => 'ready' in window);
     await page.clock.runFor(100);

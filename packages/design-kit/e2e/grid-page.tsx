@@ -36,7 +36,11 @@ const closedRoots = new WeakMap<Element, ShadowRoot>();
 /** How long a place has to load before its square fails, naming what it waited for. */
 const PATIENCE = 10_000;
 
-/** Waits for an element's load, and fails with the name given on an error or past the patience. */
+/**
+ * Waits for an element's load, and fails with the name given on an error or past the patience. A
+ * stylesheet's link fires an error where its sheet fails, while a frame fires load for a page that
+ * failed too, so a frame's failure shows in what waits on its page.
+ */
 const loadOf = (target: EventTarget, name: string): Promise<void> =>
     new Promise((done, fail) => {
         const timer = setTimeout(() => {
@@ -170,8 +174,12 @@ const build = async (row: string): Promise<Place> => {
             frame.name = 'xo';
             frame.title = 'xo';
             frame.src = 'https://other.test/holder';
+            // The kit hears the inner frame at the outer frame's load, which can come after the inner
+            // frame's page is complete, so the place is built once both have happened.
+            const done = loadOf(frame, 'the frame of another origin');
             spot.append(frame);
-            return { holder: holderIn(await innerOf(frame.contentWindow as Window)) };
+            const [inner] = await Promise.all([innerOf(frame.contentWindow as Window), done]);
+            return { holder: holderIn(inner) };
         }
         case 'loading':
             return leaving(spot, 'fl', '/held', false);

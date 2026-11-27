@@ -1,5 +1,5 @@
 import { isElement, rootOf } from './find.js';
-import { deepActive, handed } from './state.js';
+import { crossed, deepActive, docIn, handed } from './state.js';
 import type { AttachOptions } from './teardown.js';
 
 export { deepActive };
@@ -40,11 +40,37 @@ export const seen = (element: Element | null, doc: Document = document): Element
     if (!element || (element.ownerDocument === doc && isBlank(element))) return null;
     let at = element;
     while (!within(doc, at.ownerDocument)) {
-        const frame = at.ownerDocument.defaultView?.frameElement;
+        const frame = at.ownerDocument.defaultView?.frameElement ?? frameAcross(at);
         if (!frame) break;
         at = frame;
     }
     return at;
+};
+
+/**
+ * The frame that holds an element's window through a frame of another origin, whose element the
+ * window cannot name: found by climbing the element's windows to the first whose parent's document
+ * can be read, then the frame there that shows it, as the reader kept it as it went through, else
+ * by a search of that document's frames, in its open shadow roots too.
+ */
+const frameAcross = (element: Element): Element | null => {
+    let win: Window | null = element.ownerDocument.defaultView;
+    while (win && win.parent !== win && !docIn(win.parent)) win = win.parent;
+    const parent = win && win.parent !== win ? docIn(win.parent) : null;
+    if (!win || !parent) return null;
+    const kept = crossed.get(win);
+    if (kept?.isConnected && (kept as Partial<HTMLIFrameElement>).contentWindow === win)
+        return kept;
+    const search = (root: Document | ShadowRoot): Element | null => {
+        for (const frame of root.querySelectorAll('iframe, frame, object'))
+            if ((frame as Partial<HTMLIFrameElement>).contentWindow === win) return frame;
+        for (const host of root.querySelectorAll('*')) {
+            const inner = host.shadowRoot && search(host.shadowRoot);
+            if (inner) return inner;
+        }
+        return null;
+    };
+    return search(parent);
 };
 
 /**

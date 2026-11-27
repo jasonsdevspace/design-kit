@@ -1149,3 +1149,51 @@ test('focuses the next row inside a closed shadow root as a row removes itself a
     await expect.poll(() => focusedInClosed(page)).toBe('remove-two');
     expect(errors).toEqual([]);
 });
+
+test("hands focus back to a panel's button in a closed shadow root as it closes with focus in a frame of the page's origin inside an embed in it", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
+root.innerHTML = '<button type="button" class="dk-button" id="opener" aria-expanded="true" aria-controls="tips">Tips</button><div class="dk-panel" id="tips"><iframe name="embed" title="Embed" src="https://other.test/holder"></iframe></div>';
+window.closedRoot = root;
+window.tips = attachPanel(root.getElementById('opener'));
+window.ready = true;`,
+    });
+    await page.route('https://other.test/holder', (route) =>
+        route.fulfill({
+            body: '<!doctype html><title>Holder</title><iframe name="inner" title="Inner" src="https://kit.test/inner"></iframe>',
+            contentType: 'text/html',
+        })
+    );
+    await page.route('https://kit.test/inner', (route) =>
+        route.fulfill({
+            body: '<!doctype html><title>Inner</title><button type="button" id="card">Card</button>',
+            contentType: 'text/html',
+        })
+    );
+    await page.waitForFunction(() => 'ready' in window);
+    // The embed loads again once the routes that serve it are in place.
+    await page.evaluate(() => {
+        (window as unknown as { closedRoot: ShadowRoot }).closedRoot
+            .querySelector('iframe')
+            ?.setAttribute('src', 'https://other.test/holder');
+    });
+    await expect.poll(() => page.frame({ name: 'inner' })?.url()).toBe('https://kit.test/inner');
+    await page.frame({ name: 'inner' })?.locator('#card').focus();
+    await page.evaluate(() => {
+        (window as unknown as { tips: { set: (open: boolean) => void } }).tips.set(false);
+    });
+    await expect
+        .poll(() =>
+            page.evaluate(
+                () =>
+                    (window as unknown as { closedRoot: ShadowRoot }).closedRoot.activeElement
+                        ?.id ?? null
+            )
+        )
+        .toBe('opener');
+});
