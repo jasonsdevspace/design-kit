@@ -806,7 +806,14 @@
         flex: 1 1 var(--dk-fields-least, 10rem);
     }
 
-    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field, .dk-field:has(> .dk-choice))) {
+    :where(
+        .dk-fields
+            > :is(
+                .dk-stepper-inline,
+                .dk-choice-field,
+                .dk-field:not(fieldset, .dk-choice-field):has(> .dk-choice)
+            )
+    ) {
         flex-basis: 100%;
     }
 
@@ -1195,14 +1202,14 @@
 
     /*
      * A checkbox field: one setting, a field holding its box's label itself, with no group around
-     * it. Its label hugs its words, so the highlight does not read as a row of a list, and its hint
+     * it, and no fieldset or set of choices, whose labels a page may write straight in its fieldset. Its label hugs its words, so the highlight does not read as a row of a list, and its hint
      * starts under the words, past the box's 1rem and the gap, so it reads as a note on the setting.
      */
-    :where(.dk-field > .dk-choice) {
+    :where(.dk-field:not(fieldset, .dk-choice-field) > .dk-choice) {
         justify-self: start;
     }
 
-    :where(.dk-field > .dk-choice ~ .dk-field-hint) {
+    :where(.dk-field:not(fieldset, .dk-choice-field) > .dk-choice ~ .dk-field-hint) {
         padding-inline-start: calc(1rem + var(--dk-space-2));
     }
 

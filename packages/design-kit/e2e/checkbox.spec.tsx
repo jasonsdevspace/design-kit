@@ -131,6 +131,14 @@ test('refuses a consent box in a form React draws, handing the box itself and dr
     await expect(page.locator('#agree-error')).toHaveText('Error: Check the box to go on.');
     await expect(agree).toHaveAttribute('aria-describedby', 'agree-error');
     await expect(page.locator('#double')).not.toHaveAttribute('aria-invalid', 'true');
+    // A read-only field's ref holds the value it draws, which takes the page's other props too.
+    expect(await page.evaluate(() => (window as unknown as { held?: string }).held)).toBe(
+        'textarea'
+    );
+    await expect(page.getByRole('textbox', { name: 'Only the host keeps score' })).toHaveAttribute(
+        'title',
+        'Set by the host'
+    );
 });
 
 test('makes the label a target the field is tall on a wide screen and a thumb is on a phone, hugging its words', async ({

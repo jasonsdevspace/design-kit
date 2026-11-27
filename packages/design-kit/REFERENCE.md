@@ -1055,34 +1055,34 @@ find the kit's words and marks in what it holds as its own. `attachForm` drawing
 form React still draws, as from an effect, is not supported.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
-an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
-as [a checkbox field](#a-checkbox-field) draws one,
-"Enter an email address like name@example.com here." for a malformed address, "Enter the full web
-address, with https:// at the start." for a malformed web address, "Enter at least 8 characters."
-for one too short, "Enter 18 or more." for a number under its least, "Enter November 22, 2026 at
-9:00 AM or later." for a date and time before its least, "Enter a whole number." for a fraction, and
-the page's own words from `setCustomValidity`. A number off its step is told the values it takes,
-counted from the browser's step base, its `min` where that parses, else its `value` attribute where
-that parses, else 0, as "Enter 2, or 2 plus a multiple of 5." or "Enter a multiple of 5.", with the
-step and its base written as their attributes write them, as a range failure's words write its
-limit, a `min` that does not parse left out, and any step equal to 1 read as "Enter a whole number."
-where the step base is a whole number. A dated field's limit is the wall time written, with no zone
-moving it, in the nearest `lang` around the field, past any shadow root it sits in, where that
-language is English and in US English otherwise, since the words around it are English, with "or
-later" or "or earlier" after it: a date as "November 22, 2026", a time as "9:00 AM", a date and time
-joined by "at", a month as "November 2026" and a week as "the week of November 23, 2026", from its
-Monday. It keeps the Gregorian calendar and Latin digits the field takes, whatever calendar or
-digits the language tag picks, so `lang="en-u-ca-buddhist"` still gives "November 22, 2026", and
-writes a year to four digits as the field does, so a month in year 1 is "January 0001" and never
-reads as a day. A limit past any date a script can hold is shown as written, and a fraction of a
-second is shown to the limit's own digits. A time whose limits both parse with its most before its
-least is a window overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM
-the next day." Safari and Firefox draw a month or week field as a text field, which has no limits to
-fail. A field's own words for a failure come first, as `data-error-value-missing="Enter your name."`
-on the control or on its set's fieldset, then the words a page gives the form as `errorWords`, as a
-page in another language gives them, then the kit's. Each attribute is the failure's `validity` name
-in kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`.
-A field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
+an option." for an empty set or select and "Check the box to go on." for a box that stands alone, as
+[a checkbox field](#a-checkbox-field) draws one, "Enter an email address like name@example.com
+here." for a malformed address, "Enter the full web address, with https:// at the start." for a
+malformed web address, "Enter at least 8 characters." for one too short, "Enter 18 or more." for a
+number under its least, "Enter November 22, 2026 at 9:00 AM or later." for a date and time before
+its least, "Enter a whole number." for a fraction, and the page's own words from
+`setCustomValidity`. A number off its step is told the values it takes, counted from the browser's
+step base, its `min` where that parses, else its `value` attribute where that parses, else 0, as
+"Enter 2, or 2 plus a multiple of 5." or "Enter a multiple of 5.", with the step and its base
+written as their attributes write them, as a range failure's words write its limit, a `min` that
+does not parse left out, and any step equal to 1 read as "Enter a whole number." where the step base
+is a whole number. A dated field's limit is the wall time written, with no zone moving it, in the
+nearest `lang` around the field, past any shadow root it sits in, where that language is English and
+in US English otherwise, since the words around it are English, with "or later" or "or earlier"
+after it: a date as "November 22, 2026", a time as "9:00 AM", a date and time joined by "at", a
+month as "November 2026" and a week as "the week of November 23, 2026", from its Monday. It keeps
+the Gregorian calendar and Latin digits the field takes, whatever calendar or digits the language
+tag picks, so `lang="en-u-ca-buddhist"` still gives "November 22, 2026", and writes a year to four
+digits as the field does, so a month in year 1 is "January 0001" and never reads as a day. A limit
+past any date a script can hold is shown as written, and a fraction of a second is shown to the
+limit's own digits. A time whose limits both parse with its most before its least is a window
+overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM the next day."
+Safari and Firefox draw a month or week field as a text field, which has no limits to fail. A
+field's own words for a failure come first, as `data-error-value-missing="Enter your name."` on the
+control or on its set's fieldset, then the words a page gives the form as `errorWords`, as a page in
+another language gives them, then the kit's. Each attribute is the failure's `validity` name in
+kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A
+field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
 without them it asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`,
 since the markup is the page's: the failures go to it, the page sets its errors from them, keyed by
 each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are
@@ -1319,8 +1319,9 @@ A required box is for a visitor's consent, such as agreeing to terms, since a se
 rather than a choice the visitor must make. A box a visitor cannot change uses `disabled` on its
 control, never `aria-disabled`, which would leave it toggling. A checkbox has no read-only state, so
 `CheckboxField` with `readOnly` draws its state in words, "On" or "Off" unless given others, as a
-value a visitor reads, as a read-only select does, with a hidden field carrying the box's value while
-it is checked, so the form sends what the box would.
+value a visitor reads, as a read-only select does, with a hidden field carrying the box's value
+while it is checked, so the form sends what the box would. A read-only box is never refused, since
+no one could change it, so it takes no `required` and says nothing of being required.
 
 <details>
 <summary>How a checkbox field is drawn</summary>
@@ -1772,17 +1773,18 @@ choices apart.
 
 **`CheckboxField` props**
 
-| `CheckboxField`       | Default      | What it does                                                              |
-| --------------------- | ------------ | ------------------------------------------------------------------------- |
-| `label`               | required     | Names the box, as the words beside it                                     |
-| `hint`, `error`, `id` | as a field's | The hint and the error describe the box, and the id is the box's          |
-| `mark`, `markWords`   | as a field's | The mark in the label, hidden from a screen reader where it says required |
-| `readOnly`            | `false`      | Draws the box's state in words as a value, and a hidden field when on     |
-| `onWords`, `offWords` | `On`, `Off`  | The words a read-only field shows for each state                          |
+| `CheckboxField`       | Default      | What it does                                                                   |
+| --------------------- | ------------ | ------------------------------------------------------------------------------ |
+| `label`               | required     | Names the box, as the words beside it                                          |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the box, and the id is the box's               |
+| `mark`, `markWords`   | as a field's | The mark in the label, hidden from a screen reader where it says required      |
+| `readOnly`            | `false`      | Draws the state in words as a value, never refused, and a hidden field when on |
+| `onWords`, `offWords` | `On`, `Off`  | The words a read-only field shows for each state                               |
 
 Every other prop goes to the box, `ref`, `className`, `checked` and `disabled` included, except
-`style`, `type` and `aria-invalid`. An `aria-describedby` of the page's own is listed after the hint
-and the error.
+`style`, `type` and `aria-invalid`. With `readOnly`, every other prop goes to the value drawn, its
+`ref` among them, which holds that textarea, and `name`, `value`, `checked` and `defaultChecked` go
+to the hidden field. An `aria-describedby` of the page's own is listed after the hint and the error.
 
 **`Callout` props**
 
@@ -4646,12 +4648,12 @@ control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`
 ### `@jasonsdevspace/design-kit/react`
 
 It holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`, `SelectField`,
-`TextareaField`, `ValueField`, `ChoiceField`, `CheckboxField`, `StepperField`, `Callout`, `ThemeSwitch`,
-`CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and `StatusProvider`,
-a props type for each named after it, such as `ButtonProps`, the hooks `useStatus()`,
-`useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`, `useBusy()` and
-`useProgress()`, the `FocusAfterDraw` and `ArrivalKey` types they use, the `Choice` and
-`CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
+`TextareaField`, `ValueField`, `ChoiceField`, `CheckboxField`, `StepperField`, `Callout`,
+`ThemeSwitch`, `CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and
+`StatusProvider`, a props type for each named after it, such as `ButtonProps`, the hooks
+`useStatus()`, `useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`,
+`useBusy()` and `useProgress()`, the `FocusAfterDraw` and `ArrivalKey` types they use, the `Choice`
+and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
 `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ### `@jasonsdevspace/design-kit/vite`

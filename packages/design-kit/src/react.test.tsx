@@ -845,6 +845,9 @@ describe('the checkbox field', () => {
         expect(on).toContain('>On</textarea>');
         expect(on).toContain('<input type="hidden" name="double" value="on"/>');
         expect(on).toContain('<label class="dk-field-label" for="double" id="double-label">');
+        const marked = setting({ readOnly: true, mark: 'required' });
+        expect(marked).not.toContain('aria-required');
+        expect(marked).not.toContain('required=""');
         const off = setting({ readOnly: true });
         expect(off).toContain('>Off</textarea>');
         expect(off).not.toContain('type="hidden"');
