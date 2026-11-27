@@ -106,7 +106,7 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 10
         # The environment is what npm's trusted publisher is registered against, and it accepts a
-        # deployment only from a release tag.
+        # deployment only from a release tag, `design-kit-v*` or `prose-check-v*`.
         environment: npm
         permissions:
             contents: read
