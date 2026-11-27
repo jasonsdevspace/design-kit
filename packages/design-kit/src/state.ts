@@ -107,7 +107,7 @@ const clear = () => {
 };
 
 /** The document a window shows, where it is of the page's own origin, read in a try. */
-const docIn = (win: Window | null | undefined): Document | null => {
+export const docIn = (win: Window | null | undefined): Document | null => {
     try {
         return win?.document ?? null;
     } catch {
@@ -162,14 +162,54 @@ export const deepActive = (near?: Node | null): Element | null => {
     const closed = new Map<Element, ShadowRoot>();
     for (const root of closedAround(near)) closed.set(root.host, root);
     let active = document.activeElement;
-    for (
-        let next;
-        (next =
-            (active?.shadowRoot ?? (active ? closed.get(active) : undefined))?.activeElement ??
-            docIn((active as Partial<HTMLIFrameElement> | null)?.contentWindow)?.activeElement);
-    )
-        active = next;
+    for (let next; (next = beneath(active, closed));) active = next;
     return active;
+};
+
+/**
+ * What has focus one level beneath an element that holds it: inside its shadow root, an open one or
+ * a closed one around the reader's node, or inside the frame it shows, and where that frame is of
+ * another origin, inside a frame of the page's origin it holds that has focus.
+ */
+const beneath = (
+    active: Element | null,
+    closed: ReadonlyMap<Element, ShadowRoot>
+): Element | null | undefined => {
+    const root = active?.shadowRoot ?? (active ? closed.get(active) : undefined);
+    if (root?.activeElement) return root.activeElement;
+    const win = (active as Partial<HTMLIFrameElement> | null)?.contentWindow;
+    if (!win) return undefined;
+    const doc = docIn(win);
+    if (doc) return doc.activeElement;
+    // The frame of another origin is kept by its window, so a view lifting an element out of it
+    // finds the frame without a search, inside a closed shadow root too.
+    if (active) crossed.set(win, active);
+    return focusedOwnIn(win)?.activeElement;
+};
+
+/**
+ * Each frame of another origin the reader has gone through, by the window it shows, so the frame
+ * that holds a window of the page's origin inside it is found again where no search can reach it.
+ */
+export const crossed = new WeakMap<Window, Element>();
+
+/**
+ * The document of the page's origin that has focus inside a frame of another origin, found through
+ * the frames it holds, which the page reaches by their windows though it cannot read the frame's own
+ * document, at any depth, through frames of other origins too.
+ */
+const focusedOwnIn = (win: Window): Document | null => {
+    for (let index = 0; index < win.length; index += 1) {
+        const child = win[index];
+        if (!child) continue;
+        const doc = docIn(child);
+        if (doc ? doc.hasFocus() : false) return doc;
+        if (!doc) {
+            const deeper = focusedOwnIn(child);
+            if (deeper) return deeper;
+        }
+    }
+    return null;
 };
 
 /**

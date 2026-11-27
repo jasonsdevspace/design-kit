@@ -2407,11 +2407,18 @@ takes a toast dismissed by Enter on to the main content. A press inside the fram
 so the view it brings takes no focus, while `moveFocus` still lands and a view that arrives after
 the visitor moves into a field there leaves them in it. A page cannot draw a piece inside one.
 
-Focus inside a frame of the page's origin held by a frame of another origin is read from the page
-down, which stops at the frame of another origin. A dialog, `moveFocus` and a press there, and a
-form's refusal, a grid of cells, a table's pinned column, a theme switch and the React hooks drawn
-there, work as they do on the page. A toast hands focus back to the outer frame, or in Firefox to
-the main content, and a panel or a stepper drawn there leaves focus on the inner frame's body.
+Focus inside a frame of the page's origin held by a frame of another origin is read through the
+frames the page reaches by their windows, though it cannot read the frame of another origin itself,
+so the reader finds the inner frame that has focus and reads on inside it, and an element there is
+seen at the page's level as the frame of another origin that holds it. A dialog, a toast, a panel, a
+stepper, `moveFocus`, a press there, and a form's refusal, a grid of cells, a table's pinned column,
+a theme switch and the React hooks drawn there work as they do on the page. The inner frame that has
+focus is told by its document's own word, which every document gives as false while the browser's
+window itself has no focus, as when another app is in front, so then focus there reads as the frame
+of another origin until the window has focus again. The inner frame that has focus is told by its
+document's own word, which every document gives as false while the browser's window itself has no
+focus, as when another app is in front, so then focus there reads as the frame of another origin
+until the window has focus again.
 
 ### A part of the page that is loading
 
