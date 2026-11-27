@@ -12,6 +12,8 @@ import {
 import { handed, inputs, liftedFor, press, restoring, sightChanges } from './state.js';
 import { teardown } from './teardown.js';
 
+export { hearClosed } from './state.js';
+
 /*
  * A page's requests to move focus once a change is drawn, `moveFocus` and `focusOnArrival`, which
  * land in a frame where focus is still free, and drop where the page went out of sight. The form
@@ -180,6 +182,16 @@ export const moveFocus = (target: FocusTarget, options: MoveFocusOptions = {}): 
 /** How long a press may wait for the view it brings, in milliseconds, as one a slow load brings. */
 const PRESS_LIVES = 5000;
 
+/** Whether the visitor's last press still waits for the view it brings. */
+const pressFresh = (): boolean => press.at !== null && performance.now() - press.at <= PRESS_LIVES;
+
+/**
+ * The control the visitor's waiting press was made on, inside a closed shadow root the kit hears
+ * too, or none, so a view that press draws for the first time reads where focus was through it
+ * before anything in the view can take focus.
+ */
+export const pressedNear = (): Element | null => (pressFresh() ? press.on : null);
+
 /** How a view asks to take focus as it arrives. */
 export type ArrivalOptions = MoveFocusOptions & {
     /**
@@ -206,7 +218,7 @@ let arriving: {
     readonly views: Set<Arrival>;
     readonly frame: number;
     readonly at: number;
-    readonly press: number | null;
+    readonly press: { readonly at: number | null; readonly on: Element | null };
 } | null = null;
 
 /**
@@ -233,10 +245,10 @@ export const focusOnArrival = (
     // Read before the press, so a signal already aborted spends none.
     if (options.signal?.aborted) return () => undefined;
     if (!arriving) {
-        const fresh = press.at !== null && performance.now() - press.at <= PRESS_LIVES;
-        if (!fresh && !options.changed) return () => undefined;
-        const pressed = press.at;
+        if (!pressFresh() && !options.changed) return () => undefined;
+        const pressed = { at: press.at, on: press.on };
         press.at = null;
+        press.on = null;
         const views = new Set<Arrival>();
         const frame = window.requestAnimationFrame(() => {
             arriving = null;
@@ -276,7 +288,10 @@ export const focusOnArrival = (
         if (batch.views.size > 0 || arriving !== batch) return;
         window.cancelAnimationFrame(batch.frame);
         arriving = null;
-        if (inputs === batch.at) press.at = batch.press;
+        if (inputs === batch.at) {
+            press.at = batch.press.at;
+            press.on = batch.press.on;
+        }
     });
     return down.stop;
 };

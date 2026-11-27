@@ -7,7 +7,9 @@ only once every button refuses focus, by record 29 in 0.9.4, under which F8 move
 toast's action and back, and in 0.9.4 for a dialog, a panel, a stepper, a form and a group of cells
 the page attaches inside a frame, a focus request asked with focus inside one, the presses and keys
 inside one that a focus request hears, a press cleared as focus enters a frame nothing can hear, and
-an id a focus request looks for in each root outward from where focus was
+an id a focus request looks for in each root outward from where focus was, and in 0.9.5 for the
+presses and keys inside a closed shadow root the kit holds a node in, heard there with the control
+pressed, through which a view a press there draws for the first time reads where focus was
 
 ## Context
 
@@ -136,13 +138,21 @@ inner frame instead was turned down, since it would take a control the visitor l
 piece that holds an element inside a closed root reads focus inside that root through it, so a
 request given such an element as `from`, a stepper, a form's refusal, a panel, a theme switch and
 the hooks there compare focus where it is rather than at the host, and views brought by one press
-are ordered as the page draws them, through shadow roots. Looking in the page's document first was
-turned down, since it let the page's id win over the widget's own. The cost is that a widget's id
-missing from its own root as the request lands, one the widget has not drawn yet, finds an element
-of the page that shares it, where the request fell back before. A late request from
-`useFocusAfterDraw` looks an id up by the same walk, from where focus was as it was asked. The walk
-ends at the root that is no shadow root, told by its node type, since a document's named elements
-answer for `'host' in` it, so a page with a form named host held the walk forever.
+are ordered as the page draws them, through shadow roots. The kit also hears the presses and keys
+inside each closed root it holds a node in, by listeners on the root itself, since the page's own
+hear only the host, and a press keeps the control it was made on, so a view a press there draws for
+the first time reads where focus was through that control as it renders, before anything in the view
+can take focus. Following every read made with no node into the roots the kit has heard was turned
+down, since what a read sees would then hang on which piece attached first, and so were patching
+`attachShadow`, which misses a root attached before the kit loads, an entry a page calls to hear a
+root, and reading again as the heading attaches, which takes a field the view focuses above its
+heading for the visitor's place. Looking in the page's document first was turned down, since it let
+the page's id win over the widget's own. The cost is that a widget's id missing from its own root as
+the request lands, one the widget has not drawn yet, finds an element of the page that shares it,
+where the request fell back before. A late request from `useFocusAfterDraw` looks an id up by the
+same walk, from where focus was as it was asked. The walk ends at the root that is no shadow root,
+told by its node type, since a document's named elements answer for `'host' in` it, so a page with a
+form named host held the walk forever.
 
 ## Decision
 
@@ -334,9 +344,10 @@ What no fix reaches, each failing safe:
   not in `window.frames`, and its load stays inside the root. Entering it from the page only clears
   the press. The only spec work near it, whatwg/dom#1287, would report a root being attached, not
   open it.
-- A press inside a closed shadow root reaches the page as a press on its host, which is no control,
-  so the view it brings takes no focus, and a toast on the page that had focus inside one hands it
-  back to the host, which takes none, so it goes on to the main content.
+- A press inside a closed shadow root the kit holds no node in reaches the page as a press on its
+  host, which is no control, so the view it brings takes no focus, the first press in a widget whose
+  first node the kit is handed with that view among them, and a toast on the page that had focus
+  inside one hands it back to the host, which takes none, so it goes on to the main content.
 - In Firefox alone, a page script that moves focus to an element of the page just after focus enters
   a frame clears the press, since the read a task later ends on that element, which cannot be told
   from a closed shadow root's host.
@@ -417,11 +428,15 @@ The path is in `packages/design-kit`.
 - `e2e/shadow.spec.ts`, in Chromium, WebKit and Firefox, opens a widget's own panel beside its
   button inside an open shadow root and closes it by its corner Close and by Escape with focus back
   on its button, the page's panel with the same id untouched, hands focus on past the widget to the
-  page's next control where its button is off, starts a panel open as a button drawn again says
-  once the one before it left the widget, closes by Escape a page's panel a widget's button opened
-  before the page drew it, leaves the page's open panel to its own button as a widget draws a panel
-  with its id after attaching its button, and opens and closes by Escape a panel inside a closed
-  shadow root.
+  page's next control where its button is off, starts a panel open as a button drawn again says once
+  the one before it left the widget, closes by Escape a page's panel a widget's button opened before
+  the page drew it, leaves the page's open panel to its own button as a widget draws a panel with
+  its id after attaching its button, and opens and closes by Escape a panel inside a closed shadow
+  root, and brings a view by a press inside a closed shadow root whose `useArrivalFocus` heading
+  takes focus as the view first draws, left where the visitor moved first and leaving a field the
+  view focuses above or below its heading, takes no press once a Tab or a click on nothing follows
+  it, and takes no focus for the first press in a widget the kit was never handed a node of and
+  focus from the next.
 - `e2e/seen.spec.ts`, in Chromium, WebKit and Firefox, reads `seen` as a pure function over a page
   with a frame, a frame inside it, a frame beside it and a frame taken from the page, for an asker
   in each, and finds a kept place reading the same as the element, and the walk going on past a

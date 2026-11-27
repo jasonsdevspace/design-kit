@@ -2402,11 +2402,13 @@ and `useArrivalFocus`, which read where focus was through their target where it 
 form a refusal is for, or their heading once it is drawn. So a visitor who moves to another control
 in the same closed root before one of them lands is left there. A target given as an id or a
 function reads focus as the host, as does focus inside another closed root or one nested in the
-widget's own, so a move made there before the request lands is read as no move. As a view first
-draws its heading is not drawn yet, so `useArrivalFocus` reads where focus was then as the host. A
-toast on the page hands focus back to the host, which takes no focus, so focus goes on to the main
-content, and a press inside the root reaches the page as a press on its host, which is no control,
-so the view it brings takes no focus.
+widget's own, so a move made there before the request lands is read as no move. A toast on the page
+hands focus back to the host, which takes no focus, so focus goes on to the main content. A press
+inside the root is heard once the kit holds a node there, as a piece attached in it or a hook's
+element drawn there gives it, and a view that press draws for the first time reads where focus was
+through the control pressed, so its `useArrivalFocus` heading takes focus and a visitor who moves on
+first is left where they went. The first press in a widget the kit holds no node of yet reaches the
+page as a press on its host, which is no control, so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,
