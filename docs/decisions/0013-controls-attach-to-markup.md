@@ -261,19 +261,20 @@ sorted, and the median is the middle cost, or the upper of the middle two where 
 Measured so at 0.9.4, every function comes to 21,541 bytes with a median function of 637, which
 fits the whole's budget of 21.75 KB, so it stays.
 
-| Release | Entry                    | What set it                                     | Sent        | Median function | Budget set |
-| ------- | ------------------------ | ----------------------------------------------- | ----------- | --------------- | ---------- |
-| 0.9.4   | The module imported bare | The first budget for an entry                   | 706 bytes   | 637 bytes       | 1.5 KB     |
-| 0.9.4   | `attachTable` alone      | The first budget for an entry                   | 2,016 bytes | 637 bytes       | 2.75 KB    |
-| 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes | 637 bytes       | 9.25 KB    |
-| 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes | 649 bytes       | 9.5 KB     |
-| 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes | 672 bytes       | 9.75 KB    |
-| 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes | 678 bytes       | 10 KB      |
-| 0.9.4   | The module imported bare | Presses in a frame, with too little room left   | 868 bytes   | 680 bytes       | 1.75 KB    |
-| 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,163 bytes | 680 bytes       | 3 KB       |
-| 0.9.4   | The module imported bare | Frames on entry, with too little room left      | 1,433 bytes | 668 bytes       | 2.25 KB    |
-| 0.9.4   | `attachTable` alone      | Frames on entry, with too little room left      | 2,699 bytes | 668 bytes       | 3.5 KB     |
-| 0.9.4   | `attachForm` alone       | Frames on entry, with too little room left      | 9,908 bytes | 668 bytes       | 10.5 KB    |
+| Release | Entry                    | What set it                                     | Sent         | Median function | Budget set |
+| ------- | ------------------------ | ----------------------------------------------- | ------------ | --------------- | ---------- |
+| 0.9.4   | The module imported bare | The first budget for an entry                   | 706 bytes    | 637 bytes       | 1.5 KB     |
+| 0.9.4   | `attachTable` alone      | The first budget for an entry                   | 2,016 bytes  | 637 bytes       | 2.75 KB    |
+| 0.9.4   | `attachForm` alone       | The first budget for an entry                   | 8,632 bytes  | 637 bytes       | 9.25 KB    |
+| 0.9.4   | `attachForm` alone       | Limit and step words, with too little room left | 8,879 bytes  | 649 bytes       | 9.5 KB     |
+| 0.9.4   | `attachForm` alone       | One view of focus, with too little room left    | 9,204 bytes  | 672 bytes       | 9.75 KB    |
+| 0.9.4   | `attachForm` alone       | A form in a frame, with too little room left    | 9,389 bytes  | 678 bytes       | 10 KB      |
+| 0.9.4   | The module imported bare | Presses in a frame, with too little room left   | 868 bytes    | 680 bytes       | 1.75 KB    |
+| 0.9.4   | `attachTable` alone      | Presses in a frame, with too little room left   | 2,163 bytes  | 680 bytes       | 3 KB       |
+| 0.9.4   | The module imported bare | Frames on entry, with too little room left      | 1,433 bytes  | 668 bytes       | 2.25 KB    |
+| 0.9.4   | `attachTable` alone      | Frames on entry, with too little room left      | 2,699 bytes  | 668 bytes       | 3.5 KB     |
+| 0.9.4   | `attachForm` alone       | Frames on entry, with too little room left      | 9,908 bytes  | 668 bytes       | 10.5 KB    |
+| 0.9.5   | `attachForm` alone       | Presses in a closed root, too little room left  | 10,763 bytes | 668 bytes       | 11.25 KB   |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

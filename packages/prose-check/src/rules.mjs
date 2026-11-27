@@ -1,8 +1,8 @@
 /**
- * Fails the build on prose that should never reach a reader.
+ * The rules: prose that should never reach a reader.
  *
  * Applied to comments, documentation, page text and workflow files. Code is
- * left alone, so a semicolon ending a statement is none of this script's
+ * left alone, so a semicolon ending a statement is none of these rules'
  * business.
  *
  * 1. No em dashes, anywhere in a file. Pick the punctuation the sentence
@@ -15,11 +15,21 @@
  *    once the tracker moves on, so the comment says what the issue said.
  * 5. American spelling, to agree with the identifiers beside it.
  *
- * Run with `npm run prose`.
+ * A repository runs every rule over its files with the `check-prose` command, and anything else,
+ * such as a pull request's body, is checked by calling `proseProblems` with a path that says what
+ * kind of text it is, such as `body.md`.
  */
-import { extname } from 'node:path';
+import { basename, extname } from 'node:path';
 
-import { isDockerfile, isRunDirectly, repositoryFiles } from './repository.mjs';
+/**
+ * A Dockerfile by its usual names: `Dockerfile` alone, with a suffix as in
+ * `Dockerfile.prod`, or as the extension in `api.Dockerfile`.
+ *
+ * @param {string} path
+ */
+export function isDockerfile(path) {
+    return /^Dockerfile(\..+)?$|\.Dockerfile$/.test(basename(path));
+}
 
 const SCANNED = new Set([
     '.ts',
@@ -85,8 +95,6 @@ const spellsGrey = (text) =>
             )
     );
 
-/** @typedef {{ index: number, text: string }} Segment */
-
 /**
  * How a comment starts, by the kind of file. A `#` starts one in a workflow,
  * a shell script or a Dockerfile, but in JavaScript it starts a private
@@ -108,7 +116,7 @@ const commentStart = (path) => {
  *
  * @param {string} path
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const commentsOf = (path, source) => {
     const comment = new RegExp(`^\\s*(?:${commentStart(path)})\\s?(.*?)(?:\\*\\/.*)?$`);
@@ -122,7 +130,7 @@ const commentsOf = (path, source) => {
  * Markdown body text, with fenced blocks, inline code and entities removed.
  *
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const proseOf = (source) => {
     let fenced = false;
@@ -152,7 +160,7 @@ const SHOWN_META =
  * sits beside the word before it. Line breaks are kept so line numbers match.
  *
  * @param {string} source
- * @returns {Segment[]}
+ * @returns {{ index: number, text: string }[]}
  */
 const pageTextOf = (source) =>
     source
@@ -176,26 +184,35 @@ const pageTextOf = (source) =>
  * @param {{ issues: boolean }} options
  * @returns {string[]}
  */
-export const problemsIn = (text, { issues }) =>
-    [
+export function problemsIn(text, { issues }) {
+    return [
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
         /[A-Za-z];/.test(text) && 'semicolon in prose',
         (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
     ].filter((rule) => typeof rule === 'string');
-
-/** @param {string} path */
-const isScanned = (path) => SCANNED.has(extname(path)) || isDockerfile(path);
+}
 
 /**
- * Every problem in one file, as `path:line  rule` with the line beneath.
+ * Whether the check reads a file, by its kind.
  *
  * @param {string} path
- * @param {string} source
+ */
+export function isScanned(path) {
+    return SCANNED.has(extname(path)) || isDockerfile(path);
+}
+
+/**
+ * Every problem in one file, as `path:line  rule` with the line beneath. The path says what kind
+ * of text it is, so a pull request's or an issue's body goes in as `body.md`, and a path of a kind
+ * the check does not read finds nothing.
+ *
+ * @param {string} path the file's path, which says what kind of text it is
+ * @param {string} source the file's text
+ * @param {string} [label] the name each problem is reported under, the path unless given
  * @returns {string[]}
  */
-
-export const proseProblems = (path, source, label = path) => {
+export function proseProblems(path, source, label = path) {
     const ext = extname(path);
     if (!isScanned(path)) return [];
     const isMarkdown = ext === '.md';
@@ -217,20 +234,4 @@ export const proseProblems = (path, source, label = path) => {
             problemsIn(text, { issues: !isMarkdown }).map((rule) => report(index, rule, text))
         ),
     ];
-};
-
-const main = () => {
-    const failures = [...repositoryFiles(import.meta.url, isScanned)].flatMap(([path, source]) =>
-        proseProblems(path, source)
-    );
-    if (failures.length > 0) {
-        console.error(`Prose check failed with ${failures.length} problem(s):\n`);
-        console.error(failures.join('\n'));
-        process.exit(1);
-    }
-    console.log(
-        'Prose check passed. No em dashes, prose semicolons, process artifacts, issue numbers or British spellings.'
-    );
-};
-
-if (isRunDirectly(import.meta.url)) main();
+}

@@ -11,13 +11,13 @@
         "packages/*"
     ],
     "scripts": {
-        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e && tsc -p packages/design-kit/smoke && tsc -p packages/site/e2e && tsc -p packages/site/bench",
+        "type-check": "tsc --noEmit && tsc -p scripts && tsc -p packages/design-kit/e2e && tsc -p packages/design-kit/smoke && tsc -p packages/site/e2e && tsc -p packages/site/bench && tsc -p packages/prose-check",
         "build": "npm run build --workspaces --if-present",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "prose": "node scripts/check-prose.mjs",
+        "prose": "check-prose",
         "node-check": "node scripts/check-node.mjs",
         "test": "vitest",
         "test:run": "vitest run",

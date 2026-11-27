@@ -25,6 +25,7 @@ each piece live in both themes.
         - [Fields side by side](#fields-side-by-side)
         - [A refused form](#a-refused-form)
     - [Choice fields](#choice-fields)
+    - [A checkbox field](#a-checkbox-field)
     - [Callouts](#callouts)
         - [A failure with Try again](#a-failure-with-try-again)
     - [Pills](#pills)
@@ -1054,33 +1055,34 @@ find the kit's words and marks in what it holds as its own. `attachForm` drawing
 form React still draws, as from an effect, is not supported.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
-an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
-"Enter an email address like name@example.com here." for a malformed address, "Enter the full web
-address, with https:// at the start." for a malformed web address, "Enter at least 8 characters."
-for one too short, "Enter 18 or more." for a number under its least, "Enter November 22, 2026 at
-9:00 AM or later." for a date and time before its least, "Enter a whole number." for a fraction, and
-the page's own words from `setCustomValidity`. A number off its step is told the values it takes,
-counted from the browser's step base, its `min` where that parses, else its `value` attribute where
-that parses, else 0, as "Enter 2, or 2 plus a multiple of 5." or "Enter a multiple of 5.", with the
-step and its base written as their attributes write them, as a range failure's words write its
-limit, a `min` that does not parse left out, and any step equal to 1 read as "Enter a whole number."
-where the step base is a whole number. A dated field's limit is the wall time written, with no zone
-moving it, in the nearest `lang` around the field, past any shadow root it sits in, where that
-language is English and in US English otherwise, since the words around it are English, with "or
-later" or "or earlier" after it: a date as "November 22, 2026", a time as "9:00 AM", a date and time
-joined by "at", a month as "November 2026" and a week as "the week of November 23, 2026", from its
-Monday. It keeps the Gregorian calendar and Latin digits the field takes, whatever calendar or
-digits the language tag picks, so `lang="en-u-ca-buddhist"` still gives "November 22, 2026", and
-writes a year to four digits as the field does, so a month in year 1 is "January 0001" and never
-reads as a day. A limit past any date a script can hold is shown as written, and a fraction of a
-second is shown to the limit's own digits. A time whose limits both parse with its most before its
-least is a window overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM
-the next day." Safari and Firefox draw a month or week field as a text field, which has no limits to
-fail. A field's own words for a failure come first, as `data-error-value-missing="Enter your name."`
-on the control or on its set's fieldset, then the words a page gives the form as `errorWords`, as a
-page in another language gives them, then the kit's. Each attribute is the failure's `validity` name
-in kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`.
-A field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
+an option." for an empty set or select and "Check the box to go on." for a box that stands alone, as
+[a checkbox field](#a-checkbox-field) draws one, "Enter an email address like name@example.com
+here." for a malformed address, "Enter the full web address, with https:// at the start." for a
+malformed web address, "Enter at least 8 characters." for one too short, "Enter 18 or more." for a
+number under its least, "Enter November 22, 2026 at 9:00 AM or later." for a date and time before
+its least, "Enter a whole number." for a fraction, and the page's own words from
+`setCustomValidity`. A number off its step is told the values it takes, counted from the browser's
+step base, its `min` where that parses, else its `value` attribute where that parses, else 0, as
+"Enter 2, or 2 plus a multiple of 5." or "Enter a multiple of 5.", with the step and its base
+written as their attributes write them, as a range failure's words write its limit, a `min` that
+does not parse left out, and any step equal to 1 read as "Enter a whole number." where the step base
+is a whole number. A dated field's limit is the wall time written, with no zone moving it, in the
+nearest `lang` around the field, past any shadow root it sits in, where that language is English and
+in US English otherwise, since the words around it are English, with "or later" or "or earlier"
+after it: a date as "November 22, 2026", a time as "9:00 AM", a date and time joined by "at", a
+month as "November 2026" and a week as "the week of November 23, 2026", from its Monday. It keeps
+the Gregorian calendar and Latin digits the field takes, whatever calendar or digits the language
+tag picks, so `lang="en-u-ca-buddhist"` still gives "November 22, 2026", and writes a year to four
+digits as the field does, so a month in year 1 is "January 0001" and never reads as a day. A limit
+past any date a script can hold is shown as written, and a fraction of a second is shown to the
+limit's own digits. A time whose limits both parse with its most before its least is a window
+overnight, and a time in its gap takes "Enter a time between 10:00 PM and 6:00 AM the next day."
+Safari and Firefox draw a month or week field as a text field, which has no limits to fail. A
+field's own words for a failure come first, as `data-error-value-missing="Enter your name."` on the
+control or on its set's fieldset, then the words a page gives the form as `errorWords`, as a page in
+another language gives them, then the kit's. Each attribute is the failure's `validity` name in
+kebab case after `data-error-`, such as `data-error-pattern-mismatch` or `data-error-too-short`. A
+field with a `pattern` gives words of its own, since the kit cannot put a pattern in words, and
 without them it asks for the format its hint shows. In React, `useFormRefusal` asks for `invalid`,
 since the markup is the page's: the failures go to it, the page sets its errors from them, keyed by
 each failure's `field`, which is a set's fieldset for a set, and the refusal follows once they are
@@ -1266,6 +1268,71 @@ invalid set draws a thin line in the danger color around it, and a dashed line i
 forced colors, each giving way to the ring. The theme switch's choice is the same label of a radio
 and its word, drawn by rules of its own as a pill word with the radio under it, as the Theme switch
 section says.
+
+</details>
+
+A page with one setting to turn on or off draws [a checkbox field](#a-checkbox-field), not a set of
+one, which would name the setting twice, once in its legend and once on its box.
+
+### A checkbox field
+
+<!-- example: checkboxField -->
+
+```html
+<div class="dk-field">
+    <label class="dk-choice" for="sold-out" id="sold-out-label">
+        <input type="checkbox" id="sold-out" aria-describedby="sold-out-hint" name="sold-out" />
+        <span>Hide sold-out items</span>
+    </label>
+    <p class="dk-field-hint" id="sold-out-hint">They show again once restocked</p>
+</div>
+<div class="dk-field">
+    <p class="dk-field-error" id="terms-error">
+        <span class="dk-visually-hidden">Error: </span>
+        Check the box to go on.
+    </p>
+    <label class="dk-choice" for="terms" id="terms-label">
+        <input
+            required=""
+            type="checkbox"
+            id="terms"
+            aria-describedby="terms-error"
+            aria-invalid="true"
+            name="terms"
+        />
+        <span>I agree to the terms</span>
+    </label>
+</div>
+```
+
+One setting a visitor turns on or off is a lone checkbox with its label and hint and no group around
+it: a `.dk-field` holding the box's `label.dk-choice` itself. The label wraps the box and points at
+it with `for`, so the box and its words are one target and the words are the box's name. The error
+sits before the label, above the box, and the hint after it, under the words, and both describe the
+box through its `aria-describedby`, the hint before the error, so a screen reader reads both on the
+box. The box carries `aria-invalid="true"` while an error is drawn, and `aria-required="true"` where
+the field is marked required. A form's refusal counts a checkbox field as its own field wherever it
+stands, so a page's own section of settings in a `fieldset` never takes its boxes for one set, and
+each box's error goes above that box alone.
+
+A required box is for a visitor's consent, such as agreeing to terms, since a setting has a default
+rather than a choice the visitor must make. A box a visitor cannot change uses `disabled` on its
+control, never `aria-disabled`, which would leave it toggling. A checkbox has no read-only state, so
+`CheckboxField` with `readOnly` draws its state in words, "On" or "Off" unless given others, as a
+value a visitor reads, as a read-only select does, with a hidden field carrying the box's value
+while it is checked, so the form sends what the box would. A read-only box is never refused, since
+no one could change it, so it takes no `required` and says nothing of being required.
+
+<details>
+<summary>How a checkbox field is drawn</summary>
+
+The box sits at the field's edge, in line with the labels and controls above it, and its label hugs
+its words, so its highlight under a pointer and after the keyboard never reads as a row of a list.
+Its words are in the choice's look, as a box in a set is. The hint starts under the words, past the
+box and the gap, so it reads as a note on the setting, while the error stays in line with the box.
+The label is the field's height, and a thumb's target on a phone and in an app's frame, as a choice
+is. In a row of fields it takes a line of its own, so its hint never pushes the box out of line with
+the controls beside it. A box that is off is in the muted text, and in `GrayText` in forced colors.
 
 </details>
 
@@ -1703,6 +1770,21 @@ Every other prop goes to the `<fieldset>`, `ref` and `className` included, excep
 `aria-invalid`. A choice's own props go to its control, `ref` among them, except `style`,
 `className` and `aria-invalid`, and `type` and `name`, which the set gives. Its `value` tells the
 choices apart.
+
+**`CheckboxField` props**
+
+| `CheckboxField`       | Default      | What it does                                                                   |
+| --------------------- | ------------ | ------------------------------------------------------------------------------ |
+| `label`               | required     | Names the box, as the words beside it                                          |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the box, and the id is the box's               |
+| `mark`, `markWords`   | as a field's | The mark in the label, hidden from a screen reader where it says required      |
+| `readOnly`            | `false`      | Draws the state in words as a value, never refused, and a hidden field when on |
+| `onWords`, `offWords` | `On`, `Off`  | The words a read-only field shows for each state                               |
+
+Every other prop goes to the box, `ref`, `className`, `checked` and `disabled` included, except
+`style`, `type` and `aria-invalid`. With `readOnly`, every other prop goes to the value drawn, its
+`ref` among them, which holds that textarea, and `name`, `value`, `checked` and `defaultChecked` go
+to the hidden field. An `aria-describedby` of the page's own is listed after the hint and the error.
 
 **`Callout` props**
 
@@ -2316,19 +2398,20 @@ title is heard before a section of it. They are ordered as the page draws them, 
 roots, so where one of them sits inside a shadow root and another outside it, the first in the page
 takes focus in every engine. Focus a view placed itself as it drew, as a field with autofocus does,
 is never taken. Where focus was is read inside an open shadow root too, so a press on a widget's own
-button there brings focus to the heading, and a press inside a closed one does not, as [Where focus
-can be](#where-focus-can-be) has it.
+button there brings focus to the heading, and a press inside a closed one does once the kit has read
+focus there, as [Where focus can be](#where-focus-can-be) has it.
 
-The presses and keys heard are the page's and those inside each frame of the page's own origin the
-page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
-held inside one of another origin among them. So a press on a control inside such a frame brings
-focus to the heading of the view it opens, and a key that moves or types inside one leaves no press
-standing, as on the page. A frame is heard as the controls load, as it loads a page, and as focus
-enters it by a click or a key, before the click that moved it lands, a frame inside an open shadow
-root and one whose page is still loading among them. A frame's next page of the page's own origin is
-heard as it begins, before its load, so a form sent inside a frame is followed to the page it
-brings. After a page of another origin, the frame's next page is heard from its load, as on the
-return from a bank's check. A frame the page writes with `open()` is heard from its `close()`.
+The presses and keys heard are the page's, those inside each closed shadow root the kit has read
+focus in, and those inside each frame of the page's own origin the page can reach, at any depth, an
+object, a frame the page writes and a frame of the page's origin held inside one of another origin
+among them. So a press on a control inside such a frame brings focus to the heading of the view it
+opens, and a key that moves or types inside one leaves no press standing, as on the page. A frame is
+heard as the controls load, as it loads a page, and as focus enters it by a click or a key, before
+the click that moved it lands, a frame inside an open shadow root and one whose page is still
+loading among them. A frame's next page of the page's own origin is heard as it begins, before its
+load, so a form sent inside a frame is followed to the page it brings. After a page of another
+origin, the frame's next page is heard from its load, as on the return from a bank's check. A frame
+the page writes with `open()` is heard from its `close()`.
 
 A frame of another origin, one sandboxed without `allow-same-origin` and one inside a closed shadow
 root show the page no document, so nothing inside them is heard. Where focus enters one from the
@@ -2402,11 +2485,14 @@ and `useArrivalFocus`, which read where focus was through their target where it 
 form a refusal is for, or their heading once it is drawn. So a visitor who moves to another control
 in the same closed root before one of them lands is left there. A target given as an id or a
 function reads focus as the host, as does focus inside another closed root or one nested in the
-widget's own, so a move made there before the request lands is read as no move. As a view first
-draws its heading is not drawn yet, so `useArrivalFocus` reads where focus was then as the host. A
-toast on the page hands focus back to the host, which takes no focus, so focus goes on to the main
-content, and a press inside the root reaches the page as a press on its host, which is no control,
-so the view it brings takes no focus.
+widget's own, so a move made there before the request lands is read as no move. A toast on the page
+hands focus back to the host, which takes no focus, so focus goes on to the main content. A press
+inside the root is heard once the kit has read focus there, as a piece in it does when it opens,
+closes or is asked for focus, a hook does when it asks, and `useArrivalFocus` does as its heading is
+drawn. A view that press draws for the first time reads where focus was through the control pressed,
+so its `useArrivalFocus` heading takes focus and a visitor who moves on first is left where they
+went. The first press in a widget the kit has not read focus in yet reaches the page as a press on
+its host, which is no control, so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,
@@ -4566,12 +4652,12 @@ control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`
 ### `@jasonsdevspace/design-kit/react`
 
 It holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`, `SelectField`,
-`TextareaField`, `ValueField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
-`CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and `StatusProvider`,
-a props type for each named after it, such as `ButtonProps`, the hooks `useStatus()`,
-`useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`, `useBusy()` and
-`useProgress()`, the `FocusAfterDraw` and `ArrivalKey` types they use, the `Choice` and
-`CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
+`TextareaField`, `ValueField`, `ChoiceField`, `CheckboxField`, `StepperField`, `Callout`,
+`ThemeSwitch`, `CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and
+`StatusProvider`, a props type for each named after it, such as `ButtonProps`, the hooks
+`useStatus()`, `useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`,
+`useBusy()` and `useProgress()`, the `FocusAfterDraw` and `ArrivalKey` types they use, the `Choice`
+and `CalloutTone` types a page writes a choice or a tone with, and the URLs the chrome links,
 `PORTFOLIO_URL`, `PORTFOLIO_WORK_URL` and `GITHUB_PROFILE_URL`.
 
 ### `@jasonsdevspace/design-kit/vite`
