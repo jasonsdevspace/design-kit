@@ -240,7 +240,8 @@ in before focus enters it, focus already in a frame as the module loads and a fr
 the whole tree again at once whenever a heard window loses focus while the page keeps it, as focus
 moves into a frame, out of one or between two, by a click or a key, which comes ahead of the click
 that moved it in every engine measured, so a frame added later or one whose page is still loading is
-heard before that click. A frame inside an open shadow root is not in `window.frames`, and its load
+heard before that click, but for a frame of the page's origin inside one of another origin whose own
+load is still to come, which Firefox does not hear before the click. A frame inside an open shadow root is not in `window.frames`, and its load
 goes no further than that root, so on the same blur focus is read through the one reader in a
 microtask, or a task later where the microtask finds the body of the window that lost focus, as
 Firefox gives it during the blur by the order of the HTML standard's focus update steps, and the
