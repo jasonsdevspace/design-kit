@@ -1,5 +1,5 @@
 /**
- * Fails the build on prose that should never reach a reader.
+ * The rules: prose that should never reach a reader.
  *
  * Applied to comments, documentation, page text and workflow files. Code is
  * left alone, so a semicolon ending a statement is none of this script's
@@ -15,11 +15,19 @@
  *    once the tracker moves on, so the comment says what the issue said.
  * 5. American spelling, to agree with the identifiers beside it.
  *
- * Run with `npm run prose`.
+ * A repository runs every rule over its files with the `check-prose` command, and anything else,
+ * such as a pull request's body, is checked by calling `proseProblems` with a path that says what
+ * kind of text it is, such as `body.md`.
  */
-import { extname } from 'node:path';
+import { basename, extname } from 'node:path';
 
-import { isDockerfile, isRunDirectly, repositoryFiles } from './repository.mjs';
+/**
+ * A Dockerfile by its usual names: `Dockerfile` alone, with a suffix as in
+ * `Dockerfile.prod`, or as the extension in `api.Dockerfile`.
+ *
+ * @param {string} path
+ */
+export const isDockerfile = (path) => /^Dockerfile(\..+)?$|\.Dockerfile$/.test(basename(path));
 
 const SCANNED = new Set([
     '.ts',
@@ -184,8 +192,12 @@ export const problemsIn = (text, { issues }) =>
         (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
     ].filter((rule) => typeof rule === 'string');
 
-/** @param {string} path */
-const isScanned = (path) => SCANNED.has(extname(path)) || isDockerfile(path);
+/**
+ * Whether the check reads a file, by its kind.
+ *
+ * @param {string} path
+ */
+export const isScanned = (path) => SCANNED.has(extname(path)) || isDockerfile(path);
 
 /**
  * Every problem in one file, as `path:line  rule` with the line beneath.
@@ -194,7 +206,6 @@ const isScanned = (path) => SCANNED.has(extname(path)) || isDockerfile(path);
  * @param {string} source
  * @returns {string[]}
  */
-
 export const proseProblems = (path, source, label = path) => {
     const ext = extname(path);
     if (!isScanned(path)) return [];
@@ -218,19 +229,3 @@ export const proseProblems = (path, source, label = path) => {
         ),
     ];
 };
-
-const main = () => {
-    const failures = [...repositoryFiles(import.meta.url, isScanned)].flatMap(([path, source]) =>
-        proseProblems(path, source)
-    );
-    if (failures.length > 0) {
-        console.error(`Prose check failed with ${failures.length} problem(s):\n`);
-        console.error(failures.join('\n'));
-        process.exit(1);
-    }
-    console.log(
-        'Prose check passed. No em dashes, prose semicolons, process artifacts, issue numbers or British spellings.'
-    );
-};
-
-if (isRunDirectly(import.meta.url)) main();

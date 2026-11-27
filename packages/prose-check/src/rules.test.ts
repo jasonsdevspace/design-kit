@@ -1,8 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import { proseProblems } from './check-prose.mjs';
-import { runCheckIn } from './test-repository.js';
+import { proseProblems } from './index.mjs';
 
 const DASH = String.fromCodePoint(0x2014);
 const rules = (path: string, source: string): string[] =>
@@ -238,23 +237,16 @@ describe('what the prose check reads', () => {
     });
 });
 
-/** The check's status and what it wrote to stderr, run over a throwaway repository. */
-const runIn = (files: Record<string, string>) => {
-    const { status, stderr } = runCheckIn('check-prose.mjs', files);
-    return { status, stderr };
-};
-
-describe('the prose check, run as a command', () => {
-    it('exits 0 on plain prose', () => {
-        expect(runIn({ 'README.md': 'One sentence. Then another.\n' })).toEqual({
-            status: 0,
-            stderr: '',
-        });
+describe('the prose check, given a pull request body or an issue', () => {
+    it('reads text given a path that says it is Markdown, as a body is', () => {
+        expect(rules('body.md', 'One clause; then another.\n')).toEqual([
+            'body.md:1  semicolon in prose',
+        ]);
     });
 
-    it('exits 1 and names the line on a semicolon joining clauses', () => {
-        const result = runIn({ 'README.md': 'One clause; then another.\n' });
-        expect(result.stderr).toContain('README.md:1  semicolon in prose');
-        expect(result.status).toBe(1);
+    it('reads nothing given a path of no kind it scans, so a body needs a path such as body.md', () => {
+        expect(proseProblems('One clause; then another.', 'One clause; then another.\n')).toEqual(
+            []
+        );
     });
 });
