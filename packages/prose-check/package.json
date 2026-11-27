@@ -30,7 +30,7 @@
     },
     "exports": {
         ".": {
-            "types": "./src/index.d.mts",
+            "types": "./types/index.d.mts",
             "default": "./src/index.mjs"
         },
         "./package.json": "./package.json"
@@ -38,9 +38,12 @@
     "files": [
         "bin",
         "src/*.mjs",
-        "src/*.d.mts"
+        "types"
     ],
     "publishConfig": {
         "access": "public"
+    },
+    "scripts": {
+        "types": "tsc -p tsconfig.types.json"
     }
 }

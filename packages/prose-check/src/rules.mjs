@@ -2,7 +2,7 @@
  * The rules: prose that should never reach a reader.
  *
  * Applied to comments, documentation, page text and workflow files. Code is
- * left alone, so a semicolon ending a statement is none of this script's
+ * left alone, so a semicolon ending a statement is none of these rules'
  * business.
  *
  * 1. No em dashes, anywhere in a file. Pick the punctuation the sentence

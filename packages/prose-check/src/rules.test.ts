@@ -1,7 +1,6 @@
 // @vitest-environment node
+import { proseProblems } from '@jasonsdevspace/prose-check';
 import { describe, expect, it } from 'vitest';
-
-import { proseProblems } from './index.mjs';
 
 const DASH = String.fromCodePoint(0x2014);
 const rules = (path: string, source: string): string[] =>

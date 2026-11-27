@@ -58,10 +58,22 @@ A path of a kind the check does not read, such as the text itself, finds nothing
 
 ## How a fix reaches every repository
 
-The rules live here and nowhere else. A fix is made in this package and released under its own
-tag, `prose-check-vVERSION`, staged on npm with provenance and promoted by hand, as the design kit
-is, and a repository takes it by moving its exact pin to the new version. Releasing the check
-never moves the design kit's version, and releasing the kit never moves the check's.
+The rules live here and nowhere else. A fix is made in this package, and a repository takes it by
+moving its exact pin to the version that holds it. The package is versioned on its own, so a
+release of the check never moves the design kit's version, and a release of the kit never moves the
+check's. A release workflow for the package is added in a change of its own.
+
+## Versions
+
+Before 1.0.0, a version says what a repository's build may do once it moves to it:
+
+- **A minor version** can fail a build that passed before: a new rule, or a rule that matches more
+  than it did.
+- **A patch** never fails a build that passed: a rule that matches less than it did, or a fix that
+  stops a rule from finding a problem that is not one.
+
+Read the changelog before moving to a minor version, since a new rule may name lines that were
+written before it.
 
 ## License
 
