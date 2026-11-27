@@ -83,8 +83,9 @@ costs, and the test behind it.
     and a group of cells inside a frame the page drives and for a focus request asked from one, the
     presses and keys a focus request hears in each frame of the page's own origin, found through the
     window tree, as focus enters it and as its next page begins, a press cleared as focus enters a
-    frame nothing can hear, a request's id looked for in each root outward from where focus was, and
-    why the path of the last click and a flag for interaction outside were turned down.
+    frame nothing can hear, a request's id looked for in each root outward from where focus was, the
+    presses and keys heard inside a closed shadow root the kit has read focus in, and why the path
+    of the last click and a flag for interaction outside were turned down.
 20. [The kit's React hooks wrap its attach
     functions](0020-react-hooks-wrap-the-attach-functions.md):
     a hook for each attach a React page needs, a form, a busy button, progress and a group of cells,

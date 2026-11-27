@@ -396,7 +396,7 @@ export type ArrivalKey = string | number | boolean | null | undefined;
  * cannot take focus by itself, takes a tabindex of -1 where it has none, so it can take focus at
  * all, and a button, a link or a field keeps its place in the Tab order. The key changes on a
  * visitor's press or submit, never as they choose in a list or a set of radios, which would move
- * them as they choose. Inside a closed shadow root the kit holds a node in, a view a press there
+ * them as they choose. Inside a closed shadow root the kit has read focus in, a view a press there
  * draws for the first time reads where focus was through the control pressed.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
@@ -432,8 +432,8 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
     const attachHeading = useCallback((element: Heading) => {
-        // A closed shadow root the heading sits in is heard from here on, so the next press inside
-        // it brings this view's heading focus however the view is drawn.
+        // A closed shadow root the heading sits in is heard from here on, so a press inside it is
+        // noted with the control it was made on.
         hearClosed(element);
         heading.current = element;
         // Only an element that cannot take focus by itself, such as a heading or a link with no

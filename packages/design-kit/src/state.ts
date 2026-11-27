@@ -84,7 +84,7 @@ export let sightChanges = 0;
  */
 export const press: { at: number | null; on: Element | null } = { at: null, on: null };
 export let inputs = 0;
-/** A press made now on the event's own target, or none where it is no press. */
+/** Notes a press made now on the event's first target as this listener sees it, or clears it. */
 const pressFor = (event: Event): void => {
     const [target] = event.composedPath();
     if (presses(event) && isElement(target)) {
@@ -97,11 +97,6 @@ const heard = (event: Event) => {
         sweep((event.target as Partial<HTMLIFrameElement> | null)?.contentWindow);
         return;
     }
-    // An input inside a closed shadow root the kit hears is heard there, with the control it was
-    // made on, so the page's own listener, which sees only the root's host, leaves it, and each
-    // input counts once.
-    const [first] = event.composedPath();
-    if (isElement(first) && heardHosts.has(first)) return;
     if (event.type === 'keydown') {
         // A keydown with no key, as autofill sends, is no input of the visitor's, and a key that
         // neither presses, types nor moves leaves the press as it is.
@@ -110,6 +105,25 @@ const heard = (event: Event) => {
         if (!presses(event) && key.length !== 1 && !MOVES.includes(key)) return;
     }
     pressFor(event);
+    counted.add(event);
+    inputs += 1;
+};
+
+/** The inputs already counted, so one heard on the page and again inside a root counts once. */
+const counted = new WeakSet<Event>();
+
+/**
+ * Hears an input inside a closed shadow root the kit hears, after the kit's listener on the
+ * document, which saw it only as made on the root's host. A press on a control in the root is taken
+ * as a press, with the control it was made on, and counted where the page did not count it, as for
+ * Enter, which is no input on the host, or a submit, which never leaves the root. Anything else was
+ * heard on the page already, and an input aimed at the host itself never reaches the root.
+ */
+const heardInRoot = (event: Event) => {
+    if (!presses(event)) return;
+    pressFor(event);
+    if (counted.has(event)) return;
+    counted.add(event);
     inputs += 1;
 };
 /**
@@ -122,23 +136,24 @@ const clear = () => {
 };
 
 /**
- * The hosts of the closed shadow roots the kit hears, each once. A shadow root keeps its listeners
- * for as long as it lives, having no `open()` to take them off, so a set of them stays true, and a
- * root that is dropped goes with its host.
+ * The hosts of the closed shadow roots the kit hears, each once. Unlike a document, which `open()`
+ * strips of its listeners, a shadow root keeps them as long as it lives, so a set of the roots
+ * heard stays true, and a root that is dropped goes with its host.
  */
 const heardHosts = new WeakSet<Element>();
 
 /**
- * Hears the presses and keys made inside each closed shadow root around a node the kit is handed,
- * which the page's own listeners hear only as made on the root's host. Only a root the kit holds a
- * node in is heard, as only such a root is read into, so a press inside a widget the kit has never
- * been handed a node of still reaches the page as one on its host.
+ * Hears the presses and keys made inside each closed shadow root around a node the kit reads focus
+ * through, which the kit's listeners on the document hear only as made on the root's host. Only a
+ * root the kit has read focus through a node in is heard, as only such a root is read into, so a
+ * press inside a widget the kit has never read focus in still reaches the page as one on its host.
  */
 export const hearClosed = (near: Node | null | undefined): void => {
     for (const root of closedAround(near)) {
         if (root.mode !== 'closed' || heardHosts.has(root.host)) continue;
         heardHosts.add(root.host);
-        for (const type of ['keydown', 'click', 'submit']) root.addEventListener(type, heard, true);
+        for (const type of ['keydown', 'click', 'submit'])
+            root.addEventListener(type, heardInRoot, true);
     }
 };
 

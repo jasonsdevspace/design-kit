@@ -93,7 +93,10 @@ const Round = () => {
     );
 };
 
-/** How the view a press brings is drawn: plain, with the visitor moving on, or with a field of its own. */
+/**
+ * How the view a press brings is drawn: plain, with the visitor moving on, or with a field of its
+ * own.
+ */
 type ViewKind = 'only' | 'move' | 'field-above' | 'field-below';
 
 /** A view drawn for the first time, whose heading takes focus as it arrives by a press. */

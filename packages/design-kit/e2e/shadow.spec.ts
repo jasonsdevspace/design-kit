@@ -1082,9 +1082,11 @@ type ClosedRoot = 'closedRoot' | 'freshRoot';
 const pressInClosed = async (page: Page, id: string, root: ClosedRoot = 'closedRoot') => {
     await page.evaluate(
         ([given, which]) => {
-            (window as unknown as Record<string, ShadowRoot>)[which]
-                ?.getElementById(given)
-                ?.focus();
+            const control = (window as unknown as Record<string, ShadowRoot | undefined>)[
+                which
+            ]?.getElementById(given);
+            if (!control) throw new Error(`No ${given} in ${which}`);
+            control.focus();
         },
         [id, root] as const
     );
@@ -1141,12 +1143,13 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its view 
     const errors = await openClosedHooks(page);
     await pressInClosed(page, 'open-only');
     await expect.poll(() => focusedInClosed(page)).toBe('view-heading');
-    await openClosedHooks(page);
+    const moved = await openClosedHooks(page);
     await pressInClosed(page, 'open-move');
     expect(await focusedInClosed(page)).toBe('view-other');
     await frames(page, 10);
     expect(await focusedInClosed(page)).toBe('view-other');
     expect(errors).toEqual([]);
+    expect(moved).toEqual([]);
 });
 
 test('leaves focus on a field a view inside a closed shadow root focuses itself as it first draws, above or below its useArrivalFocus heading', async ({

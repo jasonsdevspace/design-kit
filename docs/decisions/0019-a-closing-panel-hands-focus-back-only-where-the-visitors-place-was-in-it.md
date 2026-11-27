@@ -8,8 +8,9 @@ toast's action and back, and in 0.9.4 for a dialog, a panel, a stepper, a form a
 the page attaches inside a frame, a focus request asked with focus inside one, the presses and keys
 inside one that a focus request hears, a press cleared as focus enters a frame nothing can hear, and
 an id a focus request looks for in each root outward from where focus was, and in 0.9.5 for the
-presses and keys inside a closed shadow root the kit holds a node in, heard there with the control
-pressed, through which a view a press there draws for the first time reads where focus was
+presses and keys inside a closed shadow root the kit has read focus in, heard on the root with the
+control pressed, so a view a press there draws for the first time reads where focus was through that
+control
 
 ## Context
 
@@ -139,20 +140,21 @@ piece that holds an element inside a closed root reads focus inside that root th
 request given such an element as `from`, a stepper, a form's refusal, a panel, a theme switch and
 the hooks there compare focus where it is rather than at the host, and views brought by one press
 are ordered as the page draws them, through shadow roots. The kit also hears the presses and keys
-inside each closed root it holds a node in, by listeners on the root itself, since the page's own
-hear only the host, and a press keeps the control it was made on, so a view a press there draws for
-the first time reads where focus was through that control as it renders, before anything in the view
-can take focus. Following every read made with no node into the roots the kit has heard was turned
-down, since what a read sees would then hang on which piece attached first, and so were patching
-`attachShadow`, which misses a root attached before the kit loads, an entry a page calls to hear a
-root, and reading again as the heading attaches, which takes a field the view focuses above its
-heading for the visitor's place. Looking in the page's document first was turned down, since it let
-the page's id win over the widget's own. The cost is that a widget's id missing from its own root as
-the request lands, one the widget has not drawn yet, finds an element of the page that shares it,
-where the request fell back before. A late request from `useFocusAfterDraw` looks an id up by the
-same walk, from where focus was as it was asked. The walk ends at the root that is no shadow root,
-told by its node type, since a document's named elements answer for `'host' in` it, so a page with a
-form named host held the walk forever.
+inside each closed root it has read focus in, by listeners on the root itself, since the kit's
+listeners on the page's document hear only the host, and a press keeps the control it was made on,
+so a view a press there draws for the first time reads where focus was through that control as it
+renders, before anything in the view can take focus. Following every read made with no node into the
+roots the kit has heard was turned down, since what a read sees would then hang on which piece read
+first. Patching `attachShadow` was turned down, since it misses a root attached before the kit
+loads, and so was an entry a page calls to hear a root, since a piece is a drop-in a page calls
+nothing more to use. Reading again as the heading attaches was turned down, since it takes a field
+the view focuses above its heading for the visitor's place. Looking in the page's document first was
+turned down, since it let the page's id win over the widget's own. The cost is that a widget's id
+missing from its own root as the request lands, one the widget has not drawn yet, finds an element
+of the page that shares it, where the request fell back before. A late request from
+`useFocusAfterDraw` looks an id up by the same walk, from where focus was as it was asked. The walk
+ends at the root that is no shadow root, told by its node type, since a document's named elements
+answer for `'host' in` it, so a page with a form named host held the walk forever.
 
 ## Decision
 
@@ -344,10 +346,11 @@ What no fix reaches, each failing safe:
   not in `window.frames`, and its load stays inside the root. Entering it from the page only clears
   the press. The only spec work near it, whatwg/dom#1287, would report a root being attached, not
   open it.
-- A press inside a closed shadow root the kit holds no node in reaches the page as a press on its
-  host, which is no control, so the view it brings takes no focus, the first press in a widget whose
-  first node the kit is handed with that view among them, and a toast on the page that had focus
-  inside one hands it back to the host, which takes none, so it goes on to the main content.
+- A press inside a closed shadow root the kit has not read focus in reaches the page as a press on
+  its host, which is no control, so the view it brings takes no focus. In a widget whose first node
+  the kit reads through is in the view a press brings, that is the first press.
+- A toast on the page that had focus inside a closed shadow root hands it back to the host, which
+  takes none, so it goes on to the main content.
 - In Firefox alone, a page script that moves focus to an element of the page just after focus enters
   a frame clears the press, since the read a task later ends on that element, which cannot be told
   from a closed shadow root's host.
@@ -432,11 +435,11 @@ The path is in `packages/design-kit`.
   the one before it left the widget, closes by Escape a page's panel a widget's button opened before
   the page drew it, leaves the page's open panel to its own button as a widget draws a panel with
   its id after attaching its button, and opens and closes by Escape a panel inside a closed shadow
-  root, and brings a view by a press inside a closed shadow root whose `useArrivalFocus` heading
-  takes focus as the view first draws, left where the visitor moved first and leaving a field the
-  view focuses above or below its heading, takes no press once a Tab or a click on nothing follows
-  it, and takes no focus for the first press in a widget the kit was never handed a node of and
-  focus from the next.
+  root. It also brings a view by a press inside a closed shadow root and finds its `useArrivalFocus`
+  heading taking focus as the view first draws, focus left where the visitor moved first, a field
+  the view focuses above or below its heading keeping focus, no focus taken once a Tab or a click on
+  nothing follows the press, and, in a widget the kit was never handed a node of, no focus for the
+  first press and focus from the next.
 - `e2e/seen.spec.ts`, in Chromium, WebKit and Firefox, reads `seen` as a pure function over a page
   with a frame, a frame inside it, a frame beside it and a frame taken from the page, for an asker
   in each, and finds a kept place reading the same as the element, and the walk going on past a
