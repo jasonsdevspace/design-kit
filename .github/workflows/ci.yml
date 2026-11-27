@@ -773,3 +773,5 @@ jobs:
                   name: prose-check-package
                   path: ${{ runner.temp }}/jasonsdevspace-prose-check-*.tgz
                   if-no-files-found: error
+                  retention-days: 7
+                  overwrite: true

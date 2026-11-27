@@ -61,7 +61,7 @@ A path of a kind the check does not read, such as the text itself, finds nothing
 The rules live here and nowhere else. A fix is made in this package, and a repository takes it by
 moving its exact pin to the version that holds it. The package is versioned on its own, so a
 release of the check never moves the design kit's version, and a release of the kit never moves the
-check's. A release workflow for the package is added in a change of its own.
+check's.
 
 ## Versions
 
