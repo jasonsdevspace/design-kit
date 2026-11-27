@@ -511,6 +511,19 @@ describe('the workflows', () => {
         expect(fetched).toEqual([]);
     });
 
+    it("run the commit message check at the lockfile's version, its hash checked and its scripts off", () => {
+        const message = workflows.get('.github/workflows/message.yml') ?? '';
+        const lockRead = message.indexOf("require('./package-lock.json')");
+        const hashCheck = message.indexOf('dist.integrity)" != "$integrity"');
+        const run = message.indexOf(
+            'npm exec --yes --ignore-scripts --package="@jasonsdevspace/prose-check@$version" -- check-commit-message --as-is'
+        );
+        expect(lockRead).toBeGreaterThan(-1);
+        expect(hashCheck).toBeGreaterThan(lockRead);
+        expect(run).toBeGreaterThan(hashCheck);
+        expect(message).toMatch(/does not match the lockfile's"\n\s+exit 1/);
+    });
+
     it('read an install however it is written, and the flags the last of which decides', () => {
         const read = (step: string) =>
             commandsIn(runOf(step))
