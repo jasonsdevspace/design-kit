@@ -110,9 +110,10 @@ its own names where the kit's go, and [the theme
 contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
 The writing rules the repository's comments, docs and pages follow come from
-[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check), which
-[jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling) publishes for every repository,
-this one included, at an exact pin.
+[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check),
+installed at an exact pin. Its first version was published from this repository, and the package
+now lives in [jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling), where a fix to its
+rules goes.
 
 ## Browser support
 

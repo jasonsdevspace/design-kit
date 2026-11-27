@@ -452,7 +452,10 @@ describe('the workflows', () => {
 
     it('stop a release while a change file is left beside its package', () => {
         for (const name of PACKAGES)
-            expect(existsSync(`packages/${name}/changes/README.md`), name).toBe(true);
+            expect(
+                existsSync(new URL(`../packages/${name}/changes/README.md`, import.meta.url)),
+                name
+            ).toBe(true);
         expect(releaseJob('agree')).toMatch(/^\s+dir=packages\/design-kit\s*$/m);
         expect(releaseJob('agree')).toMatch(
             /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
