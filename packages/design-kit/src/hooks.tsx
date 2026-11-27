@@ -32,7 +32,7 @@ import {
     type RovingOptions,
     type Say,
 } from './controls.js';
-import { byIdOutward, focusWas } from './request.js';
+import { byIdOutward, focusWas, hearClosed, pressedNear } from './request.js';
 
 /*
  * The kit's React hooks, each a thin wrapper over a function from `./controls`, as record 20 has
@@ -396,7 +396,8 @@ export type ArrivalKey = string | number | boolean | null | undefined;
  * cannot take focus by itself, takes a tabindex of -1 where it has none, so it can take focus at
  * all, and a button, a link or a field keeps its place in the Tab order. The key changes on a
  * visitor's press or submit, never as they choose in a list or a set of radios, which would move
- * them as they choose.
+ * them as they choose. Inside a closed shadow root the kit has read focus in, a view a press there
+ * draws for the first time reads where focus was through the control pressed.
  */
 export const useArrivalFocus = <Heading extends HTMLElement>(
     key: ArrivalKey
@@ -406,13 +407,15 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
     // Where focus was as the change began, read as the view draws, before anything in it can take
     // focus, so a field the view focuses itself is not taken for the visitor's own place. Read
     // into each shadow root and each frame of the page's own origin that holds it, as the request
-    // compares it when it lands, so a press inside one is not taken for focus the visitor moved.
+    // compares it when it lands, so a press inside one is not taken for focus the visitor moved. As
+    // the view first draws its heading is not there yet, so the read goes through the control the
+    // press that brings it was made on, inside a closed shadow root the kit hears too.
     const from = useRef<Element | null>(null);
     if (
         (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
-        from.current = focusWas(undefined, heading.current).from;
+        from.current = focusWas(undefined, heading.current ?? pressedNear()).from;
     // Asks once for each key, since the effect runs again only when the key changes: as the view
     // first draws, by whether a press brought it, and as its key changes, whatever the last input,
     // since the page changes it on a press. The request is called off as the effect is cleaned up,
@@ -429,6 +432,9 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         return focusOnArrival(() => heading.current, { from: from.current, changed: !first });
     }, [key]);
     const attachHeading = useCallback((element: Heading) => {
+        // A closed shadow root the heading sits in is heard from here on, so a press inside it is
+        // noted with the control it was made on.
+        hearClosed(element);
         heading.current = element;
         // Only an element that cannot take focus by itself, such as a heading or a link with no
         // address, so a button, a link or a field keeps its place in the Tab order.

@@ -78,23 +78,52 @@ export let sightChanges = 0;
  * click on nothing does, while a pointer going down to scroll leaves it. A press on a control that
  * is off or in a row of tabs counts for nothing, since an off control only says why it is off and a
  * tab keeps focus as its panel changes, and Enter or Space on a control a page makes a button or a
- * link by its role counts, since no click follows them.
+ * link by its role counts, since no click follows them. The press keeps the control it was made
+ * on, inside a closed shadow root the kit hears too, so a view it brings reads where focus was
+ * through it.
  */
-export const press: { at: number | null } = { at: null };
+export const press: { at: number | null; on: Element | null } = { at: null, on: null };
 export let inputs = 0;
+/** Notes a press made now on the event's first target as this listener sees it, or clears it. */
+const pressFor = (event: Event): void => {
+    const [target] = event.composedPath();
+    if (presses(event) && isElement(target)) {
+        press.at = performance.now();
+        press.on = target;
+    } else press.at = press.on = null;
+};
 const heard = (event: Event) => {
     if (event.type === 'load') {
         sweep((event.target as Partial<HTMLIFrameElement> | null)?.contentWindow);
         return;
     }
     if (event.type === 'keydown') {
-        // A keydown with no key, as autofill sends, is no input of the visitor's.
+        // A keydown with no key, as autofill sends, is no input of the visitor's, and a key that
+        // neither presses, types nor moves leaves the press as it is.
         const { key } = event as Partial<KeyboardEvent>;
         if (typeof key !== 'string') return;
-        if (presses(event)) press.at = performance.now();
-        else if (key.length === 1 || MOVES.includes(key)) press.at = null;
-        else return;
-    } else press.at = presses(event) ? performance.now() : null;
+        if (!presses(event) && key.length !== 1 && !MOVES.includes(key)) return;
+    }
+    pressFor(event);
+    counted.add(event);
+    inputs += 1;
+};
+
+/** The inputs already counted, so one heard on the page and again inside a root counts once. */
+const counted = new WeakSet<Event>();
+
+/**
+ * Hears an input inside a closed shadow root the kit hears, after the kit's listener on the
+ * document, which saw it only as made on the root's host. A press on a control in the root is taken
+ * as a press, with the control it was made on, and counted where the page did not count it, as for
+ * Enter, which is no input on the host, or a submit, which never leaves the root. Anything else was
+ * heard on the page already, and an input aimed at the host itself never reaches the root.
+ */
+const heardInRoot = (event: Event) => {
+    if (!presses(event)) return;
+    pressFor(event);
+    if (counted.has(event)) return;
+    counted.add(event);
     inputs += 1;
 };
 /**
@@ -102,8 +131,30 @@ const heard = (event: Event) => {
  * called off does not hand the press back.
  */
 const clear = () => {
-    press.at = null;
+    press.at = press.on = null;
     inputs += 1;
+};
+
+/**
+ * The hosts of the closed shadow roots the kit hears, each once. Unlike a document, which `open()`
+ * strips of its listeners, a shadow root keeps them as long as it lives, so a set of the roots
+ * heard stays true, and a root that is dropped goes with its host.
+ */
+const heardHosts = new WeakSet<Element>();
+
+/**
+ * Hears the presses and keys made inside each closed shadow root around a node the kit reads focus
+ * through, which the kit's listeners on the document hear only as made on the root's host. Only a
+ * root the kit has read focus through a node in is heard, as only such a root is read into, so a
+ * press inside a widget the kit has never read focus in still reaches the page as one on its host.
+ */
+export const hearClosed = (near: Node | null | undefined): void => {
+    for (const root of closedAround(near)) {
+        if (root.mode !== 'closed' || heardHosts.has(root.host)) continue;
+        heardHosts.add(root.host);
+        for (const type of ['keydown', 'click', 'submit'])
+            root.addEventListener(type, heardInRoot, true);
+    }
 };
 
 /** The document a window shows, where it is of the page's own origin, read in a try. */
@@ -159,6 +210,8 @@ export const liftedFor = (element: Element | null, near?: Node | null): Element 
  * inside a closed root reads focus there as it does in an open one.
  */
 export const deepActive = (near?: Node | null): Element | null => {
+    // A root a piece reads through is heard from here on, so the next press inside it counts.
+    hearClosed(near);
     const closed = new Map<Element, ShadowRoot>();
     for (const root of closedAround(near)) closed.set(root.host, root);
     let active = document.activeElement;

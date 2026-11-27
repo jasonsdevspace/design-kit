@@ -239,6 +239,48 @@ test('counts a group of radios with no set around it once, and a box alone in a 
         .toEqual(['I agree: Error: Check the box to go on. 2 fields need attention.']);
 });
 
+test("refuses each checkbox field in a page's own section as its own field, never the section", async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><fieldset><legend>House rules</legend>
+<div class="dk-field"><label class="dk-choice" for="double"><input type="checkbox" id="double" name="double" required checked> <span>Score the last round double</span></label></div>
+<div class="dk-field"><label class="dk-choice" for="skip"><input type="checkbox" id="skip" name="skip" required> <span>Let a player skip a round</span></label></div>
+</fieldset>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('#skip')).toBeFocused();
+    await expect(page.locator('.dk-field-error')).toHaveCount(1);
+    await expect(page.locator('#skip-error')).toHaveText('Error: Check the box to go on.');
+    await expect(page.locator('#skip')).toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('#double')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(page.locator('fieldset')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect
+        .poll(() => heard(page))
+        .toEqual(['Let a player skip a round: Error: Check the box to go on.']);
+});
+
+test("refuses a set a page writes with its choices' labels straight in its fieldset once, as a set", async ({
+    page,
+}) => {
+    await openWith(
+        page,
+        `<form><fieldset class="dk-field dk-choice-field" id="sides"><legend class="dk-field-label">Sides</legend>
+<label class="dk-choice"><input type="checkbox" id="fries" name="sides" value="fries" required> <span>Fries</span></label>
+<label class="dk-choice"><input type="checkbox" id="salad" name="sides" value="salad" required> <span>Salad</span></label>
+</fieldset>
+<button type="submit">Send</button></form>`
+    );
+    await send(page);
+    await expect(page.locator('.dk-field-error')).toHaveCount(1);
+    await expect(page.locator('#sides-error')).toHaveText('Error: Choose an option.');
+    await expect(page.locator('#fries-error')).toHaveCount(0);
+    await expect(page.locator('#salad-error')).toHaveCount(0);
+    await expect.poll(() => heard(page)).toEqual(['Sides: Error: Choose an option.']);
+});
+
 test("gives an error the page drew for a field the kit's words, and puts the page's back once it passes", async ({
     page,
 }) => {

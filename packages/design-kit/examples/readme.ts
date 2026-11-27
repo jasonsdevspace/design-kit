@@ -21,6 +21,7 @@ const LAID_OUT: ReadonlySet<ExampleName> = new Set([
     'readOnlyFields',
     'fieldAction',
     'choiceField',
+    'checkboxField',
     'callout',
     'tryAgain',
     'pills',
