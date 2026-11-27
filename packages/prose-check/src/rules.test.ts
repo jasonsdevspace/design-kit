@@ -7,6 +7,108 @@ const rules = (path: string, source: string): string[] =>
     proseProblems(path, source).map((problem) => problem.split('\n')[0] ?? '');
 
 describe('the prose check', () => {
+    const RULES: readonly (readonly [string, readonly string[], readonly string[]])[] = [
+        [
+            'trailing -ing clause',
+            [
+                'The cache sits in front of the API, ensuring reads stay fast.',
+                'Each step logs its time, highlighting the slow one.',
+            ],
+            [
+                'Ensuring a fresh read costs one query.',
+                'It mends the row only, leaving a stepper short.',
+            ],
+        ],
+        [
+            'inflated word',
+            [
+                'A seamless way to leverage the cache.',
+                'This plays a crucial part and is a testament to the design.',
+            ],
+            [
+                'Run the test harness on a highlighted row.',
+                'A dynamic import loads the robust parser.',
+            ],
+        ],
+        [
+            'empty opener',
+            [
+                'Additionally, the check reads workflows.',
+                "It's worth noting that the pin is exact.",
+            ],
+            ['The additional rows load on scroll.', 'Notable changes are listed in the changelog.'],
+        ],
+        [
+            'leftover placeholder',
+            ['Hi [Name], thanks for the review.', 'Released on 2026-XX-XX.'],
+            ['See the [link](https://example.com).', 'The table reads env[name] for each key.'],
+        ],
+        [
+            'en dash as a dash',
+            ['The build passes – the deploy waits.', 'It reads comments – not code.'],
+            ['Teams of 4–6 engineers.', 'Pages 10–12 hold the tables.'],
+        ],
+        [
+            'wordy phrase',
+            [
+                'The page reads twice in order to warm the cache.',
+                'In order to ship, the tag must match.',
+            ],
+            ['Rows come back in the order they went in.', 'A refusal is an order to stop.'],
+        ],
+        [
+            'canned closer',
+            ['I hope this helps.', 'Overall, the budget holds.'],
+            ['The overall width is 320 pixels.', 'A summary row closes the table.'],
+        ],
+        [
+            'intensifier',
+            ['An extremely small bundle.', 'Incredibly fast on a phone.'],
+            ['A truly empty list.', 'Deeply nested fields stop at six.'],
+        ],
+        ['emoji', ['Ships today \u{1F680}', 'Done ✅'], ['Tests pass ✓', '© 2026 and → next']],
+    ];
+
+    for (const [rule, caught, passed] of RULES) {
+        it(`names a line as ${rule}, and passes the lines that only look like one`, () => {
+            for (const line of caught)
+                expect(rules('a.md', `${line}\n`), line).toEqual([`a.md:1  ${rule}`]);
+            for (const line of passed) expect(rules('a.md', `${line}\n`), line).toEqual([]);
+        });
+    }
+
+    it("leaves a page's code samples alone, and still reads the words around them", () => {
+        const page = [
+            '<pre aria-label="The snippet a store adds"><code>import { a } from \'b\';',
+            '    a({ c: 1 });</code></pre>',
+            '<p>Then <code>run();</code> it; once.</p>',
+        ].join('\n');
+        expect(rules('index.html', page)).toEqual(['index.html:3  semicolon in prose']);
+        expect(rules('label.html', '<pre aria-label="One; two"><code>x</code></pre>\n')).toEqual([
+            'label.html:1  semicolon in prose',
+        ]);
+    });
+
+    it('reads the comments in a .jsx file', () => {
+        expect(rules('a.jsx', 'const a = 1;\n// One clause; then another.\n')).toEqual([
+            'a.jsx:2  semicolon in prose',
+        ]);
+    });
+
+    it('finds a semicolon after a digit, a closing bracket or a quote, and leaves the code alone', () => {
+        for (const line of [
+            'Fixed in version 12; see the notes.',
+            'It reads the list (once); then it stops.',
+            'Each key [as named]; then the value.',
+            "It says 'done'; then it closes.",
+        ])
+            expect(rules('a.md', `${line}\n`), line).toEqual(['a.md:1  semicolon in prose']);
+        expect(rules('a.ts', 'const a = f(1); const b = [2]; g("x");\n// Plain prose.\n')).toEqual(
+            []
+        );
+        expect(rules('a.md', 'Run `a(); b()` to see it.\n')).toEqual([]);
+    });
+
     it('reads comments in code and leaves the code alone', () => {
         expect(rules('a.ts', 'const a = 1;\n// One clause; then another.\n')).toEqual([
             'a.ts:2  semicolon in prose',

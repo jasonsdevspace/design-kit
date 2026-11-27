@@ -14,6 +14,15 @@
  * 4. No issue or pull request numbers in comments. The number means nothing
  *    once the tracker moves on, so the comment says what the issue said.
  * 5. American spelling, to agree with the identifiers beside it.
+ * 6. No en dash used as a dash, spaced between words. One between numbers
+ *    in a range is fine.
+ * 7. No writing that fills space rather than saying something: a clause
+ *    tacked on with -ing, a word that inflates, an opener that only
+ *    announces, a stock closing line, a wordy phrase or an intensifier.
+ * 8. No placeholder left in, and no emoji in place of words.
+ *
+ * Rhythm, structure and tone are left to people, since a check that reads
+ * one line at a time would get them wrong.
  *
  * A repository runs every rule over its files with the `check-prose` command, and anything else,
  * such as a pull request's body, is checked by calling `proseProblems` with a path that says what
@@ -34,6 +43,7 @@ export function isDockerfile(path) {
 const SCANNED = new Set([
     '.ts',
     '.tsx',
+    '.jsx',
     '.js',
     '.mjs',
     '.cjs',
@@ -71,6 +81,50 @@ const BRITISH_SPELLINGS = new RegExp(
     ].join('|'),
     'i'
 );
+
+/**
+ * A clause tacked on with -ing after a comma, which restates what the sentence showed. Only the
+ * verbs that rarely lead a real result are listed, so a clause that says what follows passes.
+ */
+const TRAILING_CLAUSE =
+    /, (ensuring|enabling|resulting in|highlighting|underscoring|showcasing|reflecting|contributing to|fostering)\b/i;
+
+/**
+ * Words and phrases that inflate rather than say. A word with a technical meaning in code or docs,
+ * such as one naming a color, a test tool or a browser feature, is left out.
+ */
+const INFLATED_WORDS =
+    /\b(?:utiliz(?:e|es|ed|ing|ation)|leverag(?:e|es|ed|ing)|spearhead(?:s|ed|ing)?|delv(?:e|es|ed|ing)|synerg(?:y|ies|istic)|seamless(?:ly)?|cutting-edge|groundbreaking|transformative|multifaceted|tapestry|vibrant|meticulous(?:ly)?|pivotal|bolster(?:s|ed|ing)?|garner(?:s|ed|ing)?|interplay|empower(?:s|ed|ing|ment)?|passionate|crucial(?:ly)?|thriv(?:e|es|ed|ing)|intricate|foster(?:s|ed|ing)?|resonates? with|testament to|sets? the stage for|at the intersection of|proven track record|deep dive|ever-evolving|at its core|the real question is|valuable insights|diverse array|meaningful impact|fast-paced)\b/i;
+
+/** An opener that only announces, at the start of a sentence or as a stock phrase. */
+const EMPTY_OPENERS =
+    /(?:^[\s>*+-]*|[.!?]\s+)(?:Additionally|Moreover|Furthermore|Notably)\b|\b(?:it['\u2019]s|it is) (?:worth noting|important to note)\b|\b(?:simply put|to be clear|here['\u2019]s the thing)\b/i;
+
+/**
+ * A placeholder left in: a bracketed slot that is not a link or an index into code, a date with
+ * its digits still to fill, or filler text.
+ */
+const PLACEHOLDERS =
+    /(?<![\w\]])\[(?:insert [^\]]*|your name|company name|name|link)\](?![([:])|\b\d{4}-XX-XX\b|\blorem ipsum\b/i;
+
+/** Built from its code point, as the em dash is. Spaced, it stands in for a dash. */
+const EN_DASH_AS_DASH = new RegExp(`\\s${String.fromCodePoint(0x2013)}\\s`);
+
+/** A phrase that says what a shorter one says. */
+const WORDY_PHRASES = /\bin order to\b/i;
+
+/** A stock line that says nothing, mostly met at the end of a body or a comment. */
+const CANNED_CLOSERS =
+    /\b(?:I hope this helps|let me know if you have any questions|happy to help|great question|in summary|in conclusion)\b|(?:^[\s>*+-]*|[.!?]\s+)Overall,/i;
+
+/** Intensifiers that never carry a meaning of their own in technical writing. */
+const INTENSIFIERS = /\b(?:extremely|incredibly)\b/i;
+
+/**
+ * A character drawn as a picture, or one asked to be drawn as one. Symbols such as a check mark,
+ * an arrow or the copyright sign are text, and pass.
+ */
+const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F/u;
 
 /**
  * The British spelling of gray as a word of its own, and its forms with an ending, in any case. A
@@ -155,7 +209,8 @@ const SHOWN_META =
 /**
  * A page's text and its comments, line by line. Scripts and styles are code,
  * so they are blanked, and a block left open runs to the end of the page, as
- * a browser reads it. A tag gives way to the words in the attributes a
+ * a browser reads it. A code sample's text is blanked too, as Markdown's
+ * inline code is, while the tag that holds it keeps its attributes. A tag gives way to the words in the attributes a
  * visitor reads, and otherwise to nothing, so a semicolon after a link still
  * sits beside the word before it. Line breaks are kept so line numbers match.
  *
@@ -166,6 +221,10 @@ const pageTextOf = (source) =>
     source
         .replace(/<(script|style)\b[\s\S]*?(?:<\/\1\s*>|$)/gi, (block) =>
             block.replace(/[^\n]/g, '')
+        )
+        .replace(
+            /(<code\b[^>]*>)([\s\S]*?)(<\/code\s*>|$)/gi,
+            (_, open, sample, close) => `${open}${sample.replace(/[^\n]/g, '')}${close}`
         )
         .replace(/<!--|--!?>/g, ' ')
         .replace(/<[^>]*>/g, (tag) => {
@@ -178,6 +237,24 @@ const pageTextOf = (source) =>
         .map((line, index) => ({ index, text: line.replace(/&[a-z]+;/gi, '') }));
 
 /**
+ * The rules that are one pattern each, by the name a problem is reported under, in the order
+ * they are reported.
+ *
+ * @type {readonly (readonly [RegExp, string])[]}
+ */
+const PATTERNS = [
+    [EN_DASH_AS_DASH, 'en dash as a dash'],
+    [TRAILING_CLAUSE, 'trailing -ing clause'],
+    [INFLATED_WORDS, 'inflated word'],
+    [EMPTY_OPENERS, 'empty opener'],
+    [CANNED_CLOSERS, 'canned closer'],
+    [WORDY_PHRASES, 'wordy phrase'],
+    [INTENSIFIERS, 'intensifier'],
+    [PLACEHOLDERS, 'leftover placeholder'],
+    [EMOJI, 'emoji'],
+];
+
+/**
  * The problems in one piece of prose, by rule.
  *
  * @param {string} text
@@ -188,8 +265,9 @@ export function problemsIn(text, { issues }) {
     return [
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
-        /[A-Za-z];/.test(text) && 'semicolon in prose',
+        /[A-Za-z0-9)\]'"`\u2019];/.test(text) && 'semicolon in prose',
         (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
+        ...PATTERNS.map(([pattern, rule]) => pattern.test(text) && rule),
     ].filter((rule) => typeof rule === 'string');
 }
 

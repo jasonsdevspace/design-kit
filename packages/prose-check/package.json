@@ -1,7 +1,7 @@
 {
     "name": "@jasonsdevspace/prose-check",
     "version": "0.1.0",
-    "description": "Fails a build on prose that should never reach a reader: em dashes, semicolons joining clauses, process artifacts, issue numbers in comments and British spellings, in comments, docs, page text and workflows.",
+    "description": "Fails a build on prose that should never reach a reader: em dashes, semicolons joining clauses, process artifacts, issue numbers, British spellings, filler such as inflated words and stock lines, placeholders and emoji, in comments, docs and page text.",
     "keywords": [
         "prose",
         "lint",

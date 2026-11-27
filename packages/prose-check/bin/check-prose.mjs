@@ -27,6 +27,4 @@ if (failures.length > 0) {
     console.error(failures.join('\n'));
     process.exit(1);
 }
-console.log(
-    'Prose check passed. No em dashes, prose semicolons, process artifacts, issue numbers or British spellings.'
-);
+console.log('Prose check passed. Every file it reads follows every rule.');
