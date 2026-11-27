@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0
 
 The prose check as a package of its own, which every repository installs in place of its own copy.
 

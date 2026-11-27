@@ -401,11 +401,35 @@ describe('the workflows', () => {
         expect(installs.filter((step) => !hasOwnTimeLimit(step))).toEqual([]);
     });
 
-    // The publishing job holds the token trusted publishing issues, so what it installs is what
-    // a release trusts most.
-    const publishing = stepsOf(workflows.get('.github/workflows/release.yml') ?? '');
+    // A workflow that can publish to npm, by the environment npm's trusted publisher is registered
+    // against. Its publishing job holds the token trusted publishing issues, so what it installs is
+    // what a release trusts most, and every such workflow is held to the same rules.
+    const releases = [...workflows].filter(([, text]) =>
+        /^\s+environment:\s*(?:npm|\n\s+name:\s*npm)\s*$/m.test(text)
+    );
+    const publishing = releases.flatMap(([, text]) => stepsOf(text));
+
+    it('name the kit and the prose check among the workflows that publish to npm', () => {
+        expect(releases.map(([path]) => path).sort()).toEqual([
+            '.github/workflows/release-prose-check.yml',
+            '.github/workflows/release.yml',
+        ]);
+    });
+
+    it('use no cache in any workflow that publishes to npm', () => {
+        expect(
+            releases
+                .filter(([, text]) => !/^cache-mode: none\s*$/m.test(text))
+                .map(([path]) => path)
+        ).toEqual([]);
+    });
 
     it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
+        for (const [path, text] of releases)
+            expect(
+                stepsOf(text).some(({ text: step }) => /\bnpm install -g\b/.test(step)),
+                path
+            ).toBe(true);
         const installs = publishing.filter(({ text }) => /\bnpm install -g\b/.test(text));
         expect(installs.length).toBeGreaterThan(0);
         for (const { text } of installs) {
@@ -667,7 +691,6 @@ describe('the workflows', () => {
     // starts.
     describe('the cache of installed dependencies', () => {
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
-        const release = workflows.get('.github/workflows/release.yml') ?? '';
         const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
         const jobs = jobsOf(ci);
         const WRITERS = ['dependencies', 'dependencies-mac'];
@@ -689,11 +712,14 @@ describe('the workflows', () => {
             expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
                 /^cache-mode: read\s*$/m
             );
-            expect(release).toMatch(/^cache-mode: none\s*$/m);
-            const checks = jobsOf(release).find(({ body }) =>
-                /^ {8}uses: \.\/\.github\/workflows\/ci\.yml\s*$/m.test(body)
-            );
-            expect(checks?.body ?? '').toMatch(/^ {8}cache-mode: read\s*$/m);
+            expect(releases.length).toBeGreaterThan(1);
+            for (const [path, text] of releases) {
+                expect(text, path).toMatch(/^cache-mode: none\s*$/m);
+                const checks = jobsOf(text).find(({ body }) =>
+                    /^ {8}uses: \.\/\.github\/workflows\/ci\.yml\s*$/m.test(body)
+                );
+                expect(checks?.body ?? '', path).toMatch(/^ {8}cache-mode: read\s*$/m);
+            }
         });
 
         it('writes it from the dependencies workflow alone, on a push to main, straight after the install', () => {
