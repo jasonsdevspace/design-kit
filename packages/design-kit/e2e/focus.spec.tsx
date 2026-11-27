@@ -1575,12 +1575,7 @@ test("focuses a view's heading as it arrives, brought by a press in a frame the 
 
 test("focuses a view's heading as it arrives, brought by a press in a frame of the page's origin inside one of another origin whose own load is still held", async ({
     page,
-    browserName,
 }) => {
-    test.fail(
-        browserName === 'firefox',
-        'Firefox does not hear a press in a frame of the page origin inside one of another origin while that outer frame loads.'
-    );
     await openWithFrames(page);
     // The frame of another origin holds a frame of the page's origin and a picture that never
     // comes, so its own load, where the kit hears the inner frame, is still to come as the press

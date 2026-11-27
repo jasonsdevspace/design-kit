@@ -246,10 +246,13 @@ in before focus enters it, focus already in a frame as the module loads and a fr
 the whole tree again at once whenever a heard window loses focus while the page keeps it, as focus
 moves into a frame, out of one or between two, by a click or a key, which comes ahead of the click
 that moved it in every engine measured, so a frame added later or one whose page is still loading is
-heard before that click, but for a frame of the page's origin inside one of another origin whose own
-load is still to come, which Firefox does not hear before the click. A frame inside an open shadow root is not in `window.frames`, and its load
-goes no further than that root, so on the same blur focus is read through the one reader in a
-microtask, or a task later where the microtask finds the body of the window that lost focus, as
+heard before that click. That holds too for a frame of the page's origin inside one of another
+origin whose own load is still to come, and the press made there stands, since the read on the same
+blur, below, goes through the frame of another origin to the inner frame that has focus, which it
+hears with each frame around it, rather than ending at the outer frame and clearing the press as
+focus in a frame nothing can hear. A frame inside an open shadow root is not in `window.frames`, and
+its load goes no further than that root, so on the same blur focus is read through the one reader in
+a microtask, or a task later where the microtask finds the body of the window that lost focus, as
 Firefox gives it during the blur by the order of the HTML standard's focus update steps, and the
 frame the read ends in is heard with each frame around it. A heard frame's window is read once more,
 a task after its `pagehide`, which found the next document in every engine measured, before its
@@ -478,7 +481,8 @@ The path is in `packages/design-kit`.
   down and up. It finds focus left in a frame inside a closed shadow root and in a frame of another
   origin the visitor clicked into after a press on the page, and in a frame whose form went on to a
   page of another origin with focus inside, and a view's heading taking focus for a press in a frame
-  the page added after its load whose page is still loading, in a frame's next page before its load,
+  the page added after its load whose page is still loading, in a frame of the page's origin inside
+  one of another origin whose own load is still to come, in a frame's next page before its load,
   with focus in the frame so no blur hears it, and in an object that loaded before the controls,
   clicked by the page's script. Each failed without these listeners or against a break of the part
   that holds it. It finds no page error as a frame is taken from the page while its next page is
