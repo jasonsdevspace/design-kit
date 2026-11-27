@@ -2336,13 +2336,14 @@ it does in a heard frame where they typed, and a press inside such a frame bring
 view it opens. The visitor stays where they were, and the view is there when they read on. A
 `moveFocus` the page calls for a press inside such a frame still moves focus, since the page cannot
 see the visitor move inside it. A frame of the page's origin inside one of another origin is heard
-as the controls load and as the outer frame loads, so a press there counts, and one the outer frame
-adds later is heard once focus first comes in from the page, which clears the press on the way. A
-page script's `click()` in a frame the page adds later, before the frame's page loads and with focus
-never in the frame, is not heard. Focus entering a frame inside a closed shadow root from a heard
-frame, or from the page where a frame of the page's origin holds that root, leaves a press on the
-page standing. In Firefox, a page script that moves focus to the page just after focus enters a
-frame clears the press.
+as the controls load, as the outer frame loads and as focus comes into it from the page, so a press
+there counts, before the outer frame's load too. One the outer frame adds after its load, reached
+from inside the outer frame, stays unheard until focus next comes in from the page, and the press
+was cleared as focus entered the outer frame. A page script's `click()` in a frame the page adds
+later, before the frame's page loads and with focus never in the frame, is not heard. Focus entering
+a frame inside a closed shadow root from a heard frame, or from the page where a frame of the page's
+origin holds that root, leaves a press on the page standing. In Firefox, a page script that moves
+focus to the page just after focus enters a frame clears the press.
 
 A mousedown on the scrollbar of a frame of another origin leaves the press standing in Chromium and
 WebKit, as a scroll on the page does. Firefox, where scrollbars are drawn over the content, may take
@@ -2415,10 +2416,7 @@ stepper, `moveFocus`, a press there, and a form's refusal, a grid of cells, a ta
 a theme switch and the React hooks drawn there work as they do on the page. The inner frame that has
 focus is told by its document's own word, which every document gives as false while the browser's
 window itself has no focus, as when another app is in front, so then focus there reads as the frame
-of another origin until the window has focus again. The inner frame that has focus is told by its
-document's own word, which every document gives as false while the browser's window itself has no
-focus, as when another app is in front, so then focus there reads as the frame of another origin
-until the window has focus again.
+of another origin until the window has focus again.
 
 ### A part of the page that is loading
 

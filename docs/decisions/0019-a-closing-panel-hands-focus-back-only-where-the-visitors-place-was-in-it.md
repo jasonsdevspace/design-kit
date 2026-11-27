@@ -246,34 +246,35 @@ in before focus enters it, focus already in a frame as the module loads and a fr
 the whole tree again at once whenever a heard window loses focus while the page keeps it, as focus
 moves into a frame, out of one or between two, by a click or a key, which comes ahead of the click
 that moved it in every engine measured, so a frame added later or one whose page is still loading is
-heard before that click. That holds for a frame of the page's origin inside one of another origin
-whose own load is still to come too, since the read on the same blur, below, goes through the frame
-of another origin to the inner frame that has focus and hears it, rather than ending at the outer
-frame and dropping the press as focus in a frame nothing can hear. A frame inside an open shadow
-root is not in `window.frames`, and its load goes no further than that root, so on the same blur
-focus is read through the one reader in a microtask, or a task later where the microtask finds the
-body of the window that lost focus, as Firefox gives it during the blur by the order of the HTML
-standard's focus update steps, and the frame the read ends in is heard with each frame around it. A
-heard frame's window is read once more, a task after its `pagehide`, which found the next document
-in every engine measured, before its load, and that document is heard then, since no event hands the
-page a frame's next document. A read that still finds the old document leaves the next page to its
-load, as every frame was heard before, a frame taken from the page is passed over, a page brought
-back from the back and forward cache shows the document it had, heard already, and each read is made
-in a try. Focus is read only as it enters a frame and where a frame's next page shows no document,
-through the one reader, which sits in the shared module beside the presses so the module that hears
-them reads focus without the rest of the focus module, and the focus module gives it again. The
-listeners are the module's one set, the same functions on each document and window, which the DOM
-keeps once however often one is reached, rather than a set of documents already heard, since
-`open()` takes every listener off a document that stays the same object, which such a set would
-never hear again. They go with a document its frame leaves or replaces, tell an event by its type
-and its target by its node type, and pass over a keydown with no key, as autofill sends. Neither the
-dialog nor the panels read them. Listeners for inputs on a frame's window, which outlives the first
-blank page a frame shows, were tried for a frame's page before its load and are not used, since they
-reach only a frame the module found while it was blank, and only its first page, while the walk on
-blur and the read after `pagehide` reach a frame found later, each next page and a frame inside an
-open shadow root. The module hears every such frame rather than a frame a piece is attached or a
-request is asked in, which would miss the first press there, and a separate entry a page calls to
-hear frames was turned down for the same reason.
+heard before that click. That holds too for a frame of the page's origin inside one of another
+origin whose own load is still to come, and the press made there stands, since the read on the same
+blur, below, goes through the frame of another origin to the inner frame that has focus, which it
+hears with each frame around it, rather than ending at the outer frame and clearing the press as
+focus in a frame nothing can hear. A frame inside an open shadow root is not in `window.frames`, and
+its load goes no further than that root, so on the same blur focus is read through the one reader in
+a microtask, or a task later where the microtask finds the body of the window that lost focus, as
+Firefox gives it during the blur by the order of the HTML standard's focus update steps, and the
+frame the read ends in is heard with each frame around it. A heard frame's window is read once more,
+a task after its `pagehide`, which found the next document in every engine measured, before its
+load, and that document is heard then, since no event hands the page a frame's next document. A read
+that still finds the old document leaves the next page to its load, as every frame was heard before,
+a frame taken from the page is passed over, a page brought back from the back and forward cache
+shows the document it had, heard already, and each read is made in a try. Focus is read only as it
+enters a frame and where a frame's next page shows no document, through the one reader, which sits
+in the shared module beside the presses so the module that hears them reads focus without the rest
+of the focus module, and the focus module gives it again. The listeners are the module's one set,
+the same functions on each document and window, which the DOM keeps once however often one is
+reached, rather than a set of documents already heard, since `open()` takes every listener off a
+document that stays the same object, which such a set would never hear again. They go with a
+document its frame leaves or replaces, tell an event by its type and its target by its node type,
+and pass over a keydown with no key, as autofill sends. Neither the dialog nor the panels read them.
+Listeners for inputs on a frame's window, which outlives the first blank page a frame shows, were
+tried for a frame's page before its load and are not used, since they reach only a frame the module
+found while it was blank, and only its first page, while the walk on blur and the read after
+`pagehide` reach a frame found later, each next page and a frame inside an open shadow root. The
+module hears every such frame rather than a frame a piece is attached or a request is asked in,
+which would miss the first press there, and a separate entry a page calls to hear frames was turned
+down for the same reason.
 
 A press is meant to stand only while the page can hear what follows it. Where a heard window loses
 focus while the page keeps it, and the read ends on a frame that shows no document, one of another
@@ -480,7 +481,8 @@ The path is in `packages/design-kit`.
   down and up. It finds focus left in a frame inside a closed shadow root and in a frame of another
   origin the visitor clicked into after a press on the page, and in a frame whose form went on to a
   page of another origin with focus inside, and a view's heading taking focus for a press in a frame
-  the page added after its load whose page is still loading, in a frame's next page before its load,
+  the page added after its load whose page is still loading, in a frame of the page's origin inside
+  one of another origin whose own load is still to come, in a frame's next page before its load,
   with focus in the frame so no blur hears it, and in an object that loaded before the controls,
   clicked by the page's script. Each failed without these listeners or against a break of the part
   that holds it. It finds no page error as a frame is taken from the page while its next page is
