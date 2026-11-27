@@ -19,9 +19,9 @@ const tokens = readFileSync(
 );
 const icon = readFileSync(new URL('../public/favicon.svg', import.meta.url), 'utf8');
 const css = readFileSync(new URL('site.css', import.meta.url), 'utf8');
-const marks = ['light', 'dark'].map((theme) =>
-    readFileSync(new URL(`../../../.github/readme/mark-${theme}.svg`, import.meta.url), 'utf8')
-);
+/** The README's mark for a theme, by the file's name. */
+const mark = (theme: string) =>
+    readFileSync(new URL(`../../../.github/readme/mark-${theme}.svg`, import.meta.url), 'utf8');
 
 /** A color written in hex, in lower case and with six digits, so one color is written one way. */
 const hex = (color: string | undefined) => {
@@ -104,16 +104,17 @@ describe("the site's icon", () => {
         );
     });
 
-    it("gives the README the same drawing in a file for each theme, in that theme's colors", () => {
-        const [accent, onAccent] = [pair('--dk-accent'), pair('--dk-on-accent')];
-        marks.forEach((mark, theme) => {
-            expect(tilesOf(mark)).toEqual(drawn);
-            expect(groundOf(mark)).toMatchObject({ width: 32, height: 32, rx: GROUND_RADIUS });
-            expect(mark).not.toMatch(/prefers-color-scheme/);
-            expect([fill(mark, 'ground'), fill(mark, 'tile')]).toEqual([
-                accent[theme],
-                onAccent[theme],
-            ]);
-        });
+    it.each([
+        ['light', 0],
+        ['dark', 1],
+    ])("gives the README the same drawing in mark-%s.svg, in that theme's colors", (theme, at) => {
+        const drawing = mark(theme);
+        expect(tilesOf(drawing)).toEqual(drawn);
+        expect(groundOf(drawing)).toMatchObject({ width: 32, height: 32, rx: GROUND_RADIUS });
+        expect(drawing).not.toMatch(/prefers-color-scheme/);
+        expect([fill(drawing, 'ground'), fill(drawing, 'tile')]).toEqual([
+            pair('--dk-accent')[at],
+            pair('--dk-on-accent')[at],
+        ]);
     });
 });

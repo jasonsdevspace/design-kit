@@ -7,10 +7,11 @@
 
 **A design system for a web page or a small app, with React or without it.**
 
-It draws every demo on [jasonsdevspace.com](https://jasonsdevspace.com), and ShelfLens is built on
-it. You get colors and type, a light and dark theme that follows the visitor's choice, and
+It draws the portfolio at [jasonsdevspace.com](https://jasonsdevspace.com), and ShelfLens is built
+on it. You get colors and type, a light and dark theme that follows the visitor's choice, and
 ready-made pieces such as buttons, form fields, callouts, dialogs, a tab bar and page layouts. Each
-piece works by keyboard and screen reader. It ships on npm as `@jasonsdevspace/design-kit`.
+piece is built to work by keyboard and screen reader. It ships on npm as
+`@jasonsdevspace/design-kit`.
 
 **[See every piece live](https://jasonsdevspace.com/design-kit/)** ·
 [Install it from npm](https://www.npmjs.com/package/@jasonsdevspace/design-kit) ·
@@ -24,8 +25,9 @@ My demos each carried their own copy of the same things. ShelfLens and inventory
 shipped the same script to set the visitor's theme, line for line, and each named its colors its own
 way. A change to how a theme is chosen had to be made in every repository, and every new demo would
 have copied it again. I wanted one package a demo could load beside its own styles, with neither
-side overruling the other. A style that quietly loses to another one shows no error, so each promise
-is held by a test. ShelfLens now draws from the published package, pinned to one version.
+side overruling the other. ShelfLens now draws from the published package, pinned to one version.
+These are what it promises, and since a style that quietly loses to another one shows no error, each
+is held by a test.
 
 - **A page's own styles win.** The kit never fights the page it sits in, so a demo can load it
   beside the styles it already has. The one thing it holds over a page is the reduced-motion rule,
@@ -50,8 +52,8 @@ saves the same choice the portfolio does, so it holds across jasonsdevspace.com.
   hero, groups of sections, stacks and split rows a page is laid out with.
 - **[Page chrome](https://jasonsdevspace.com/design-kit/page-chrome/)** shows the skip link, strip
   and footer around a demo.
-- **[Explainer pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/)** holds the layout of
-  the page that says how a demo works.
+- **[Explainer pieces](https://jasonsdevspace.com/design-kit/explainer-pieces/)** holds the layout
+  of the page that says how a demo works.
 - **[How it works](https://jasonsdevspace.com/design-kit/how-it-works/)** is that page written for
   the kit itself.
 - **[The pieces together](https://jasonsdevspace.com/design-kit/together/)** stacks the newer pieces
@@ -118,159 +120,160 @@ floor, and what no test here covers, is under
 ## The gotchas, and the test behind each
 
 Each promise the kit makes is held by a test. These are the ones a page leans on most, and the rest
-follow by area. A test's path is under `packages/design-kit/` unless it starts with `packages/site/`.
+follow by area. Each test links to its file, and a path that does not start with `packages/site/` is
+under `packages/design-kit/`.
 
-| Gotcha                                                                                                    | Where it is tested                  |
-| --------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| A page's own rule outside a layer wins, however little it weighs, and a kit piece marked `hidden` is gone | `e2e/sheets.spec.ts`                |
-| Every measured pairing passes its WCAG ratio in both themes                                               | `src/tokens.test.ts`                |
-| The theme is set before the body is parsed                                                                | `e2e/theme.spec.ts`                 |
-| A button and a field stand level, at the field height wide and the target on a phone                      | `e2e/controls.spec.tsx`             |
-| A build that takes the kit's floor keeps each `light-dark()` as written, with either CSS transformer      | `src/vite.test.ts`                  |
-| Every page of the site meets the Lighthouse gates ShelfLens is held to                                    | `packages/site/bench/lighthouse.ts` |
+| Gotcha                                                                                                    | Where it is tested                                                   |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| A page's own rule outside a layer wins, however little it weighs, and a kit piece marked `hidden` is gone | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)       |
+| Every measured pairing passes its WCAG ratio in both themes                                               | [`src/tokens.test.ts`](packages/design-kit/src/tokens.test.ts)       |
+| The theme is set before the body is parsed                                                                | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)         |
+| A button and a field stand level, at the field height wide and the target on a phone                      | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| A build that takes the kit's floor keeps each `light-dark()` as written, with either CSS transformer      | [`src/vite.test.ts`](packages/design-kit/src/vite.test.ts)           |
+| Every page of the site meets the Lighthouse gates ShelfLens is held to                                    | `packages/site/bench/lighthouse.ts`                                  |
 
 <details>
 <summary>Cascade layers, weight and contrast</summary>
 
-| Gotcha                                                                                                    | Where it is tested            |
-| --------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| A page's layers placed before the kit's lose to it unless they name `dk` first                            | `e2e/sheets.spec.ts`          |
-| Each rule is in its own dk layer, and only a class, a focus rule or an allowed pseudo-element adds weight | `src/scope.test.ts`           |
-| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                     | `src/scope.test.ts`           |
-| A page's `::before` and `::after` take the border box                                                     | `e2e/sheets.spec.ts`          |
-| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                          | `e2e/sheets.spec.ts`          |
-| Reduced motion cuts a page's important transition, unlayered or layered after the kit                     | `e2e/sheets.spec.ts`          |
-| A palette set on a container restyles only what is inside it                                              | `e2e/sheets.spec.ts`          |
-| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                    | `e2e/sheets.spec.ts`          |
-| A label hidden from the eye is still read by a screen reader                                              | `e2e/sheets.spec.ts`          |
-| A link in running text is underlined in both themes and forced colors, and a linked piece is not          | `e2e/links.spec.ts`           |
-| Text, the accent and a control's edge pass on the highlight and each callout's ground                     | `src/tokens.test.ts`          |
-| Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | `src/tokens.resolver.test.ts` |
-| A rule on the root reads its lengths in em, since Safari draws a root's own rem from 16px at any size     | `src/scope.test.ts`           |
+| Gotcha                                                                                                    | Where it is tested                                                               |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| A page's layers placed before the kit's lose to it unless they name `dk` first                            | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| Each rule is in its own dk layer, and only a class, a focus rule or an allowed pseudo-element adds weight | [`src/scope.test.ts`](packages/design-kit/src/scope.test.ts)                     |
+| Every rule past the page chrome sits in a `:where()`, the explainer's layout included                     | [`src/scope.test.ts`](packages/design-kit/src/scope.test.ts)                     |
+| A page's `::before` and `::after` take the border box                                                     | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| Reduced motion reaches `::before`, `::after`, `::backdrop` and a view transition                          | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| Reduced motion cuts a page's important transition, unlayered or layered after the kit                     | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| A palette set on a container restyles only what is inside it                                              | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| The focus ring is drawn in the accent, and not on a section a skip link moves focus to                    | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| A label hidden from the eye is still read by a screen reader                                              | [`e2e/sheets.spec.ts`](packages/design-kit/e2e/sheets.spec.ts)                   |
+| A link in running text is underlined in both themes and forced colors, and a linked piece is not          | [`e2e/links.spec.ts`](packages/design-kit/e2e/links.spec.ts)                     |
+| Text, the accent and a control's edge pass on the highlight and each callout's ground                     | [`src/tokens.test.ts`](packages/design-kit/src/tokens.test.ts)                   |
+| Each root token is in the design tokens file in both themes, or named with why the format cannot hold it  | [`src/tokens.resolver.test.ts`](packages/design-kit/src/tokens.resolver.test.ts) |
+| A rule on the root reads its lengths in em, since Safari draws a root's own rem from 16px at any size     | [`src/scope.test.ts`](packages/design-kit/src/scope.test.ts)                     |
 
 </details>
 
 <details>
 <summary>The theme script and the Vite plugin</summary>
 
-| Gotcha                                                                                       | Where it is tested    |
-| -------------------------------------------------------------------------------------------- | --------------------- |
-| Nothing saved, `system`, an unknown value and refused storage follow the system              | `e2e/theme.spec.ts`   |
-| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | `e2e/theme.spec.ts`   |
-| The theme follows the system as it changes, while nothing is saved                           | `e2e/theme.spec.ts`   |
-| A choice saved in another tab, or storage cleared there, reaches the page                    | `e2e/theme.spec.ts`   |
-| A page restored by Back draws the theme saved while it was away                              | `e2e/theme.spec.ts`   |
-| A page in the dark theme prints the light values                                             | `e2e/chrome.spec.tsx` |
-| The key and themes are the portfolio's, and the tokens have a rule for each                  | `src/theme.test.ts`   |
-| The script holds nothing that would end its element, and compiles                            | `src/theme.test.ts`   |
-| A page with no placeholder, or with two, fails the build                                     | `src/vite.test.ts`    |
-| The hash is of the script exactly as the plugin writes it                                    | `src/vite.test.ts`    |
-| The floor both READMEs and the accessibility statement give is the one the kit gives a build | `src/vite.test.ts`    |
+| Gotcha                                                                                       | Where it is tested                                               |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Nothing saved, `system`, an unknown value and refused storage follow the system              | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)     |
+| A browser that cannot report its scheme draws light or the saved theme, and hears other tabs | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)     |
+| The theme follows the system as it changes, while nothing is saved                           | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)     |
+| A choice saved in another tab, or storage cleared there, reaches the page                    | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)     |
+| A page restored by Back draws the theme saved while it was away                              | [`e2e/theme.spec.ts`](packages/design-kit/e2e/theme.spec.ts)     |
+| A page in the dark theme prints the light values                                             | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The key and themes are the portfolio's, and the tokens have a rule for each                  | [`src/theme.test.ts`](packages/design-kit/src/theme.test.ts)     |
+| The script holds nothing that would end its element, and compiles                            | [`src/theme.test.ts`](packages/design-kit/src/theme.test.ts)     |
+| A page with no placeholder, or with two, fails the build                                     | [`src/vite.test.ts`](packages/design-kit/src/vite.test.ts)       |
+| The hash is of the script exactly as the plugin writes it                                    | [`src/vite.test.ts`](packages/design-kit/src/vite.test.ts)       |
+| The floor both READMEs and the accessibility statement give is the one the kit gives a build | [`src/vite.test.ts`](packages/design-kit/src/vite.test.ts)       |
 
 </details>
 
 <details>
 <summary>The React components</summary>
 
-| Gotcha                                                                                        | Where it is tested   |
-| --------------------------------------------------------------------------------------------- | -------------------- |
-| The chrome draws the markup a page without React writes, and opens no link in a new tab       | `src/react.test.tsx` |
-| A button never submits unless a page says so, and an off one runs no click handler            | `src/react.test.tsx` |
-| A toggle has `aria-pressed` whether on or off, and an action has none                         | `src/react.test.tsx` |
-| A button hands its ref on to the `<button>` it draws                                          | `src/react.test.tsx` |
-| Focus moved through a button's ref lands on the kit's button                                  | `e2e/ref.spec.ts`    |
-| A field's ref is typed as the `<input>` or `<select>` it draws, and one of another is refused | `src/react.test.tsx` |
-| Focus moved through a field's ref, after the field is drawn again, lands on its control       | `e2e/ref.spec.ts`    |
-| A field lists only what it draws in `aria-describedby`, and is invalid only with an error     | `src/react.test.tsx` |
-| A callout has a role only when the page asks, and its actions sit outside the message         | `src/react.test.tsx` |
-| A live callout is drawn empty, and success, warning and danger say their tone in words        | `src/react.test.tsx` |
+| Gotcha                                                                                        | Where it is tested                                             |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| The chrome draws the markup a page without React writes, and opens no link in a new tab       | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| A button never submits unless a page says so, and an off one runs no click handler            | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| A toggle has `aria-pressed` whether on or off, and an action has none                         | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| A button hands its ref on to the `<button>` it draws                                          | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| Focus moved through a button's ref lands on the kit's button                                  | [`e2e/ref.spec.ts`](packages/design-kit/e2e/ref.spec.ts)       |
+| A field's ref is typed as the `<input>` or `<select>` it draws, and one of another is refused | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| Focus moved through a field's ref, after the field is drawn again, lands on its control       | [`e2e/ref.spec.ts`](packages/design-kit/e2e/ref.spec.ts)       |
+| A field lists only what it draws in `aria-describedby`, and is invalid only with an error     | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| A callout has a role only when the page asks, and its actions sit outside the message         | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
+| A live callout is drawn empty, and success, warning and danger say their tone in words        | [`src/react.test.tsx`](packages/design-kit/src/react.test.tsx) |
 
 </details>
 
 <details>
 <summary>The page chrome in the browser</summary>
 
-| Gotcha                                                                                             | Where it is tested    |
-| -------------------------------------------------------------------------------------------------- | --------------------- |
-| The strip is one row over its rule on a wide screen, and rows of links on a phone                  | `e2e/chrome.spec.tsx` |
-| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone        | `e2e/chrome.spec.tsx` |
-| The strip keeps the room of switches on their way, at the height they give it at every width       | `e2e/chrome.spec.tsx` |
-| The skip link is out of sight until the keyboard reaches it, and lands on the content              | `e2e/chrome.spec.tsx` |
-| A skip link inside a positioned box stays out of sight and out of the way of a click until focused | `e2e/chrome.spec.tsx` |
-| The focused skip link is a box in forced colors, by an edge in the link's color                    | `e2e/chrome.spec.tsx` |
-| The footer's rule spans the page, and its text and the strip's links line up in the column         | `e2e/chrome.spec.tsx` |
-| The chrome's link to the current page stands apart by its weight, in each theme and forced colors  | `e2e/chrome.spec.tsx` |
-| The chrome has no axe findings in either theme, at both widths, on a demo and its explainer        | `e2e/chrome.spec.tsx` |
-| The chrome draws with no inline style, under a policy that allows styles only from its origin      | `e2e/chrome.spec.tsx` |
+| Gotcha                                                                                             | Where it is tested                                               |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| The strip is one row over its rule on a wide screen, and rows of links on a phone                  | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| A demo's switches sit beside the links on a wide screen, and on a row below them on a phone        | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The strip keeps the room of switches on their way, at the height they give it at every width       | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The skip link is out of sight until the keyboard reaches it, and lands on the content              | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| A skip link inside a positioned box stays out of sight and out of the way of a click until focused | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The focused skip link is a box in forced colors, by an edge in the link's color                    | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The footer's rule spans the page, and its text and the strip's links line up in the column         | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The chrome's link to the current page stands apart by its weight, in each theme and forced colors  | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The chrome has no axe findings in either theme, at both widths, on a demo and its explainer        | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
+| The chrome draws with no inline style, under a policy that allows styles only from its origin      | [`e2e/chrome.spec.tsx`](packages/design-kit/e2e/chrome.spec.tsx) |
 
 </details>
 
 <details>
 <summary>Buttons, fields and callouts in the browser</summary>
 
-| Gotcha                                                                                                | Where it is tested      |
-| ----------------------------------------------------------------------------------------------------- | ----------------------- |
-| Field text is 16px or more on a phone, and every control fits 320px wide                              | `e2e/controls.spec.tsx` |
-| An off button stays in the tab order, and is drawn as a disabled one is                               | `e2e/controls.spec.tsx` |
-| A pressed toggle has a thicker edge as well as a ground, and keeps its name                           | `e2e/controls.spec.tsx` |
-| A field is named by its label, and described by its hint and then its error                           | `e2e/controls.spec.tsx` |
-| The focus ring follows the keyboard, on the accent button and inside every callout                    | `e2e/controls.spec.tsx` |
-| Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | `e2e/controls.spec.tsx` |
-| An empty live callout draws nothing, and takes the callout's look once it is filled                   | `e2e/controls.spec.tsx` |
-| Fields side by side share a line where they fit and stack where they do not, every label whole        | `e2e/fields.spec.tsx`   |
-| The controls have no axe findings in any state, in either theme, wide and on a phone                  | `e2e/controls.spec.tsx` |
+| Gotcha                                                                                                | Where it is tested                                                   |
+| ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Field text is 16px or more on a phone, and every control fits 320px wide                              | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| An off button stays in the tab order, and is drawn as a disabled one is                               | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| A pressed toggle has a thicker edge as well as a ground, and keeps its name                           | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| A field is named by its label, and described by its hint and then its error                           | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| The focus ring follows the keyboard, on the accent button and inside every callout                    | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| Pressed and off stay apart in forced colors, a callout keeps its edge, and the select's arrow returns | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| An empty live callout draws nothing, and takes the callout's look once it is filled                   | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
+| Fields side by side share a line where they fit and stack where they do not, every label whole        | [`e2e/fields.spec.tsx`](packages/design-kit/e2e/fields.spec.tsx)     |
+| The controls have no axe findings in any state, in either theme, wide and on a phone                  | [`e2e/controls.spec.tsx`](packages/design-kit/e2e/controls.spec.tsx) |
 
 </details>
 
 <details>
 <summary>The controls and hooks in the browser</summary>
 
-| Gotcha                                                                                                      | Where it is tested         |
-| ----------------------------------------------------------------------------------------------------------- | -------------------------- |
-| A form that fails its constraints is refused before the page's handler, with the kit's errors and no bubble | `e2e/checked.spec.tsx`     |
-| Words a visitor must hear are not lost on a shared status line                                              | `e2e/shared-line.spec.tsx` |
-| A view's heading takes focus only for a recent press, never for Tab or typing                               | `e2e/focus.spec.tsx`       |
-| A grid and a tab row are one Tab stop moved by the arrows                                                   | `e2e/roving.spec.tsx`      |
-| A busy button saves once however often it is pressed                                                        | `e2e/busy.spec.tsx`        |
-| Each hook attaches a swapped element and sets nothing again on a redraw                                     | `e2e/hooks.spec.tsx`       |
-| A piece taken down leaves no listener, observer, timer or animation frame running                           | `e2e/leaks.spec.tsx`       |
+| Gotcha                                                                                                      | Where it is tested                                                         |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| A form that fails its constraints is refused before the page's handler, with the kit's errors and no bubble | [`e2e/checked.spec.tsx`](packages/design-kit/e2e/checked.spec.tsx)         |
+| Words a visitor must hear are not lost on a shared status line                                              | [`e2e/shared-line.spec.tsx`](packages/design-kit/e2e/shared-line.spec.tsx) |
+| A view's heading takes focus only for a recent press, never for Tab or typing                               | [`e2e/focus.spec.tsx`](packages/design-kit/e2e/focus.spec.tsx)             |
+| A grid and a tab row are one Tab stop moved by the arrows                                                   | [`e2e/roving.spec.tsx`](packages/design-kit/e2e/roving.spec.tsx)           |
+| A busy button saves once however often it is pressed                                                        | [`e2e/busy.spec.tsx`](packages/design-kit/e2e/busy.spec.tsx)               |
+| Each hook attaches a swapped element and sets nothing again on a redraw                                     | [`e2e/hooks.spec.tsx`](packages/design-kit/e2e/hooks.spec.tsx)             |
+| A piece taken down leaves no listener, observer, timer or animation frame running                           | [`e2e/leaks.spec.tsx`](packages/design-kit/e2e/leaks.spec.tsx)             |
 
 </details>
 
 <details>
 <summary>Explainer pages</summary>
 
-| Gotcha                                                                                        | Where it is tested       |
-| --------------------------------------------------------------------------------------------- | ------------------------ |
-| An explainer marks its link to how it works as the current page in the strip and the footer   | `e2e/explainer.spec.tsx` |
-| An explainer's text starts where the strip's links do, and holds to the measure               | `e2e/explainer.spec.tsx` |
-| A line of the lead and of body text runs to 80 characters or fewer on a wide screen           | `e2e/explainer.spec.tsx` |
-| A section opens with its rule, its number, its heading and then its text                      | `e2e/explainer.spec.tsx` |
-| The page never scrolls sideways at any width or text size, and only the frames do             | `e2e/explainer.spec.tsx` |
-| Nothing clips text spaced out as far as WCAG asks, on a phone                                 | `e2e/explainer.spec.tsx` |
-| Each frame is named by its title, and the keyboard reaches and scrolls it                     | `e2e/explainer.spec.tsx` |
-| A table reads by its column and row headers, with its figures set to the right                | `e2e/explainer.spec.tsx` |
-| Code keeps its lines whole, and inline code is a step under the text and breaks where it must | `e2e/explainer.spec.tsx` |
-| The skip link lands on the content, and an in-page link keeps its section's number in sight   | `e2e/explainer.spec.tsx` |
-| No section is a landmark, each frame is, and the steps stay a list                            | `e2e/explainer.spec.tsx` |
-| A panel sits on the card ground, with an edge that stays in forced colors                     | `e2e/explainer.spec.tsx` |
-| An explainer page has no axe findings in either theme, wide and on a phone                    | `e2e/explainer.spec.tsx` |
+| Gotcha                                                                                        | Where it is tested                                                     |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| An explainer marks its link to how it works as the current page in the strip and the footer   | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| An explainer's text starts where the strip's links do, and holds to the measure               | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| A line of the lead and of body text runs to 80 characters or fewer on a wide screen           | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| A section opens with its rule, its number, its heading and then its text                      | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| The page never scrolls sideways at any width or text size, and only the frames do             | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| Nothing clips text spaced out as far as WCAG asks, on a phone                                 | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| Each frame is named by its title, and the keyboard reaches and scrolls it                     | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| A table reads by its column and row headers, with its figures set to the right                | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| Code keeps its lines whole, and inline code is a step under the text and breaks where it must | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| The skip link lands on the content, and an in-page link keeps its section's number in sight   | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| No section is a landmark, each frame is, and the steps stay a list                            | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| A panel sits on the card ground, with an edge that stays in forced colors                     | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
+| An explainer page has no axe findings in either theme, wide and on a phone                    | [`e2e/explainer.spec.tsx`](packages/design-kit/e2e/explainer.spec.tsx) |
 
 </details>
 
 <details>
 <summary>The packed package and the markup the docs print</summary>
 
-| Gotcha                                                                                                                                                       | Where it is tested               |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- |
-| Each sheet resolves and each module loads from the packed package, on the oldest Node                                                                        | `smoke/consumer.mjs`             |
-| The strip draws its markup from the packed package, with the React a page has                                                                                | `smoke/consumer.mjs`             |
-| A field makes its ids with `useId` in a server render of the packed package                                                                                  | `smoke/consumer.mjs`             |
-| Each block of a piece's markup in the reference is what its example draws                                                                                    | `examples/readme.test.ts`        |
-| Each state the site shows draws the attribute printed under it                                                                                               | `examples/states.test.tsx`       |
-| Each state's React draws the state's own markup, laid out as the repository lays out code                                                                    | `examples/states.test.tsx`       |
-| Each state's React draws what the version the site pins draws for the state                                                                                  | `packages/site/src/code.test.ts` |
-| The package exports what the smoke test loads and nothing else, has a changelog entry for its version, and packs its build, its README and its license alone | `smoke/package.test.ts`          |
+| Gotcha                                                                                                                                                       | Where it is tested                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Each sheet resolves and each module loads from the packed package, on the oldest Node                                                                        | [`smoke/consumer.mjs`](packages/design-kit/smoke/consumer.mjs)             |
+| The strip draws its markup from the packed package, with the React a page has                                                                                | [`smoke/consumer.mjs`](packages/design-kit/smoke/consumer.mjs)             |
+| A field makes its ids with `useId` in a server render of the packed package                                                                                  | [`smoke/consumer.mjs`](packages/design-kit/smoke/consumer.mjs)             |
+| Each block of a piece's markup in the reference is what its example draws                                                                                    | [`examples/readme.test.ts`](packages/design-kit/examples/readme.test.ts)   |
+| Each state the site shows draws the attribute printed under it                                                                                               | [`examples/states.test.tsx`](packages/design-kit/examples/states.test.tsx) |
+| Each state's React draws the state's own markup, laid out as the repository lays out code                                                                    | [`examples/states.test.tsx`](packages/design-kit/examples/states.test.tsx) |
+| Each state's React draws what the version the site pins draws for the state                                                                                  | `packages/site/src/code.test.ts`                                           |
+| The package exports what the smoke test loads and nothing else, has a changelog entry for its version, and packs its build, its README and its license alone | [`smoke/package.test.ts`](packages/design-kit/smoke/package.test.ts)       |
 
 </details>
 
@@ -299,8 +302,8 @@ follow by area. A test's path is under `packages/design-kit/` unless it starts w
 
 ## What was measured
 
-**What the kit costs a page.** Each part a page can load is held by a test, gzipped without its
-comments.
+**What the kit costs a page.** Each part a page can load is held by a test, gzipped, the sheets and
+the controls without their comments.
 
 | What a page loads                                       | Held to  |
 | ------------------------------------------------------- | -------- |
@@ -311,11 +314,12 @@ comments.
 | `attachTable` alone                                     | 3.5 KB   |
 | `attachForm` alone                                      | 10.5 KB  |
 
-The controls ship in parts, so a bundler sends a page only what it imports. The package npm
-publishes is 165 KB packed, the sheets and modules a page loads together with the README, the types
-and the tokens in the design tokens format, which it never does. [The
-record](docs/benchmarks/package-size.md) lists every file, raw and gzipped, each sheet without its
-comments, and from 0.6.0 what each piece of the sheets and each function of the controls costs.
+A page that attaches a control loads the controls as well, and they ship in parts, so a bundler
+sends a page only what it imports. The package npm publishes is 165 KB packed, the sheets and
+modules a page loads together with the README, the types and the tokens in the design tokens format,
+which it never does. [The record](docs/benchmarks/package-size.md) lists every file, raw and
+gzipped, each sheet without its comments, and from 0.6.0 what each piece of the sheets and each
+function of the controls costs.
 
 **The site's pages.** On a first visit as Lighthouse makes one, a phone on a slow network with its
 processor slowed, every page scores a hundred for accessibility and at least 99 for performance,
@@ -559,9 +563,10 @@ npm run bench:pages
   which say what the package weighs and how the site's pages score, and the decision records in
   `decisions/`.
 - `.github/` holds the contributing guide in `CONTRIBUTING.md`, the security policy in
-  `SECURITY.md`, the issue templates for a piece of work, a parent issue and a bug, the pull request
-  template, the weekly dependency and action updates in `dependabot.yml`, and CI and deploy, release
-  and the pull request check in `workflows/`.
+  `SECURITY.md`, the issue templates for a piece of work, a parent issue and a bug in
+  `ISSUE_TEMPLATE/`, the pull request template in `pull_request_template.md`, the README's mark and
+  picture in `readme/`, the weekly dependency and action updates in `dependabot.yml`, and CI and
+  deploy, release and the pull request check in `workflows/`.
 
 </details>
 
