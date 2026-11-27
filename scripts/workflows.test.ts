@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -422,6 +422,27 @@ describe('the workflows', () => {
                 .filter(([, text]) => !/^cache-mode: none\s*$/m.test(text))
                 .map(([path]) => path)
         ).toEqual([]);
+    });
+
+    it('stop a release while a change file is left beside its package', () => {
+        for (const [path, text] of releases) {
+            const dir = /^\s+dir=(packages\/[\w-]+)\s*$/m.exec(text)?.[1];
+            expect(dir, path).toBeDefined();
+            expect(existsSync(`${dir}/changes/README.md`), path).toBe(true);
+            expect(text, path).toMatch(
+                /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
+            );
+        }
+    });
+
+    it("leave the repository's Latest release to the kit when the prose check releases", () => {
+        const releaseStep = (path: string) =>
+            stepsOf(workflows.get(path) ?? '').find(({ text }) => /github-release\.sh/.test(text))
+                ?.text ?? '';
+        expect(releaseStep('.github/workflows/release-prose-check.yml')).toMatch(
+            /flags=\(--latest=false\)/
+        );
+        expect(releaseStep('.github/workflows/release.yml')).not.toMatch(/--latest=false/);
     });
 
     it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {

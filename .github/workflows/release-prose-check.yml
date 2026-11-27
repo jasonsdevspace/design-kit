@@ -2,8 +2,9 @@ name: Release the prose check
 
 # Releases the prose check when a tag such as prose-check-v0.1.0 is pushed, apart from the kit,
 # whose release this never moves. The tag has to name a commit on main, match the version in the
-# package's package.json, and have an entry in its changelog with no Unreleased entry left, or
-# nothing is released. Every check CI runs, runs first.
+# package's package.json, and have an entry in its changelog with no Unreleased entry left, and
+# its changes folder may hold nothing but the README, or nothing is released. Every check CI runs,
+# runs first.
 #
 # The publish uses npm's trusted publishing: the workflow proves who it is with an OpenID Connect
 # token, so no npm token is stored anywhere, and each version carries provenance that links it to
@@ -71,6 +72,12 @@ jobs:
                   fi
                   if grep -qiE '^##[[:space:]]+\[?unreleased\]?[[:space:]]*$' "$dir/CHANGELOG.md"; then
                       echo "$dir/CHANGELOG.md still has an Unreleased heading, which ## $version replaces"
+                      exit 1
+                  fi
+                  left=$(find "$dir/changes" ! -type d ! -path "$dir/changes/README.md")
+                  if [ -n "$left" ]; then
+                      echo "fold these change files into $dir/CHANGELOG.md and delete them:"
+                      echo "$left"
                       exit 1
                   fi
                   if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
@@ -186,7 +193,8 @@ jobs:
 
     # A release on GitHub with the changelog entry as its notes, so the tag has a page a reader can
     # land on. Left alone if it exists. Its own job, so writing to the repository and publishing
-    # to npm never share one.
+    # to npm never share one. It is never marked Latest, which stays with the kit's newest release,
+    # so the repository's page keeps pointing at the design kit.
     release:
         name: Release on GitHub
         needs: [agree, publish]
@@ -208,7 +216,7 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
-                  flags=()
+                  flags=(--latest=false)
                   [ "$PRERELEASE" = "true" ] && flags+=(--prerelease)
                   package="$(jq -r .name packages/prose-check/package.json)"
                   export NOTES_LEAD="The prose check is [\`$package\`](https://www.npmjs.com/package/$package) on npm. Once this version is promoted there, install it with \`npm install --save-dev --save-exact $package@$VERSION\`."

@@ -777,6 +777,39 @@ jobs:
                       if (found.length !== 1) throw new Error('found ' + found.length + ' problems, not one');
                   "
 
+            # As Node and as a bundler resolve the types, with the package's own declarations
+            # checked whole, so one that a setting cannot find fails here, not in a repository
+            # that installs it.
+            - name: Type-check as an installer would
+              working-directory: ${{ runner.temp }}/consumer
+              run: |
+                  cat > uses.mts <<'TS'
+                  import { proseProblems, repositoryProblems } from '@jasonsdevspace/prose-check';
+                  const found: string[] = proseProblems('body.md', 'Plain prose.', 'body');
+                  const all: string[] = repositoryProblems('.');
+                  export const count: number = found.length + all.length;
+                  TS
+                  tsc="$GITHUB_WORKSPACE/node_modules/typescript/bin/tsc"
+                  node "$tsc" --strict --noEmit --skipLibCheck false --target es2023 --module nodenext --moduleResolution nodenext uses.mts
+                  node "$tsc" --strict --noEmit --skipLibCheck false --target es2023 --module preserve --moduleResolution bundler uses.mts
+
+            # The same tarball on the Node the project builds on, which the floor does not cover.
+            - name: Set up the project's Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+
+            - name: Pass and fail on the project's Node
+              working-directory: ${{ runner.temp }}/consumer
+              run: |
+                  rm dashed.md
+                  ./node_modules/.bin/check-prose
+                  node -e "require('fs').writeFileSync('dashed.md', 'a' + String.fromCodePoint(0x2014) + 'b\n')"
+                  if ./node_modules/.bin/check-prose; then
+                      echo "the check passed a file with an em dash in it"
+                      exit 1
+                  fi
+
             # A release publishes this tarball, now that it is proven, so the job that holds the
             # publish token never installs or builds anything.
             - name: Upload the packed prose check

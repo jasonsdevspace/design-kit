@@ -109,6 +109,11 @@ palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a
 its own names where the kit's go, and [the theme
 contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
+The repository also publishes
+[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check), the
+check that holds each repository's comments, docs and page text to the same writing rules, with
+[a README of its own](packages/prose-check/README.md).
+
 ## Browser support
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
@@ -521,8 +526,10 @@ a staged version goes live only when it is promoted on the package page. The job
 installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
 fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
 prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
-The steps a maintainer takes around a release are in
-[CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
+The prose check releases the same way from a tag such as `prose-check-v0.2.0`, through
+`release-prose-check.yml`, under the same rules, with its own version, changelog and changes folder,
+and its GitHub release leaves the repository's Latest mark on the kit. The steps a maintainer takes
+around a release are in [CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
 
 </details>
 

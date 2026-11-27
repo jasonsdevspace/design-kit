@@ -68,6 +68,19 @@ release reaches npm". Around it, a maintainer:
 - reviews the pull request the site pages workflow opens with the site's record, taken from the
   commit on main that moves the pin, once the pin's pull request merges
 
+The prose check releases apart from the kit, from a tag such as `prose-check-v0.2.0` through
+`release-prose-check.yml`. Around it, a maintainer:
+
+- bumps the version in `packages/prose-check/package.json`, adds a `## VERSION` heading to its
+  `CHANGELOG.md` that folds in every change file under `packages/prose-check/changes`, which that
+  pull request deletes, under the lead-ins the entries before it use, and points the README's rules
+  link at the new version's tag, in a pull request of its own
+- registers the trusted publisher for the package on npm, for `release-prose-check.yml` and the
+  `npm` environment, in the same sitting as the tag that first publishes through it, since npm drops
+  a registration that publishes nothing within two days
+- tags main with `prose-check-vVERSION` once that merges, which starts the release workflow
+- promotes the staged version on the package's npm page
+
 The release workflow stops on a version npm already holds, staged or published, since it cannot tell
 one staged by an earlier run from one staged from other code. A run whose later step failed is
 repeated with "Re-run failed jobs", which keeps the staging and runs only what failed.
