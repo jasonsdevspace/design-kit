@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
     Button,
     Callout,
+    CheckboxField,
+    type CheckboxFieldProps,
     ChoiceField,
     type ChoiceFieldProps,
     CopyButton,
@@ -773,6 +775,82 @@ describe('the choice field', () => {
         expect(rule({ 'aria-invalid': true })).toBeTruthy();
         // @ts-expect-error The set's role follows its type, so a page's would be dropped.
         expect(rule({ role: 'group' })).toBeTruthy();
+    });
+});
+
+describe('the checkbox field', () => {
+    const setting = (props: Partial<CheckboxFieldProps> = {}) =>
+        renderToStaticMarkup(
+            <CheckboxField
+                id="double"
+                name="double"
+                label="Score the last round double"
+                {...props}
+            />
+        );
+
+    it('draws one box in a label that wraps it and points at it, with no fieldset or legend', () => {
+        expect(setting()).toBe(
+            '<div class="dk-field"><label class="dk-choice" for="double" id="double-label">' +
+                '<input type="checkbox" id="double" name="double"/>' +
+                '<span>Score the last round double</span></label></div>'
+        );
+        expect(setting()).not.toMatch(/fieldset|legend|role=/);
+    });
+
+    it('draws the hint after the label and outside it, and describes the box by it', () => {
+        const hinted = setting({ hint: 'Every bid in round 10 counts twice' });
+        expect(hinted).toContain('aria-describedby="double-hint"');
+        expect(hinted).toMatch(
+            /<\/label><p class="dk-field-hint" id="double-hint">Every bid in round 10 counts twice<\/p><\/div>$/
+        );
+    });
+
+    it('draws the error before the label, marks the box invalid and describes it by the hint, then the error, then its own', () => {
+        const wrong = setting({
+            hint: 'Every bid in round 10 counts twice',
+            error: 'Check the box to go on.',
+            'aria-describedby': 'rules-note',
+        });
+        expect(wrong).toMatch(
+            /^<div class="dk-field"><p class="dk-field-error" id="double-error"><span class="dk-visually-hidden">Error: <\/span>Check the box to go on.<\/p><label/
+        );
+        expect(wrong).toContain('aria-describedby="double-hint double-error rules-note"');
+        expect(wrong).toContain('aria-invalid="true"');
+        expect(setting()).not.toContain('aria-invalid');
+        expect(setting()).not.toContain('aria-describedby');
+    });
+
+    it('marks a required box by aria-required, with its mark hidden from a screen reader', () => {
+        const required = setting({ mark: 'required', required: true });
+        expect(required).toContain('required=""');
+        expect(required).toContain('aria-required="true"');
+        expect(required).toContain(
+            '<span class="dk-field-mark" aria-hidden="true">(required)</span>'
+        );
+        expect(setting()).not.toContain('aria-required');
+    });
+
+    it('passes disabled to the box, and never aria-disabled', () => {
+        const off = setting({ disabled: true });
+        expect(off).toContain('disabled=""');
+        expect(off).not.toContain('aria-disabled');
+    });
+
+    it('draws a read-only field as its state in words, with a hidden field only while checked', () => {
+        const on = setting({ readOnly: true, defaultChecked: true, hint: 'Set by the host' });
+        expect(on).not.toContain('type="checkbox"');
+        expect(on).not.toContain('aria-readonly');
+        expect(on).toContain('class="dk-textarea dk-value"');
+        expect(on).toContain('>On</textarea>');
+        expect(on).toContain('<input type="hidden" name="double" value="on"/>');
+        expect(on).toContain('<label class="dk-field-label" for="double" id="double-label">');
+        const off = setting({ readOnly: true });
+        expect(off).toContain('>Off</textarea>');
+        expect(off).not.toContain('type="hidden"');
+        expect(
+            setting({ readOnly: true, checked: true, onChange: () => undefined, onWords: 'Yes' })
+        ).toContain('>Yes</textarea>');
     });
 });
 

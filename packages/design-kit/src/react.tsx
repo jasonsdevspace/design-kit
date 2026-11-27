@@ -501,19 +501,39 @@ const FieldText = ({
     readonly field: ReturnType<typeof useField>;
 }) => (
     <>
-        {field.hint ? (
-            <p className="dk-field-hint" id={`${field.id}-hint`}>
-                {parts.hint}
-            </p>
-        ) : null}
-        {field.error ? (
-            <p className="dk-field-error" id={`${field.id}-error`}>
-                <span className="dk-visually-hidden">Error: </span>
-                {breakable(parts.error)}
-            </p>
-        ) : null}
+        <FieldHint parts={parts} field={field} />
+        <FieldError parts={parts} field={field} />
     </>
 );
+
+/** A field's hint, drawn only when it holds something. */
+const FieldHint = ({
+    parts,
+    field,
+}: {
+    readonly parts: FieldParts;
+    readonly field: ReturnType<typeof useField>;
+}) =>
+    field.hint ? (
+        <p className="dk-field-hint" id={`${field.id}-hint`}>
+            {parts.hint}
+        </p>
+    ) : null;
+
+/** A field's error, drawn only when it holds something. */
+const FieldError = ({
+    parts,
+    field,
+}: {
+    readonly parts: FieldParts;
+    readonly field: ReturnType<typeof useField>;
+}) =>
+    field.error ? (
+        <p className="dk-field-error" id={`${field.id}-error`}>
+            <span className="dk-visually-hidden">Error: </span>
+            {breakable(parts.error)}
+        </p>
+    ) : null;
 
 /**
  * A control on its own, or with what a field draws beside it, such as the button that runs a
@@ -890,6 +910,80 @@ export const ChoiceField = (props: ChoiceFieldProps) => {
                 )}
             </div>
         </fieldset>
+    );
+};
+
+export type CheckboxFieldProps = FieldParts &
+    Omit<ComponentPropsWithRef<'input'>, 'style' | 'type' | 'id' | 'aria-invalid' | 'children'> & {
+        /** The words a read-only field shows while it is checked, "On" unless given. */
+        readonly onWords?: string | undefined;
+        /** The words a read-only field shows while it is not checked, "Off" unless given. */
+        readonly offWords?: string | undefined;
+    };
+
+/**
+ * One setting a visitor turns on or off, a lone checkbox with its label and hint and no group
+ * around it: the label wraps the box and names it, so the box and its words are one target, and
+ * the hint and the error describe the box, so a screen reader reads both on it. The error sits
+ * above the box and the hint under its words. The box takes every other prop given, its `ref`
+ * among them, which holds the box drawn for a page that moves focus to it. A checkbox has no
+ * read-only state, so a read-only field draws its state in words, "On" or "Off" unless given
+ * others, as a value a visitor reads, and a hidden field carries its value while it is checked, so
+ * the form sends what the box would. A required box is for a visitor's consent, since a setting
+ * has a default rather than a choice the visitor must make.
+ */
+export const CheckboxField = (props: CheckboxFieldProps) => {
+    const { native, field } = useControl(props);
+    const { onWords = 'On', offWords = 'Off', ...rest } = native;
+    if (rest.readOnly === true) {
+        const {
+            name,
+            value = 'on',
+            checked,
+            defaultChecked,
+            disabled,
+            form,
+            title,
+            autoFocus,
+        } = rest;
+        const on = checked ?? defaultChecked ?? false;
+        return (
+            <Field parts={props} field={field}>
+                <textarea
+                    className={spaced('dk-textarea dk-value', rest.className)}
+                    rows={1}
+                    readOnly
+                    value={on ? onWords : offWords}
+                    disabled={disabled}
+                    form={form}
+                    title={title}
+                    autoFocus={autoFocus}
+                    {...field.wired}
+                />
+                {name === undefined || !on ? null : (
+                    <input
+                        type="hidden"
+                        name={name}
+                        value={value}
+                        disabled={disabled}
+                        form={form}
+                    />
+                )}
+            </Field>
+        );
+    }
+    const { readOnly: _readOnly, ...box } = rest;
+    return (
+        <div className="dk-field">
+            <FieldError parts={props} field={field} />
+            <label className="dk-choice" htmlFor={field.id} id={`${field.id}-label`}>
+                <input {...box} type="checkbox" {...field.wired} />
+                <span>
+                    <Labeled parts={props} />
+                </span>
+            </label>
+            <FieldHint parts={props} field={field} />
+        </div>
     );
 };
 

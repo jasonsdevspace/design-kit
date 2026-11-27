@@ -25,6 +25,7 @@ each piece live in both themes.
         - [Fields side by side](#fields-side-by-side)
         - [A refused form](#a-refused-form)
     - [Choice fields](#choice-fields)
+    - [A checkbox field](#a-checkbox-field)
     - [Callouts](#callouts)
         - [A failure with Try again](#a-failure-with-try-again)
     - [Pills](#pills)
@@ -1055,6 +1056,7 @@ form React still draws, as from an effect, is not supported.
 
 Each way a field fails takes words that say what to do: "Enter a value." for an empty field, "Choose
 an option." for an empty set or select and "Check the box to go on." for a box that stands alone,
+as [a checkbox field](#a-checkbox-field) draws one,
 "Enter an email address like name@example.com here." for a malformed address, "Enter the full web
 address, with https:// at the start." for a malformed web address, "Enter at least 8 characters."
 for one too short, "Enter 18 or more." for a number under its least, "Enter November 22, 2026 at
@@ -1266,6 +1268,70 @@ invalid set draws a thin line in the danger color around it, and a dashed line i
 forced colors, each giving way to the ring. The theme switch's choice is the same label of a radio
 and its word, drawn by rules of its own as a pill word with the radio under it, as the Theme switch
 section says.
+
+</details>
+
+A page with one setting to turn on or off draws [a checkbox field](#a-checkbox-field), not a set of
+one, which would name the setting twice, once in its legend and once on its box.
+
+### A checkbox field
+
+<!-- example: checkboxField -->
+
+```html
+<div class="dk-field">
+    <label class="dk-choice" for="sold-out" id="sold-out-label">
+        <input type="checkbox" id="sold-out" aria-describedby="sold-out-hint" name="sold-out" />
+        <span>Hide sold-out items</span>
+    </label>
+    <p class="dk-field-hint" id="sold-out-hint">They show again once restocked</p>
+</div>
+<div class="dk-field">
+    <p class="dk-field-error" id="terms-error">
+        <span class="dk-visually-hidden">Error: </span>
+        Check the box to go on.
+    </p>
+    <label class="dk-choice" for="terms" id="terms-label">
+        <input
+            required=""
+            type="checkbox"
+            id="terms"
+            aria-describedby="terms-error"
+            aria-invalid="true"
+            name="terms"
+        />
+        <span>I agree to the terms</span>
+    </label>
+</div>
+```
+
+One setting a visitor turns on or off is a lone checkbox with its label and hint and no group around
+it: a `.dk-field` holding the box's `label.dk-choice` itself. The label wraps the box and points at
+it with `for`, so the box and its words are one target and the words are the box's name. The error
+sits before the label, above the box, and the hint after it, under the words, and both describe the
+box through its `aria-describedby`, the hint before the error, so a screen reader reads both on the
+box. The box carries `aria-invalid="true"` while an error is drawn, and `aria-required="true"` where
+the field is marked required. A form's refusal counts a checkbox field as its own field wherever it
+stands, so a page's own section of settings in a `fieldset` never takes its boxes for one set, and
+each box's error goes above that box alone.
+
+A required box is for a visitor's consent, such as agreeing to terms, since a setting has a default
+rather than a choice the visitor must make. A box a visitor cannot change uses `disabled` on its
+control, never `aria-disabled`, which would leave it toggling. A checkbox has no read-only state, so
+`CheckboxField` with `readOnly` draws its state in words, "On" or "Off" unless given others, as a
+value a visitor reads, as a read-only select does, with a hidden field carrying the box's value while
+it is checked, so the form sends what the box would.
+
+<details>
+<summary>How a checkbox field is drawn</summary>
+
+The box sits at the field's edge, in line with the labels and controls above it, and its label hugs
+its words, so its highlight under a pointer and after the keyboard never reads as a row of a list.
+Its words are in the choice's look, as a box in a set is. The hint starts under the words, past the
+box and the gap, so it reads as a note on the setting, while the error stays in line with the box.
+The label is the field's height, and a thumb's target on a phone and in an app's frame, as a choice
+is. In a row of fields it takes a line of its own, so its hint never pushes the box out of line with
+the controls beside it. A box that is off is in the muted text, and in `GrayText` in forced colors.
 
 </details>
 
@@ -1703,6 +1769,20 @@ Every other prop goes to the `<fieldset>`, `ref` and `className` included, excep
 `aria-invalid`. A choice's own props go to its control, `ref` among them, except `style`,
 `className` and `aria-invalid`, and `type` and `name`, which the set gives. Its `value` tells the
 choices apart.
+
+**`CheckboxField` props**
+
+| `CheckboxField`       | Default      | What it does                                                              |
+| --------------------- | ------------ | ------------------------------------------------------------------------- |
+| `label`               | required     | Names the box, as the words beside it                                     |
+| `hint`, `error`, `id` | as a field's | The hint and the error describe the box, and the id is the box's          |
+| `mark`, `markWords`   | as a field's | The mark in the label, hidden from a screen reader where it says required |
+| `readOnly`            | `false`      | Draws the box's state in words as a value, and a hidden field when on     |
+| `onWords`, `offWords` | `On`, `Off`  | The words a read-only field shows for each state                          |
+
+Every other prop goes to the box, `ref`, `className`, `checked` and `disabled` included, except
+`style`, `type` and `aria-invalid`. An `aria-describedby` of the page's own is listed after the hint
+and the error.
 
 **`Callout` props**
 
@@ -4566,7 +4646,7 @@ control, `CopyOptions`, `ShowToast`, `ToastAction`, `OpenDialog`, `DialogOpener`
 ### `@jasonsdevspace/design-kit/react`
 
 It holds `SkipLink`, `PortfolioStrip`, `DemoFooter`, `Button`, `InputField`, `SelectField`,
-`TextareaField`, `ValueField`, `ChoiceField`, `StepperField`, `Callout`, `ThemeSwitch`,
+`TextareaField`, `ValueField`, `ChoiceField`, `CheckboxField`, `StepperField`, `Callout`, `ThemeSwitch`,
 `CopyButton`, `StatusLine`, which `CopyStatus` also names, `Progress`, `Toast` and `StatusProvider`,
 a props type for each named after it, such as `ButtonProps`, the hooks `useStatus()`,
 `useFocusAfterDraw()`, `useArrivalFocus()`, `useRoving()`, `useFormRefusal()`, `useBusy()` and

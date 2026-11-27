@@ -8,6 +8,7 @@ export const VALUE_EXPORTS = {
         'Button',
         'Callout',
         'ChoiceField',
+        'CheckboxField',
         'CopyButton',
         'CopyStatus',
         'DemoFooter',
