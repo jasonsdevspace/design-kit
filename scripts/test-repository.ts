@@ -49,11 +49,11 @@ export const runCheckIn = (
         write(tracked);
         execFileSync('git', ['add', '--all'], options);
         write(untracked);
-        // The prose check's package, which a check may import as the workspace links it, linked
+        // The prose check's package, which a check may import as the repository installs it, linked
         // into the throwaway repository and kept out of what git lists there.
         mkdirSync(join(root, 'node_modules', '@jasonsdevspace'), { recursive: true });
         symlinkSync(
-            join(HERE, '..', 'packages', 'prose-check'),
+            join(HERE, '..', 'node_modules', '@jasonsdevspace', 'prose-check'),
             join(root, 'node_modules', '@jasonsdevspace', 'prose-check'),
             'dir'
         );

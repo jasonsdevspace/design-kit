@@ -1,5 +1,4 @@
 // @vitest-environment node
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
@@ -410,32 +409,13 @@ describe('the workflows', () => {
     );
     const publishing = releases.flatMap(([, text]) => stepsOf(text));
 
-    // Every package releases through the one workflow, by its tag's prefix, so the rules a
-    // release keeps are written once.
+    // The kit releases through the one workflow, from its own tag.
     const RELEASE = '.github/workflows/release.yml';
-    const PACKAGES = ['design-kit', 'prose-check'] as const;
+    const PACKAGES = ['design-kit'] as const;
     const releaseJob = (id: string) =>
         jobsOf(workflows.get(RELEASE) ?? '').find((job) => job.id === id)?.body ?? '';
 
-    /** The package the release's agree step names for a tag, or undefined where it stops. */
-    const packageFor = (tag: string): string | undefined => {
-        const step =
-            stepsOf(releaseJob('agree')).find(({ text }) => /case "\$TAG" in/.test(text))?.text ??
-            '';
-        const block = /case "\$TAG" in[\s\S]*?\besac\b/.exec(step)?.[0] ?? '';
-        expect(block).not.toBe('');
-        const run = spawnSync(
-            'bash',
-            ['-c', `${block.replace(/^\s+/gm, '')}\nprintf %s "$package"`],
-            {
-                env: { TAG: tag, PATH: process.env.PATH ?? '' },
-                encoding: 'utf8',
-            }
-        );
-        return run.status === 0 ? run.stdout : undefined;
-    };
-
-    it('publish to npm from one workflow, for each package by its tag', () => {
+    it("publish to npm from one workflow, from the kit's tag", () => {
         expect(releases.map(([path]) => path)).toEqual([RELEASE]);
         for (const name of PACKAGES)
             expect(workflows.get(RELEASE)).toMatch(new RegExp(`^\\s+- '${name}-v\\*'\\s*$`, 'm'));
@@ -449,31 +429,20 @@ describe('the workflows', () => {
         ).toEqual([]);
     });
 
-    it('name the package from its tag, and stop on a tag that names none', () => {
-        expect(packageFor('design-kit-v0.9.5')).toBe('design-kit');
-        expect(packageFor('prose-check-v0.2.0')).toBe('prose-check');
-        expect(packageFor('prose-check-v0.2.0-next.1')).toBe('prose-check');
-        expect(packageFor('shelflens-v1.0.0')).toBeUndefined();
-    });
-
-    it('publish the package the tag names, from its own artifact and its own checksum', () => {
+    it('publish the tarball CI packed, from its artifact and the checksum the oldest Node check reported', () => {
         const publish = releaseJob('publish');
-        expect(publish).toMatch(/name: \$\{\{ needs\.agree\.outputs\.package \}\}-package\s*$/m);
+        expect(publish).toMatch(/^\s+name: design-kit-package\s*$/m);
         expect(publish).toMatch(
-            /^ {12}SHA256: \$\{\{ needs\.agree\.outputs\.package == 'design-kit' && needs\.checks\.outputs\.package-sha256 \|\| needs\.agree\.outputs\.package == 'prose-check' && needs\.checks\.outputs\.prose-check-sha256 \|\| '' \}\}$/m
+            /^ {12}SHA256: \$\{\{ needs\.checks\.outputs\.package-sha256 \}\}$/m
         );
-        expect(publish).toMatch(
-            /"\$RUNNER_TEMP\/package\/jasonsdevspace-\$PACKAGE-\$VERSION\.tgz"/
-        );
-        expect(publish).not.toMatch(/jasonsdevspace-(?:design-kit|prose-check)-/);
         const ci = workflows.get('.github/workflows/ci.yml') ?? '';
-        for (const name of PACKAGES)
-            expect(ci).toMatch(new RegExp(`^\\s+name: ${name}-package\\s*$`, 'm'));
+        expect(ci).toMatch(/^\s+name: design-kit-package\s*$/m);
+        expect(ci).toMatch(/^ {16}value: \$\{\{ jobs\.floor\.outputs\.sha256 \}\}$/m);
     });
 
-    it('record only a release of the kit, so a prose check tag never reaches the records', () => {
+    it('record only a stable release, and open the records only once they are recorded', () => {
         expect(releaseJob('records')).toMatch(
-            /^ {8}if: needs\.agree\.outputs\.package == 'design-kit' && needs\.agree\.outputs\.prerelease != 'true'$/m
+            /^ {8}if: needs\.agree\.outputs\.prerelease != 'true'$/m
         );
         expect(releaseJob('records-pull-request')).toMatch(/^\s+needs: \[agree, records\]\s*$/m);
         expect(releaseJob('records-pull-request')).toMatch(
@@ -484,17 +453,10 @@ describe('the workflows', () => {
     it('stop a release while a change file is left beside its package', () => {
         for (const name of PACKAGES)
             expect(existsSync(`packages/${name}/changes/README.md`), name).toBe(true);
-        expect(releaseJob('agree')).toMatch(/^\s+dir="packages\/\$package"\s*$/m);
+        expect(releaseJob('agree')).toMatch(/^\s+dir=packages\/design-kit\s*$/m);
         expect(releaseJob('agree')).toMatch(
             /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
         );
-    });
-
-    it("leave the repository's Latest release to the kit when the prose check releases", () => {
-        const step =
-            stepsOf(releaseJob('release')).find(({ text }) => /github-release\.sh/.test(text))
-                ?.text ?? '';
-        expect(step).toMatch(/\[ "\$PACKAGE" = "prose-check" \] && flags\+=\(--latest=false\)/);
     });
 
     it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
@@ -767,7 +729,7 @@ describe('the workflows', () => {
         const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
         const jobs = jobsOf(ci);
         const WRITERS = ['dependencies', 'dependencies-mac'];
-        const FRESH = ['floor', 'prose-check-floor', 'site'];
+        const FRESH = ['floor', 'site'];
         const KEY =
             /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
         const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
@@ -1026,22 +988,7 @@ describe('the release workflow', () => {
         ).toEqual([]);
     });
 
-    it("marks the kit's GitHub release as the repository's latest, and never the prose check's", () => {
-        const step =
-            stepsOf(job('release')).find(({ text: found }) => /github-release\.sh/.test(found))
-                ?.text ?? '';
-        const flagLines = step
-            .split('\n')
-            .filter((line) => /^\s+(?:flags=|\[ "\$(?:PRERELEASE|PACKAGE)" = )/.test(line))
-            .map((line) => line.trim())
-            .join('\n');
-        expect(text.match(/--latest=false/g)?.length).toBe(1);
-        const flagsFor = (pkg: string) =>
-            spawnSync('bash', ['-c', `${flagLines}\nprintf '%s ' "\${flags[@]}"`], {
-                env: { PACKAGE: pkg, PRERELEASE: 'false', PATH: process.env.PATH ?? '' },
-                encoding: 'utf8',
-            }).stdout.trim();
-        expect(flagsFor('design-kit')).toBe('');
-        expect(flagsFor('prose-check')).toBe('--latest=false');
+    it("leaves each kit release the repository's latest, as GitHub marks it", () => {
+        expect(text).not.toMatch(/--latest/);
     });
 });

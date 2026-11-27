@@ -109,10 +109,10 @@ palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a
 its own names where the kit's go, and [the theme
 contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
-The repository also publishes
-[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check), the
-check that holds each repository's comments, docs and page text to the same writing rules, with
-[a README of its own](packages/prose-check/README.md).
+The writing rules the repository's comments, docs and pages follow come from
+[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check), which
+[jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling) publishes for every repository,
+this one included, at an exact pin.
 
 ## Browser support
 
@@ -526,11 +526,8 @@ a staged version goes live only when it is promoted on the package page. The job
 installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
 fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
 prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
-The prose check releases through the same workflow from a tag such as `prose-check-v0.2.0`, which
-names the package by its prefix, under the same rules, with its own version, changelog and changes
-folder. Only the kit's release is recorded, and the prose check's GitHub release leaves the
-repository's Latest mark on the kit. The steps a maintainer takes
-around a release are in [CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
+The steps a maintainer takes around a release are in
+[CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
 
 </details>
 
@@ -569,8 +566,6 @@ npm run bench:pages
     - `e2e/` holds the browser tests.
     - `smoke/` installs the packed package as a page would install it.
 - `packages/site/` holds the site at jasonsdevspace.com/design-kit/, its browser tests and audit.
-- `packages/prose-check/` holds the prose check, published on its own for every repository to
-  install.
 - `scripts/` holds the Node and commit checks, the run summaries and the benchmark writer.
 - `docs/` holds the accessibility statement in `ACCESSIBILITY.md`, the benchmarks in `benchmarks/`,
   which say what the package weighs and how the site's pages score, and the decision records in

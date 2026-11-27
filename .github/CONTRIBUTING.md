@@ -68,35 +68,6 @@ release reaches npm". Around it, a maintainer:
 - reviews the pull request the site pages workflow opens with the site's record, taken from the
   commit on main that moves the pin, once the pin's pull request merges
 
-The prose check releases apart from the kit, through the same release workflow, from a tag such as
-`prose-check-v0.2.0`. Around it, a maintainer:
-
-- bumps the version in `packages/prose-check/package.json`, adds a `## VERSION` heading to its
-  `CHANGELOG.md` that folds in every change file under `packages/prose-check/changes`, which that
-  pull request deletes, under the lead-ins the entries before it use, in a pull request of its own
-- tags main with `prose-check-vVERSION` once that merges, which starts the release workflow
-- reads the run's summary for "Staged on npm", since a run that finds the version already on npm
-  passes without staging anything
-- promotes the staged version on the package's npm page
-- moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
-  with `npm dist-tag add @jasonsdevspace/prose-check@VERSION next`, so `next` is never older than
-  `latest`
-- moves each repository's exact pin to the promoted version, in a pull request of its own in that
-  repository, reading the changelog first, since a minor version can fail a build that passed
-
-Once, not for each release, the trusted publisher is registered on npm for the first tag that
-publishes through `release.yml`, with the workflow `release.yml` and the `npm` environment, never
-left blank, since a release's CI jobs run under the same file, and allowed to stage but not to
-publish. It is registered in the same sitting as that tag, since npm drops a registration that
-publishes nothing within two days. A registration left from an earlier workflow is revoked and made
-again, not edited, since an edit keeps its old clock:
-
-```sh
-npm trust list @jasonsdevspace/prose-check
-npm trust revoke @jasonsdevspace/prose-check --id ID
-npm trust github @jasonsdevspace/prose-check --file release.yml --repo jasonsdevspace/design-kit --env npm --allow-stage-publish
-```
-
 The release workflow stops on a version npm already holds, staged or published, since it cannot tell
 one staged by an earlier run from one staged from other code. A run whose later step failed is
 repeated with "Re-run failed jobs", which keeps the staging and runs only what failed.
