@@ -28,8 +28,8 @@ list of what is left to do, in anything a reader sees. The prose check now lives
 [jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling), where a rule that flags a line
 it should not is raised as an issue. A commit message says what changed and why in
 plain sentences, with no em dash or semicolon, and names the work rather than whatever tool wrote
-it, which the prose check's `check-commit-message` command enforces. Installing with `npm ci` sets that check up as a hook
-on each commit, and CI runs it on a pull request's title and body.
+it, which the prose check's `check-commit-message` command enforces. Installing with `npm ci` sets
+that check up as a hook on each commit, and CI runs it on a pull request's title and body.
 
 ## Issues
 

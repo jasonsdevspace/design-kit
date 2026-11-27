@@ -267,6 +267,26 @@ const runOf = (step: string): string => {
     return value.startsWith('>') ? block.join(' ') : block.join('\n');
 };
 
+/** npx's options before the tool it runs, with the value of each option that takes one. */
+const optionsBeforeTool = (words: readonly string[]) => {
+    const options: string[] = [];
+    for (let at = 0; at < words.length; at += 1) {
+        const word = words[at] ?? '';
+        if (word === '--' || !word.startsWith('-')) break;
+        options.push(word);
+        if (['--package', '-p', '--call', '-c'].includes(word)) at += 1;
+    }
+    return options;
+};
+
+/**
+ * Whether a command fetches a package and runs it, as npx, `npm exec` and `npm x` do, which runs the
+ * package's install scripts, unless `--no-install` holds it to what is already installed.
+ */
+const fetchesAndRuns = (command: NpmCommand) =>
+    (command.npx || command.command === 'exec' || command.command === 'x') &&
+    ![...command.flags, ...optionsBeforeTool(command.args)].includes('--no-install');
+
 /** The folder a step names to run in, if it names one. */
 const dirOf = (step: string) => /^ *working-directory: *(.+?) *$/m.exec(step)?.[1];
 
@@ -486,14 +506,16 @@ describe('the workflows', () => {
     });
 
     it('install dependencies without running their install scripts', () => {
-        const installs = npmCommands.filter(({ command }) => INSTALLS.has(command));
+        const installs = npmCommands.filter(
+            (command) => INSTALLS.has(command.command) || fetchesAndRuns(command)
+        );
         expect(installs.length).toBeGreaterThan(0);
         expect(
             installs.filter((command) => !skipsScripts(command)).map(({ line }) => line)
         ).toEqual([]);
     });
 
-    it('run with npx only the tools the lockfile installs, in the repository, so nothing is fetched with its scripts', () => {
+    it('name with npx only the tools the lockfile holds, so a job that installed finds them and one that did not fails rather than fetching', () => {
         const { packages, bins } = lockfileTools(LOCKFILE);
         const fetched = npmCommands
             .filter((command) => {
@@ -511,17 +533,70 @@ describe('the workflows', () => {
         expect(fetched).toEqual([]);
     });
 
-    it("run the commit message check at the lockfile's version, its hash checked and its scripts off", () => {
-        const message = workflows.get('.github/workflows/message.yml') ?? '';
-        const lockRead = message.indexOf("require('./package-lock.json')");
-        const hashCheck = message.indexOf('dist.integrity)" != "$integrity"');
-        const run = message.indexOf(
-            'npm exec --yes --ignore-scripts --package="@jasonsdevspace/prose-check@$version" -- check-commit-message --as-is'
+    it('grant only read access to the repository by default, in every workflow', () => {
+        expect(
+            [...workflows]
+                .filter(([, text]) => !/^permissions:\n {4}contents: read\n/m.test(text))
+                .map(([path]) => path)
+        ).toEqual([]);
+    });
+
+    it('pin every action to a full commit, in every workflow', () => {
+        const unpinned = [...workflows].flatMap(([path, text]) =>
+            [...text.matchAll(/^\s+(?:- )?uses: (\S+)/gm)]
+                .map((match) => match[1] ?? '')
+                .filter((use) => !use.startsWith('./') && !/@[0-9a-f]{40}$/.test(use))
+                .map((use) => `${path} ${use}`)
         );
-        expect(lockRead).toBeGreaterThan(-1);
-        expect(hashCheck).toBeGreaterThan(lockRead);
-        expect(run).toBeGreaterThan(hashCheck);
-        expect(message).toMatch(/does not match the lockfile's"\n\s+exit 1/);
+        expect(unpinned).toEqual([]);
+        for (const path of ['.github/workflows/message.yml', '.github/workflows/release.yml'])
+            expect(workflows.get(path) ?? '', path).toMatch(/uses: \S+@[0-9a-f]{40}/);
+    });
+
+    it('check out without keeping the token in the repository, in every workflow', () => {
+        const keeping = [...workflows].flatMap(([path, text]) =>
+            stepsOf(text)
+                .filter(({ text: step }) => /uses: actions\/checkout@/.test(step))
+                .filter(({ text: step }) => !/^\s+persist-credentials: false$/m.test(step))
+                .map(() => path)
+        );
+        expect(keeping).toEqual([]);
+        expect(workflows.get('.github/workflows/message.yml') ?? '').toMatch(
+            /uses: actions\/checkout@/
+        );
+    });
+
+    it("run the commit message check from the lockfile's own tarball, checked against its hash, with nothing installed", () => {
+        const message = workflows.get('.github/workflows/message.yml') ?? '';
+        const step =
+            stepsOf(message).find(({ text }) => /check-commit-message/.test(text))?.text ?? '';
+        const order = [
+            "p.resolved + ' ' + p.integrity",
+            'https://registry.npmjs.org/@jasonsdevspace/prose-check/-/prose-check-*.tgz) ;;',
+            'openssl dgst -sha512 -binary',
+            'does not match the lockfile\'s hash"',
+            'exit 1',
+            'node "$RUNNER_TEMP/prose-check/package/bin/check-commit-message.mjs" --as-is',
+        ];
+        let from = 0;
+        const missing = order.filter((text) => {
+            const at = step.indexOf(text, from);
+            if (at < 0) return true;
+            from = at + text.length;
+            return false;
+        });
+        expect(missing).toEqual([]);
+        expect(message).not.toMatch(/\bnpm (?:exec|x)\b|\bnpx\b/);
+    });
+
+    it('count npx and npm exec as an install, unless --no-install holds them to what is installed', () => {
+        const read = (step: string) => commandsIn(runOf(step)).map(fetchesAndRuns);
+        expect(read('- run: npx playwright install chromium')).toEqual([true]);
+        expect(read('- run: npx --no-install playwright install chromium')).toEqual([false]);
+        expect(read('- run: npm exec --package=foo -- foo')).toEqual([true]);
+        expect(read('- run: npm x --no-install -- foo')).toEqual([false]);
+        expect(read('- run: npx foo --no-install')).toEqual([true]);
+        expect(read('- run: npm ci --ignore-scripts')).toEqual([false]);
     });
 
     it('read an install however it is written, and the flags the last of which decides', () => {
@@ -889,7 +964,9 @@ describe('the workflows', () => {
         );
         expect(skipping).toEqual(['.github/workflows/ci.yml chromium']);
         const siteKit = jobs.find(({ id }) => id === 'site-kit')?.body ?? '';
-        expect(siteKit).toMatch(/npx playwright test packages\/site --project chromium/);
+        expect(siteKit).toMatch(
+            /npx --no-install playwright test packages\/site --project chromium/
+        );
         expect(siteKit).not.toMatch(/^ {8}if:/m);
     });
 
@@ -951,10 +1028,6 @@ describe('the release workflow', () => {
     const jobs = jobsOf(text);
     const job = (id: string) => jobs.find((found) => found.id === id)?.body ?? '';
 
-    it('grants only read access to the repository by default', () => {
-        expect(text).toMatch(/^permissions:\n {4}contents: read\n/m);
-    });
-
     it('runs one release at a time for a tag, never cancelling one under way', () => {
         expect(text).toMatch(
             /^concurrency:\n {4}group: release-\$\{\{ github\.ref \}\}\n {4}cancel-in-progress: false\n/m
@@ -984,24 +1057,6 @@ describe('the release workflow', () => {
         expect(job('agree')).toMatch(
             /^ {22}\*-\*\) echo "prerelease=true" >> "\$GITHUB_OUTPUT" ;;$/m
         );
-    });
-
-    it('pins every action it uses to a full commit', () => {
-        const uses = [...text.matchAll(/^\s+(?:- )?uses: (\S+)/gm)].map((match) => match[1] ?? '');
-        expect(uses.length).toBeGreaterThan(0);
-        expect(uses.filter((use) => !use.startsWith('./') && !/@[0-9a-f]{40}$/.test(use))).toEqual(
-            []
-        );
-    });
-
-    it('checks out without keeping the token in the repository', () => {
-        const checkouts = stepsOf(text).filter(({ text: step }) =>
-            /uses: actions\/checkout@/.test(step)
-        );
-        expect(checkouts.length).toBeGreaterThan(0);
-        expect(
-            checkouts.filter(({ text: step }) => !/^\s+persist-credentials: false$/m.test(step))
-        ).toEqual([]);
     });
 
     it("leaves each kit release the repository's latest, as GitHub marks it", () => {
