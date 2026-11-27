@@ -64,10 +64,13 @@ const holdsOneSet = (fieldset: Element): boolean => {
 
 /**
  * The field a control stands for: a set's fieldset where the control is one of its choices, so a
- * set counts once, else the control itself, a box that stands alone in a section among them.
+ * set counts once, else the control itself, a box that stands alone in a section among them. A
+ * checkbox field, a field holding its one box's label itself, is its own field wherever it stands,
+ * so a page's section of settings never takes its boxes for one set.
  */
 export const fieldOf = (marked: Element): Element => {
     if (!marked.matches(CHOICE)) return marked;
+    if (marked.closest('.dk-choice')?.parentElement?.matches('.dk-field')) return marked;
     const set = marked.closest('fieldset');
     return set && holdsOneSet(set) ? set : marked;
 };
