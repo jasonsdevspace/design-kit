@@ -24,7 +24,9 @@ supports, as Dev setup describes.
 
 Every file is held to one style, which the prose check enforces: no em dashes, no semicolons joining
 clauses, American spelling, no issue numbers in comments, and no notes about the process, such as a
-list of what is left to do, in anything a reader sees. A commit message says what changed and why in
+list of what is left to do, in anything a reader sees. The prose check now lives in
+[jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling), where a rule that flags a line
+it should not is raised as an issue. A commit message says what changed and why in
 plain sentences, with no em dash or semicolon, and names the work rather than whatever tool wrote
 it, which the commit message check enforces. Installing with `npm ci` sets that check up as a hook
 on each commit, and CI runs it on a pull request's title and body.

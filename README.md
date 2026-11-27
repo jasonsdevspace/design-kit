@@ -109,6 +109,12 @@ palettes](packages/design-kit/REFERENCE.md#layers-and-palettes), including how a
 its own names where the kit's go, and [the theme
 contract](packages/design-kit/REFERENCE.md#the-theme-contract).
 
+The writing rules the repository's comments, docs and pages follow come from
+[`@jasonsdevspace/prose-check`](https://www.npmjs.com/package/@jasonsdevspace/prose-check),
+installed at an exact pin. Its first version was published from this repository, and the package
+now lives in [jasonsdevspace/tooling](https://github.com/jasonsdevspace/tooling), where a fix to its
+rules goes.
+
 ## Browser support
 
 The color roles are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox
@@ -561,8 +567,6 @@ npm run bench:pages
     - `e2e/` holds the browser tests.
     - `smoke/` installs the packed package as a page would install it.
 - `packages/site/` holds the site at jasonsdevspace.com/design-kit/, its browser tests and audit.
-- `packages/prose-check/` holds the prose check, published on its own for every repository to
-  install.
 - `scripts/` holds the Node and commit checks, the run summaries and the benchmark writer.
 - `docs/` holds the accessibility statement in `ACCESSIBILITY.md`, the benchmarks in `benchmarks/`,
   which say what the package weighs and how the site's pages score, and the decision records in

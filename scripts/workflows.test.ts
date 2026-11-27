@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -409,11 +409,16 @@ describe('the workflows', () => {
     );
     const publishing = releases.flatMap(([, text]) => stepsOf(text));
 
-    it('name the kit and the prose check among the workflows that publish to npm', () => {
-        expect(releases.map(([path]) => path).sort()).toEqual([
-            '.github/workflows/release-prose-check.yml',
-            '.github/workflows/release.yml',
-        ]);
+    // The kit releases through the one workflow, from its own tag.
+    const RELEASE = '.github/workflows/release.yml';
+    const PACKAGES = ['design-kit'] as const;
+    const releaseJob = (id: string) =>
+        jobsOf(workflows.get(RELEASE) ?? '').find((job) => job.id === id)?.body ?? '';
+
+    it("publish to npm from one workflow, from the kit's tag", () => {
+        expect(releases.map(([path]) => path)).toEqual([RELEASE]);
+        for (const name of PACKAGES)
+            expect(workflows.get(RELEASE)).toMatch(new RegExp(`^\\s+- '${name}-v\\*'\\s*$`, 'm'));
     });
 
     it('use no cache in any workflow that publishes to npm', () => {
@@ -422,6 +427,39 @@ describe('the workflows', () => {
                 .filter(([, text]) => !/^cache-mode: none\s*$/m.test(text))
                 .map(([path]) => path)
         ).toEqual([]);
+    });
+
+    it('publish the tarball CI packed, from its artifact and the checksum the oldest Node check reported', () => {
+        const publish = releaseJob('publish');
+        expect(publish).toMatch(/^\s+name: design-kit-package\s*$/m);
+        expect(publish).toMatch(
+            /^ {12}SHA256: \$\{\{ needs\.checks\.outputs\.package-sha256 \}\}$/m
+        );
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        expect(ci).toMatch(/^\s+name: design-kit-package\s*$/m);
+        expect(ci).toMatch(/^ {16}value: \$\{\{ jobs\.floor\.outputs\.sha256 \}\}$/m);
+    });
+
+    it('record only a stable release, and open the records only once they are recorded', () => {
+        expect(releaseJob('records')).toMatch(
+            /^ {8}if: needs\.agree\.outputs\.prerelease != 'true'$/m
+        );
+        expect(releaseJob('records-pull-request')).toMatch(/^\s+needs: \[agree, records\]\s*$/m);
+        expect(releaseJob('records-pull-request')).toMatch(
+            /^\s+if: needs\.records\.result == 'success'\s*$/m
+        );
+    });
+
+    it('stop a release while a change file is left beside its package', () => {
+        for (const name of PACKAGES)
+            expect(
+                existsSync(new URL(`../packages/${name}/changes/README.md`, import.meta.url)),
+                name
+            ).toBe(true);
+        expect(releaseJob('agree')).toMatch(/^\s+dir=packages\/design-kit\s*$/m);
+        expect(releaseJob('agree')).toMatch(
+            /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
+        );
     });
 
     it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
@@ -694,7 +732,7 @@ describe('the workflows', () => {
         const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
         const jobs = jobsOf(ci);
         const WRITERS = ['dependencies', 'dependencies-mac'];
-        const FRESH = ['floor', 'prose-check-floor', 'site'];
+        const FRESH = ['floor', 'site'];
         const KEY =
             /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
         const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
@@ -712,7 +750,7 @@ describe('the workflows', () => {
             expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
                 /^cache-mode: read\s*$/m
             );
-            expect(releases.length).toBeGreaterThan(1);
+            expect(releases.length).toBe(1);
             for (const [path, text] of releases) {
                 expect(text, path).toMatch(/^cache-mode: none\s*$/m);
                 const checks = jobsOf(text).find(({ body }) =>
@@ -892,5 +930,68 @@ describe('the workflows', () => {
         const [quoted] = stepsOf("    - run: npx playwright install\n      timeout-minutes: '3'");
         if (!quoted) throw new Error('expected a step');
         expect(hasOwnTimeLimit(quoted)).toBe(true);
+    });
+});
+
+describe('the release workflow', () => {
+    const text = workflows.get('.github/workflows/release.yml') ?? '';
+    const jobs = jobsOf(text);
+    const job = (id: string) => jobs.find((found) => found.id === id)?.body ?? '';
+
+    it('grants only read access to the repository by default', () => {
+        expect(text).toMatch(/^permissions:\n {4}contents: read\n/m);
+    });
+
+    it('runs one release at a time for a tag, never cancelling one under way', () => {
+        expect(text).toMatch(
+            /^concurrency:\n {4}group: release-\$\{\{ github\.ref \}\}\n {4}cancel-in-progress: false\n/m
+        );
+    });
+
+    it('releases only a commit on main', () => {
+        expect(job('agree')).toMatch(
+            /^ {18}if ! git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main; then\n {22}echo "the tagged commit is not on main"\n {22}exit 1\n/m
+        );
+    });
+
+    it('holds the npm environment and its publishing token in the publish job alone', () => {
+        expect(
+            jobs.filter(({ body }) => /^ {8}environment: npm$/m.test(body)).map(({ id }) => id)
+        ).toEqual(['publish']);
+        expect(job('publish')).toMatch(
+            /^ {8}permissions:\n {12}contents: read\n {12}id-token: write\n/m
+        );
+    });
+
+    it('stages with provenance, under next for a version with a hyphen and latest otherwise', () => {
+        const publish = job('publish');
+        expect(publish).toMatch(
+            /^ {18}tag=latest\n {18}\[ "\$PRERELEASE" = "true" \] && tag=next\n {18}npm stage publish "\$tarball" --provenance --access public --tag "\$tag"$/m
+        );
+        expect(job('agree')).toMatch(
+            /^ {22}\*-\*\) echo "prerelease=true" >> "\$GITHUB_OUTPUT" ;;$/m
+        );
+    });
+
+    it('pins every action it uses to a full commit', () => {
+        const uses = [...text.matchAll(/^\s+(?:- )?uses: (\S+)/gm)].map((match) => match[1] ?? '');
+        expect(uses.length).toBeGreaterThan(0);
+        expect(uses.filter((use) => !use.startsWith('./') && !/@[0-9a-f]{40}$/.test(use))).toEqual(
+            []
+        );
+    });
+
+    it('checks out without keeping the token in the repository', () => {
+        const checkouts = stepsOf(text).filter(({ text: step }) =>
+            /uses: actions\/checkout@/.test(step)
+        );
+        expect(checkouts.length).toBeGreaterThan(0);
+        expect(
+            checkouts.filter(({ text: step }) => !/^\s+persist-credentials: false$/m.test(step))
+        ).toEqual([]);
+    });
+
+    it("leaves each kit release the repository's latest, as GitHub marks it", () => {
+        expect(text).not.toMatch(/--latest/);
     });
 });

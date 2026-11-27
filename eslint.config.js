@@ -85,15 +85,6 @@ export default tseslint.config(
         },
     },
     {
-        // The prose check's exports are declarations, since the types written from its JSDoc keep
-        // a function's docs only on a declaration, and the published types are what a repository
-        // that installs it reads. Its helpers inside stay values, as everywhere else.
-        files: ['packages/prose-check/src/*.mjs'],
-        rules: {
-            'func-style': 'off',
-        },
-    },
-    {
         // The markup components draw markup alone, as record 20 has it, so they render the same on
         // a server and by hand. They live in the modules react.tsx gathers beside hooks.tsx, and
         // import no effect from React, while the hooks that attach the controls live in the modules
