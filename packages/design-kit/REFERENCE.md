@@ -2240,13 +2240,15 @@ a heading in the page's markup finds that heading. An id the widget's root does 
 request lands is looked for in the page ahead of the fallbacks, so a widget asks for a control it
 may not have drawn yet by passing the element or a function that returns it, not its id. Focus
 inside a closed shadow root reads as its host, so a request asked there with no `from` looks from
-the root the host sits in and finds no id inside the closed root. A widget in a closed root passes
-its own control as an element, not as an id, and may give its own control as `from`, which the
-request reads inside the closed root, so it lands while focus stays on that control. The form's
-refusal, a stepper and progress find the errors, hints and labels they read in their own element's
-root alone. A panel is found from its button's root outward, as an id is here, and listens on the
-document the button sits in. `activeOf()` from `./controls` returns what has focus, followed into
-each shadow root that holds it, for a page that asks later and passes `from` itself.
+the root the host sits in and finds no id inside the closed root, though `useFocusAfterDraw` given
+its target as an element inside the root reads where focus was through it, so its fallbacks given as
+ids are found there. A widget in a closed root passes its own control as an element, not as an id,
+and may give its own control as `from`, which the request reads inside the closed root, so it lands
+while focus stays on that control. The form's refusal, a stepper and progress find the errors, hints
+and labels they read in their own element's root alone. A panel is found from its button's root
+outward, as an id is here, and listens on the document the button sits in. `activeOf()` from
+`./controls` returns what has focus, followed into each shadow root that holds it, for a page that
+asks later and passes `from` itself.
 
 A request keeps where focus was inside a frame of the page's own origin as well, and compares where
 focus is as the document it was in sees it, while that document is still the one its frame shows: a
@@ -2396,11 +2398,15 @@ root reads focus there through the element it holds. So a dialog, `moveFocus`, a
 after the visitor moves into a field there, a panel, a stepper going read only or taken down, a
 form's refusal, a grid of cells, a table's pinned column, a theme switch and `useRoving` drawn
 inside the root work there as they do on the page, and so do `useFocusAfterDraw`, `useFormRefusal`
-and `useArrivalFocus`, though a visitor who moves to another control inside the root before one of
-them lands is read as still where they were, since a hook reads where focus was with no element of
-its own. A toast on the page hands focus back to the host, which takes no focus, so focus goes on to
-the main content, and a press inside the root reaches the page as a press on its host, which is no
-control, so the view it brings takes no focus.
+and `useArrivalFocus`, which read where focus was through their target where it is an element, the
+form a refusal is for, or their heading once it is drawn. So a visitor who moves to another control
+in the same closed root before one of them lands is left there. A target given as an id or a
+function reads focus as the host, as does focus inside another closed root or one nested in the
+widget's own, so a move made there before the request lands is read as no move. As a view first
+draws its heading is not drawn yet, so `useArrivalFocus` reads where focus was then as the host. A
+toast on the page hands focus back to the host, which takes no focus, so focus goes on to the main
+content, and a press inside the root reaches the page as a press on its host, which is no control,
+so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,

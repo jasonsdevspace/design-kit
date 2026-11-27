@@ -335,7 +335,12 @@ export const useFocusAfterDraw = (): FocusAfterDraw => {
     const afterCommit = useAfterCommit(true);
     return useCallback<FocusAfterDraw>(
         (target, options) => {
-            const { from, page } = focusWas(options?.from);
+            // Read through the target where it is an element, the one target that is an object,
+            // into a closed root it sits in.
+            const { from, page } = focusWas(
+                options?.from,
+                typeof target === 'object' ? target : null
+            );
             // Where focus was as the page sees it, read as the request is asked, since a late request
             // is made with no place focus was, which is where `moveFocus` would look for an id. An
             // id is looked for from there by the same walk `moveFocus` takes, in that root and then
@@ -407,7 +412,7 @@ export const useArrivalFocus = <Heading extends HTMLElement>(
         (seen.current === null || !Object.is(seen.current.key, key)) &&
         typeof document !== 'undefined'
     )
-        from.current = focusWas().from;
+        from.current = focusWas(undefined, heading.current).from;
     // Asks once for each key, since the effect runs again only when the key changes: as the view
     // first draws, by whether a press brought it, and as its key changes, whatever the last input,
     // since the page changes it on a press. The request is called off as the effect is cleaned up,
@@ -479,11 +484,12 @@ export const useFormRefusal = <Form extends HTMLElement>(
     // would point at and speak for is leaving with it.
     const afterCommit = useAfterCommit(false);
     // Where focus was as the refusal was asked for, not as the render that draws the errors
-    // commits, so a visitor who moved it since is not pulled back.
+    // commits, so a visitor who moved it since is not pulled back, read through the form it refuses
+    // for, into a closed shadow root that form sits in.
     const refuseThrough = useCallback(
-        (pick: () => Refuse | undefined): Refuse =>
+        (pick: () => Refuse | undefined, near: () => Form | undefined): Refuse =>
             (asked) => {
-                const { from } = focusWas(asked?.from);
+                const { from } = focusWas(asked?.from, near());
                 return afterCommit(() => pick()?.({ from }) ?? (() => undefined));
             },
         [afterCommit]
@@ -491,7 +497,11 @@ export const useFormRefusal = <Form extends HTMLElement>(
     // The page's own refusal goes through the newest form attached, and each form's own failed
     // submit through that form.
     const refuse = useMemo(
-        () => refuseThrough(() => [...refusers.values()].at(-1)),
+        () =>
+            refuseThrough(
+                () => [...refusers.values()].at(-1),
+                () => [...refusers.keys()].at(-1)
+            ),
         [refuseThrough, refusers]
     );
     const attachOne = useCallback(
@@ -514,7 +524,10 @@ export const useFormRefusal = <Form extends HTMLElement>(
                 // A refusal of its own, made once the errors the page sets are drawn.
                 invalid: (failures, shown) => {
                     latest.current.invalid(failures, shown);
-                    refuseThrough(() => refusers.get(form))();
+                    refuseThrough(
+                        () => refusers.get(form),
+                        () => form
+                    )();
                 },
             });
             refusers.set(form, handle);

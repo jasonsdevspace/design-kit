@@ -54,9 +54,12 @@ const STALE = 10_000;
  */
 export type FocusWas = { readonly from: Element | null; readonly page: Element | null };
 
-/** Where focus is as a request is asked, or where the page says it was, as a request keeps it. */
-export const focusWas = (given?: Element | null): FocusWas => {
-    const from = given === undefined ? deepActive() : given;
+/**
+ * Where focus is as a request is asked, or where the page says it was, as a request keeps it, read
+ * through the node given, which a piece holds, into each closed shadow root around it.
+ */
+export const focusWas = (given?: Element | null, near?: Node | null): FocusWas => {
+    const from = given === undefined ? deepActive(near) : given;
     return { from, page: seen(from, document) };
 };
 
