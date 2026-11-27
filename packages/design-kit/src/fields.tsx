@@ -10,6 +10,13 @@ import {
 
 import { ChoiceLabel, filled, spaced } from './react-parts.js';
 
+/*
+ * The fields and their shared parts: the label, the hint, the error and the action beside a
+ * control, and the input, select, textarea, value and choice fields drawn from them. The checkbox
+ * field and the stepper draw their fields from these parts, so a page that draws either sends this
+ * module too.
+ */
+
 /** What a field draws around its control. */
 export type FieldParts = {
     /**

@@ -8,7 +8,9 @@ import { useLiveRef } from './hook-ref.js';
 import { byIdOutward, focusWas, hearClosed, pressedNear } from './request.js';
 
 /*
- * The hooks that move focus: once a change is drawn, and as a view arrives.
+ * The hooks that move focus, once the change that asks is drawn and as a view arrives. They make
+ * their request after a commit by the module they share with the form's refusal, so a page that
+ * moves focus and refuses no form sends no form code.
  */
 
 /** Moves focus to a control once the change that asked for it is drawn, as `moveFocus` does. */

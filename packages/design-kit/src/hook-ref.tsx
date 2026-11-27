@@ -3,7 +3,8 @@
 import { type RefCallback, useCallback, useState } from 'react';
 
 /*
- * The ref the kit's hooks attach through, as the hooks' module describes it.
+ * The ref every hook attaches through, which makes a controller for each element it lands on and
+ * takes that element's part down as it leaves.
  */
 
 /** An element a hook holds: the signal its attach was given, and what takes its part down. */

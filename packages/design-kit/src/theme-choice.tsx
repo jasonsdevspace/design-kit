@@ -3,6 +3,11 @@ import { type ReactNode, type Ref, useId } from 'react';
 import { ChoiceLabel, filled, spaced } from './react-parts.js';
 import { THEME_CHOICES, type ThemeChoice } from './theme.js';
 
+/*
+ * The theme switch's markup, its choices drawn by the label a choice field's choices are drawn by,
+ * apart from the fields, so a page that draws the switch sends none of them.
+ */
+
 /** The word each theme choice is shown by. */
 const CHOICE_WORDS: Readonly<Record<ThemeChoice, string>> = {
     system: 'System',

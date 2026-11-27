@@ -6,7 +6,7 @@ that return their cleanup and the focus requests around an unmount, by record 23
 which the hooks take their part down at once and the kit keeps the control, and in 0.9.4 for a form
 React still draws, which refuses only through `useFormRefusal`, while an attached stepper in it
 keeps its own error and the observer that puts it back, the one exception to one owner for each node
-and attribute of a field
+and attribute of a field, and in 0.9.5 for hooks and components in modules a bundler can leave out
 
 ## Context
 
@@ -56,8 +56,9 @@ page.
 
 Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `useRoving` for
 `attachRoving`, or for the part a page calls where the attach does more, `useFormRefusal` for
-`attachForm`, and lives in a module of its own that `hooks.tsx` gathers, which `./react` exports beside the markup, so a site's bundler sends a page only the hooks it uses. Each hook follows
-the same rules.
+`attachForm`. Each hook, or the few of one kind, lives in a module of its own that `hooks.tsx`
+gathers, which `./react` exports beside the markup, so a site's bundler sends a page only the hooks
+it uses. Each hook follows the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
   hook sees each element as it arrives. The ref makes an `AbortController` as each element arrives,
@@ -183,9 +184,9 @@ change, the buttons' `aria-disabled`, which React never writes, and the words of
 empty. The stepper's error follows its value's `validity` rather than an error React draws, so a
 value the browser refuses keeps its error.
 
-The hooks import `./controls`, and the markup components, in `react.tsx` and the modules it
-gathers, import no effect from React, so they still render on a server and draw the same markup a
-page writes by hand.
+The hooks import `./controls`, and the markup components, in the modules `react.tsx` gathers beside
+`hooks.tsx`, import no effect from React and no hook's module, so they still render on a server and
+draw the same markup a page writes by hand.
 
 ## Consequences
 
@@ -212,8 +213,10 @@ page writes by hand.
 
 The paths are in `packages/design-kit`, and that of the budget in the repository's `scripts`.
 
-- The lint holds `src/react.tsx` and each module of markup components it gathers to importing no
-  effect from React, so a markup component that reaches for one fails the checks.
+- The lint holds every module of markup components, the modules `src/react.tsx` gathers beside
+  `src/hooks.tsx`, to importing no effect from React, so a markup component that reaches for one
+  fails the checks, a component in a new module among them. `src/controls.test.ts` holds those
+  modules to importing no hook's module.
 - `src/react.test.tsx` renders the markup components with `renderToStaticMarkup` in plain Node,
   which fails if one reaches for the browser as it renders.
 - Each hook adds browser tests in `e2e/`, since the unit tests run in Node with no document. They
@@ -265,3 +268,7 @@ The paths are in `packages/design-kit`, and that of the budget in the repository
   error, drawn, described, marked invalid and said once.
 - `scripts/controls.test.ts` measures every function a page can import from `./controls`, so the
   behavior the hooks wrap is weighed where it lives.
+- `scripts/react-entry.test.ts` bundles the React entry from the package as npm ships it. It builds
+  a site of two pages together and finds no form, group of cells, stepper, toast, checkbox field or
+  plain field on a page that keeps only a status line, a skip link and the theme switch, and finds a
+  page alone that keeps a status line or a busy button free of the other pieces.

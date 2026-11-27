@@ -2,6 +2,11 @@ import { type ComponentPropsWithRef, type ReactNode } from 'react';
 
 import { filled, spaced } from './react-parts.js';
 
+/*
+ * The callout, a message in one of four tones with its heading, said as it arrives where a page
+ * makes it live as a status or an alert.
+ */
+
 /**
  * What a callout is about: news, something that went right, something that went wrong, or
  * something that needs care before it goes wrong, such as stock running low.

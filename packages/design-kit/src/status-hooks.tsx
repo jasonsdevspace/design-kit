@@ -15,7 +15,7 @@ import { useLiveRef } from './hook-ref.js';
 /*
  * The status line the hooks that speak say their words on: the provider that draws it, the
  * function that says on it, and what a hook that speaks hands its attach. A page that keeps only a
- * status line imports this module and none of the other hooks.
+ * status line sends this module and the ref it attaches through, and none of the other hooks.
  */
 
 /** What a status provider hands the parts of the page under it. */

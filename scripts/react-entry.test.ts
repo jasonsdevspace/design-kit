@@ -7,16 +7,16 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /*
- * What a page's bundler sends for a few names of the React entry, built from the package as npm
- * ships it, so the bundler reads the manifest's `sideEffects` as it does in a page's install. A
- * page that keeps a status line and nothing else sends none of the toast, the stepper, the table,
- * the form or the group of cells, since each is a module a bundler can leave out when no name of
- * it is imported.
+ * What a page's bundler sends from the React entry, built from the package as npm ships it, so the
+ * bundler reads the manifest's `sideEffects` as it does in a page's install. A page sends only the
+ * hooks and the markup it names and the pieces they attach, alone and as one page of a site whose
+ * other pages use the rest, since each hook, or the few of one kind, and each component, or the few
+ * that share their parts, is a module a bundler leaves out of a chunk a page does not load.
  */
 
 const FOLDER = fileURLToPath(new URL('../packages/design-kit/', import.meta.url));
 
-/** The attach functions of the pieces a page that names none of them never runs. */
+/** The attach functions of the pieces a page leaves out, each found in the code it is sent. */
 const PIECES = ['attachToast', 'attachStepper', 'attachTable', 'attachForm', 'attachRoving'];
 
 /** The package laid out as npm ships it: its manifest and the compiled `dist`. */
@@ -91,8 +91,8 @@ const sentFor = async (
 /**
  * The modules of the package each page of a site sends, where the pages are built together and
  * each imports the names given from the React entry, as a site with a page that keeps only a status
- * line beside screens that refuse a form and draw a stepper builds them. A module two pages share
- * goes into a chunk both load, so a module that holds more than one page needs is sent whole.
+ * line beside screens that refuse a form and draw a stepper builds them. A module both pages import
+ * goes into a chunk both load, with every part of it the site uses.
  */
 const modulesPerPage = async (
     pages: readonly (readonly string[])[]
@@ -174,7 +174,7 @@ describe('the React entry, bundled for a page', () => {
             )
         ).toEqual([]);
         // Nor the markup of the pieces it draws none of: a stepper's, a toast's, a checkbox field's,
-        // told by the words it draws its state in, and a plain field's.
+        // told by the words it draws its state in, and a plain field's, told by the textarea's class.
         expect(
             ['dk-stepper', 'dk-toast', 'onWords', 'dk-textarea'].filter((name) =>
                 status?.code.includes(name)

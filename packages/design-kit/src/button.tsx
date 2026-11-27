@@ -2,6 +2,12 @@ import { type ComponentPropsWithRef } from 'react';
 
 import { spaced } from './react-parts.js';
 
+/*
+ * The button, in each of its kinds, which carries the busy words `attachBusy` says while what its
+ * press started runs. A page that draws a button sends this module alone of the fields and the
+ * other pieces.
+ */
+
 type NativeButton = Omit<
     ComponentPropsWithRef<'button'>,
     'style' | 'disabled' | 'aria-disabled' | 'aria-pressed'

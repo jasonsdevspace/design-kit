@@ -6,6 +6,11 @@ import {
     type ReactNode,
 } from 'react';
 
+/*
+ * The parts every markup component uses: whether a slot holds something to draw, a list of names an
+ * attribute holds, and the label a choice and the theme switch share.
+ */
+
 /**
  * Whether a slot holds something to draw: a demo's `cond && <X />` leaves false or null, an empty
  * string draws nothing either, and nor does a list or a fragment of only those. Every slot a

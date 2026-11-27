@@ -1,4 +1,5 @@
 import { getEventListeners } from 'node:events';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +12,37 @@ import * as controls from './controls.js';
  * bundler sends it.
  */
 
+/** The modules that hold a hook, which the markup components never import. */
+const HOOK_MODULE = /(?:-hooks?|^after-commit|^hook-ref|^hooks)\.tsx$/;
+
+/** The modules that only gather others, the hooks' and the whole React entry's. */
+const BARRELS = new Set(['hooks.tsx', 'react.tsx']);
+
+/** The package's React modules, each a `.tsx` file that is not a test. */
+const reactModules = (): string[] =>
+    readdirSync(new URL('.', import.meta.url)).filter(
+        (file) => file.endsWith('.tsx') && !/\.test(ing)?\.tsx$/.test(file)
+    );
+
+/** Each module of the kit's own a file imports or exports from, and whether only types are taken. */
+const importsOf = (file: string): { path: string; typeOnly: boolean }[] =>
+    [
+        ...readFileSync(new URL(`./${file}`, import.meta.url), 'utf8').matchAll(
+            /^(import|export)(\s+type)?\b([^;]*?)['"](\.\/[\w-]+\.js)['"]/gms
+        ),
+    ].map(([, , whole, names = '', path = '']) => {
+        const inBraces = /\{([^}]*)\}/.exec(names)?.[1];
+        const typeOnly =
+            whole !== undefined ||
+            (inBraces
+                ?.split(',')
+                .map((name) => name.trim())
+                .filter((name) => name !== '')
+                .every((name) => name.startsWith('type ')) ??
+                false);
+        return { path, typeOnly };
+    });
+
 describe('the controls', () => {
     it('load in plain Node without reaching for the browser', async () => {
         const controls = await import('./controls.js');
@@ -20,26 +52,14 @@ describe('the controls', () => {
         for (const value of Object.values(controls)) expect(typeof value).toBe('function');
     });
 
-    // The hooks also take where focus was and the walk an id is found by from the focus requests'
-    // own module, the one the entry gathers, so the same file and the same state serve both. Every
-    // React module is read, each hook's module of its own among them, and may import the others.
-    it('reach the React modules only through the entry, so a page holds one copy of the state', async () => {
-        const { readdirSync, readFileSync } = await import('node:fs');
-        const modules = readdirSync(new URL('.', import.meta.url)).filter(
-            (file) => file.endsWith('.tsx') && !/\.test(ing)?\.tsx$/.test(file)
-        );
-        expect(modules).toEqual(
-            expect.arrayContaining(['react.tsx', 'hooks.tsx', 'status-hooks.tsx'])
-        );
-        const imported = modules.flatMap((file) =>
-            [
-                ...readFileSync(new URL(`./${file}`, import.meta.url), 'utf8').matchAll(
-                    /^(?:import|export)\b[^;]*?['"](\.\/[\w-]+\.js)['"]/gms
-                ),
-            ].map(([, path]) => path ?? '')
-        );
+    // The hooks take where focus was and the walk an id is found by from the focus requests' own
+    // module, the one the entry gathers, so the same file and the same state serve both. Every
+    // React module is read: the hooks and the barrels may import each other, the entry, the focus
+    // requests' module and the theme, and nothing else of the kit's.
+    it('reach the React modules only through the entry, so a page holds one copy of the state', () => {
+        const imported = reactModules().flatMap((file) => importsOf(file).map(({ path }) => path));
         expect(imported).toContain('./controls.js');
-        const react = modules.map((file) => `./${file.replace(/\.tsx$/, '.js')}`);
+        const react = reactModules().map((file) => `./${file.replace(/\.tsx$/, '.js')}`);
         expect(
             [...new Set(imported)].filter(
                 (path) =>
@@ -47,6 +67,26 @@ describe('the controls', () => {
                     !['./controls.js', './request.js', './theme.js'].includes(path)
             )
         ).toEqual([]);
+    });
+
+    // A markup component draws markup alone, so a module of components imports only other
+    // modules of components, their shared parts and the theme's choices, and a type from anywhere,
+    // never a hook's module, which would bring its effects into markup a server draws.
+    it('keep the modules of markup components to markup, never a hook', () => {
+        const markup = reactModules().filter(
+            (file) => !HOOK_MODULE.test(file) && !BARRELS.has(file)
+        );
+        expect(markup).toEqual(expect.arrayContaining(['react-parts.tsx', 'stepper-field.tsx']));
+        const allowed = new Set([
+            ...markup.map((file) => `./${file.replace(/\.tsx$/, '.js')}`),
+            './theme.js',
+        ]);
+        const reached = markup.flatMap((file) =>
+            importsOf(file)
+                .filter(({ path, typeOnly }) => !typeOnly && !allowed.has(path))
+                .map(({ path }) => `${file} imports ${path}`)
+        );
+        expect(reached).toEqual([]);
     });
 
     it('returns the function a status line was first attached with when it is attached again', async () => {

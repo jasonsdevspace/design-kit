@@ -2,6 +2,11 @@ import { type ReactNode } from 'react';
 
 import { filled } from './react-parts.js';
 
+/*
+ * The page chrome a demo draws around its page: the skip link, the strip above the page that says
+ * whose demo it is, and the footer below it, with the addresses they link to.
+ */
+
 /** Where the portfolio is, and the section of it that lists the work. */
 export const PORTFOLIO_URL = 'https://jasonsdevspace.com/';
 export const PORTFOLIO_WORK_URL = 'https://jasonsdevspace.com/#work';

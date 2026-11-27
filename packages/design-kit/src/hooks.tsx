@@ -14,8 +14,9 @@
  */
 
 /*
- * Each hook is a module of its own, which this one gathers, so a site's bundler sends a page only the
- * hooks it imports and the pieces they attach, even where another page of the site imports the rest.
+ * Each hook, or the few of one kind, is a module of its own, which this one gathers, so a site's
+ * bundler sends a page only the hooks it imports and the pieces they attach, even where another
+ * page of the site imports the rest.
  */
 
 export { useBusy } from './busy-hook.js';

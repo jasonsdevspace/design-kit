@@ -2,6 +2,11 @@ import { type Ref } from 'react';
 
 import { spaced } from './react-parts.js';
 
+/*
+ * The toast's markup, a message line with an action and a Close, apart from the other pieces so a
+ * page that shows no toast sends none of it.
+ */
+
 /**
  * A toast's markup: the place its message is drawn, hidden from a screen reader, and the status
  * line it is said and read on, out of sight, both empty, and its action's button and close button,

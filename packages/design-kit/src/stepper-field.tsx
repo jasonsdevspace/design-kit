@@ -3,6 +3,11 @@ import { type ComponentPropsWithRef, type ReactNode } from 'react';
 import { Field, type FieldParts, useControl } from './fields.js';
 import { spaced } from './react-parts.js';
 
+/*
+ * The stepper field, a number with buttons that step it and a line that says its value, drawn from
+ * the fields' parts, apart from them so a page that draws no stepper sends none of its own markup.
+ */
+
 /** What a stepper adds to a field's props. */
 type StepperOwn = {
     /** The least value. */

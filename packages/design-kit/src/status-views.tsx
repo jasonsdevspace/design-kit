@@ -2,6 +2,13 @@ import { type ReactNode, type Ref, useId } from 'react';
 
 import { filled, spaced } from './react-parts.js';
 
+/*
+ * The markup the status line, the copy button and progress draw, which say what happens on the
+ * page: the copy button beside the status line its copy is said on, and progress beside the line
+ * its steps are said on. Each is a few elements with no parts of their own, so they share one
+ * module.
+ */
+
 /**
  * A copy button's markup, named for what it copies. It is hidden until `attachCopyButton` from
  * `@jasonsdevspace/design-kit/controls` shows it, and its three words share one cell, so it keeps

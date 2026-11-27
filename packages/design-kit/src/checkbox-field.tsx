@@ -3,6 +3,11 @@ import { type ComponentPropsWithRef } from 'react';
 import { Field, FieldError, FieldHint, type FieldParts, Labeled, useControl } from './fields.js';
 import { spaced } from './react-parts.js';
 
+/*
+ * The checkbox field, one setting on or off with its label and hint and no group around it, drawn
+ * from the fields' parts, apart from the other fields so a page that draws none sends none of it.
+ */
+
 /** The words a read-only checkbox field draws for each state. */
 type CheckboxWords = {
     /** The words a read-only field shows while it is checked, "On" unless given. */
