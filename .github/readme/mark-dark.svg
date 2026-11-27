@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+    <title>The design kit</title>
+    <!--
+        The kit's mark in the dark theme, for the README, which shows it by the viewer's GitHub theme
+        rather than the system's, so each theme has a file of its own.
+    -->
+    <style>
+        .ground { fill: #8fb0ff; }
+        .tile { fill: #121212; }
+    </style>
+    <rect class="ground" width="32" height="32" rx="7" />
+    <rect class="tile" x="6" y="6" width="9" height="9" rx="2.5" />
+    <rect class="tile" x="17" y="6" width="9" height="9" rx="2.5" fill-opacity="0.55" />
+    <rect class="tile" x="6" y="17" width="9" height="9" rx="2.5" fill-opacity="0.55" />
+    <circle class="tile" cx="21.5" cy="21.5" r="4.5" />
+</svg>
