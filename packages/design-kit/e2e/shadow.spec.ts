@@ -1124,6 +1124,34 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its key c
     expect(errors).toEqual([]);
 });
 
+test('focuses a useArrivalFocus heading inside a closed shadow root as its view first draws by a press, and leaves focus where it moved there first', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInClosed(page, 'open-only');
+    await expect.poll(() => focusedInClosed(page)).toBe('view-heading');
+    await openClosedHooks(page);
+    await pressInClosed(page, 'open-move');
+    expect(await focusedInClosed(page)).toBe('view-other');
+    await frames(page, 10);
+    expect(await focusedInClosed(page)).toBe('view-other');
+    expect(errors).toEqual([]);
+});
+
+test('leaves focus on a field a view inside a closed shadow root focuses itself as it first draws, above or below its useArrivalFocus heading', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    for (const kind of ['field-above', 'field-below']) {
+        const errors = await openClosedHooks(page);
+        await pressInClosed(page, `open-${kind}`);
+        await frames(page, 10);
+        expect(await focusedInClosed(page), kind).toBe('view-field');
+        expect(errors).toEqual([]);
+    }
+});
+
 test('focuses the first field in error of a useFormRefusal form inside a closed shadow root, and leaves focus where it moved there before a refusal lands', async ({
     page,
 }) => {

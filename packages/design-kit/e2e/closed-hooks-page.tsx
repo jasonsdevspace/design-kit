@@ -8,7 +8,9 @@ import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react
  * rather than the package: a component that asks for focus on its target, by one button with
  * nothing more and by another that then moves focus to a second button before the request lands,
  * as a visitor who moves on would, and a round whose heading takes focus as its key changes, by
- * one button with nothing more and by another after which focus moves on once the round is drawn.
+ * one button with nothing more and by another after which focus moves on once the round is drawn,
+ * and a view a press brings, drawn for the first time, whose heading takes focus unless the visitor
+ * moves on once it is drawn or the view focuses a field of its own above or below its heading.
  */
 
 const Ask = () => {
@@ -88,6 +90,55 @@ const Round = () => {
     );
 };
 
+/** How the view a press brings is drawn: plain, with the visitor moving on, or with a field of its own. */
+type ViewKind = 'only' | 'move' | 'field-above' | 'field-below';
+
+/** A view drawn for the first time, whose heading takes focus as it arrives by a press. */
+const View = ({ kind, other }: { kind: ViewKind; other: HTMLButtonElement | null }) => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('view');
+    // The visitor moves on once the view is drawn, after the hook read where focus was and before
+    // its heading takes focus.
+    useLayoutEffect(() => {
+        if (kind === 'move') other?.focus();
+    }, [kind, other]);
+    const field = <input id="view-field" aria-label="Name" autoFocus />;
+    return (
+        <section aria-label="View">
+            {kind === 'field-above' ? field : null}
+            <h2 id="view-heading" ref={heading}>
+                The view
+            </h2>
+            {kind === 'field-below' ? field : null}
+        </section>
+    );
+};
+
+/** Buttons that each bring the view, drawn for the first time, and a control to move on to. */
+const Opener = () => {
+    const [kind, setKind] = useState<ViewKind | null>(null);
+    const [other, setOther] = useState<HTMLButtonElement | null>(null);
+    return (
+        <>
+            {(['only', 'move', 'field-above', 'field-below'] as const).map((each) => (
+                <button
+                    key={each}
+                    type="button"
+                    id={`open-${each}`}
+                    onClick={() => {
+                        setKind(each);
+                    }}
+                >
+                    Open the view, {each}
+                </button>
+            ))}
+            <button type="button" id="view-other" ref={setOther}>
+                Elsewhere
+            </button>
+            {kind === null ? null : <View key={kind} kind={kind} other={other} />}
+        </>
+    );
+};
+
 /**
  * A form whose fields' own failed submit focuses the first in error, and whose page refusal, asked
  * by a button that then moves focus to another field once the errors are drawn, leaves it there.
@@ -163,6 +214,7 @@ createRoot(holder).render(
     <>
         <Ask />
         <Round />
+        <Opener />
         <Seat />
         <Rows />
     </>
