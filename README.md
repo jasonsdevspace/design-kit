@@ -571,7 +571,7 @@ npm run bench:pages
   `SECURITY.md`, the issue templates for a piece of work, a parent issue and a bug in
   `ISSUE_TEMPLATE/`, the pull request template in `pull_request_template.md`, the README's mark and
   picture in `readme/`, the weekly dependency and action updates in `dependabot.yml`, and CI and
-  deploy, release and the pull request check in `workflows/`.
+  deploy, release, the pull request check and the Dependabot merge in `workflows/`.
 
 </details>
 
