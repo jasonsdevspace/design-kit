@@ -51,8 +51,8 @@ merged, the browser tests and the Lighthouse audit among them.
 release reaches npm". Around it, a maintainer:
 
 - bumps the version in `packages/design-kit/package.json`, turns the `## Unreleased` heading in its
-  `CHANGELOG.md` into `## VERSION`, or adds that heading where there is none, and points the
-  package README's links to the reference at the new version's tag, in a pull request of its own.
+  `CHANGELOG.md` into `## VERSION`, or adds that heading where there is none, and points every
+  link in the package README pinned to a tag at the new version's tag, in a pull request of its own.
   The entry folds in every change file under `packages/design-kit/changes`, which that pull request
   deletes, opens with an **Upgrading.** bullet when a page has to change anything, and files the
   rest under the lead-ins the entries before it use

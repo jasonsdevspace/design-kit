@@ -86,7 +86,17 @@ describe('the community files', () => {
             ([, link = '', anchor]) => {
                 // The path is left encoded, since `at` builds a URL and reading it decodes it once.
                 const heading = anchor === undefined ? undefined : decoded(anchor);
-                const target = link === '' ? file : posix.join(posix.dirname(file), link);
+                // GitHub reads a link from the file's own folder, or from the root when it opens
+                // with a slash, and serves nothing above the root.
+                const target =
+                    link === ''
+                        ? file
+                        : posix.normalize(
+                              link.startsWith('/')
+                                  ? link.slice(1)
+                                  : posix.join(posix.dirname(file), link)
+                          );
+                if (target.startsWith('..')) return [link];
                 if (heading === undefined) return exists(target) ? [] : [target];
                 if (!isFile(target)) return [`${target}#${heading}`];
                 return headingIds(read(target)).includes(heading) ? [] : [`${target}#${heading}`];

@@ -424,8 +424,8 @@ options rejected, what the choice costs, and the test behind it.
 
 ## Dev setup
 
-How to contribute is in [CONTRIBUTING.md](.github/CONTRIBUTING.md), and what the kit holds itself to for
-accessibility, and how to report a barrier, is in [ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
+How to contribute is in [CONTRIBUTING.md](.github/CONTRIBUTING.md), and what the kit holds itself
+to for accessibility, and how to report a barrier, is in [ACCESSIBILITY.md](docs/ACCESSIBILITY.md).
 
 You need [Node.js 24](https://nodejs.org/) and Git. The version is in `.nvmrc`, so `nvm use`
 picks it.
@@ -490,7 +490,8 @@ a staged version goes live only when it is promoted on the package page. The job
 installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
 fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
 prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
-The steps a maintainer takes around a release are in [CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
+The steps a maintainer takes around a release are in
+[CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
 
 </details>
 
@@ -539,6 +540,8 @@ docs/
 ├── CONTRIBUTING.md   how a change is made, checked and released
 ├── SECURITY.md       how to report a security issue
 ├── ISSUE_TEMPLATE/   the templates for a piece of work, a parent issue and a bug
+├── pull_request_template.md  what a pull request's description holds
+├── dependabot.yml    the weekly dependency and action updates
 └── workflows/        CI and deploy, release, and the pull request check
 ```
 
