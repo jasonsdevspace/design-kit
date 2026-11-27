@@ -57,17 +57,18 @@ const BUDGET = 26 * 1024;
  * one more function of the usual size, the median of what each function adds to every other, from
  * the same layout, the upper of the middle two where the count is even, rounded up to the next
  * quarter of a kilobyte. Set so in 0.9.4, and for `attachForm` alone again once a limit kept to the
- * field's calendar and digits, a year written in full and steps counted from the browser's step base
- * left too little room for another, again once one view of focus that a focus request compares
- * through did, and again once a form inside a frame the page drives did, and for the module imported
- * bare and `attachTable` alone again once the presses and keys heard inside a frame of the page's
- * own origin did, and for all three again once hearing a frame as focus enters it and its next page
- * as it begins did.
+ * field's calendar and digits, a year written in full and steps counted from the browser's step
+ * base left too little room for another, again once one view of focus that a focus request compares
+ * through did, and again once a form inside a frame the page drives did, and for the module
+ * imported bare and `attachTable` alone again once the presses and keys heard inside a frame of the
+ * page's own origin did, and for all three again once hearing a frame as focus enters it and its
+ * next page as it begins did, and for `attachForm` alone again in 0.9.5 once the presses heard
+ * inside a closed shadow root, each with the control it was made on, did.
  */
 const ENTRY_BUDGETS = [
     ['the module imported bare', [], 2.25 * 1024],
     ['attachTable alone', ['attachTable'], 3.5 * 1024],
-    ['attachForm alone', ['attachForm'], 10.5 * 1024],
+    ['attachForm alone', ['attachForm'], 11.25 * 1024],
 ] as const;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */

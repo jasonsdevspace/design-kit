@@ -2316,19 +2316,20 @@ title is heard before a section of it. They are ordered as the page draws them, 
 roots, so where one of them sits inside a shadow root and another outside it, the first in the page
 takes focus in every engine. Focus a view placed itself as it drew, as a field with autofocus does,
 is never taken. Where focus was is read inside an open shadow root too, so a press on a widget's own
-button there brings focus to the heading, and a press inside a closed one does not, as [Where focus
-can be](#where-focus-can-be) has it.
+button there brings focus to the heading, and a press inside a closed one does once the kit has read
+focus there, as [Where focus can be](#where-focus-can-be) has it.
 
-The presses and keys heard are the page's and those inside each frame of the page's own origin the
-page can reach, at any depth, an object, a frame the page writes and a frame of the page's origin
-held inside one of another origin among them. So a press on a control inside such a frame brings
-focus to the heading of the view it opens, and a key that moves or types inside one leaves no press
-standing, as on the page. A frame is heard as the controls load, as it loads a page, and as focus
-enters it by a click or a key, before the click that moved it lands, a frame inside an open shadow
-root and one whose page is still loading among them. A frame's next page of the page's own origin is
-heard as it begins, before its load, so a form sent inside a frame is followed to the page it
-brings. After a page of another origin, the frame's next page is heard from its load, as on the
-return from a bank's check. A frame the page writes with `open()` is heard from its `close()`.
+The presses and keys heard are the page's, those inside each closed shadow root the kit has read
+focus in, and those inside each frame of the page's own origin the page can reach, at any depth, an
+object, a frame the page writes and a frame of the page's origin held inside one of another origin
+among them. So a press on a control inside such a frame brings focus to the heading of the view it
+opens, and a key that moves or types inside one leaves no press standing, as on the page. A frame is
+heard as the controls load, as it loads a page, and as focus enters it by a click or a key, before
+the click that moved it lands, a frame inside an open shadow root and one whose page is still
+loading among them. A frame's next page of the page's own origin is heard as it begins, before its
+load, so a form sent inside a frame is followed to the page it brings. After a page of another
+origin, the frame's next page is heard from its load, as on the return from a bank's check. A frame
+the page writes with `open()` is heard from its `close()`.
 
 A frame of another origin, one sandboxed without `allow-same-origin` and one inside a closed shadow
 root show the page no document, so nothing inside them is heard. Where focus enters one from the
@@ -2402,11 +2403,14 @@ and `useArrivalFocus`, which read where focus was through their target where it 
 form a refusal is for, or their heading once it is drawn. So a visitor who moves to another control
 in the same closed root before one of them lands is left there. A target given as an id or a
 function reads focus as the host, as does focus inside another closed root or one nested in the
-widget's own, so a move made there before the request lands is read as no move. As a view first
-draws its heading is not drawn yet, so `useArrivalFocus` reads where focus was then as the host. A
-toast on the page hands focus back to the host, which takes no focus, so focus goes on to the main
-content, and a press inside the root reaches the page as a press on its host, which is no control,
-so the view it brings takes no focus.
+widget's own, so a move made there before the request lands is read as no move. A toast on the page
+hands focus back to the host, which takes no focus, so focus goes on to the main content. A press
+inside the root is heard once the kit has read focus there, as a piece in it does when it opens,
+closes or is asked for focus, a hook does when it asks, and `useArrivalFocus` does as its heading is
+drawn. A view that press draws for the first time reads where focus was through the control pressed,
+so its `useArrivalFocus` heading takes focus and a visitor who moves on first is left where they
+went. The first press in a widget the kit has not read focus in yet reaches the page as a press on
+its host, which is no control, so the view it brings takes no focus.
 
 A page sees nothing inside a frame of another origin. A dialog or a toast hands focus back to the
 frame rather than to the control in it, and Firefox, which will not focus such a frame from a key,
