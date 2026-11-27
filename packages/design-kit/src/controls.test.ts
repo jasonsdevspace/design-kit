@@ -21,20 +21,32 @@ describe('the controls', () => {
     });
 
     // The hooks also take where focus was and the walk an id is found by from the focus requests'
-    // own module, the one the entry gathers, so the same file and the same state serve both.
+    // own module, the one the entry gathers, so the same file and the same state serve both. Every
+    // React module is read, each hook's module of its own among them, and may import the others.
     it('reach the React modules only through the entry, so a page holds one copy of the state', async () => {
-        const { readFileSync } = await import('node:fs');
-        const imported = ['./react.tsx', './hooks.tsx'].flatMap((file) =>
+        const { readdirSync, readFileSync } = await import('node:fs');
+        const modules = readdirSync(new URL('.', import.meta.url)).filter(
+            (file) => file.endsWith('.tsx') && !/\.test(ing)?\.tsx$/.test(file)
+        );
+        expect(modules).toEqual(
+            expect.arrayContaining(['react.tsx', 'hooks.tsx', 'status-hooks.tsx'])
+        );
+        const imported = modules.flatMap((file) =>
             [
-                ...readFileSync(new URL(file, import.meta.url), 'utf8').matchAll(
+                ...readFileSync(new URL(`./${file}`, import.meta.url), 'utf8').matchAll(
                     /^(?:import|export)\b[^;]*?['"](\.\/[\w-]+\.js)['"]/gms
                 ),
-            ].map(([, path]) => path)
+            ].map(([, path]) => path ?? '')
         );
         expect(imported).toContain('./controls.js');
-        expect(new Set(imported)).toEqual(
-            new Set(['./controls.js', './hooks.js', './request.js', './theme.js'])
-        );
+        const react = modules.map((file) => `./${file.replace(/\.tsx$/, '.js')}`);
+        expect(
+            [...new Set(imported)].filter(
+                (path) =>
+                    !react.includes(path) &&
+                    !['./controls.js', './request.js', './theme.js'].includes(path)
+            )
+        ).toEqual([]);
     });
 
     it('returns the function a status line was first attached with when it is attached again', async () => {

@@ -56,7 +56,7 @@ page.
 
 Option C. A hook is named for its attach, `useStatus` for `attachStatus` and `useRoving` for
 `attachRoving`, or for the part a page calls where the attach does more, `useFormRefusal` for
-`attachForm`, and lives in `hooks.tsx`, which `./react` exports beside the markup. Each hook follows
+`attachForm`, and lives in a module of its own that `hooks.tsx` gathers, which `./react` exports beside the markup, so a site's bundler sends a page only the hooks it uses. Each hook follows
 the same rules.
 
 - **It attaches through a callback ref it returns,** so a page puts the ref on the element and the
@@ -183,8 +183,9 @@ change, the buttons' `aria-disabled`, which React never writes, and the words of
 empty. The stepper's error follows its value's `validity` rather than an error React draws, so a
 value the browser refuses keeps its error.
 
-`hooks.tsx` imports `./controls`, and `react.tsx` imports no effect from React, so the markup
-components still render on a server and draw the same markup a page writes by hand.
+The hooks import `./controls`, and the markup components, in `react.tsx` and the modules it
+gathers, import no effect from React, so they still render on a server and draw the same markup a
+page writes by hand.
 
 ## Consequences
 
@@ -211,8 +212,8 @@ components still render on a server and draw the same markup a page writes by ha
 
 The paths are in `packages/design-kit`, and that of the budget in the repository's `scripts`.
 
-- The lint holds `src/react.tsx` to importing no effect from React, so a markup component that
-  reaches for one fails the checks.
+- The lint holds `src/react.tsx` and each module of markup components it gathers to importing no
+  effect from React, so a markup component that reaches for one fails the checks.
 - `src/react.test.tsx` renders the markup components with `renderToStaticMarkup` in plain Node,
   which fails if one reaches for the browser as it renders.
 - Each hook adds browser tests in `e2e/`, since the unit tests run in Node with no document. They

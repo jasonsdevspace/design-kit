@@ -94,7 +94,9 @@ const sentFor = async (
  * line beside screens that refuse a form and draw a stepper builds them. A module two pages share
  * goes into a chunk both load, so a module that holds more than one page needs is sent whole.
  */
-const modulesPerPage = async (pages: readonly (readonly string[])[]): Promise<string[][]> => {
+const modulesPerPage = async (
+    pages: readonly (readonly string[])[]
+): Promise<{ modules: string[]; code: string }[]> => {
     const { build } = await import('vite');
     const entries = mkdtempSync(join(tmpdir(), 'design-kit-react-site-'));
     try {
@@ -132,14 +134,17 @@ const modulesPerPage = async (pages: readonly (readonly string[])[]): Promise<st
                     const imported = byFile.get(name);
                     if (imported) reached.add(imported);
                 }
-            return [
-                ...new Set(
-                    [...reached]
-                        .flatMap((chunk) => chunk.moduleIds)
-                        .filter((id) => id.includes(`${packaged}/dist/`))
-                        .map((id) => id.slice(id.lastIndexOf('/') + 1))
-                ),
-            ].sort();
+            return {
+                modules: [
+                    ...new Set(
+                        [...reached]
+                            .flatMap((chunk) => chunk.moduleIds)
+                            .filter((id) => id.includes(`${packaged}/dist/`))
+                            .map((id) => id.slice(id.lastIndexOf('/') + 1))
+                    ),
+                ].sort(),
+                code: [...reached].map((chunk) => chunk.code).join('\n'),
+            };
         });
     } finally {
         rmSync(entries, { recursive: true, force: true });
@@ -149,13 +154,30 @@ const modulesPerPage = async (pages: readonly (readonly string[])[]): Promise<st
 describe('the React entry, bundled for a page', () => {
     it("keeps the other pieces off a status line's page built beside screens that use them", async () => {
         const [status, screens] = await modulesPerPage([
-            ['StatusProvider', 'useStatus'],
-            ['StatusProvider', 'useStatus', 'useFormRefusal', 'useRoving', 'StepperField', 'Toast'],
+            ['StatusProvider', 'useStatus', 'SkipLink', 'ThemeSwitch'],
+            [
+                'StatusProvider',
+                'useStatus',
+                'useFormRefusal',
+                'useRoving',
+                'StepperField',
+                'Toast',
+                'CheckboxField',
+            ],
         ]);
-        expect(screens).toEqual(expect.arrayContaining(['form.js', 'roving.js']));
+        expect(screens?.modules).toEqual(expect.arrayContaining(['form.js', 'roving.js']));
+        expect(screens?.code).toContain('dk-stepper');
+        expect(screens?.code).toContain('onWords');
         expect(
-            (status ?? []).filter((module) =>
+            (status?.modules ?? []).filter((module) =>
                 ['form.js', 'roving.js', 'stepper.js', 'toast.js', 'table.js'].includes(module)
+            )
+        ).toEqual([]);
+        // Nor the markup of the pieces it draws none of: a stepper's, a toast's, a checkbox field's,
+        // told by the words it draws its state in, and a plain field's.
+        expect(
+            ['dk-stepper', 'dk-toast', 'onWords', 'dk-textarea'].filter((name) =>
+                status?.code.includes(name)
             )
         ).toEqual([]);
     }, 120_000);

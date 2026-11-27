@@ -95,8 +95,21 @@ export default tseslint.config(
     },
     {
         // The markup components draw markup alone, as record 20 has it, so they render the same on
-        // a server and by hand. The hooks that attach the controls live in hooks.tsx.
-        files: ['packages/design-kit/src/react.tsx'],
+        // a server and by hand. They live in react.tsx and the modules it gathers, and the hooks
+        // that attach the controls live in the modules hooks.tsx gathers.
+        files: [
+            'packages/design-kit/src/react.tsx',
+            'packages/design-kit/src/react-parts.tsx',
+            'packages/design-kit/src/chrome.tsx',
+            'packages/design-kit/src/button.tsx',
+            'packages/design-kit/src/fields.tsx',
+            'packages/design-kit/src/checkbox-field.tsx',
+            'packages/design-kit/src/callout.tsx',
+            'packages/design-kit/src/theme-choice.tsx',
+            'packages/design-kit/src/status-views.tsx',
+            'packages/design-kit/src/toast-view.tsx',
+            'packages/design-kit/src/stepper-field.tsx',
+        ],
         rules: {
             'no-restricted-imports': [
                 'error',
@@ -105,7 +118,8 @@ export default tseslint.config(
                         {
                             name: 'react',
                             importNames: ['useEffect', 'useLayoutEffect', 'useInsertionEffect'],
-                            message: 'A markup component runs no effect. Put a hook in hooks.tsx.',
+                            message:
+                                'A markup component runs no effect. Put a hook in a module hooks.tsx gathers.',
                         },
                     ],
                 },
