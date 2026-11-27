@@ -364,6 +364,12 @@ export const WEBKIT: Engine = {
     },
     hero: "A heading broken between words only, by each engine's line breaks.",
     progress: 'The native bar, which each engine draws its own way.',
+    checkbox: {
+        reason: "A lone box's name and description in each engine's tree, a refused submit that focuses it, and its label's target and reflow in each engine's layout.",
+        except: [
+            'draws an invalid box with a dashed line and one that is off in the system color for it, in forced colors',
+        ],
+    },
     checked: {
         reason: 'Focus on the first field in error after a submit by Enter.',
         except: [
@@ -470,6 +476,12 @@ export const FIREFOX: Engine = {
     'buttongrid-columns':
         "A grid's columns, which rest on each engine's sums of a share and clamps.",
     progress: 'The native bar, which each engine draws its own way.',
+    checkbox: {
+        reason: "A lone box's name and description in each engine's tree, a refused submit that focuses it, and its label's target and reflow in each engine's layout.",
+        except: [
+            'draws an invalid box with a dashed line and one that is off in the system color for it, in forced colors',
+        ],
+    },
     checked: {
         reason: 'Focus on the first field in error after a submit by Enter.',
         except: [

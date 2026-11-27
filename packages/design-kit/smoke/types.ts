@@ -1,6 +1,7 @@
 import {
     Button,
     Callout,
+    CheckboxField,
     ChoiceField,
     CopyButton,
     CopyStatus,
@@ -219,6 +220,25 @@ export const roledChoices = ChoiceField({
     choices: [],
     // @ts-expect-error The set's role follows its type.
     role: 'group',
+});
+
+// A checkbox field needs only its label, and its ref is the box drawn.
+export const setting = CheckboxField({
+    ref: createRef<HTMLInputElement>(),
+    label: 'Score the last round double',
+    hint: 'Every bid in round 10 counts twice',
+});
+
+export const typedSetting = CheckboxField({
+    label: 'Score the last round double',
+    // @ts-expect-error A checkbox field's type is a checkbox.
+    type: 'radio',
+});
+
+export const wrongSetting = CheckboxField({
+    // @ts-expect-error A checkbox field's ref is the box drawn, not a fieldset.
+    ref: createRef<HTMLFieldSetElement>(),
+    label: 'Score the last round double',
 });
 
 export const wrongChoices = ChoiceField({

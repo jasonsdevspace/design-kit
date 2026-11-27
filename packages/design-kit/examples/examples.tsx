@@ -4,6 +4,7 @@ import * as kit from '../src/react.js';
 import {
     Button,
     Callout,
+    CheckboxField,
     ChoiceField,
     CopyButton,
     CopyStatus,
@@ -234,6 +235,25 @@ export const choiceField: ReactElement = (
                 { value: 'brand', label: 'Brand', defaultChecked: true },
                 { value: 'price', label: 'Price' },
             ]}
+        />
+    </>
+);
+
+/** One setting a visitor turns on or off, with a hint, and a box for consent a form refused. */
+export const checkboxField: ReactElement = (
+    <>
+        <CheckboxField
+            id="sold-out"
+            name="sold-out"
+            label="Hide sold-out items"
+            hint="They show again once restocked"
+        />
+        <CheckboxField
+            id="terms"
+            name="terms"
+            label="I agree to the terms"
+            required
+            error="Check the box to go on."
         />
     </>
 );
@@ -1129,6 +1149,7 @@ export const EXAMPLES = {
     fieldAction,
     fieldsRow,
     choiceField,
+    checkboxField,
     callout,
     tryAgain,
     pills,

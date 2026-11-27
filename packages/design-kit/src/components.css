@@ -806,7 +806,14 @@
         flex: 1 1 var(--dk-fields-least, 10rem);
     }
 
-    :where(.dk-fields > :is(.dk-stepper-inline, .dk-choice-field)) {
+    :where(
+        .dk-fields
+            > :is(
+                .dk-stepper-inline,
+                .dk-choice-field,
+                .dk-field:not(fieldset, .dk-choice-field):has(> .dk-choice)
+            )
+    ) {
         flex-basis: 100%;
     }
 
@@ -1193,6 +1200,19 @@
         color: var(--dk-muted);
     }
 
+    /*
+     * A checkbox field: one setting, a field holding its box's label itself, with no group around
+     * it, and no fieldset or set of choices, whose labels a page may write straight in its fieldset. Its label hugs its words, so the highlight does not read as a row of a list, and its hint
+     * starts under the words, past the box's 1rem and the gap, so it reads as a note on the setting.
+     */
+    :where(.dk-field:not(fieldset, .dk-choice-field) > .dk-choice) {
+        justify-self: start;
+    }
+
+    :where(.dk-field:not(fieldset, .dk-choice-field) > .dk-choice ~ .dk-field-hint) {
+        padding-inline-start: calc(1rem + var(--dk-space-2));
+    }
+
     /* Every control of an invalid set, a radio group marked as one or checkboxes marked each. */
     :where(
         .dk-choice-field[aria-invalid='true'] .dk-choice > input,
@@ -1237,6 +1257,11 @@
      * does, in the text color, and the ring in its place with focus.
      */
     @media (forced-colors: active) {
+        /* A choice that is off says so in the system's color for it, not only in its box. */
+        :where(.dk-choice:has(> input:disabled)) {
+            color: GrayText;
+        }
+
         :where(
             .dk-choice-field[aria-invalid='true'] .dk-choice > input,
             .dk-choice > input[aria-invalid='true']
