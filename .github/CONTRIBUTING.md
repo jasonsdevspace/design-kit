@@ -6,7 +6,7 @@ conduct](https://github.com/jasonsdevspace/.github/blob/main/CODE_OF_CONDUCT.md)
 
 ## Setting up and running the checks
 
-[Dev setup](README.md#dev-setup) in the README says how to install and what each check covers.
+[Dev setup](../README.md#dev-setup) in the README says how to install and what each check covers.
 Before a pull request, run these checks, which CI runs too:
 
 ```bash
@@ -47,7 +47,7 @@ merged, the browser tests and the Lighthouse audit among them.
 
 ## Releasing
 
-[Dev setup](README.md#dev-setup) in the README says how a release reaches npm, under "How a
+[Dev setup](../README.md#dev-setup) in the README says how a release reaches npm, under "How a
 release reaches npm". Around it, a maintainer:
 
 - bumps the version in `packages/design-kit/package.json`, turns the `## Unreleased` heading in its
@@ -76,4 +76,4 @@ repeated with "Re-run failed jobs", which keeps the staging and runs only what f
 
 Report a security issue privately, as the [security policy](SECURITY.md) says, not in a public
 issue. Report a barrier to using the kit or its site as the [accessibility
-statement](ACCESSIBILITY.md) says.
+statement](../docs/ACCESSIBILITY.md) says.

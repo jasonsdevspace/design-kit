@@ -1,14 +1,18 @@
 import { readFileSync, statSync } from 'node:fs';
+import { posix } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 /*
  * Every npm script the contributing guide runs is one the repository has, every file, heading
- * and issue template the guide or the accessibility statement links to is there, and the statement
- * sends a reader who meets a barrier to the bug template.
+ * and issue template the guide, the security policy or the accessibility statement links to is
+ * there, read from the folder each sits in as GitHub reads a relative link, and the statement sends
+ * a reader who meets a barrier to the bug template.
  */
 
-const FILES = ['CONTRIBUTING.md', 'ACCESSIBILITY.md'];
+const GUIDE = '.github/CONTRIBUTING.md';
+const STATEMENT = 'docs/ACCESSIBILITY.md';
+const FILES = [GUIDE, '.github/SECURITY.md', STATEMENT];
 const REPOSITORY = 'jasonsdevspace/design-kit';
 
 const at = (path: string) => new URL(`../${path}`, import.meta.url);
@@ -70,7 +74,7 @@ describe('the community files', () => {
         const scripts = Object.keys(
             (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts
         );
-        const named = [...read('CONTRIBUTING.md').matchAll(/npm\s+run\s+([\w:-]+)/g)].map(
+        const named = [...read(GUIDE).matchAll(/npm\s+run\s+([\w:-]+)/g)].map(
             ([, script]) => script ?? ''
         );
         expect(named.length).toBeGreaterThan(0);
@@ -82,7 +86,7 @@ describe('the community files', () => {
             ([, link = '', anchor]) => {
                 // The path is left encoded, since `at` builds a URL and reading it decodes it once.
                 const heading = anchor === undefined ? undefined : decoded(anchor);
-                const target = link === '' ? file : link;
+                const target = link === '' ? file : posix.join(posix.dirname(file), link);
                 if (heading === undefined) return exists(target) ? [] : [target];
                 if (!isFile(target)) return [`${target}#${heading}`];
                 return headingIds(read(target)).includes(heading) ? [] : [`${target}#${heading}`];
@@ -101,6 +105,6 @@ describe('the community files', () => {
     });
 
     it('sends a reader who meets a barrier to the bug template, from the accessibility statement', () => {
-        expect(templatesIn('ACCESSIBILITY.md')).toContain('3-bug.md');
+        expect(templatesIn(STATEMENT)).toContain('3-bug.md');
     });
 });

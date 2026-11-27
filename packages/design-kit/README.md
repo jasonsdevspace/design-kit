@@ -257,7 +257,7 @@ one taken from the page's address or a visitor's input, since that could send a 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
 and Safari 17.5. What falls short at the floor, such as the missing pointer over a checkbox's label
 in Firefox 120, is listed under [known
-limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/ACCESSIBILITY.md#known-limitations).
+limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/docs/ACCESSIBILITY.md#known-limitations).
 With `browserFloor()` as the build target, each `light-dark()` color stays as written, and the
 target rises when the kit raises its floor. A lower target rewrites each one into custom properties
 set once on the root, so a part of the page set to the other scheme keeps the page's colors.

@@ -175,7 +175,7 @@ is its CSS transformer, as the package README shows.
   closes on a second Escape or Back there. Chrome 134 and later keep it open by its `closedby`
   attribute.
 - The browser tests run in Chromium, and the specs listed in
-  [`packages/design-kit/e2e/engines.ts`](packages/design-kit/e2e/engines.ts) run in WebKit and the
+  [`packages/design-kit/e2e/engines.ts`](../packages/design-kit/e2e/engines.ts) run in WebKit and the
   current Firefox as well, and the file gives the reason each runs there. What Firefox 120 lacks at
   the floor is known from its documented support rather than from a test here.
 - No test runs a screen reader. What one would announce is checked through the names, roles and
@@ -193,4 +193,4 @@ If something in the kit or its site is hard or impossible to use, open an issue 
 you were trying to do, on which page or with which component, and the browser and any assistive
 technology you use. The acceptance criteria and the size are for whoever fixes it, and can be left
 empty. It is handled as a bug. A barrier that is also a security issue goes to the
-[security policy](SECURITY.md) instead.
+[security policy](../.github/SECURITY.md) instead.
