@@ -86,7 +86,7 @@ describe('the browser floor', () => {
 
     const README = new URL('../README.md', import.meta.url);
     const ROOT_README = new URL('../../../README.md', import.meta.url);
-    const ACCESSIBILITY = new URL('../../../ACCESSIBILITY.md', import.meta.url);
+    const ACCESSIBILITY = new URL('../../../docs/ACCESSIBILITY.md', import.meta.url);
 
     it("is the floor the package's README, the repository's README and the accessibility statement state", () => {
         expect(browserFloor()).toEqual(stated(README));
