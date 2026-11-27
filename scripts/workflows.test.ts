@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
@@ -409,11 +410,35 @@ describe('the workflows', () => {
     );
     const publishing = releases.flatMap(([, text]) => stepsOf(text));
 
-    it('name the kit and the prose check among the workflows that publish to npm', () => {
-        expect(releases.map(([path]) => path).sort()).toEqual([
-            '.github/workflows/release-prose-check.yml',
-            '.github/workflows/release.yml',
-        ]);
+    // Every package releases through the one workflow, by its tag's prefix, so the rules a
+    // release keeps are written once.
+    const RELEASE = '.github/workflows/release.yml';
+    const PACKAGES = ['design-kit', 'prose-check'] as const;
+    const releaseJob = (id: string) =>
+        jobsOf(workflows.get(RELEASE) ?? '').find((job) => job.id === id)?.body ?? '';
+
+    /** The package the release's agree step names for a tag, or undefined where it stops. */
+    const packageFor = (tag: string): string | undefined => {
+        const step =
+            stepsOf(releaseJob('agree')).find(({ text }) => /case "\$TAG" in/.test(text))?.text ??
+            '';
+        const block = /case "\$TAG" in[\s\S]*?\besac\b/.exec(step)?.[0] ?? '';
+        expect(block).not.toBe('');
+        const run = spawnSync(
+            'bash',
+            ['-c', `${block.replace(/^\s+/gm, '')}\nprintf %s "$package"`],
+            {
+                env: { TAG: tag, PATH: process.env.PATH ?? '' },
+                encoding: 'utf8',
+            }
+        );
+        return run.status === 0 ? run.stdout : undefined;
+    };
+
+    it('publish to npm from one workflow, for each package by its tag', () => {
+        expect(releases.map(([path]) => path)).toEqual([RELEASE]);
+        for (const name of PACKAGES)
+            expect(workflows.get(RELEASE)).toMatch(new RegExp(`^\\s+- '${name}-v\\*'\\s*$`, 'm'));
     });
 
     it('use no cache in any workflow that publishes to npm', () => {
@@ -424,25 +449,55 @@ describe('the workflows', () => {
         ).toEqual([]);
     });
 
+    it('name the package from its tag, and stop on a tag that names none', () => {
+        expect(packageFor('design-kit-v0.9.5')).toBe('design-kit');
+        expect(packageFor('prose-check-v0.2.0')).toBe('prose-check');
+        expect(packageFor('prose-check-v0.2.0-next.1')).toBe('prose-check');
+        expect(packageFor('shelflens-v1.0.0')).toBeUndefined();
+    });
+
+    it('publish the package the tag names, from its own artifact and its own checksum', () => {
+        const publish = releaseJob('publish');
+        expect(publish).toMatch(/name: \$\{\{ needs\.agree\.outputs\.package \}\}-package\s*$/m);
+        expect(publish).toMatch(
+            /needs\.agree\.outputs\.package == 'design-kit' && needs\.checks\.outputs\.package-sha256/
+        );
+        expect(publish).toMatch(
+            /needs\.agree\.outputs\.package == 'prose-check' && needs\.checks\.outputs\.prose-check-sha256/
+        );
+        expect(publish).toMatch(
+            /"\$RUNNER_TEMP\/package\/jasonsdevspace-\$PACKAGE-\$VERSION\.tgz"/
+        );
+        expect(publish).not.toMatch(/jasonsdevspace-(?:design-kit|prose-check)-/);
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        for (const name of PACKAGES)
+            expect(ci).toMatch(new RegExp(`^\\s+name: ${name}-package\\s*$`, 'm'));
+    });
+
+    it('record only a release of the kit, so a prose check tag never reaches the records', () => {
+        expect(releaseJob('records')).toMatch(
+            /^\s+if: .*needs\.agree\.outputs\.package == 'design-kit'/m
+        );
+        expect(releaseJob('records-pull-request')).toMatch(/^\s+needs: \[agree, records\]\s*$/m);
+        expect(releaseJob('records-pull-request')).toMatch(
+            /^\s+if: needs\.records\.result == 'success'\s*$/m
+        );
+    });
+
     it('stop a release while a change file is left beside its package', () => {
-        for (const [path, text] of releases) {
-            const dir = /^\s+dir=(packages\/[\w-]+)\s*$/m.exec(text)?.[1];
-            expect(dir, path).toBeDefined();
-            expect(existsSync(`${dir}/changes/README.md`), path).toBe(true);
-            expect(text, path).toMatch(
-                /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
-            );
-        }
+        for (const name of PACKAGES)
+            expect(existsSync(`packages/${name}/changes/README.md`), name).toBe(true);
+        expect(releaseJob('agree')).toMatch(/^\s+dir="packages\/\$package"\s*$/m);
+        expect(releaseJob('agree')).toMatch(
+            /left=\$\(find "\$dir\/changes" ! -type d ! -path "\$dir\/changes\/README\.md"\)\n\s+if \[ -n "\$left" \]; then\n(?:\s+echo[^\n]*\n)+\s+exit 1\n/
+        );
     });
 
     it("leave the repository's Latest release to the kit when the prose check releases", () => {
-        const releaseStep = (path: string) =>
-            stepsOf(workflows.get(path) ?? '').find(({ text }) => /github-release\.sh/.test(text))
+        const step =
+            stepsOf(releaseJob('release')).find(({ text }) => /github-release\.sh/.test(text))
                 ?.text ?? '';
-        expect(releaseStep('.github/workflows/release-prose-check.yml')).toMatch(
-            /flags=\(--latest=false\)/
-        );
-        expect(releaseStep('.github/workflows/release.yml')).not.toMatch(/--latest=false/);
+        expect(step).toMatch(/\[ "\$PACKAGE" = "prose-check" \] && flags\+=\(--latest=false\)/);
     });
 
     it('install npm where a release publishes only from a tarball held to a pinned checksum', () => {
@@ -733,7 +788,7 @@ describe('the workflows', () => {
             expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
                 /^cache-mode: read\s*$/m
             );
-            expect(releases.length).toBeGreaterThan(1);
+            expect(releases.length).toBeGreaterThan(0);
             for (const [path, text] of releases) {
                 expect(text, path).toMatch(/^cache-mode: none\s*$/m);
                 const checks = jobsOf(text).find(({ body }) =>

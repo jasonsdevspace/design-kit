@@ -526,9 +526,10 @@ a staged version goes live only when it is promoted on the package page. The job
 installs nothing but a pinned npm, checked against the checksum npm's registry gives for it, and
 fetches nothing else. A version with a hyphen is staged under npm's `next` tag and marked as a
 prerelease on GitHub, and each release has a GitHub release with its changelog entry as the notes.
-The prose check releases the same way from a tag such as `prose-check-v0.2.0`, through
-`release-prose-check.yml`, under the same rules, with its own version, changelog and changes folder,
-and its GitHub release leaves the repository's Latest mark on the kit. The steps a maintainer takes
+The prose check releases through the same workflow from a tag such as `prose-check-v0.2.0`, which
+names the package by its prefix, under the same rules, with its own version, changelog and changes
+folder. Only the kit's release is recorded, and the prose check's GitHub release leaves the
+repository's Latest mark on the kit. The steps a maintainer takes
 around a release are in [CONTRIBUTING.md](.github/CONTRIBUTING.md#releasing).
 
 </details>
