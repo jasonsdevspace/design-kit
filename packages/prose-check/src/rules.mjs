@@ -61,6 +61,16 @@ const SCANNED = new Set([
  */
 const EM_DASH = String.fromCodePoint(0x2014);
 
+/**
+ * A semicolon joining clauses: one after a word, anywhere, or one after a digit, a closing bracket
+ * or a quote with more on the line, since one of those that ends a line closes a statement quoted
+ * in a comment.
+ */
+const SEMICOLON = /[A-Za-z];|[0-9)\]'"`\u2019];(?!\s*$)/;
+
+/** A named or numeric character reference, such as `&amp;` or `&#169;`, read as no text at all. */
+const ENTITY = /&#?[a-z0-9]+;/gi;
+
 const PROCESS_ARTIFACTS =
     /\b(TODO|FIXME|XXX|HACK|TBD)\b|\b(coming soon|not implemented|a?waiting on|to be (decided|determined)|for now,? (leav(e|ing)|left|skip(ped|ping)?))\b/i;
 
@@ -98,14 +108,14 @@ const INFLATED_WORDS =
 
 /** An opener that only announces, at the start of a sentence or as a stock phrase. */
 const EMPTY_OPENERS =
-    /(?:^[\s>*+-]*|[.!?]\s+)(?:Additionally|Moreover|Furthermore|Notably)\b|\b(?:it['\u2019]s|it is) (?:worth noting|important to note)\b|\b(?:simply put|to be clear|here['\u2019]s the thing)\b/i;
+    /(?:^[\s>*+-]*|[.!?]\s+)(?:Additionally|Moreover|Furthermore|Notably)\b|(?:^[\s>*+-]*|[.!?]\s+)(?:to be clear|simply put),|\b(?:it['\u2019]s|it is) (?:worth noting|important to note)\b|\bhere['\u2019]s the thing\b/i;
 
 /**
  * A placeholder left in: a bracketed slot that is not a link or an index into code, a date with
  * its digits still to fill, or filler text.
  */
 const PLACEHOLDERS =
-    /(?<![\w\]])\[(?:insert [^\]]*|your name|company name|name|link)\](?![([:])|\b\d{4}-XX-XX\b|\blorem ipsum\b/i;
+    /(?<![\w\]]|\}\s)\[(?:insert [^\]]*|your name|company name|name|link)\](?![([:])|\b\d{4}-XX-XX\b|\blorem ipsum\b/i;
 
 /** Built from its code point, as the em dash is. Spaced, it stands in for a dash. */
 const EN_DASH_AS_DASH = new RegExp(`\\s${String.fromCodePoint(0x2013)}\\s`);
@@ -115,7 +125,7 @@ const WORDY_PHRASES = /\bin order to\b/i;
 
 /** A stock line that says nothing, mostly met at the end of a body or a comment. */
 const CANNED_CLOSERS =
-    /\b(?:I hope this helps|let me know if you have any questions|happy to help|great question|in summary|in conclusion)\b|(?:^[\s>*+-]*|[.!?]\s+)Overall,/i;
+    /\b(?:I hope this helps|let me know if you have any questions|happy to help|great question)\b|(?:^[\s>*+-]*|[.!?]\s+)(?:Overall|In summary|In conclusion),/i;
 
 /** Intensifiers that never carry a meaning of their own in technical writing. */
 const INTENSIFIERS = /\b(?:extremely|incredibly)\b/i;
@@ -165,8 +175,10 @@ const commentStart = (path) => {
 };
 
 /**
- * Comment text only, so statement semicolons are never considered. A
- * comment that closes on its line ends there, so code after it is left alone.
+ * Comment text only, so statement semicolons are never considered. A comment that closes on its
+ * line ends there, so code after it is left alone. Code quoted in backticks is left out, as
+ * Markdown's inline code is, and so is a doc comment's example, from its `@example` tag to the next
+ * tag or the comment's end.
  *
  * @param {string} path
  * @param {string} source
@@ -174,28 +186,53 @@ const commentStart = (path) => {
  */
 const commentsOf = (path, source) => {
     const comment = new RegExp(`^\\s*(?:${commentStart(path)})\\s?(.*?)(?:\\*\\/.*)?$`);
+    let example = false;
     return source.split('\n').flatMap((line, index) => {
         const text = comment.exec(line)?.[1];
-        return text === undefined ? [] : [{ index, text }];
+        if (text === undefined) {
+            example = false;
+            return [];
+        }
+        if (/^@example\b/.test(text)) {
+            example = true;
+            return [];
+        }
+        if (example && !/^@\w/.test(text)) {
+            example = !line.includes('*/');
+            return [];
+        }
+        example = false;
+        return [{ index, text: text.replace(/`[^`]*`/g, '') }];
     });
 };
 
 /**
- * Markdown body text, with fenced blocks, inline code and entities removed.
+ * Markdown body text, with fenced blocks, inline code and entities removed, and a reference whose
+ * label the file defines read as its label, since it is a link, not a slot left to fill.
  *
  * @param {string} source
  * @returns {{ index: number, text: string }[]}
  */
 const proseOf = (source) => {
+    const defined = new Set(
+        [...source.matchAll(/^ {0,3}\[([^\]]+)\]:\s*\S/gm)].map((match) =>
+            (match[1] ?? '').toLowerCase()
+        )
+    );
     let fenced = false;
     return source.split('\n').flatMap((line, index) => {
         if (/^\s*```/.test(line)) {
             fenced = !fenced;
             return [];
         }
-        return fenced
-            ? []
-            : [{ index, text: line.replace(/`[^`]*`/g, '').replace(/&[a-z]+;/gi, '') }];
+        if (fenced) return [];
+        const text = line
+            .replace(/`[^`]*`/g, '')
+            .replace(ENTITY, '')
+            .replace(/\[([^\]]+)\](?![([:])/g, (reference, label) =>
+                defined.has(label.toLowerCase()) ? label : reference
+            );
+        return [{ index, text }];
     });
 };
 
@@ -207,12 +244,13 @@ const SHOWN_META =
     /<meta\s[^>]*\b(?:name|property)="(?:description|og:description|og:title|twitter:description)"[^>]*>/i;
 
 /**
- * A page's text and its comments, line by line. Scripts and styles are code,
- * so they are blanked, and a block left open runs to the end of the page, as
- * a browser reads it. A code sample's text is blanked too, as Markdown's
- * inline code is, while the tag that holds it keeps its attributes. A tag gives way to the words in the attributes a
- * visitor reads, and otherwise to nothing, so a semicolon after a link still
- * sits beside the word before it. Line breaks are kept so line numbers match.
+ * A page's text and its comments, line by line. Scripts and styles are code, so they are blanked,
+ * and a block left open runs to the end of the page, as a browser reads it. A comment's own text is
+ * read, with any tag named in it left out, before code samples are blanked, so a tag named in a
+ * comment hides nothing. A code sample's text is blanked, as Markdown's inline code is, up to its
+ * closing tag or the end of the element it sits in. A tag gives way to the words in the attributes
+ * a visitor reads, and otherwise to nothing, so a semicolon after a link still sits beside the word
+ * before it. Line breaks are kept so line numbers match.
  *
  * @param {string} source
  * @returns {{ index: number, text: string }[]}
@@ -223,10 +261,15 @@ const pageTextOf = (source) =>
             block.replace(/[^\n]/g, '')
         )
         .replace(
-            /(<code\b[^>]*>)([\s\S]*?)(<\/code\s*>|$)/gi,
-            (_, open, sample, close) => `${open}${sample.replace(/[^\n]/g, '')}${close}`
+            /<!--([\s\S]*?)(?:--!?>|$)/g,
+            (_, /** @type {string} */ inner) =>
+                ` ${inner.replace(/<[^>]*>/g, (tag) => tag.replace(/[^\n]/g, ''))} `
         )
-        .replace(/<!--|--!?>/g, ' ')
+        .replace(
+            /(<code\b[^>]*>)([\s\S]*?)(?=<\/code\s*>|<\/(?:p|pre|li|td|th|dd|dt|div|figcaption|blockquote|h[1-6]|section|article|main|body)\s*>|$)/gi,
+            (_, /** @type {string} */ open, /** @type {string} */ sample) =>
+                `${open}${sample.replace(/[^\n]/g, '')}`
+        )
         .replace(/<[^>]*>/g, (tag) => {
             const read = [...tag.matchAll(READ_ATTRIBUTES)].map((attribute) => attribute[1]);
             if (SHOWN_META.test(tag)) read.push(/\bcontent="([^"]*)"/i.exec(tag)?.[1] ?? '');
@@ -234,7 +277,7 @@ const pageTextOf = (source) =>
             return read.length === 0 ? breaks : ` ${read.join(' ')} ${breaks}`;
         })
         .split('\n')
-        .map((line, index) => ({ index, text: line.replace(/&[a-z]+;/gi, '') }));
+        .map((line, index) => ({ index, text: line.replace(ENTITY, '') }));
 
 /**
  * The rules that are one pattern each, by the name a problem is reported under, in the order
@@ -265,7 +308,7 @@ export function problemsIn(text, { issues }) {
     return [
         PROCESS_ARTIFACTS.test(text) && 'process artifact',
         issues && ISSUE_REFERENCES.test(text) && 'issue reference',
-        /[A-Za-z0-9)\]'"`\u2019];/.test(text) && 'semicolon in prose',
+        SEMICOLON.test(text) && 'semicolon in prose',
         (BRITISH_SPELLINGS.test(text) || spellsGrey(text)) && 'British spelling',
         ...PATTERNS.map(([pattern, rule]) => pattern.test(text) && rule),
     ].filter((rule) => typeof rule === 'string');

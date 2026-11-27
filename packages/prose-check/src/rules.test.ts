@@ -89,6 +89,67 @@ describe('the prose check', () => {
         ]);
     });
 
+    it('reads a numeric character reference as a character, never as a semicolon', () => {
+        expect(rules('a.md', 'Made by Jason &#169; 2026 and &#x2192; next.\n')).toEqual([]);
+        expect(rules('a.html', '<p>Made by Jason &#169; 2026 and &#x2192; next.</p>\n')).toEqual(
+            []
+        );
+        expect(rules('a.md', 'Made in 2026; then sold.\n')).toEqual(['a.md:1  semicolon in prose']);
+    });
+
+    it('leaves code quoted in a comment alone, and an example in its doc comment', () => {
+        expect(rules('a.ts', '// Call `total(rows); render()` once.\n')).toEqual([]);
+        expect(rules('a.ts', '// const total = sum(rows);\n')).toEqual([]);
+        expect(
+            rules(
+                'a.ts',
+                '/**\n * Sums the rows.\n *\n * @example\n * const total = sum(rows);\n * render(total);\n *\n * @param rows the rows\n */\n'
+            )
+        ).toEqual([]);
+        expect(rules('a.ts', '// It saves (once); then it closes.\n')).toEqual([
+            'a.ts:1  semicolon in prose',
+        ]);
+        expect(rules('a.ts', '// Fixed in version 12; see the notes.\n')).toEqual([
+            'a.ts:1  semicolon in prose',
+        ]);
+    });
+
+    it('reads a doc comment parameter in brackets and a Markdown reference as what they are, not placeholders', () => {
+        expect(
+            rules(
+                'a.mjs',
+                '/**\n * @param {string} [name] the label\n * @property {string} [link] where it goes\n */\n'
+            )
+        ).toEqual([]);
+        expect(rules('a.md', 'See the [link] for more.\n\n[link]: https://example.com\n')).toEqual(
+            []
+        );
+        expect(rules('a.md', 'Read [name] before it goes out.\n')).toEqual([
+            'a.md:1  leftover placeholder',
+        ]);
+    });
+
+    it('reads a stock phrase only where it opens a sentence with a comma', () => {
+        expect(rules('a.md', 'The error message has to be clear.\n')).toEqual([]);
+        expect(rules('a.md', 'Fill the form in summary view.\n')).toEqual([]);
+        expect(rules('a.md', 'In summary, the budget holds.\n')).toEqual(['a.md:1  canned closer']);
+        expect(rules('a.md', 'It holds. To be clear, nothing moved.\n')).toEqual([
+            'a.md:1  empty opener',
+        ]);
+    });
+
+    it('reads the rest of a page past a code element left open or one named in a comment', () => {
+        expect(rules('a.html', '<p><code>x</p>\n<p>The colour</p>\n')).toEqual([
+            'a.html:2  British spelling',
+        ]);
+        expect(rules('b.html', '<!-- a <code> sample -->\n<p>The colour</p>\n')).toEqual([
+            'b.html:2  British spelling',
+        ]);
+        expect(rules('c.html', '<p title="use <code>">x</p>\n<p>The colour</p>\n')).toEqual([
+            'c.html:2  British spelling',
+        ]);
+    });
+
     it('reads the comments in a .jsx file', () => {
         expect(rules('a.jsx', 'const a = 1;\n// One clause; then another.\n')).toEqual([
             'a.jsx:2  semicolon in prose',

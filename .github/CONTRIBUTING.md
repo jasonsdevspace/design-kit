@@ -73,7 +73,8 @@ The prose check releases apart from the kit, through the same release workflow, 
 
 - bumps the version in `packages/prose-check/package.json`, adds a `## VERSION` heading to its
   `CHANGELOG.md` that folds in every change file under `packages/prose-check/changes`, which that
-  pull request deletes, under the lead-ins the entries before it use, in a pull request of its own
+  pull request deletes, under the lead-ins the entries before it use, and points the README's rules
+  link at the new version's tag, in a pull request of its own
 - tags main with `prose-check-vVERSION` once that merges, which starts the release workflow
 - reads the run's summary for "Staged on npm", since a run that finds the version already on npm
   passes without staging anything

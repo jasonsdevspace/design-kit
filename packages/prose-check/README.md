@@ -7,8 +7,9 @@
 A check that fails a build on prose that should never reach a reader: an em dash, a semicolon
 joining clauses, a marker such as `TODO`, an issue number in a comment, a British spelling, or
 writing that fills space rather than saying something. It reads the comments in code, Markdown and
-the text a page shows, and leaves code alone, so a semicolon ending a statement passes. The `check-prose` command reads a whole repository, and the
-`proseProblems` function reads one piece of text, such as a pull request's body.
+the text a page shows, and leaves code alone, so a semicolon ending a statement passes. The
+`check-prose` command reads a whole repository, and the `proseProblems` function reads one piece of
+text, such as a pull request's body.
 
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/prose-check/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit/tree/main/packages/prose-check)
@@ -16,8 +17,9 @@ the text a page shows, and leaves code alone, so a semicolon ending a statement 
 ## What it checks
 
 - **An em dash**, U+2014, anywhere in a file it reads, code included.
-- **A semicolon joining clauses**, one that follows a word, a digit, a closing bracket or a quote,
-  as in `It saves; then it closes.` or `Fixed in version 12; see the notes.`
+- **A semicolon joining clauses**, one that follows a word, as in `It saves; then it closes.`, or
+  one that follows a digit, a closing bracket or a quote with more on the line after it, as in
+  `Fixed in version 12; see the notes.`
 - **A process artifact**, a word that tells a reader something was missing or unsure when it was
   written: `TODO`, `FIXME`, `XXX`, `HACK` and `TBD` as whole words, and `coming soon`,
   `not implemented`, `waiting on`, `to be decided`, `to be determined`, and `for now` followed by
@@ -25,17 +27,17 @@ the text a page shows, and leaves code alone, so a semicolon ending a statement 
 - **An issue or pull request number** in a comment or a page, as in `// See issue #12`, `PR 7`,
   `(#12)` or `GH-12`, since the number means nothing once the tracker moves on. Markdown is left
   out, so a pull request's body can say `Closes #12`.
-- **A British spelling** from a list of the words code and docs use, such as `behaviour`,
-  `colour`, `organise`, `cancelled`, `catalogue`, `centre`, `licence` and `whilst`, and `grey` in
-  any of its forms. A name such as `Earl Grey Tea` passes.
+- **A British spelling** from a list of the words code and docs use, such as `behaviour`, `colour`,
+  `organise`, `cancelled`, `catalogue`, `centre`, `licence` and `whilst`, and `grey` in any of its
+  forms. A name such as `Earl Grey Tea` passes.
 - **An en dash used as a dash**, spaced between words, as in `It reads comments – not code.` One
   between numbers in a range, as in `4–6`, passes.
-- **A trailing -ing clause**, one tacked on after a comma that restates what the sentence showed,
-  as in `It sits in front of the API, ensuring reads stay fast.` Only verbs that rarely lead a real
+- **A trailing -ing clause**, one tacked on after a comma that restates what the sentence showed, as
+  in `It sits in front of the API, ensuring reads stay fast.` Only verbs that rarely lead a real
   result are listed, so `, leaving a stepper short` passes.
-- **An inflated word**, such as `leverage`, `utilize`, `seamless`, `pivotal`, `crucial`, `delve`
-  or `testament to`. A word with a technical meaning in code or docs, such as `highlight`,
-  `harness` or `dynamic`, is left out.
+- **An inflated word**, such as `leverage`, `utilize`, `seamless`, `pivotal`, `crucial`, `delve` or
+  `testament to`. A word with a technical meaning in code or docs, such as `highlight`, `harness` or
+  `dynamic`, is left out.
 - **An empty opener**, one that only announces, such as `Additionally,`, `Moreover,` or
   `It's worth noting`.
 - **A canned closer**, a stock line such as `I hope this helps` or `In summary`, or a sentence
@@ -47,21 +49,27 @@ the text a page shows, and leaves code alone, so a semicolon ending a statement 
 - **An emoji** in prose, such as `🚀`. A symbol that is text, such as `✓`, `→` or `©`, passes.
 
 The whole list of words and patterns is in
-[the rules](https://github.com/jasonsdevspace/design-kit/blob/prose-check-v0.2.0/packages/prose-check/src/rules.mjs).
+[the rules](https://github.com/jasonsdevspace/design-kit/blob/main/packages/prose-check/src/rules.mjs).
 Each rule reads one line at a time, so a phrase wrapped across two lines is not found. Rhythm,
 structure and tone, such as a list of three or a run of sentences of one length, are left to people,
 since a check that reads one line at a time would get them wrong.
 
 ## What it reads
 
-- **Code**, in `.js`, `.mjs`, `.cjs`, `.ts`, `.tsx` and `.jsx` files: each line that starts with `//`,
-  `/*` or `*`, up to where the comment closes. A comment after code on the same line is not read.
+- **Code**, in `.js`, `.mjs`, `.cjs`, `.ts`, `.tsx` and `.jsx` files: each line that starts with
+  `//`, `/*` or `*`, up to where the comment closes. A comment after code on the same line is not
+  read, and neither is code quoted in backticks or a doc comment's example, from its `@example` tag
+  to the next tag.
 - **Workflows, scripts and queries**: each line that starts with `#` in `.yml`, `.yaml` and `.sh`
   files and Dockerfiles, and with `--` in `.sql` files.
-- **Markdown**, in `.md` files: the text, leaving out fenced blocks, inline code and entities.
+- **Markdown**, in `.md` files: the text, leaving out fenced blocks, inline code and character
+  references such as `&amp;` and `&#169;`. A reference such as `[link]` whose label the file defines
+  is read as a link.
 - **Pages**, in `.html` files: the text a visitor reads, the comments, the `alt`, `title`,
-  `aria-label`, `aria-description` and `placeholder` attributes, and a description or title meta
-  tag, leaving out scripts, styles and the text of a code sample.
+  `aria-label`, `aria-description` and `placeholder` attributes, and the content of the
+  `description`, `og:description`, `og:title` and `twitter:description` meta tags. Scripts and
+  styles are left out, and so is the text of a code sample, up to its closing tag or the end of the
+  element it sits in.
 
 Any other file, `.css` and `.json` among them, is not read.
 
@@ -124,6 +132,9 @@ path that matches no file. A failure to start is one line that says why.
 In a GitHub Actions job, after the checkout step, which leaves the git repository the check reads:
 
 ```yaml
+- uses: actions/setup-node@v7
+  with:
+      node-version: 24
 - run: npm ci
 - run: npm run prose
 ```
@@ -153,17 +164,17 @@ const problems = proseProblems('body.md', body);
 if (problems.length > 0) throw new Error(problems.join('\n'));
 ```
 
-The command is built from the rest of the exports: `repositoryProblems(root)` for every problem in
-a repository, `repositoryRoot(folder)` for the top of the repository a folder sits in,
+The command is built from the rest of the exports: `repositoryProblems(root)` for every problem in a
+repository, `repositoryRoot(folder)` for the top of the repository a folder sits in,
 `skippedIn(root)` for its skip list, `isScanned(path)` and `isDockerfile(path)` for whether a file
-is read, and `problemsIn(text, { issues })` for the rules one line of prose breaks. Each comes with
-its types.
+is read, and `problemsIn(text, { issues })` for the names of the rules one line of prose breaks,
+issue numbers among them only when `issues` is true. Each comes with its types.
 
 ## Versions and license
 
-The rules live in this package and nowhere else, so a repository takes a fix by moving its exact
-pin to the version that holds it. The package is versioned apart from the design kit, and before
-1.0.0 a version says what a build may do once a repository moves to it:
+The rules live in this package and nowhere else, so a repository takes a fix by moving its exact pin
+to the version that holds it. The package is versioned apart from the design kit, and before 1.0.0 a
+version says what a build may do once a repository moves to it:
 
 - **A minor version** can fail a build that passed before: a new rule, or a rule that matches more
   than it did.
