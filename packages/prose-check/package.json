@@ -1,0 +1,49 @@
+{
+    "name": "@jasonsdevspace/prose-check",
+    "version": "0.1.0",
+    "description": "Fails a build on prose that should never reach a reader: em dashes, semicolons joining clauses, process artifacts, issue numbers in comments and British spellings, in comments, docs, page text and workflows.",
+    "keywords": [
+        "prose",
+        "lint",
+        "documentation",
+        "comments",
+        "style"
+    ],
+    "license": "MIT",
+    "author": "Jason Poteet",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/jasonsdevspace/design-kit.git",
+        "directory": "packages/prose-check"
+    },
+    "homepage": "https://github.com/jasonsdevspace/design-kit/tree/main/packages/prose-check#readme",
+    "bugs": {
+        "url": "https://github.com/jasonsdevspace/design-kit/issues"
+    },
+    "type": "module",
+    "sideEffects": false,
+    "engines": {
+        "node": ">=24"
+    },
+    "bin": {
+        "check-prose": "./bin/check-prose.mjs"
+    },
+    "exports": {
+        ".": {
+            "types": "./types/index.d.mts",
+            "default": "./src/index.mjs"
+        },
+        "./package.json": "./package.json"
+    },
+    "files": [
+        "bin",
+        "src/*.mjs",
+        "types"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "types": "tsc -p tsconfig.types.json"
+    }
+}

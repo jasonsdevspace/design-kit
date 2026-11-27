@@ -671,7 +671,7 @@ describe('the workflows', () => {
         const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
         const jobs = jobsOf(ci);
         const WRITERS = ['dependencies', 'dependencies-mac'];
-        const FRESH = ['floor', 'site'];
+        const FRESH = ['floor', 'prose-check-floor', 'site'];
         const KEY =
             /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
         const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
