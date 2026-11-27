@@ -7,13 +7,14 @@
 
 **A design system for a web page or a small app, with React or without it.**
 
-It draws the portfolio at [jasonsdevspace.com](https://jasonsdevspace.com), and ShelfLens is built
-on it. You get colors and type, a light and dark theme that follows the visitor's choice, and
-ready-made pieces such as buttons, form fields, callouts, dialogs, a tab bar and page layouts. Each
-piece is built to work by keyboard and screen reader. It ships on npm as
+It draws the portfolio at [jasonsdevspace.com](https://jasonsdevspace.com), and ShelfLens and Game
+Table Tally are built on it. You get colors and type, a light and dark theme that follows the
+visitor's choice, and ready-made pieces such as buttons, form fields, callouts, dialogs, a tab bar
+and page layouts. Each piece is built to work by keyboard and screen reader. It ships on npm as
 `@jasonsdevspace/design-kit`.
 
 **[See every piece live](https://jasonsdevspace.com/design-kit/)** ·
+[Read how it works](https://jasonsdevspace.com/design-kit/how-it-works/) ·
 [Install it from npm](https://www.npmjs.com/package/@jasonsdevspace/design-kit) ·
 [Read the reference](packages/design-kit/REFERENCE.md)
 
@@ -63,6 +64,8 @@ saves the same choice the portfolio does, so it holds across jasonsdevspace.com.
   loads, each working with what it says on its status line.
 - **[A page's own palette](https://jasonsdevspace.com/design-kit/own-palette/)** shows a page drawn
   in its own colors and column, with its rules in a layer after the kit's.
+
+The rest of this page is for engineers.
 
 ## Using it
 
