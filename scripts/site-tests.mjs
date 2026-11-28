@@ -52,7 +52,6 @@ export const SITE_INPUTS = [
     'package-lock.json',
     'package.json',
     '.nvmrc',
-    '.prettierrc.json',
     'tsconfig.json',
     'playwright.config.ts',
     '.github/workflows/ci.yml',

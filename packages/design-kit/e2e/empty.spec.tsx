@@ -95,7 +95,7 @@ test('is not live, so it is read where it is', async ({ page }) => {
 test('draws its words muted at the body size and a plain button under them', async ({ page }) => {
     await draw(page, EMPTY);
     const words = await style(page.locator('.dk-empty > p'), 'color', 'font-size', 'margin-top');
-    expect(words.color).toBe(await colorOf(page, 'var(--dk-muted)'));
+    expect(words['color']).toBe(await colorOf(page, 'var(--dk-muted)'));
     expect(words['font-size']).toBe((await style(page.locator('main'), 'font-size'))['font-size']);
     expect(words['margin-top']).toBe('0px');
     const button = page.getByRole('button', { name: 'Add a player' });

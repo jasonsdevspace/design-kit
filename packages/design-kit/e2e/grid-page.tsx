@@ -344,10 +344,10 @@ const grid = {
     stepper: (markup: string): void => {
         const holder = draw(markup);
         const box = holder.querySelector('.dk-stepper') as HTMLElement;
-        box.dataset.name = 'box';
-        (box.querySelector('.dk-stepper-up') as HTMLElement).dataset.name = 'up';
-        (box.querySelector('.dk-stepper-down') as HTMLElement).dataset.name = 'down';
-        (box.querySelector('input') as HTMLElement).dataset.name = 'value';
+        box.dataset['name'] = 'box';
+        (box.querySelector('.dk-stepper-up') as HTMLElement).dataset['name'] = 'up';
+        (box.querySelector('.dk-stepper-down') as HTMLElement).dataset['name'] = 'down';
+        (box.querySelector('input') as HTMLElement).dataset['name'] = 'value';
         attachStepper(box, { signal: controller.signal });
     },
     readOnly: (): void => {
@@ -362,7 +362,7 @@ const grid = {
     },
     form: (markup: string): void => {
         const holder = draw(markup);
-        (holder.querySelector('form input') as HTMLElement).dataset.name = 'field';
+        (holder.querySelector('form input') as HTMLElement).dataset['name'] = 'field';
         attachForm(holder.querySelector('form') as HTMLFormElement, {
             status: document.querySelector<HTMLElement>('.line'),
         });
@@ -397,9 +397,9 @@ const grid = {
     theme: (markup: string): void => {
         const holder = draw(markup);
         const element = holder.querySelector('.dk-theme-switch') as HTMLElement;
-        (element.querySelector('button') as HTMLElement).dataset.name = 'switch';
-        (element.querySelector('input[value="light"]') as HTMLElement).dataset.name = 'light';
-        (element.querySelector('input[value="system"]') as HTMLElement).dataset.name = 'system';
+        (element.querySelector('button') as HTMLElement).dataset['name'] = 'switch';
+        (element.querySelector('input[value="light"]') as HTMLElement).dataset['name'] = 'light';
+        (element.querySelector('input[value="system"]') as HTMLElement).dataset['name'] = 'system';
         attachThemeSwitch(element);
     },
     hooks: (): void => {

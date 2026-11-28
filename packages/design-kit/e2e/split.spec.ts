@@ -128,7 +128,7 @@ test('draws a note muted at the small size, and a numeral at its size in tabular
 }) => {
     await draw(page, EXAMPLE);
     const note = await style(page.locator('.dk-split > .dk-note'), 'color', 'font-size');
-    expect(note.color).toBe(await colorOf(page, 'var(--dk-muted)'));
+    expect(note['color']).toBe(await colorOf(page, 'var(--dk-muted)'));
     expect(Number.parseFloat(note['font-size'] ?? '')).toBeCloseTo(
         await lengthOf(page, 'var(--dk-text-small)'),
         1
@@ -178,7 +178,7 @@ for (const theme of ['light', 'dark'] as const) {
         );
         expect(label['font-weight']).toBe(await weight(page, '--dk-weight-medium'));
         expect(note['font-weight']).toBe(await weight(page, '--dk-weight-normal'));
-        expect(note.color).toBe(await colorOf(page, 'var(--dk-muted)'));
+        expect(note['color']).toBe(await colorOf(page, 'var(--dk-muted)'));
         const results = await new AxeBuilder({ page }).analyze();
         expect(results.violations.map(({ id }) => id)).toEqual([]);
     });

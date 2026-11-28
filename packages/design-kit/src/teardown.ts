@@ -66,6 +66,7 @@ export type Kept<Handle, Options = AttachOptions> = {
 const optionsIn = <Options>(options?: Options): Options | undefined => {
     for (const key of Object.keys(options ?? {}) as (keyof Options)[])
         if (key !== 'signal' && options?.[key] !== undefined) return options;
+    return undefined;
 };
 
 /**

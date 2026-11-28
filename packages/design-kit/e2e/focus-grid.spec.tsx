@@ -198,7 +198,7 @@ const walk = (): { readonly path: readonly string[]; readonly into?: string } =>
     for (;;) {
         if (!at) return { path: [...path, 'nothing'] };
         const named = at as HTMLElement;
-        const name = named.dataset.name ?? (named.id || named.tagName.toLowerCase());
+        const name = named.dataset['name'] ?? (named.id || named.tagName.toLowerCase());
         if (at.tagName === 'IFRAME') {
             const frame = at as HTMLIFrameElement;
             const doc = frame.contentDocument;

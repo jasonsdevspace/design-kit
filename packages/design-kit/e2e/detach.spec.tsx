@@ -101,11 +101,11 @@ test('leaves a newer attach in place when the detach of an older one is called a
                 }
             ).shown
     );
-    expect(shown.switch?.hidden).toBe(false);
-    expect(shown.copy?.hidden).toBe(false);
+    expect(shown['switch']?.hidden).toBe(false);
+    expect(shown['copy']?.hidden).toBe(false);
     // The group keeps the toolbar role and one stop for the Tab key.
-    expect(shown.roving?.role).toBe('toolbar');
-    expect(shown.roving?.stops).toBe(1);
+    expect(shown['roving']?.role).toBe('toolbar');
+    expect(shown['roving']?.stops).toBe(1);
     // Its controls still work, each once.
     const value = page.locator('.dk-stepper input');
     await expect(value).toHaveValue('4');

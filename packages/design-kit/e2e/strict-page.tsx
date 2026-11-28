@@ -163,7 +163,7 @@ const Pieces = () => {
                 words={`${String(done)} of 40`}
             />
             <form id="form" ref={form} onSubmit={(event) => event.preventDefault()}>
-                <InputField id="name" label="List name" required error={errors.name} />
+                <InputField id="name" label="List name" required error={errors['name']} />
                 <button type="submit">Make the list</button>
             </form>
         </>

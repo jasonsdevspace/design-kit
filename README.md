@@ -476,7 +476,10 @@ npm run verify
 ```
 
 `npm run verify` runs the type-check, lint, the format, prose, Node and install checks, and the unit
-tests.
+tests. The lint, format and TypeScript settings come from
+[`@jasonsdevspace/config`](https://www.npmjs.com/package/@jasonsdevspace/config), which every
+project repository takes, and `eslint.config.js` adds only the rules that name this repository's
+folders.
 `npm run e2e` runs the browser tests in Chromium, and the specs `packages/design-kit/e2e/engines.ts`
 names, each with the reason it runs there, in WebKit and Firefox too. `npm run lighthouse` builds
 the site and audits every page against the gates CI holds it to. Nothing needs building first, since

@@ -40,7 +40,6 @@ describe('the site tests against the pinned release', () => {
             'package-lock.json',
             'package.json',
             '.nvmrc',
-            '.prettierrc.json',
             'tsconfig.json',
             'playwright.config.ts',
             '.github/workflows/ci.yml',
