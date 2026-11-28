@@ -3,6 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { empty, rows } from '../examples/examples.js';
+import { SEARCH_SETTLE } from '../examples/games.js';
 import { bundle } from './bundle.js';
 import {
     box,
@@ -12,6 +13,7 @@ import {
     lengthOf,
     servePage,
     sideways,
+    stillClock,
     style,
     writePage,
 } from './page.js';
@@ -151,20 +153,53 @@ test.describe('the saved games', () => {
     const heard = (page: Page) =>
         page.evaluate(() => (window as unknown as { heard: string[] }).heard);
 
+    /**
+     * The moment the search's words are put on the line after its last key: the example's wait for
+     * typing to stop, then the moment a status line takes to put words in once they are said.
+     */
+    const PUT_IN = SEARCH_SETTLE + 100;
+    /** Well past that moment, so the words are surely on the line. */
+    const SAID_AFTER = PUT_IN + 300;
+
+    /**
+     * Opens the saved games on a stopped clock, so the keys typed land in one moment however slowly
+     * the browser takes them, a pause between keys under load never reads as typing that stopped,
+     * and only the clock run on purpose moves time.
+     */
+    const openStill = async (page: Page) => {
+        await stillClock(page.clock);
+        await open(page);
+    };
+
+    /** Types into the search, on the stopped clock `openStill` leaves. */
+    const typeSearch = async (page: Page, words: string) => {
+        await page.getByLabel('Search the games').pressSequentially(words);
+    };
+
     test('waits for typing to stop, then says the search matches nothing and names it', async ({
         page,
     }) => {
-        await open(page);
-        await page.getByLabel('Search the games').pressSequentially('Chss', { delay: 50 });
+        await openStill(page);
+        // Each key starts the wait again, so a pause shorter than the wait says nothing.
+        await typeSearch(page, 'Ch');
+        await page.clock.runFor(400);
+        await typeSearch(page, 'ss');
+        await page.clock.runFor(400);
+        expect(await heard(page)).toEqual([]);
         await expect(page.getByRole('list')).toHaveCount(0);
         await expect(page.locator('.dk-empty > p')).toHaveText('No games match “Chss”.');
+        // Nothing is said until the whole wait after the last key has passed.
+        await page.clock.runFor(PUT_IN - 400 - 1);
+        expect(await heard(page)).toEqual([]);
+        await page.clock.runFor(SAID_AFTER - PUT_IN + 1);
         await expect.poll(() => heard(page)).toEqual(['No games match “Chss”.']);
     });
 
     test('says how many games match a search that finds some', async ({ page }) => {
-        await open(page);
-        await page.getByLabel('Search the games').pressSequentially('sky', { delay: 50 });
+        await openStill(page);
+        await typeSearch(page, 'sky');
         await expect(page.getByRole('listitem')).toHaveCount(1);
+        await page.clock.runFor(SAID_AFTER);
         await expect.poll(() => heard(page)).toEqual(['1 game matches.']);
     });
 
