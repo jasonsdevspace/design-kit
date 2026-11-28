@@ -1908,6 +1908,25 @@ const padded = (height: number, depth: number, style = ''): string =>
 
 const low = (page: Page): Locator => page.frameLocator('iframe').locator('#low');
 
+/**
+ * The top of the control given inside its frame once two reads in a row agree, since WebKit can lay
+ * a frame scaled by zoom out again after its document loads. Each read forces the frame's layout,
+ * and the reads wait on the poll's own intervals rather than the frame's animation frames, which
+ * WebKit holds back in a frame that sits off screen, as this one starts.
+ */
+const settledTop = async (control: Locator): Promise<number> => {
+    let last = Number.NaN;
+    await expect
+        .poll(async () => {
+            const top = await control.evaluate((element) => element.getBoundingClientRect().top);
+            const same = top === last;
+            last = top;
+            return same;
+        })
+        .toBe(true);
+    return last;
+};
+
 /** Where the foot of the screen is, or of the body of the page's app frame. */
 const foot = (page: Page): Promise<number> =>
     page.evaluate(
@@ -2077,18 +2096,22 @@ test('keeps a control inside a frame scaled by zoom clear of the toast, as each 
         body: PAGE.replace('</button>', `</button>${padded(1200, 1100, 'zoom: 0.6')}`),
     });
     await expect(low(page)).toBeAttached();
+    // WebKit 27.2 lays the document of a frame scaled by zoom out on some loads larger than it
+    // draws it, which puts the button at its depth over the zoom, past what the frame shows, and on
+    // others at the size it draws, as Chromium and Firefox always do, which puts it at its depth.
+    // CI met the second in WebKit once, so the layout is read once it holds still, and the toast is
+    // held to what that layout shows.
+    const inFrame = await settledTop(low(page));
+    const past = inFrame > 1100 / 0.6 - 2;
+    if (!past) expect(inFrame).toBeCloseTo(1100, -1);
+    if (browserName !== 'webkit') expect(past).toBe(false);
     const { y: top } = await resting(page);
     await scrollEnd(page, low(page), top + 6);
     await focusStill(low(page));
-    if (browserName === 'webkit') {
-        // WebKit 27.2 lays the document of a frame scaled by zoom out larger than it draws it, so
-        // the button sits past what the frame shows, and the toast leaves the page and the frame
-        // be.
-        expect(
-            await low(page).evaluate((element) => element.getBoundingClientRect().top)
-        ).toBeGreaterThan(1100 / 0.6 - 2);
-        await showStill(page);
-    } else await showClear(page, low(page));
+    // A button past what the frame shows is under no toast, so the toast leaves the page and the
+    // frame be.
+    if (past) await showStill(page);
+    else await showClear(page, low(page));
 });
 
 test('keeps a control on the page clear of the toast that covers it by less than the rise it enters on', async ({
