@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react.js';
@@ -14,7 +14,10 @@ import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react
  * round's heading is drawn in the root as the page loads, so the kit hears presses there from the
  * first. A second widget holds the view alone, so the first press in it reaches the kit as one on
  * its host. A third widget, in an open shadow root, holds a form whose submit brings the view, so a
- * submit inside an open root, which never leaves it, can be seen to count as a press.
+ * submit inside an open root, which never leaves it, can be seen to count as a press, and the closed
+ * widget holds the same form in an open root of its own. Where the page asks for them, a fourth
+ * widget's field takes focus as it draws and sends its form itself once a code is filled in, as a
+ * phone fills one, and a root the page wrote has a field focused before the kit loaded.
  */
 
 const Ask = () => {
@@ -233,6 +236,7 @@ const SubmitOpener = () => {
     const [shown, setShown] = useState(false);
     return (
         <>
+            <p id="open-note">Search the games.</p>
             <form
                 onSubmit={(event) => {
                     event.preventDefault();
@@ -240,15 +244,58 @@ const SubmitOpener = () => {
                 }}
             >
                 <input id="search" aria-label="Search" />
+                <button type="submit" id="send">
+                    Search
+                </button>
             </form>
             {shown ? <View kind="only" other={null} /> : null}
         </>
     );
 };
 
+/**
+ * A field for a code that takes focus as it draws and sends its form itself once the code is
+ * whole, with no key or click, as a field a phone fills does.
+ */
+const CodeOpener = () => {
+    const [shown, setShown] = useState(false);
+    return (
+        <>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    setShown(true);
+                }}
+            >
+                <input
+                    id="code"
+                    aria-label="Code"
+                    autoFocus
+                    onInput={(event) => {
+                        if (event.currentTarget.value.length === 4)
+                            event.currentTarget.form?.requestSubmit();
+                    }}
+                />
+            </form>
+            {shown ? <View kind="only" other={null} /> : null}
+        </>
+    );
+};
+
+/** Draws a component into a new open shadow root on the host given, and hands back the root. */
+const drawOpen = (host: Element, element: ReactNode): ShadowRoot => {
+    const shadow = host.attachShadow({ mode: 'open' });
+    const inner = document.createElement('div');
+    shadow.append(inner);
+    createRoot(inner).render(element);
+    return shadow;
+};
+
 const root = (document.querySelector('#widget') as HTMLElement).attachShadow({ mode: 'closed' });
 const holder = document.createElement('div');
 root.append(holder);
+const nestedHost = document.createElement('div');
+root.append(nestedHost);
 createRoot(holder).render(
     <>
         <Ask />
@@ -258,14 +305,34 @@ createRoot(holder).render(
         <Rows />
     </>
 );
+// An open root inside the closed one, holding the form, which the page never sees into.
+const nested = drawOpen(nestedHost, <SubmitOpener />);
 // A widget the kit is handed no node of before its first press.
 const fresh = (document.querySelector('#fresh') as HTMLElement).attachShadow({ mode: 'closed' });
 const freshHolder = document.createElement('div');
 fresh.append(freshHolder);
 createRoot(freshHolder).render(<Opener />);
 // A widget in an open shadow root, whose form the kit is handed no node of before its submit.
-const open = (document.querySelector('#open') as HTMLElement).attachShadow({ mode: 'open' });
-const openHolder = document.createElement('div');
-open.append(openHolder);
-createRoot(openHolder).render(<SubmitOpener />);
-Object.assign(window, { closedRoot: root, freshRoot: fresh, openRoot: open, ready: true });
+const open = drawOpen(document.querySelector('#open') as HTMLElement, <SubmitOpener />);
+// The widget whose field takes focus as it draws, where the page asks for it.
+const autoHost = document.querySelector('#auto');
+const auto = autoHost ? drawOpen(autoHost, <CodeOpener />) : null;
+// A root the page wrote, whose field had focus before the kit loaded, and whose form brings the view.
+const early = document.querySelector('#early')?.shadowRoot ?? null;
+const earlyHolder = early?.getElementById('early-holder');
+if (early && earlyHolder) {
+    const view = createRoot(earlyHolder);
+    early.querySelector('form')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        view.render(<View kind="only" other={null} />);
+    });
+}
+Object.assign(window, {
+    closedRoot: root,
+    freshRoot: fresh,
+    openRoot: open,
+    nestedRoot: nested,
+    autoRoot: auto,
+    earlyRoot: early,
+    ready: true,
+});

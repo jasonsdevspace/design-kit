@@ -122,6 +122,8 @@ const counted = new WeakSet<Event>();
  * page already, and an input aimed at the host itself never reaches the root.
  */
 const heardInRoot = (event: Event) => {
+    // An open root inside this one is heard from here, since the page never sees into this root.
+    if (event.type !== 'submit') hearOpen(event);
     if (!presses(event)) return;
     pressFor(event);
     if (counted.has(event)) return;
@@ -156,23 +158,34 @@ export const hearClosed = (near: Node | null | undefined): void => {
         heardHosts.add(root.host);
         for (const type of ['keydown', 'click', 'submit'])
             root.addEventListener(type, heardInRoot, true);
+        root.addEventListener('focusin', hearOpen, true);
     }
 };
 
+/** Hears a submit inside an open shadow root, once for each root. */
+const hearOpenRoot = (node: EventTarget | null | undefined) => {
+    const root = node as Partial<ShadowRoot> | null | undefined;
+    if ((root as Partial<Node> | null | undefined)?.nodeType !== 11) return;
+    if (!root?.host || root.mode !== 'open' || heardHosts.has(root.host)) return;
+    heardHosts.add(root.host);
+    (root as ShadowRoot).addEventListener('submit', heardInRoot, true);
+};
+
 /**
- * Hears a submit inside each open shadow root an input on the page passes through. A submit never
- * leaves the root its form is in, while the key or click that sends it reaches the page first, so
- * the root is heard in time for the submit that follows. A form a script submits inside an open
- * root with no input before it is not heard, as no input passed through the root.
+ * Hears a submit inside each open shadow root that focus enters or an input passes through. A
+ * submit never leaves the root its form is in, while focus entering the root and the key or click
+ * that sends a form reach the page first, so the root is heard in time for the submit that follows,
+ * a field a phone fills and that sends its own form among them. Only a form a script submits inside
+ * a root focus never entered is not heard.
  */
 const hearOpen = (event: Event) => {
-    for (const node of event.composedPath()) {
-        const root = node as Partial<ShadowRoot>;
-        if ((node as Partial<Node>).nodeType !== 11 || !root.host || root.mode !== 'open') continue;
-        if (heardHosts.has(root.host)) continue;
-        heardHosts.add(root.host);
-        node.addEventListener('submit', heardInRoot, true);
-    }
+    for (const node of event.composedPath()) hearOpenRoot(node);
+};
+
+/** Hears each open shadow root around what has focus as the module loads. */
+const hearOpenFocused = () => {
+    for (let at = document.activeElement; at?.shadowRoot; at = at.shadowRoot.activeElement)
+        hearOpenRoot(at.shadowRoot);
 };
 
 /** The document a window shows, where it is of the page's own origin, read in a try. */
@@ -294,6 +307,8 @@ const focusedOwnIn = (win: Window): Document | null => {
 const hear = (doc: Document) => {
     for (const type of ['keydown', 'click', 'submit', 'load'])
         doc.addEventListener(type, heard, true);
+    // Focus entering an open shadow root counts for nothing, but hears the root's submits.
+    doc.addEventListener('focusin', hearOpen, true);
     const win = doc.defaultView;
     if (!win) return;
     win.addEventListener('blur', entered);
@@ -402,9 +417,11 @@ const next = (event: Event) => {
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
 // view is heard and a request made before the page went out of sight is known. It notes inputs,
 // frames loading, focus entering a frame and a frame's page going, on the page and in each frame of
-// its own origin, and each time the page goes out of sight or comes back, and nothing else.
+// its own origin, the open shadow roots focus is in, and each time the page goes out of sight or
+// comes back, and nothing else.
 if (typeof document !== 'undefined') {
     sweep(window);
+    hearOpenFocused();
     document.addEventListener('visibilitychange', () => {
         sightChanges += 1;
     });

@@ -1058,13 +1058,16 @@ window.ready = true;`,
     expect(errors).toEqual([]);
 });
 
-/** Opens the page of hooks inside a closed shadow root, with the errors it raises. */
-const openClosedHooks = async (page: Page): Promise<Error[]> => {
+/**
+ * Opens the page of hooks inside shadow roots, with the errors it raises, and the markup given added
+ * to its main content.
+ */
+const openClosedHooks = async (page: Page, more = ''): Promise<Error[]> => {
     const errors: Error[] = [];
     page.on('pageerror', (error) => errors.push(error));
     await servePage(page, {
         title: 'Shop',
-        body: '<main><h1>Shop</h1><div id="widget"></div><div id="fresh"></div><div id="open"></div></main>',
+        body: `<main><h1>Shop</h1><div id="widget"></div><div id="fresh"></div><div id="open"></div>${more}</main>`,
         script: await bundle('closed-hooks-page.tsx'),
     });
     await page.waitForFunction(
@@ -1075,12 +1078,23 @@ const openClosedHooks = async (page: Page): Promise<Error[]> => {
     return errors;
 };
 
-/** The shadow roots of the page of hooks: the closed widget the kit hears, a closed one it was never
- * handed, and an open one. */
-type ClosedRoot = 'closedRoot' | 'freshRoot' | 'openRoot';
+/**
+ * The shadow roots of the page of hooks: the closed widget the kit hears, a closed one it was never
+ * handed, an open one, an open one inside the closed widget, and, where the page asks for them, the
+ * open one whose field takes focus as it draws and the open one the page wrote.
+ */
+type HookRoot = 'closedRoot' | 'freshRoot' | 'openRoot' | 'nestedRoot' | 'autoRoot' | 'earlyRoot';
 
-/** Presses the button of the closed root with the id given, by Enter, and waits two frames. */
-const pressInClosed = async (page: Page, id: string, root: ClosedRoot = 'closedRoot') => {
+/**
+ * Focuses the control with the id given inside the root named, presses the key given on it, Enter
+ * unless told otherwise, and waits two frames.
+ */
+const pressInRoot = async (
+    page: Page,
+    id: string,
+    root: HookRoot = 'closedRoot',
+    key = 'Enter'
+) => {
     await page.evaluate(
         ([given, which]) => {
             const control = (window as unknown as Record<string, ShadowRoot | undefined>)[
@@ -1091,7 +1105,7 @@ const pressInClosed = async (page: Page, id: string, root: ClosedRoot = 'closedR
         },
         [id, root] as const
     );
-    await page.keyboard.press('Enter');
+    await page.keyboard.press(key);
     await page.evaluate(
         () =>
             new Promise((done) => {
@@ -1100,8 +1114,8 @@ const pressInClosed = async (page: Page, id: string, root: ClosedRoot = 'closedR
     );
 };
 
-/** What has focus inside the closed root, by its id. */
-const focusedInClosed = (page: Page, root: ClosedRoot = 'closedRoot') =>
+/** What has focus inside the root named, by its id. */
+const focusedInRoot = (page: Page, root: HookRoot = 'closedRoot') =>
     page.evaluate(
         (which) =>
             (window as unknown as Record<string, ShadowRoot>)[which]?.activeElement?.id ?? null,
@@ -1113,13 +1127,13 @@ test('lands a useFocusAfterDraw request inside a closed shadow root, and leaves 
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'ask-only');
-    await expect.poll(() => focusedInClosed(page)).toBe('target');
-    await pressInClosed(page, 'ask');
-    expect(await focusedInClosed(page)).toBe('second');
+    await pressInRoot(page, 'ask-only');
+    await expect.poll(() => focusedInRoot(page)).toBe('target');
+    await pressInRoot(page, 'ask');
+    expect(await focusedInRoot(page)).toBe('second');
     // Still there some frames later, so a request that lands late fails too.
     await frames(page, 10);
-    expect(await focusedInClosed(page)).toBe('second');
+    expect(await focusedInRoot(page)).toBe('second');
     expect(errors).toEqual([]);
 });
 
@@ -1128,12 +1142,12 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its key c
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'next-only');
-    await expect.poll(() => focusedInClosed(page)).toBe('heading');
-    await pressInClosed(page, 'next');
-    expect(await focusedInClosed(page)).toBe('other');
+    await pressInRoot(page, 'next-only');
+    await expect.poll(() => focusedInRoot(page)).toBe('heading');
+    await pressInRoot(page, 'next');
+    expect(await focusedInRoot(page)).toBe('other');
     await frames(page, 10);
-    expect(await focusedInClosed(page)).toBe('other');
+    expect(await focusedInRoot(page)).toBe('other');
     expect(errors).toEqual([]);
 });
 
@@ -1142,13 +1156,13 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its view 
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'open-only');
-    await expect.poll(() => focusedInClosed(page)).toBe('view-heading');
+    await pressInRoot(page, 'open-only');
+    await expect.poll(() => focusedInRoot(page)).toBe('view-heading');
     const moved = await openClosedHooks(page);
-    await pressInClosed(page, 'open-move');
-    expect(await focusedInClosed(page)).toBe('view-other');
+    await pressInRoot(page, 'open-move');
+    expect(await focusedInRoot(page)).toBe('view-other');
     await frames(page, 10);
-    expect(await focusedInClosed(page)).toBe('view-other');
+    expect(await focusedInRoot(page)).toBe('view-other');
     expect(errors).toEqual([]);
     expect(moved).toEqual([]);
 });
@@ -1158,8 +1172,132 @@ test('focuses a useArrivalFocus heading inside an open shadow root as its view f
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'search', 'openRoot');
-    await expect.poll(() => focusedInClosed(page, 'openRoot')).toBe('view-heading');
+    await pressInRoot(page, 'search', 'openRoot');
+    await expect.poll(() => focusedInRoot(page, 'openRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+/** Submits the form inside the root named by a script, with no key or click, and waits two frames. */
+const submitInRoot = (page: Page, root: HookRoot) =>
+    page.evaluate(
+        (which) =>
+            new Promise((done) => {
+                const shadow = (window as unknown as Record<string, ShadowRoot | null>)[which];
+                const form = shadow?.querySelector('form');
+                if (!form) throw new Error(`No form in ${which}`);
+                form.requestSubmit();
+                requestAnimationFrame(() => requestAnimationFrame(done));
+            }),
+        root
+    );
+
+test('focuses the view a script submits a form in an open shadow root inside a closed one for once focus entered it', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await page.evaluate(() => {
+        (window as unknown as { nestedRoot: ShadowRoot }).nestedRoot
+            .getElementById('search')
+            ?.focus();
+    });
+    await submitInRoot(page, 'nestedRoot');
+    await expect.poll(() => focusedInRoot(page, 'nestedRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a form in an open shadow root inside a closed one brings by Enter', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInRoot(page, 'search', 'nestedRoot');
+    await expect.poll(() => focusedInRoot(page, 'nestedRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+for (const key of ['Enter', 'Space'])
+    test(`focuses the view a form in an open shadow root brings by ${key} on its submit button`, async ({
+        page,
+    }) => {
+        test.setTimeout(120_000);
+        const errors = await openClosedHooks(page);
+        await pressInRoot(page, 'send', 'openRoot', key);
+        await expect.poll(() => focusedInRoot(page, 'openRoot')).toBe('view-heading');
+        expect(errors).toEqual([]);
+    });
+
+test('focuses the view a form in an open shadow root brings by a pointer on its submit button', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await page.locator('#open #send').click();
+    await expect.poll(() => focusedInRoot(page, 'openRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a script submits a form in an open shadow root for after a click there', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await page.locator('#open #open-note').click();
+    await submitInRoot(page, 'openRoot');
+    await expect.poll(() => focusedInRoot(page, 'openRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a field in an open shadow root brings as it sends its own form once filled, with no key or click', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page, '<div id="auto"></div>');
+    await expect.poll(() => focusedInRoot(page, 'autoRoot')).toBe('code');
+    await page.evaluate(() => {
+        const field = (window as unknown as { autoRoot: ShadowRoot }).autoRoot.getElementById(
+            'code'
+        ) as HTMLInputElement;
+        field.value = '1234';
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect.poll(() => focusedInRoot(page, 'autoRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a form in an open shadow root brings where its field had focus before the kit loaded', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(
+        page,
+        '<div id="early"><template shadowrootmode="open"><form><input id="early-code" aria-label="Code"></form><div id="early-holder"></div></template></div>' +
+            "<script>document.getElementById('early').shadowRoot.getElementById('early-code').focus();</script>"
+    );
+    expect(await focusedInRoot(page, 'earlyRoot')).toBe('early-code');
+    await submitInRoot(page, 'earlyRoot');
+    await expect.poll(() => focusedInRoot(page, 'earlyRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('takes no focus for the view a script submits a form in an open shadow root for before any input or focus there', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await submitInRoot(page, 'openRoot');
+    await expect
+        .poll(() =>
+            page.evaluate(
+                () =>
+                    !!(window as unknown as { openRoot: ShadowRoot }).openRoot.getElementById(
+                        'view-heading'
+                    )
+            )
+        )
+        .toBe(true);
+    await frames(page, 10);
+    expect(await focusedInRoot(page, 'openRoot')).not.toBe('view-heading');
     expect(errors).toEqual([]);
 });
 
@@ -1171,11 +1309,11 @@ test('leaves focus on a field a view inside a closed shadow root focuses itself 
         const errors = await openClosedHooks(page);
         // A plain view brought by a press takes focus first, so the press is heard and the field
         // below is what keeps focus from the heading.
-        await pressInClosed(page, 'open-only');
-        await expect.poll(() => focusedInClosed(page)).toBe('view-heading');
-        await pressInClosed(page, `open-${kind}`);
+        await pressInRoot(page, 'open-only');
+        await expect.poll(() => focusedInRoot(page)).toBe('view-heading');
+        await pressInRoot(page, `open-${kind}`);
         await frames(page, 10);
-        expect(await focusedInClosed(page), kind).toBe('view-field');
+        expect(await focusedInRoot(page), kind).toBe('view-field');
         expect(errors).toEqual([]);
     }
 });
@@ -1186,7 +1324,7 @@ test('takes no press for a view inside a closed shadow root once a Tab or a clic
     test.setTimeout(120_000);
     for (const after of ['Tab', 'click']) {
         const errors = await openClosedHooks(page);
-        await pressInClosed(page, 'open-later');
+        await pressInRoot(page, 'open-later');
         if (after === 'Tab') await page.keyboard.press('Tab');
         else
             await page.evaluate(() => {
@@ -1194,7 +1332,7 @@ test('takes no press for a view inside a closed shadow root once a Tab or a clic
                     .getElementById('view-note')
                     ?.click();
             });
-        const left = await focusedInClosed(page);
+        const left = await focusedInRoot(page);
         await expect
             .poll(() =>
                 page.evaluate(
@@ -1206,7 +1344,7 @@ test('takes no press for a view inside a closed shadow root once a Tab or a clic
             )
             .toBe(true);
         await frames(page, 10);
-        expect(await focusedInClosed(page), after).toBe(left);
+        expect(await focusedInRoot(page), after).toBe(left);
         expect(errors).toEqual([]);
     }
 });
@@ -1216,13 +1354,13 @@ test('takes no focus for a view a first press brings inside a closed shadow root
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'open-only', 'freshRoot');
+    await pressInRoot(page, 'open-only', 'freshRoot');
     await frames(page, 10);
-    expect(await focusedInClosed(page, 'freshRoot')).toBe('open-only');
+    expect(await focusedInRoot(page, 'freshRoot')).toBe('open-only');
     // The view's heading is drawn now, so the kit hears the widget from here on.
-    await pressInClosed(page, 'open-move', 'freshRoot');
-    await pressInClosed(page, 'open-only', 'freshRoot');
-    await expect.poll(() => focusedInClosed(page, 'freshRoot')).toBe('view-heading');
+    await pressInRoot(page, 'open-move', 'freshRoot');
+    await pressInRoot(page, 'open-only', 'freshRoot');
+    await expect.poll(() => focusedInRoot(page, 'freshRoot')).toBe('view-heading');
     expect(errors).toEqual([]);
 });
 
@@ -1232,13 +1370,13 @@ test('focuses the first field in error of a useFormRefusal form inside a closed 
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
     // A field's own failed submit by Enter, with nothing moved.
-    await pressInClosed(page, 'name');
-    await expect.poll(() => focusedInClosed(page)).toBe('seat');
+    await pressInRoot(page, 'name');
+    await expect.poll(() => focusedInRoot(page)).toBe('seat');
     // The page's refusal, asked by a button that moves focus to another field once the errors draw.
-    await pressInClosed(page, 'refuse-move');
-    expect(await focusedInClosed(page)).toBe('other-field');
+    await pressInRoot(page, 'refuse-move');
+    expect(await focusedInRoot(page)).toBe('other-field');
     await frames(page, 10);
-    expect(await focusedInClosed(page)).toBe('other-field');
+    expect(await focusedInRoot(page)).toBe('other-field');
     expect(errors).toEqual([]);
 });
 
@@ -1247,8 +1385,8 @@ test('focuses the next row inside a closed shadow root as a row removes itself a
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
-    await pressInClosed(page, 'remove-one');
-    await expect.poll(() => focusedInClosed(page)).toBe('remove-two');
+    await pressInRoot(page, 'remove-one');
+    await expect.poll(() => focusedInRoot(page)).toBe('remove-two');
     expect(errors).toEqual([]);
 });
 
