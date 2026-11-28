@@ -1,0 +1,87 @@
+name: Deploy
+
+# Publishes the site to GitHub Pages at jasonsdevspace.com/design-kit/ from each push to main, once
+# every check CI runs has passed on that commit, so a merge that fails a check is never deployed.
+# CI is called from here rather than holding the deploy itself, so the release, which calls CI too,
+# grants its checks read access alone, and only this workflow's deploy job holds what Pages asks.
+on:
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+
+# The checks read the cache as CI does, and the job that builds the site installs afresh.
+cache-mode: read
+
+# One deploy at a time, and one that has started finishes, since a run canceled after it has handed
+# the site to Pages would leave the deployment pending. A newer push still replaces a run that is
+# waiting its turn, which loses nothing, since that push deploys the newer commit.
+concurrency:
+    group: deploy
+    cancel-in-progress: false
+
+jobs:
+    checks:
+        name: CI
+        uses: ./.github/workflows/ci.yml
+        permissions:
+            contents: read
+
+    # The site is built in a job with no more than read access, so nothing the build installs or
+    # runs can deploy, and the deploy job runs only GitHub's own Pages actions.
+    site:
+        name: Build the site
+        needs: checks
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Set up Node
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version-file: .nvmrc
+                  cache: 'npm'
+
+            # Without their install scripts, as record 1 says, and afresh from the lockfile, which
+            # npm checks each package against, since this job builds what is published or deployed.
+            - name: Install dependencies
+              run: npm ci --ignore-scripts
+
+            - name: Build the site
+              run: npm run site
+
+            - name: Upload the site
+              uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+              with:
+                  path: packages/site/dist
+
+    deploy:
+        name: Deploy the site
+        needs: site
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Configure Pages
+              uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+            - name: Summarize the deploy
+              env:
+                  PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+              run: |
+                  commit="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+                  printf '### Deployed\n\n%s, from [`%s`](%s).\n' "$PAGE_URL" "${GITHUB_SHA:0:7}" "$commit" >> "$GITHUB_STEP_SUMMARY"

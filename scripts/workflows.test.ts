@@ -22,9 +22,9 @@ import { repositoryFiles } from './repository.mjs';
 /*
  * What the workflows promise that only reading them can hold: a browser installed without the
  * system packages the runner already has, and within a time of its own, dependencies installed
- * without their install scripts, and the token that can publish or deploy held by the deploy job
- * alone in CI, and the required Browser tests kept as a gate that passes only where every browser
- * job it waits on passed.
+ * without their install scripts, the token that can publish or deploy held by no job in CI and by
+ * the deploy workflow's deploy job alone, and the required Browser tests kept as a gate that passes
+ * only where every browser job it waits on passed.
  */
 
 const workflows = repositoryFiles(import.meta.url, (path) =>
@@ -571,25 +571,29 @@ describe('the workflows', () => {
         expect(scripts.filter((name) => /^(?:pre|post)?install$/.test(name))).toEqual([]);
     });
 
-    it('give the token that can publish or deploy to the deploy job alone in CI', () => {
+    it('give the token that can publish or deploy to no job in CI, and to the deploy job alone where the site deploys', () => {
         // Called from a release, every job in CI runs as the release, so any of them holding the
-        // token and naming the npm environment could publish to npm as the release does. The
-        // workflow's own permissions would give it to every job, as write-all would give it to a
-        // job.
-        const ci = (workflows.get('.github/workflows/ci.yml') ?? '')
-            .replace(/\r\n/g, '\n')
-            .replace(/^[ \t]*#.*\n/gm, '')
-            .replace(/[ \t]+#[ \t].*$/gm, '');
-        const grants = (text: string) => /id-token:\s*write|write-all/.test(text);
-        const start = ci.search(/^jobs:/m);
-        expect(start).toBeGreaterThan(-1);
-        expect(grants(ci.slice(0, start))).toBe(false);
-        const holding = ci
-            .slice(start)
-            .split(/^ {4}(?=[a-z][\w-]*:\s*$)/m)
-            .filter(grants)
-            .map((job) => job.slice(0, job.indexOf(':')));
-        expect(holding).toEqual(['deploy']);
+        // token and naming the npm environment could publish to npm as the release does, and a
+        // caller has to grant whatever a job in it asks for. The workflow's own permissions would
+        // give it to every job, as write-all would give it to a job.
+        const holdingIn = (path: string) => {
+            const text = (workflows.get(path) ?? '')
+                .replace(/\r\n/g, '\n')
+                .replace(/^[ \t]*#.*\n/gm, '')
+                .replace(/[ \t]+#[ \t].*$/gm, '');
+            const grants = (part: string) =>
+                /id-token:\s*write|pages:\s*write|write-all/.test(part);
+            const start = text.search(/^jobs:/m);
+            expect(start, path).toBeGreaterThan(-1);
+            expect(grants(text.slice(0, start)), path).toBe(false);
+            return text
+                .slice(start)
+                .split(/^ {4}(?=[a-z][\w-]*:\s*$)/m)
+                .filter(grants)
+                .map((job) => job.slice(0, job.indexOf(':')));
+        };
+        expect(holdingIn('.github/workflows/ci.yml')).toEqual([]);
+        expect(holdingIn(DEPLOY)).toEqual(['deploy']);
     });
 
     it("run only git, gh and the shell's own words in a job that holds a token that can write", () => {
@@ -743,7 +747,7 @@ describe('the workflows', () => {
         const writer = workflows.get('.github/workflows/dependencies.yml') ?? '';
         const jobs = jobsOf(ci);
         const WRITERS = ['dependencies', 'dependencies-mac'];
-        const FRESH = ['floor', 'site'];
+        const FRESH = ['floor'];
         const KEY =
             /key: deps-\$\{\{ runner\.os \}\}-\$\{\{ runner\.arch \}\}-node-\$\{\{ steps\.node\.outputs\.node-version \}\}-\$\{\{ hashFiles\('package-lock\.json'\) \}\}\s*$/m;
         const PATHS = /path: \|\n\s+node_modules\n\s+packages\/\*\/node_modules\n/;
@@ -761,6 +765,7 @@ describe('the workflows', () => {
             expect(workflows.get('.github/workflows/site-pages.yml') ?? '').toMatch(
                 /^cache-mode: read\s*$/m
             );
+            expect(workflows.get(DEPLOY) ?? '').toMatch(/^cache-mode: read\s*$/m);
             expect(releases.length).toBe(1);
             for (const [path, text] of releases) {
                 expect(text, path).toMatch(/^cache-mode: none\s*$/m);
@@ -841,8 +846,13 @@ describe('the workflows', () => {
         });
 
         it('installs afresh where a job builds what is published or deployed', () => {
-            for (const id of FRESH) {
-                const body = jobs.find((job) => job.id === id)?.body ?? '';
+            const built = [
+                ...FRESH.map((id) => jobs.find((job) => job.id === id)),
+                jobsOf(workflows.get(DEPLOY) ?? '').find((job) => job.id === 'site'),
+            ];
+            for (const [index, job] of built.entries()) {
+                const id = job?.id ?? String(index);
+                const body = job?.body ?? '';
                 expect(body, id).toMatch(INSTALL);
                 expect(body, id).not.toMatch(RESTORE);
                 expect(body, id).not.toMatch(/cache-hit/);
@@ -946,6 +956,38 @@ describe('the workflows', () => {
     });
 });
 
+const DEPLOY = '.github/workflows/deploy.yml';
+
+describe('the deploy workflow', () => {
+    const text = workflows.get(DEPLOY) ?? '';
+    const job = (id: string) => jobsOf(text).find((found) => found.id === id)?.body ?? '';
+
+    it('runs on a push to main alone, and CI runs only on pull requests and when called', () => {
+        expect(text).toMatch(/^on:\n {4}push:\n {8}branches: \[main\]\n\n/m);
+        const ci = workflows.get('.github/workflows/ci.yml') ?? '';
+        const triggers = /^on:\n((?: {4}.*\n|[ \t]*\n)*)/m.exec(ci)?.[1] ?? '';
+        expect(triggers.match(/^ {4}[a-z_]+(?=:)/gm)?.map((name) => name.trim())).toEqual([
+            'pull_request',
+            'workflow_call',
+        ]);
+    });
+
+    it('builds the site only once every check in CI has passed, and deploys only what it built', () => {
+        expect(job('checks')).toMatch(/^ {8}uses: \.\/\.github\/workflows\/ci\.yml\s*$/m);
+        expect(job('checks')).toMatch(/^ {8}permissions:\n {12}contents: read\n(?! {12})/m);
+        expect(job('site')).toMatch(/^ {8}needs: checks\s*$/m);
+        expect(job('site')).toMatch(/uses: actions\/upload-pages-artifact@[0-9a-f]{40}\b/);
+        expect(job('deploy')).toMatch(/^ {8}needs: site\s*$/m);
+        expect(job('deploy')).toMatch(
+            /^ {8}permissions:\n {12}pages: write\n {12}id-token: write\n {8}environment:\n {12}name: github-pages\n/m
+        );
+    });
+
+    it('runs one deploy at a time, never canceling one under way', () => {
+        expect(text).toMatch(/^concurrency:\n {4}group: deploy\n {4}cancel-in-progress: false\n/m);
+    });
+});
+
 describe('the release workflow', () => {
     const text = workflows.get('.github/workflows/release.yml') ?? '';
     const jobs = jobsOf(text);
@@ -961,6 +1003,10 @@ describe('the release workflow', () => {
         expect(job('agree')).toMatch(
             /^ {18}if ! git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main; then\n {22}echo "the tagged commit is not on main"\n {22}exit 1\n/m
         );
+    });
+
+    it('grants the checks it calls read access alone', () => {
+        expect(job('checks')).toMatch(/^ {8}permissions:\n {12}contents: read\n(?! {12})/m);
     });
 
     it('holds the npm environment and its publishing token in the publish job alone', () => {

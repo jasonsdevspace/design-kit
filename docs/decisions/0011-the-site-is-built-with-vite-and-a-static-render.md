@@ -49,9 +49,9 @@ element and no form posts. The footer names the version of the kit a page is dra
 commit it was built at, so it never names a version npm cannot give. The strip's and the footer's
 link to how the kit works leads to the site's own explainer, drawn in the kit's explainer layout as
 a demo's is. The site's navigation leaves it out, as a demo's pages leave out theirs. The explainer
-links the README and the decision records at the commit the site was built at. CI builds and uploads
-the site from a job with read access alone once every check has passed on main, and a job that runs
-only GitHub's Pages actions deploys it.
+links the README and the decision records at the commit the site was built at. A deploy workflow of
+its own runs CI on each push to main, builds and uploads the site from a job with read access alone
+once every check has passed, and a job that runs only GitHub's Pages actions deploys it.
 
 ## Consequences
 
@@ -105,9 +105,9 @@ The paths are in `packages/site`.
   cursor and a target of the size the kit holds to, at a laptop's width and a phone's.
 - `src/code.test.ts` builds the React each state shows with the pinned version's components, and
   finds it drawing what that version draws for the state.
-- `scripts/workflows.test.ts`, at the root, finds only the deploy job in CI asking for the token
-  that can deploy, never the workflow or a job by `write-all`, since every job in CI runs as the
-  release when the release calls it.
+- `scripts/workflows.test.ts`, at the root, finds the deploy workflow's deploy job alone asking for
+  the token that can deploy, and no job in CI, never the workflow or a job by `write-all`, since
+  every job in CI runs as the release when the release calls it.
 - `src/published.test.ts` finds the kit pinned to one exact version of the npm package, installed
   from the registry, and no file the site is built, tested or audited from reaching the kit by any
   other name or path.
