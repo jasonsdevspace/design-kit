@@ -1102,9 +1102,14 @@ describe("the message workflow's check", () => {
         new URL('../node_modules/@jasonsdevspace/prose-check', import.meta.url)
     );
     const work = mkdtempSync(join(tmpdir(), 'message-check-'));
-    const version = (
-        JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8')) as { version: string }
-    ).version;
+    const manifest: unknown = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'));
+    const version =
+        typeof manifest === 'object' &&
+        manifest !== null &&
+        'version' in manifest &&
+        typeof manifest.version === 'string'
+            ? manifest.version
+            : '';
     execFileSync('npm', ['pack', '--ignore-scripts', '--pack-destination', work, installed], {
         stdio: 'ignore',
     });
@@ -1152,7 +1157,7 @@ describe("the message workflow's check", () => {
                 cwd: dir,
                 encoding: 'utf8',
                 env: {
-                    PATH: `${bin}:${process.env.PATH ?? ''}`,
+                    PATH: `${bin}:${process.env['PATH'] ?? ''}`,
                     RUNNER_TEMP: temp,
                     TITLE: title,
                     BODY: 'A plain body.',
