@@ -1064,7 +1064,7 @@ const openClosedHooks = async (page: Page): Promise<Error[]> => {
     page.on('pageerror', (error) => errors.push(error));
     await servePage(page, {
         title: 'Shop',
-        body: '<main><h1>Shop</h1><div id="widget"></div><div id="fresh"></div></main>',
+        body: '<main><h1>Shop</h1><div id="widget"></div><div id="fresh"></div><div id="open"></div></main>',
         script: await bundle('closed-hooks-page.tsx'),
     });
     await page.waitForFunction(
@@ -1075,8 +1075,9 @@ const openClosedHooks = async (page: Page): Promise<Error[]> => {
     return errors;
 };
 
-/** The closed roots of the page of hooks: the widget the kit hears, and one it was never handed. */
-type ClosedRoot = 'closedRoot' | 'freshRoot';
+/** The shadow roots of the page of hooks: the closed widget the kit hears, a closed one it was never
+ * handed, and an open one. */
+type ClosedRoot = 'closedRoot' | 'freshRoot' | 'openRoot';
 
 /** Presses the button of the closed root with the id given, by Enter, and waits two frames. */
 const pressInClosed = async (page: Page, id: string, root: ClosedRoot = 'closedRoot') => {
@@ -1150,6 +1151,16 @@ test('focuses a useArrivalFocus heading inside a closed shadow root as its view 
     expect(await focusedInClosed(page)).toBe('view-other');
     expect(errors).toEqual([]);
     expect(moved).toEqual([]);
+});
+
+test('focuses a useArrivalFocus heading inside an open shadow root as its view first draws by a form submitted there', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page);
+    await pressInClosed(page, 'search', 'openRoot');
+    await expect.poll(() => focusedInClosed(page, 'openRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
 });
 
 test('leaves focus on a field a view inside a closed shadow root focuses itself as it first draws, above or below its useArrivalFocus heading', async ({

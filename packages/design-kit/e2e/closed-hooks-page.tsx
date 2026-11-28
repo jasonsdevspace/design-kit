@@ -13,7 +13,8 @@ import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react
  * moves on once it is drawn or the view focuses a field of its own above or below its heading. The
  * round's heading is drawn in the root as the page loads, so the kit hears presses there from the
  * first. A second widget holds the view alone, so the first press in it reaches the kit as one on
- * its host.
+ * its host. A third widget, in an open shadow root, holds a form whose submit brings the view, so a
+ * submit inside an open root, which never leaves it, can be seen to count as a press.
  */
 
 const Ask = () => {
@@ -227,6 +228,24 @@ const Rows = () => {
     );
 };
 
+/** A form whose submit brings the view, drawn for the first time. */
+const SubmitOpener = () => {
+    const [shown, setShown] = useState(false);
+    return (
+        <>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    setShown(true);
+                }}
+            >
+                <input id="search" aria-label="Search" />
+            </form>
+            {shown ? <View kind="only" other={null} /> : null}
+        </>
+    );
+};
+
 const root = (document.querySelector('#widget') as HTMLElement).attachShadow({ mode: 'closed' });
 const holder = document.createElement('div');
 root.append(holder);
@@ -244,4 +263,9 @@ const fresh = (document.querySelector('#fresh') as HTMLElement).attachShadow({ m
 const freshHolder = document.createElement('div');
 fresh.append(freshHolder);
 createRoot(freshHolder).render(<Opener />);
-Object.assign(window, { closedRoot: root, freshRoot: fresh, ready: true });
+// A widget in an open shadow root, whose form the kit is handed no node of before its submit.
+const open = (document.querySelector('#open') as HTMLElement).attachShadow({ mode: 'open' });
+const openHolder = document.createElement('div');
+open.append(openHolder);
+createRoot(openHolder).render(<SubmitOpener />);
+Object.assign(window, { closedRoot: root, freshRoot: fresh, openRoot: open, ready: true });

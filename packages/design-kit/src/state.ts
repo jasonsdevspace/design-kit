@@ -97,6 +97,7 @@ const heard = (event: Event) => {
         sweep((event.target as Partial<HTMLIFrameElement> | null)?.contentWindow);
         return;
     }
+    if (event.type !== 'submit') hearOpen(event);
     if (event.type === 'keydown') {
         // A keydown with no key, as autofill sends, is no input of the visitor's, and a key that
         // neither presses, types nor moves leaves the press as it is.
@@ -113,11 +114,12 @@ const heard = (event: Event) => {
 const counted = new WeakSet<Event>();
 
 /**
- * Hears an input inside a closed shadow root the kit hears, after the kit's listener on the
- * document, which saw it only as made on the root's host. A press on a control in the root is taken
- * as a press, with the control it was made on, and counted where the page did not count it, as for
- * Enter, which is no input on the host, or a submit, which never leaves the root. Anything else was
- * heard on the page already, and an input aimed at the host itself never reaches the root.
+ * Hears an input inside a shadow root the kit hears, after the kit's listener on the document. In a
+ * closed root the page saw the input only as made on the root's host, and in an open one it never
+ * saw a submit, which does not leave the root. A press on a control in the root is taken as a
+ * press, with the control it was made on, and counted where the page did not count it, as for
+ * Enter, which is no input on a closed root's host, or a submit. Anything else was heard on the
+ * page already, and an input aimed at the host itself never reaches the root.
  */
 const heardInRoot = (event: Event) => {
     if (!presses(event)) return;
@@ -136,7 +138,7 @@ const clear = () => {
 };
 
 /**
- * The hosts of the closed shadow roots the kit hears, each once. Unlike a document, which `open()`
+ * The hosts of the shadow roots the kit hears, each once. Unlike a document, which `open()`
  * strips of its listeners, a shadow root keeps them as long as it lives, so a set of the roots
  * heard stays true, and a root that is dropped goes with its host.
  */
@@ -154,6 +156,22 @@ export const hearClosed = (near: Node | null | undefined): void => {
         heardHosts.add(root.host);
         for (const type of ['keydown', 'click', 'submit'])
             root.addEventListener(type, heardInRoot, true);
+    }
+};
+
+/**
+ * Hears a submit inside each open shadow root an input on the page passes through. A submit never
+ * leaves the root its form is in, while the key or click that sends it reaches the page first, so
+ * the root is heard in time for the submit that follows. A form a script submits inside an open
+ * root with no input before it is not heard, as no input passed through the root.
+ */
+const hearOpen = (event: Event) => {
+    for (const node of event.composedPath()) {
+        const root = node as Partial<ShadowRoot>;
+        if ((node as Partial<Node>).nodeType !== 11 || !root.host || root.mode !== 'open') continue;
+        if (heardHosts.has(root.host)) continue;
+        heardHosts.add(root.host);
+        node.addEventListener('submit', heardInRoot, true);
     }
 };
 

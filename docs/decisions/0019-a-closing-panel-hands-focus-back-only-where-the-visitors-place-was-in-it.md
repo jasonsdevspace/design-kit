@@ -10,7 +10,8 @@ inside one that a focus request hears, a press cleared as focus enters a frame n
 an id a focus request looks for in each root outward from where focus was, and in 0.9.5 for the
 presses and keys inside a closed shadow root the kit has read focus in, heard on the root with the
 control pressed, so a view a press there draws for the first time reads where focus was through that
-control
+control, and for a submit inside an open shadow root, heard on the root once a key or a click on the
+page has passed through it, since a submit never leaves the root its form is in
 
 ## Context
 
@@ -349,6 +350,9 @@ What no fix reaches, each failing safe:
 - A press inside a closed shadow root the kit has not read focus in reaches the page as a press on
   its host, which is no control, so the view it brings takes no focus. In a widget whose first node
   the kit reads through is in the view a press brings, that is the first press.
+- A form a script submits inside an open shadow root with no key or click before it never counts,
+  since the root is heard only once an input on the page has passed through it, and a submit stays
+  inside the root.
 - A toast on the page that had focus inside a closed shadow root hands it back to the host, which
   takes none, so it goes on to the main content.
 - In Firefox alone, a page script that moves focus to an element of the page just after focus enters
@@ -435,8 +439,10 @@ The path is in `packages/design-kit`.
   the one before it left the widget, closes by Escape a page's panel a widget's button opened before
   the page drew it, leaves the page's open panel to its own button as a widget draws a panel with
   its id after attaching its button, and opens and closes by Escape a panel inside a closed shadow
-  root. It also brings a view by a press inside a closed shadow root and finds its `useArrivalFocus`
-  heading taking focus as the view first draws, focus left where the visitor moved first, a field
+  root. It submits a form inside an open shadow root by Enter and finds the view the submit draws
+  for the first time taking focus. It also brings a view by a press inside a closed shadow root and
+  finds its `useArrivalFocus` heading taking focus as the view first draws, focus left where the
+  visitor moved first, a field
   the view focuses above or below its heading keeping focus, no focus taken once a Tab or a click on
   nothing follows the press, and, in a widget the kit was never handed a node of, no focus for the
   first press and focus from the next.
