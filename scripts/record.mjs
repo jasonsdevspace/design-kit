@@ -381,9 +381,12 @@ if (isRunDirectly(import.meta.url)) {
     // publishes it, into a folder of its own.
     const into = mkdtempSync(join(tmpdir(), 'design-kit-pack-'));
     try {
-        execFileSync('npm', ['run', 'build', '--workspace', '@jasonsdevspace/design-kit'], {
-            stdio: ['ignore', 'ignore', 'inherit'],
-        });
+        // The build's own output shows, so a compiler error says why the record could not be made.
+        execFileSync(
+            'npm',
+            ['run', 'build', '--silent', '--workspace', '@jasonsdevspace/design-kit'],
+            { stdio: ['ignore', 'inherit', 'inherit'] }
+        );
         execFileSync(
             'npm',
             ['pack', '--workspace', '@jasonsdevspace/design-kit', '--pack-destination', into],
