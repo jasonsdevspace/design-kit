@@ -636,7 +636,7 @@ const CLOSED_HOST =
 
 /** The same limit, for a press. */
 const CLOSED_PRESS =
-    'A press inside a closed shadow root reaches the page as a press on its host, which is no control.';
+    'The first press inside a closed shadow root the kit has not read focus in reaches the page as a press on its host, which is no control.';
 
 /** A square that fails: the wrong answer its cause gives, and the cause. */
 type Failing = { readonly gives: ByEngine; readonly because: string };

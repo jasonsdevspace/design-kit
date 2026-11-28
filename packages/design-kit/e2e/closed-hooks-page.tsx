@@ -19,7 +19,7 @@ import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react
  * widget's field takes focus as it draws and sends its form itself once a code is filled in, as a
  * phone fills one, a root the page wrote has a field focused before the kit loaded, a frame the page
  * wrote has one too, and a fifth widget's heading, which the kit reads focus through, sits beside a
- * form a script submits.
+ * form a script submits. The closed widget holds two refusal forms side by side.
  */
 
 const Ask = () => {
@@ -177,6 +177,8 @@ const Seat = () => {
         say: () => undefined,
         invalid: () => {
             setError(true);
+            const counts = window as unknown as { seatRefused?: number };
+            counts.seatRefused = (counts.seatRefused ?? 0) + 1;
         },
     });
     useLayoutEffect(() => {
@@ -199,6 +201,29 @@ const Seat = () => {
             >
                 Refuse and move on
             </button>
+        </form>
+    );
+};
+
+/**
+ * A second form beside the first, whose own failed submit focuses its own first field in error and
+ * counts its own refusals, so each form is refused for its own submit alone.
+ */
+const Score = () => {
+    const [error, setError] = useState(false);
+    const [form] = useFormRefusal<HTMLFormElement>({
+        say: () => undefined,
+        invalid: () => {
+            setError(true);
+            const counts = window as unknown as { scoreRefused?: number };
+            counts.scoreRefused = (counts.scoreRefused ?? 0) + 1;
+        },
+    });
+    return (
+        <form ref={form} noValidate>
+            <input id="score-name" aria-label="Player" defaultValue="Bo" />
+            <input id="score" aria-label="Score" required aria-invalid={error ? true : undefined} />
+            <button type="submit">Save the score</button>
         </form>
     );
 };
@@ -341,6 +366,7 @@ createRoot(holder).render(
         <Round />
         <Opener />
         <Seat />
+        <Score />
         <Rows />
     </>
 );

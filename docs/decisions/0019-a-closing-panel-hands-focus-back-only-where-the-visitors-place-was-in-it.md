@@ -224,9 +224,10 @@ button in it or once that document has lost its window, and on a closed shadow r
 attached button, since the page sees a press, focus or a key there only as one on the host, and the
 panel's id, its buttons, the button that opened it and whether it has started are kept for each root
 that holds a panel, a document or a shadow root, found from the button's own root out through each
-host, so a panel of the page and one of a frame or of a widget's shadow root that share an id stay
-apart. A screen reader follows `aria-controls` only within one root, so a button that names a panel
-in another root is heard with its expanded state alone. The stepper and a group of cells read focus
+host as the button is attached and kept from then on, so no read moves state between roots, and a
+panel of the page and one of a frame or of a widget's shadow root that share an id stay apart. A
+screen reader follows `aria-controls` only within one root, so a button that names a panel in
+another root is heard with its expanded state alone. The stepper and a group of cells read focus
 through `seen` for the document they sit in, the page's where it has no window, so a stepper keeps a
 button with focus shown as its value turns read only and hands focus to its value or itself in the
 frame as it is taken down, and a group hands focus on where focus fell to the frame's body. The
@@ -346,6 +347,11 @@ leaving one standing. Two do not:
 
 What no fix reaches, each failing safe:
 
+- A panel the page draws after attaching its button, in a root other than the one the button's panel
+  was found in as it was attached, or the button's own where none was, is never found. Finding it
+  would move the panel's state between roots inside a read, with every caller bound to read in
+  order. A page attaches the button once its panel is drawn.
+
 - A press inside a frame in a closed shadow root never counts. Nothing reaches its document, it is
   not in `window.frames`, and its load stays inside the root. Entering it from the page only clears
   the press. The only spec work near it, whatwg/dom#1287, would report a root being attached, not
@@ -440,22 +446,20 @@ The path is in `packages/design-kit`.
 - `e2e/shadow.spec.ts`, in Chromium, WebKit and Firefox, opens a widget's own panel beside its
   button inside an open shadow root and closes it by its corner Close and by Escape with focus back
   on its button, the page's panel with the same id untouched, hands focus on past the widget to the
-  page's next control where its button is off, starts a panel open as a button drawn again says once
-  the one before it left the widget, closes by Escape a page's panel a widget's button opened before
-  the page drew it, leaves the page's open panel to its own button as a widget draws a panel with
-  its id after attaching its button, and opens and closes by Escape a panel inside a closed shadow
-  root. It submits a form inside an open shadow root by Enter in its field, by Enter or Space once
-  focus is on its submit button, by a pointer on that button, by a script after a click in the root,
-  by a script after focus entered an open root inside a closed one, by its own field once a code is
-  filled in with no key or click, by a script where its field had focus before the kit loaded, on
-  the page and in a frame, and by a script beside a heading the kit reads focus through, and finds
-  the view the submit draws for the first time taking focus each time. A form a script submits in a
-  root focus never entered brings its view with no focus, and the next submit after a click there
-  brings focus. It also brings a view by a press inside a closed shadow root and finds its
-  `useArrivalFocus` heading taking focus as the view first draws, focus left where the visitor moved
-  first, a field the view focuses above or below its heading keeping focus, no focus taken once a
-  Tab or a click on nothing follows the press, and, in a widget the kit was never handed a node of,
-  no focus for the first press and focus from the next.
+  page's next control where its button is off, and starts a panel open as a button drawn again says
+  once the one before it left the widget, and the focus grid opens and closes by Escape a panel
+  inside a closed shadow root. It submits a form inside an open shadow root by Enter in its field,
+  by Enter or Space once focus is on its submit button, by a pointer on that button, by a script
+  after a click in the root, by a script after focus entered an open root inside a closed one, by
+  its own field once a code is filled in with no key or click, by a script where its field had focus
+  before the kit loaded, on the page and in a frame, and by a script beside a heading the kit reads
+  focus through, and finds the view the submit draws for the first time taking focus each time. A
+  form a script submits in a root focus never entered brings its view with no focus, and the next
+  submit after a click there brings focus. It also brings a view by a press inside a closed shadow
+  root and finds its `useArrivalFocus` heading taking focus as the view first draws, focus left
+  where the visitor moved first, a field the view focuses above or below its heading keeping focus,
+  no focus taken once a Tab or a click on nothing follows the press, and, in a widget the kit was
+  never handed a node of, no focus for the first press and focus from the next.
 - `e2e/seen.spec.ts`, in Chromium, WebKit and Firefox, reads `seen` as a pure function over a page
   with a frame, a frame inside it, a frame beside it and a frame taken from the page, for an asker
   in each, and finds a kept place reading the same as the element, and the walk going on past a

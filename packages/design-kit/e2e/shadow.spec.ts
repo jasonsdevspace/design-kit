@@ -509,6 +509,23 @@ window.ready = true;`,
     await expect(page.locator('iframe')).toBeFocused();
 });
 
+test("stops at a closed details' summary that follows the panel, passing over what it hides, as a panel closes with its button off", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Shop',
+        body: '<main><h1>Shop</h1><div id="widget"></div><details><summary id="more">More</summary><button type="button" id="hidden-inside">Inside the details</button></details><button type="button" id="after">After the details</button></main>',
+        script: `import { attachPanel } from './controls.js';
+const root = document.querySelector('#widget').attachShadow({ mode: 'open' });
+window.root = root;
+${SLOTTED}
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await closeWithButtonOff(page);
+    await expect(page.locator('#more')).toBeFocused();
+});
+
 test("hands focus on into a following widget's open shadow root, as a panel closes with its button off", async ({
     page,
 }) => {
@@ -526,6 +543,50 @@ window.ready = true;`,
     await page.waitForFunction(() => 'ready' in window);
     await closeWithButtonOff(page);
     await expect(page.locator('#next-widget').locator('#inside')).toBeFocused();
+});
+
+test("opens a widget's panel from a button attached before the widget put it beside the panel", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `const button = document.createElement('button');
+Object.assign(button, { type: 'button', id: 'opener', textContent: 'Tips' });
+button.setAttribute('aria-expanded', 'false');
+button.setAttribute('aria-controls', 'tips');
+attachPanel(button);
+root.innerHTML = '<div id="tips" hidden><a href="#deal">How to deal</a></div>';
+root.prepend(button);`
+    );
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('link', { name: 'How to deal' })).toBeVisible();
+});
+
+test("opens the page's panel from a button moved out of a widget, taken down and attached again", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `root.innerHTML = \`<button type="button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div id="tips" hidden><a href="#deal">The widget's tips</a></div>\`;
+window.first = attachPanel(root.querySelector('#opener'));`,
+        '<div id="page-tips"></div>'
+    );
+    await page.evaluate(() => {
+        const { root, attachPanel } = window as unknown as Widget;
+        const button = root.querySelector<HTMLButtonElement>('#opener');
+        const panel = root.querySelector('#tips');
+        if (!button || !panel) throw new Error('expected the widget');
+        (window as unknown as { first: { detach: () => void } }).first.detach();
+        // The button and its panel move out to the page, and the button is attached again there.
+        document.querySelector('#page-tips')?.append(button, panel);
+        attachPanel(button);
+    });
+    await page.locator('#page-tips').getByRole('button', { name: 'Tips' }).click();
+    await expect(
+        page.locator('#page-tips').getByRole('link', { name: "The widget's tips" })
+    ).toBeVisible();
 });
 
 test("starts a widget's panel as a button drawn again says, once the one before it left the widget and was taken down", async ({
@@ -554,86 +615,6 @@ window.first = attachPanel(root.querySelector('#first'));`
         'aria-expanded',
         'true'
     );
-});
-
-test("closes by Escape a page's panel opened from a widget's button before the page drew it", async ({
-    page,
-}) => {
-    await openWidget(
-        page,
-        `root.innerHTML = '<button type="button" id="help-button" aria-expanded="true" aria-controls="help">Help</button>';
-attachPanel(root.querySelector('#help-button'));
-document.querySelector('main').insertAdjacentHTML('beforeend', '<div id="help"><a href="#start">Start here</a></div>');`
-    );
-    await page.getByRole('link', { name: 'Start here' }).focus();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('#help')).toBeHidden();
-    await expect(page.locator('#widget').getByRole('button', { name: 'Help' })).toBeFocused();
-});
-
-test("leaves the page's open panel to its own button as a widget draws a panel with its id after attaching its button", async ({
-    page,
-}) => {
-    await openWidget(
-        page,
-        `attachPanel(document.querySelector('#page-tips'));
-document.querySelector('#page-tips').click();
-root.innerHTML = '<button type="button" id="widget-tips" aria-expanded="false" aria-controls="tips">Widget tips</button>';
-// The widget's button is attached before the widget draws its own panel, so it first finds the page's.
-attachPanel(root.querySelector('#widget-tips'));
-const panel = document.createElement('div');
-panel.id = 'tips';
-panel.hidden = true;
-panel.textContent = "The widget's tips";
-root.append(panel);`,
-        '<button type="button" id="page-tips" aria-expanded="false" aria-controls="tips">Page tips</button><div id="tips" hidden><a href="#deal">How to deal</a></div>'
-    );
-    await expect(page.locator('main > #tips')).toBeVisible();
-    await page.getByRole('link', { name: 'How to deal' }).focus();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('main > #tips')).toBeHidden();
-    await expect(page.locator('#page-tips')).toBeFocused();
-    await expect(page.locator('#page-tips')).toHaveAttribute('aria-expanded', 'false');
-});
-
-test("opens a widget's panel inside a closed shadow root by a press on its button, and closes it by Escape", async ({
-    page,
-}) => {
-    await servePage(page, {
-        title: 'Shop',
-        body: '<main><h1>Shop</h1><div id="widget"></div></main>',
-        script: `import { attachPanel } from './controls.js';
-const root = document.querySelector('#widget').attachShadow({ mode: 'closed' });
-root.innerHTML = \`<button type="button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
-<div id="tips" hidden><a href="#deal">How to deal</a></div>\`;
-attachPanel(root.querySelector('#opener'));
-window.opener = root.querySelector('#opener');
-window.tips = root.querySelector('#tips');
-window.link = root.querySelector('a');
-window.ready = true;`,
-    });
-    await page.waitForFunction(() => 'ready' in window);
-    type Closed = { opener: HTMLButtonElement; tips: HTMLElement; link: HTMLElement };
-    const shown = () => page.evaluate(() => !(window as unknown as Closed).tips.hidden);
-    // Pressed by pointer at the button's middle, since no locator reaches into a closed root.
-    const box = await page.evaluate(() => {
-        const { left, top, width, height } = (
-            window as unknown as Closed
-        ).opener.getBoundingClientRect();
-        return { x: left + width / 2, y: top + height / 2 };
-    });
-    await page.mouse.click(box.x, box.y);
-    await expect.poll(shown).toBe(true);
-    expect(
-        await page.evaluate(() =>
-            (window as unknown as Closed).opener.getAttribute('aria-expanded')
-        )
-    ).toBe('true');
-    await page.evaluate(() => {
-        (window as unknown as Closed).link.focus();
-    });
-    await page.keyboard.press('Escape');
-    await expect.poll(shown).toBe(false);
 });
 
 /** Shows a message on the toast a page has attached, with no action. */
@@ -1437,6 +1418,26 @@ test('focuses the first field in error of a useFormRefusal form inside a closed 
     expect(await focusedInRoot(page)).toBe('other-field');
     await frames(page, 10);
     expect(await focusedInRoot(page)).toBe('other-field');
+    expect(errors).toEqual([]);
+});
+
+test('refuses each useFormRefusal form inside a closed shadow root for its own failed submit alone', async ({
+    page,
+}) => {
+    const errors = await openClosedHooks(page);
+    const refused = () =>
+        page.evaluate(() => {
+            const counts = window as unknown as { seatRefused?: number; scoreRefused?: number };
+            return { seat: counts.seatRefused ?? 0, score: counts.scoreRefused ?? 0 };
+        });
+    // The second form's own failed submit focuses its own field in error and refuses it alone.
+    await pressInRoot(page, 'score-name');
+    await expect.poll(() => focusedInRoot(page)).toBe('score');
+    expect(await refused()).toEqual({ seat: 0, score: 1 });
+    // Then the first form's, which leaves the second as it was.
+    await pressInRoot(page, 'name');
+    await expect.poll(() => focusedInRoot(page)).toBe('seat');
+    expect(await refused()).toEqual({ seat: 1, score: 1 });
     expect(errors).toEqual([]);
 });
 

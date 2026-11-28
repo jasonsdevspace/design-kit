@@ -1,8 +1,16 @@
 import { isElement, rootOf } from './find.js';
-import { crossed, deepActive, docIn, handed } from './state.js';
+import {
+    closedHeard,
+    crossed,
+    deepActive as readActive,
+    docIn,
+    handed,
+    heardHosts,
+    heardInRoot,
+    hearOpen,
+    hearOpenRoot,
+} from './state.js';
 import type { AttachOptions } from './teardown.js';
-
-export { deepActive };
 
 /*
  * How the controls move focus and hand it back: the one view of focus read from the page down
@@ -11,6 +19,76 @@ export { deepActive };
  * rule by which a piece closing or leaving hands focus back. No entry of the package names this
  * module, so a page imports it only through `./controls`.
  */
+
+/**
+ * The shadow roots around a node, out to its document, a plain fragment ending the walk since it has
+ * no host.
+ */
+const closedAround = (near: Node | null | undefined): ShadowRoot[] => {
+    const roots: ShadowRoot[] = [];
+    for (
+        let root = near?.getRootNode();
+        root?.nodeType === 11 && (root as Partial<ShadowRoot>).host;
+        root = (root as ShadowRoot).host.getRootNode()
+    )
+        roots.push(root as ShadowRoot);
+    return roots;
+};
+
+/**
+ * Hears the shadow roots around a node the kit reads focus through. A closed root's presses and
+ * keys, which the kit's listeners on the document hear only as made on the root's host, are heard
+ * on the root itself, with focus entering an open root inside it and the keys and clicks passing
+ * through one, so that open root's submits are heard too. An open root's submits are heard, which
+ * never leave it. Only a closed root the kit has read focus through a node in is heard, as only such
+ * a root is read into, so a press inside a widget the kit has never read focus in still reaches the
+ * page as one on its host. It sits here rather than in the state module, since only a piece that
+ * holds a node calls it, so a page that attaches nothing never loads it.
+ */
+export const hearClosed = (near: Node | null | undefined): void => {
+    for (const root of closedAround(near)) {
+        if (root.mode === 'open') {
+            hearOpenRoot(root);
+            continue;
+        }
+        if (heardHosts.has(root.host)) continue;
+        heardHosts.add(root.host);
+        closedHeard.any = true;
+        for (const type of ['keydown', 'click', 'submit'])
+            root.addEventListener(type, heardInRoot, true);
+        root.addEventListener('focusin', hearOpen, true);
+    }
+};
+
+/**
+ * An element as the reader given the node sees it: lifted out of each closed shadow root that is not
+ * around that node, to the root's host, as the page sees it, so a place kept by one reading and
+ * focus read by another compare in the same view.
+ */
+export const liftedFor = (element: Element | null, near?: Node | null): Element | null => {
+    if (!element) return null;
+    const open = new Set(closedAround(near));
+    let lifted = element;
+    for (const root of closedAround(element))
+        if (root.mode === 'closed' && !open.has(root)) lifted = root.host;
+    return lifted;
+};
+
+/**
+ * What has focus, read from the page down by the state module's reader. Given a node a piece holds,
+ * the reader also follows focus into each closed shadow root around that node, which the piece
+ * reaches through the node though the page cannot, so a piece drawn inside a closed root reads
+ * focus there as it does in an open one. Kept as it is wherever the kit stores where focus was, and
+ * compared and judged only through `seen`.
+ */
+export const deepActive = (near?: Node | null): Element | null => {
+    if (!near) return readActive();
+    // A root a piece reads through is heard from here on, so the next press inside it counts.
+    hearClosed(near);
+    const closed = new Map<Element, ShadowRoot>();
+    for (const root of closedAround(near)) closed.set(root.host, root);
+    return readActive(closed);
+};
 
 /**
  * Whether an element is a body no one can type in, which stands in where nothing has focus, unlike
@@ -70,7 +148,10 @@ const frameAcross = (element: Element): Element | null => {
         }
         return null;
     };
-    return search(parent);
+    const found = search(parent);
+    // Kept, so the next read finds the frame without the search.
+    if (found) crossed.set(win, found);
+    return found;
 };
 
 /**
