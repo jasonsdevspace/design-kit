@@ -888,6 +888,8 @@ test("reads focus in a frame of the page's origin inside one of another origin a
     await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(false);
     await expect.poll(read).toBe('iframe@kit.test');
     await session.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+    // The emulation back on, so the page says it has focus again however the runner's window is.
+    await session.send('Emulation.setFocusEmulationEnabled', { enabled: true });
     await page.bringToFront();
     await expect.poll(read).toBe('card@kit.test');
 });

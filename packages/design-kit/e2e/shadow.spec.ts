@@ -545,6 +545,50 @@ window.ready = true;`,
     await expect(page.locator('#next-widget').locator('#inside')).toBeFocused();
 });
 
+test("opens a widget's panel from a button attached before the widget put it beside the panel", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `const button = document.createElement('button');
+Object.assign(button, { type: 'button', id: 'opener', textContent: 'Tips' });
+button.setAttribute('aria-expanded', 'false');
+button.setAttribute('aria-controls', 'tips');
+attachPanel(button);
+root.innerHTML = '<div id="tips" hidden><a href="#deal">How to deal</a></div>';
+root.prepend(button);`
+    );
+    const widget = page.locator('#widget');
+    await widget.getByRole('button', { name: 'Tips' }).click();
+    await expect(widget.getByRole('link', { name: 'How to deal' })).toBeVisible();
+});
+
+test("opens the page's panel from a button moved out of a widget, taken down and attached again", async ({
+    page,
+}) => {
+    await openWidget(
+        page,
+        `root.innerHTML = \`<button type="button" id="opener" aria-expanded="false" aria-controls="tips">Tips</button>
+<div id="tips" hidden><a href="#deal">The widget's tips</a></div>\`;
+window.first = attachPanel(root.querySelector('#opener'));`,
+        '<div id="page-tips"></div>'
+    );
+    await page.evaluate(() => {
+        const { root, attachPanel } = window as unknown as Widget;
+        const button = root.querySelector<HTMLButtonElement>('#opener');
+        const panel = root.querySelector('#tips');
+        if (!button || !panel) throw new Error('expected the widget');
+        (window as unknown as { first: { detach: () => void } }).first.detach();
+        // The button and its panel move out to the page, and the button is attached again there.
+        document.querySelector('#page-tips')?.append(button, panel);
+        attachPanel(button);
+    });
+    await page.locator('#page-tips').getByRole('button', { name: 'Tips' }).click();
+    await expect(
+        page.locator('#page-tips').getByRole('link', { name: "The widget's tips" })
+    ).toBeVisible();
+});
+
 test("starts a widget's panel as a button drawn again says, once the one before it left the widget and was taken down", async ({
     page,
 }) => {

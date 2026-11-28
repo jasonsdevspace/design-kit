@@ -46,24 +46,24 @@ const closedRootOf = (node: Node): ShadowRoot | null => {
         : null;
 };
 
-/** The root each attached button's panel is kept in, settled as the button is attached. */
+/** The root each attached button's panel is kept in, settled once the button is on a page. */
 const settled = new WeakMap<Element, Scope>();
 
 /**
- * The root that holds the panel a button names, settled the first time it is asked for, as the
- * button is attached, and kept from then on: where its id is found from the button's own root out
- * through each host to the document, as a focus request finds an id, so a panel drawn beside its
- * button inside a shadow root is found there, and one of the page from a button inside a widget.
- * Where no element has the id yet, the button's own root, where a panel drawn later is looked for.
- * A panel the page draws later in another root is out of reach, as record 19 has it.
+ * The root that holds the panel a button names, settled the first time it is asked for while the
+ * button is on a page, as it is attached, and kept until the button is taken down: where its id is
+ * found from the button's own root out through each host to the document, as a focus request finds
+ * an id, so a panel drawn beside its button inside a shadow root is found there, and one of the
+ * page from a button inside a widget. Where no element has the id yet, the button's own root, where
+ * a panel drawn later is looked for. A button attached before the page puts it in is read afresh
+ * until it is in. A panel the page draws later in another root is out of reach, as record 19 has
+ * it.
  */
 const scopeOf = (button: Element): Scope => {
-    let scope = settled.get(button);
-    if (!scope)
-        settled.set(
-            button,
-            (scope = scopeOfNode(byIdOutward(button, panelIdOf(button)) ?? button))
-        );
+    const held = settled.get(button);
+    if (held) return held;
+    const scope = scopeOfNode(byIdOutward(button, panelIdOf(button)) ?? button);
+    if (button.isConnected) settled.set(button, scope);
     return scope;
 };
 
@@ -537,6 +537,8 @@ export const attachPanel = (opener: HTMLButtonElement, options?: AttachOptions):
         // A panel this button opened passes to the first attached button that names it, so Escape
         // and its Close, which close a panel only while it has one, close it alike.
         const scope = scopeOf(opener);
+        // Forgotten, so the button attached again, wherever it is then, finds its root afresh.
+        settled.delete(opener);
         const last = lastIn(scope);
         for (const [id, button] of last) {
             if (button !== opener) continue;

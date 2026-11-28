@@ -223,7 +223,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | A frame heard as focus enters and its next page, with too little room left               | 23,956 bytes   | 668 bytes       | 24.25 KB   |
 | 0.9.5   | A panel found from its button's root and heard on a closed shadow root                   | 24,863 bytes   | 675 bytes       | 25 KB      |
 | 0.9.5   | What follows a panel walked in the order the page draws it, with too little room left    | 25,728 bytes   | 653 bytes       | 26 KB      |
-| 0.9.5   | The release measured whole, with too little room left                                    | 26,526 bytes   | 663 bytes       | 26.75 KB   |
+| 0.9.5   | The release measured whole, with too little room left                                    | 26,537 bytes   | 664 bytes       | 26.75 KB   |
 
 Every 0.9.4 and 0.9.5 row of these tables is measured at the commit on main that set its budget, the
 rows for the release measured whole at the commit that settled it, the controls from the package
@@ -277,9 +277,9 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachTable` alone      | Frames on entry, with too little room left      | 2,699 bytes  | 668 bytes       | 3.5 KB     |
 | 0.9.4   | `attachForm` alone       | Frames on entry, with too little room left      | 9,908 bytes  | 668 bytes       | 10.5 KB    |
 | 0.9.5   | `attachForm` alone       | Presses in a closed root, too little room left  | 10,763 bytes | 668 bytes       | 11.25 KB   |
-| 0.9.5   | The module imported bare | The release whole, with too little room left    | 1,925 bytes  | 663 bytes       | 2.75 KB    |
-| 0.9.5   | `attachTable` alone      | The release whole, with too little room left    | 3,175 bytes  | 663 bytes       | 3.75 KB    |
-| 0.9.5   | `attachForm` alone       | The release whole, with too little room left    | 11,075 bytes | 663 bytes       | 11.5 KB    |
+| 0.9.5   | The module imported bare | The release whole, with too little room left    | 1,925 bytes  | 664 bytes       | 2.75 KB    |
+| 0.9.5   | `attachTable` alone      | The release whole, with too little room left    | 3,175 bytes  | 664 bytes       | 3.75 KB    |
+| 0.9.5   | `attachForm` alone       | The release whole, with too little room left    | 11,075 bytes | 664 bytes       | 11.5 KB    |
 
 In 0.9.5 the module imported bare grew from 1,433 bytes to 1,925, and `attachTable` alone with it,
 since the listeners it adds as it loads now hear submits inside open shadow roots and look for focus
