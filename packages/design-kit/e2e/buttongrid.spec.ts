@@ -252,9 +252,9 @@ test("reads the button's shadow and press, and draws neither without them", asyn
     });
     const resting = await style(card(page, '8'), 'box-shadow', 'translate');
     expect(resting['box-shadow']).toContain('0px 2px 0px');
-    expect(resting.translate).toBe('none');
+    expect(resting['translate']).toBe('none');
     // A toggle that is on rests where a held one lands.
-    expect((await style(card(page, '7'), 'translate')).translate).toBe('0px 2px');
+    expect((await style(card(page, '7'), 'translate'))['translate']).toBe('0px 2px');
     // Held down, a cell moves by the press.
     const before = await box(card(page, '8'), 'the cell');
     await card(page, '8').hover();

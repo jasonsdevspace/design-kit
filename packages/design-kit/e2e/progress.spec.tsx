@@ -157,7 +157,7 @@ test('draws a short track in the line color on pill corners, filled in the accen
     await draw(page);
     const bar = page.locator('.dk-progress');
     const look = await style(bar, 'height', 'border-top-left-radius');
-    expect(look.height).toBe(`${String(await lengthOf(page, 'var(--dk-space-2)'))}px`);
+    expect(look['height']).toBe(`${String(await lengthOf(page, 'var(--dk-space-2)'))}px`);
     expect(Number.parseFloat(look['border-top-left-radius'] ?? '')).toBeGreaterThan(0);
     // Twelve of forty is three tenths, so a tenth in is filled and eight tenths in is the track.
     expect(await drawnAt(page, 0.1, 0.8)).toEqual([

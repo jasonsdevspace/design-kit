@@ -271,7 +271,7 @@ test('keeps an off button in the tab order, and skips a disabled one, drawn alik
     expect(await style(off, ...look)).toEqual(await style(disabled, ...look));
     // Both would match the disabled button if the resting look won, so the words are held to the
     // muted text.
-    expect((await style(off, 'color')).color).toBe('rgb(92, 92, 92)');
+    expect((await style(off, 'color'))['color']).toBe('rgb(92, 92, 92)');
 });
 
 test('draws a button in a disabled fieldset as off, and keeps the keyboard off it', async ({
@@ -283,7 +283,7 @@ test('draws a button in a disabled fieldset as off, and keeps the keyboard off i
     expect(await style(inside, ...look)).toEqual(
         await style(page.getByRole('button', { name: 'Next' }), ...look)
     );
-    expect((await style(inside, 'color')).color).toBe('rgb(92, 92, 92)');
+    expect((await style(inside, 'color'))['color']).toBe('rgb(92, 92, 92)');
     await expect(inside).toBeDisabled();
 });
 
@@ -453,7 +453,7 @@ test('draws a shadow under a button and moves it when pressed, where a page sets
     await page.mouse.up();
     // A toggle that is on is not moved either, and keeps its own inner edge.
     const toggle = page.getByRole('button', { name: 'Member', exact: true });
-    expect((await drawn(toggle)).translate).toBe('none');
+    expect((await drawn(toggle))['translate']).toBe('none');
 
     // A page sets the two on its root and writes no rule over the kit's class.
     await page.addStyleTag({
@@ -472,11 +472,11 @@ test('draws a shadow under a button and moves it when pressed, where a page sets
     // A toggle that is on rests where a held button lands, with its inner edge in place of the
     // shadow, and holding it down moves it no further.
     const resting = await drawn(toggle);
-    expect(resting.translate).toBe('0px 2px');
+    expect(resting['translate']).toBe('0px 2px');
     expect(resting['box-shadow']).toContain('inset');
     await toggle.hover();
     await page.mouse.down();
-    expect((await drawn(toggle)).translate).toBe('0px 2px');
+    expect((await drawn(toggle))['translate']).toBe('0px 2px');
     await page.mouse.up();
 
     // A button that is off, and one drawn as a link, offer nothing to press, so each has no
@@ -490,7 +490,7 @@ test('draws a shadow under a button and moves it when pressed, where a page sets
     await forceColors(page);
     await plain.hover();
     await page.mouse.down();
-    expect((await drawn(plain)).translate).toBe('none');
+    expect((await drawn(plain))['translate']).toBe('none');
     await page.mouse.up();
 });
 
@@ -1103,7 +1103,7 @@ test.describe('in forced colors', () => {
             )
         ).toEqual({ 'text-decoration-line': 'underline', 'border-top-width': '0px' });
         // The select's own arrow comes back, since the drawn one is a background.
-        expect((await style(page.getByLabel('Sort by'), 'appearance')).appearance).toBe('auto');
+        expect((await style(page.getByLabel('Sort by'), 'appearance'))['appearance']).toBe('auto');
         // Each callout's ground is gone, so its edge marks where it starts and ends.
         for (const callout of await page.locator('.dk-callout').all()) {
             const { 'border-top-style': line, 'border-top-color': color } = await style(

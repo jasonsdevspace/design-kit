@@ -1,89 +1,19 @@
-import js from '@eslint/js';
-import importX from 'eslint-plugin-import-x';
-import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import sonarjs from 'eslint-plugin-sonarjs';
-import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import { base, tests, typed } from '@jasonsdevspace/config/eslint';
+import { defineConfig } from 'eslint/config';
 
 /*
- * Three kinds of rule live here.
- *
- * Mechanical ones, such as import order, are fixed by `eslint --fix` and
- * exist so a diff never carries reordering noise. Bug catchers, from
- * typescript-eslint's type-aware set and SonarJS, flag code that is wrong
- * rather than code that is unusual. Size budgets catch a function that has
- * grown past what a reader can hold at once. Everything is an error, since
- * a warning that does not fail the build is a rule nobody follows.
+ * The house's presets from @jasonsdevspace/config, which every project repository takes, and after
+ * them the rules that name this repository's own folders.
  */
-
-/** Rules that fire on real mistakes and almost never on style. */
-const bugCatchers = {
-    'sonarjs/no-identical-conditions': 'error',
-    'sonarjs/no-identical-expressions': 'error',
-    'sonarjs/no-all-duplicated-branches': 'error',
-    'sonarjs/no-element-overwrite': 'error',
-    'sonarjs/no-ignored-return': 'error',
-    'sonarjs/no-use-of-empty-return-value': 'error',
-    'sonarjs/no-empty-collection': 'error',
-    'sonarjs/no-unused-collection': 'error',
-    'sonarjs/no-collection-size-mischeck': 'error',
-    'sonarjs/no-extra-arguments': 'error',
-    'sonarjs/no-gratuitous-expressions': 'error',
-    'sonarjs/no-redundant-jump': 'error',
-    eqeqeq: ['error', 'always'],
-    'no-param-reassign': 'error',
-    'array-callback-return': 'error',
-    'no-return-assign': 'error',
-};
-
-/** How large a function may grow before it should be split. */
-const sizeBudgets = {
-    complexity: ['error', 15],
-    'sonarjs/cognitive-complexity': ['error', 15],
-    'max-depth': ['error', 4],
-    'max-params': ['error', 4],
-};
-
-export default tseslint.config(
-    // A disable comment whose rule no longer fires fails the lint, so it cannot outlive its reason.
-    { linterOptions: { reportUnusedDisableDirectives: 'error' } },
-    {
+export default defineConfig(
+    ...base({
         ignores: [
-            '**/coverage',
-            '**/node_modules',
-            '**/dist',
             // Compiled in the oldest Node check's empty project, against the installed package.
             // Its imports resolve to the package's build, which does not exist yet when the
             // checks that lint it run.
             'packages/design-kit/smoke/types.ts',
         ],
-    },
-    {
-        extends: [js.configs.recommended, ...tseslint.configs.recommended],
-        files: ['**/*.{ts,tsx,mjs,js}'],
-        languageOptions: {
-            ecmaVersion: 2023,
-            globals: globals.node,
-        },
-        plugins: { 'simple-import-sort': simpleImportSort, 'import-x': importX, sonarjs },
-        rules: {
-            '@typescript-eslint/no-unused-vars': [
-                'error',
-                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-            ],
-            // Every callable is a value, so a file reads top to bottom with no
-            // hoisting surprises.
-            'func-style': ['error', 'expression'],
-            'prefer-arrow-callback': ['error', { allowNamedFunctions: false }],
-            'simple-import-sort/imports': 'error',
-            'simple-import-sort/exports': 'error',
-            'import-x/first': 'error',
-            'import-x/newline-after-import': 'error',
-            'import-x/no-duplicates': ['error', { 'prefer-inline': true }],
-            ...bugCatchers,
-            ...sizeBudgets,
-        },
-    },
+    }),
     {
         // The markup components draw markup alone, as record 20 has it, so they render the same on
         // a server and by hand. They live in the modules react.tsx gathers beside hooks.tsx, and
@@ -116,27 +46,6 @@ export default tseslint.config(
             ],
         },
     },
-    {
-        // Rules that need the types, read from each file's own tsconfig.
-        files: ['**/*.{ts,tsx}'],
-        extends: [...tseslint.configs.recommendedTypeChecked],
-        languageOptions: {
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname,
-            },
-        },
-        rules: {
-            '@typescript-eslint/no-floating-promises': 'error',
-            '@typescript-eslint/no-misused-promises': 'error',
-            '@typescript-eslint/await-thenable': 'error',
-            '@typescript-eslint/require-array-sort-compare': 'error',
-            '@typescript-eslint/prefer-nullish-coalescing': 'error',
-            '@typescript-eslint/prefer-optional-chain': 'error',
-            '@typescript-eslint/no-unnecessary-condition': 'error',
-            '@typescript-eslint/prefer-readonly': 'error',
-            // A switch over a union names every case, so a new member left out fails the lint.
-            '@typescript-eslint/switch-exhaustiveness-check': 'error',
-        },
-    }
+    ...typed({ tsconfigRootDir: import.meta.dirname }),
+    ...tests()
 );

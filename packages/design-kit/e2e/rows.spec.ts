@@ -236,7 +236,7 @@ test('says how many rows a list holds, and draws an empty list not at all', asyn
     await open(page);
     await expect(items(games(page))).toHaveCount(GAMES.length);
     // Not drawn, though a line break sits in it, and so not a list a screen reader finds.
-    expect((await style(page.locator('#empty'), 'display')).display).toBe('none');
+    expect((await style(page.locator('#empty'), 'display'))['display']).toBe('none');
     await expect(page.getByRole('list', { name: 'Nothing yet' })).toHaveCount(0);
 });
 

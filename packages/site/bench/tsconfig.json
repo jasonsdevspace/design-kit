@@ -2,7 +2,11 @@
     "extends": "../../../tsconfig.json",
     "compilerOptions": {
         "allowImportingTsExtensions": true,
-        "allowJs": true
+        "allowJs": true,
+        // Lighthouse installs @paulirish/trace_engine, whose shipped declarations do not compile
+        // (a class there implements its own interface wrongly), and nothing here can fix them. This
+        // tsconfig alone reads those declarations, so it alone leaves library checking off.
+        "skipLibCheck": true
     },
     "include": ["."]
 }

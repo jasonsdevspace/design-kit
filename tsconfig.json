@@ -1,21 +1,9 @@
 {
+    "extends": "@jasonsdevspace/config/tsconfig.json",
     "compilerOptions": {
-        "target": "ES2023",
         "lib": ["ES2023", "DOM"],
         "jsx": "react-jsx",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
         "types": ["node"],
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "exactOptionalPropertyTypes": true,
-        "noImplicitOverride": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "verbatimModuleSyntax": true,
-        "isolatedModules": true,
-        "skipLibCheck": true,
         "noEmit": true
     },
     "include": [

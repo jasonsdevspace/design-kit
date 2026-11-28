@@ -272,7 +272,7 @@ test('opens each section with its rule, its number, its heading and then its tex
     const number = await box(section.locator('.dk-explainer-number'));
     const heading = await box(section.getByRole('heading', { level: 2 }));
     expect(Math.round(heading.y - (number.y + number.height))).toBe(4);
-    expect((await style(section.locator('.dk-explainer-number'), 'color')).color).toBe(
+    expect((await style(section.locator('.dk-explainer-number'), 'color'))['color']).toBe(
         'rgb(92, 92, 92)'
     );
 });
@@ -414,7 +414,7 @@ test('makes a landmark of no section, and of each frame, and keeps the steps a l
     // The arrow between steps is read by no one, and drawn in the muted text.
     const arrow = page.locator('.dk-steps-arrow');
     await expect(arrow).toHaveAttribute('aria-hidden', 'true');
-    expect((await style(arrow, 'color')).color).toBe('rgb(92, 92, 92)');
+    expect((await style(arrow, 'color'))['color']).toBe('rgb(92, 92, 92)');
 });
 
 test('sets a panel on the card ground, with an edge that stays in forced colors', async ({
