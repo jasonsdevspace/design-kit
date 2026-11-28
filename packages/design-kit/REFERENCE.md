@@ -2402,7 +2402,9 @@ button there brings focus to the heading, and a press inside a closed one does o
 focus there, as [Where focus can be](#where-focus-can-be) has it.
 
 The presses and keys heard are the page's, those inside each closed shadow root the kit has read
-focus in, and those inside each frame of the page's own origin the page can reach, at any depth, an
+focus in, a submit inside each open shadow root focus has entered, a key or a click has passed
+through or the kit reads focus through a node in, and those inside each frame of the page's own
+origin the page can reach, at any depth, an
 object, a frame the page writes and a frame of the page's origin held inside one of another origin
 among them. So a press on a control inside such a frame brings focus to the heading of the view it
 opens, and a key that moves or types inside one leaves no press standing, as on the page. A frame is
