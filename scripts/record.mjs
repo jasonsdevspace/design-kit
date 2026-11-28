@@ -377,9 +377,13 @@ export const writeRecord = (name, { markdown, json }) => {
 
 if (isRunDirectly(import.meta.url)) {
     requireCommitted();
-    // Packed as npm publishes it, which builds the package first, into a folder of its own.
+    // Built by name, since the .npmrc's ignore-scripts skips a prepack, then packed as npm
+    // publishes it, into a folder of its own.
     const into = mkdtempSync(join(tmpdir(), 'design-kit-pack-'));
     try {
+        execFileSync('npm', ['run', 'build', '--workspace', '@jasonsdevspace/design-kit'], {
+            stdio: ['ignore', 'ignore', 'inherit'],
+        });
         execFileSync(
             'npm',
             ['pack', '--workspace', '@jasonsdevspace/design-kit', '--pack-destination', into],

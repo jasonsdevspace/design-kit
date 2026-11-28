@@ -87,6 +87,11 @@ jobs:
             - name: Node version check
               run: npm run node-check
 
+            # The repository's .npmrc keeps npm from running install scripts or fetching a package
+            # from git or an address, for every install however it is written.
+            - name: Install check
+              run: npm run installs
+
             - name: Unit tests
               run: npm run test:run
 
@@ -245,6 +250,7 @@ jobs:
             # site's audits or its policy fails here, before it is released, not when the pin moves.
             - name: Site tests over this commit's kit
               run: |
+                  npm run build --workspace @jasonsdevspace/design-kit
                   npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
                   kit="$(ls "$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)"
                   npm install --no-save --ignore-scripts --workspace packages/site "design-kit-release@file:$kit"
@@ -512,16 +518,22 @@ jobs:
             - name: Install dependencies
               run: npm ci --ignore-scripts
 
-            # Packing runs the package's build, which is how the published package is made. Its
-            # checksum is a job output, which no other job in the run can change, unlike the
-            # artifact, so the release publishes only this tarball.
+            # The package is built by name, since the .npmrc's ignore-scripts skips a prepack, then
+            # packed, which is how the published package is made, and the tarball must hold the
+            # build. Its checksum is a job output, which no other job in the run can change, unlike
+            # the artifact, so the release publishes only this tarball.
             - name: Pack the package
               id: pack
               run: |
+                  npm run build --workspace @jasonsdevspace/design-kit
                   npm pack --workspace @jasonsdevspace/design-kit --pack-destination "$RUNNER_TEMP"
                   tarballs=("$RUNNER_TEMP"/jasonsdevspace-design-kit-*.tgz)
                   if [ "${#tarballs[@]}" -ne 1 ] || [ ! -f "${tarballs[0]}" ]; then
                       echo "packing made ${#tarballs[@]} tarballs, not one"
+                      exit 1
+                  fi
+                  if ! tar -tzf "${tarballs[0]}" | grep -q '^package/dist/'; then
+                      echo "the packed tarball holds no dist"
                       exit 1
                   fi
                   sum=$(sha256sum "${tarballs[0]}" | cut -d' ' -f1)

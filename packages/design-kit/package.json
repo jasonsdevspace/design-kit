@@ -66,8 +66,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/*.css src/tokens.resolver.json dist/",
-        "prepack": "npm run build"
+        "build": "rm -rf dist && tsc -p tsconfig.build.json && cp src/*.css src/tokens.resolver.json dist/"
     },
     "peerDependencies": {
         "react": "^19.3.0",
