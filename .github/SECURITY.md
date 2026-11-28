@@ -23,5 +23,6 @@ a script other than the one the plugin writes.
 The package depends on nothing at run time, and takes Vite as an optional peer for its plugin,
 which a page that does not use the plugin never installs. Everything the repository installs is a
 tool for checking the code, and none of it ships. Among them, a lint plugin is under the GNU Lesser
-General Public License, and a CSS parser the test runner depends on is under the Mozilla Public
-License. Both are accepted for tools that run only in development.
+General Public License, a CSS parser the test runner depends on is under the Mozilla Public License,
+and a package the Lighthouse audit depends on is under the Functional Source License. All are
+accepted for tools that run only in development.

@@ -52,13 +52,16 @@ merged, the browser tests and the Lighthouse audit among them.
 [Dev setup](../README.md#dev-setup) in the README says how a release reaches npm, under "How a
 release reaches npm". Around it, a maintainer:
 
-- bumps the version in `packages/design-kit/package.json`, turns the `## Unreleased` heading in its
-  `CHANGELOG.md` into `## VERSION`, or adds that heading where there is none, and points every
-  link in the package README pinned to a tag at the new version's tag, in a pull request of its own.
+- bumps the version in `packages/design-kit/package.json`, runs `npm install --package-lock-only`
+  so the lockfile carries it, turns the `## Unreleased` heading in its `CHANGELOG.md` into
+  `## VERSION`, or adds that heading where there is none, and points every link in the package
+  README pinned to a tag at the new version's tag, in a pull request of its own.
   The entry folds in every change file under `packages/design-kit/changes`, which that pull request
   deletes, opens with an **Upgrading.** bullet when a page has to change anything, and files the
   rest under the lead-ins the entries before it use
 - tags main with `design-kit-vVERSION` once that merges, which starts the release workflow
+- reads the run's summary for "Staged on npm", since a run that finds the version already published
+  passes without staging anything
 - promotes the staged version on the package's npm page
 - moves npm's `next` tag to a stable version once it is promoted and no newer prerelease is staged,
   with `npm dist-tag add @jasonsdevspace/design-kit@VERSION next`, so `next` is never older than
@@ -70,9 +73,11 @@ release reaches npm". Around it, a maintainer:
 - reviews the pull request the site pages workflow opens with the site's record, taken from the
   commit on main that moves the pin, once the pin's pull request merges
 
-The release workflow stops on a version npm already holds, staged or published, since it cannot tell
-one staged by an earlier run from one staged from other code. A run whose later step failed is
-repeated with "Re-run failed jobs", which keeps the staging and runs only what failed.
+The release workflow stages nothing for a version npm has already published, and passes, with its
+summary saying so. It stops on a version that is staged and not yet promoted, since npm's lookup does
+not show a staged version and the workflow cannot tell one staged by an earlier run from one staged
+from other code. A run whose later step failed is repeated with "Re-run failed jobs", which keeps the
+staging and runs only what failed.
 
 ## Security and accessibility
 
