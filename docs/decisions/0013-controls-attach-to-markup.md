@@ -223,6 +223,7 @@ own functions, with the medians the package record gave at each.
 | 0.9.4   | A frame heard as focus enters and its next page, with too little room left               | 23,956 bytes   | 668 bytes       | 24.25 KB   |
 | 0.9.5   | A panel found from its button's root and heard on a closed shadow root                   | 24,863 bytes   | 675 bytes       | 25 KB      |
 | 0.9.5   | What follows a panel walked in the order the page draws it, with too little room left    | 25,728 bytes   | 653 bytes       | 26 KB      |
+| 0.9.5   | The release measured whole, with too little room left                                    | 26,533 bytes   | 670 bytes       | 26.75 KB   |
 
 Every 0.9.4 row of these tables is measured at the commit on main that set its budget, the controls
 from the package laid out as npm ships it, each with one median, the upper of the middle two costs
@@ -275,6 +276,9 @@ fits the whole's budget of 21.75 KB, so it stays.
 | 0.9.4   | `attachTable` alone      | Frames on entry, with too little room left      | 2,699 bytes  | 668 bytes       | 3.5 KB     |
 | 0.9.4   | `attachForm` alone       | Frames on entry, with too little room left      | 9,908 bytes  | 668 bytes       | 10.5 KB    |
 | 0.9.5   | `attachForm` alone       | Presses in a closed root, too little room left  | 10,763 bytes | 668 bytes       | 11.25 KB   |
+| 0.9.5   | The module imported bare | The release whole, with too little room left    | 2,047 bytes  | 670 bytes       | 2.75 KB    |
+| 0.9.5   | `attachTable` alone      | The release whole, with too little room left    | 3,290 bytes  | 670 bytes       | 4 KB       |
+| 0.9.5   | `attachForm` alone       | The release whole, with too little room left    | 10,989 bytes | 670 bytes       | 11.5 KB    |
 
 In 0.9.4 the kit's words for a failure moved out of the controls module into an internal one, which
 took every function from 21,739 bytes to 21,832 and `attachForm` alone from 8,678 to 8,705, and left

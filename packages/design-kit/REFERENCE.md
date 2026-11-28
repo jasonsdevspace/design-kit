@@ -4736,7 +4736,7 @@ is inside it. A role set to one color draws that color in both themes.
 
 The default palette passes 4.5 to 1 for text and 3 to 1 for a control's edge on every ground it is
 meant for, in both themes, as [the accessibility
-statement](https://github.com/jasonsdevspace/design-kit/blob/main/docs/ACCESSIBILITY.md#how-it-is-checked)
+statement](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/docs/ACCESSIBILITY.md#how-it-is-checked)
 lists. A page that sets its own palette answers for its own pairings.
 
 ## The theme contract

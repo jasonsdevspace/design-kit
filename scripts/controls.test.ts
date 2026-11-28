@@ -46,9 +46,9 @@ import { bundledOf, packagedOf, sentOf } from './parts.mjs';
  * and again once hearing a frame as focus enters it and its next page as it begins did, and for
  * 0.9.5 once a panel found from its button's root and heard on a closed shadow root took them past
  * 24.25 KB, and again once what follows a panel walked in the order the page draws it took them
- * past 25 KB.
+ * past 25 KB, and again once the release measured whole left too little room for another.
  */
-const BUDGET = 26 * 1024;
+const BUDGET = 26.75 * 1024;
 
 /*
  * What a page that imports one function pays, beside the whole, on three sentinels: the module
@@ -63,12 +63,13 @@ const BUDGET = 26 * 1024;
  * imported bare and `attachTable` alone again once the presses and keys heard inside a frame of the
  * page's own origin did, and for all three again once hearing a frame as focus enters it and its
  * next page as it begins did, and for `attachForm` alone again in 0.9.5 once the presses heard
- * inside a closed shadow root, each with the control it was made on, did.
+ * inside a closed shadow root, each with the control it was made on, did, and for all three again
+ * once the release measured whole did.
  */
 const ENTRY_BUDGETS = [
-    ['the module imported bare', [], 2.25 * 1024],
-    ['attachTable alone', ['attachTable'], 3.5 * 1024],
-    ['attachForm alone', ['attachForm'], 11.25 * 1024],
+    ['the module imported bare', [], 2.75 * 1024],
+    ['attachTable alone', ['attachTable'], 4 * 1024],
+    ['attachForm alone', ['attachForm'], 11.5 * 1024],
 ] as const;
 
 /* The theme script with room to grow, since a page sends it whole on every visit. */

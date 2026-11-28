@@ -157,7 +157,12 @@ is its CSS transformer, as the package README shows.
   first press in a widget whose closed root it has not read brings no focus to the view it opens,
   and the next press does. A form a script submits inside an open shadow root that focus has not
   entered, that no key or click has passed through and that holds no node the kit reads focus
-  through counts as no press either, so the view it brings takes no focus.
+  through counts as no press either, and so does one inside an open shadow root within a closed
+  root the kit has not read focus in, so the view it brings takes no focus.
+- A screen reader follows `aria-controls` within one root only, so a panel the page keeps in a root
+  around its button's, rather than in the same root, still opens, but a screen reader hears only the
+  button's expanded state, and an accessibility check reports the id as missing while it is open.
+  The reference asks for each panel in its button's root.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.

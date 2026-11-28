@@ -27,11 +27,12 @@ refusal counts each such box as its own field. A narrow table fits a 320px phone
 draws only some of the React components and hooks sends only their code. Upgrading names what a page
 and its tests change. No public token is added or renamed and the theme script is unchanged, so
 `themeScriptHash` is the same. The budgets are set under record 13's rule and measured from the
-package as npm ships it, with one median: the sheets within 13.25 KB, at 13,253 bytes with a median
-piece of 179, the controls within 26 KB as a bundler sends every function, at 26,533 bytes with a
-median function of 670, the module imported bare within 2.25 KB, at 2,047 bytes, `attachTable` alone
-within 3.5 KB, at 3,290, `attachForm` alone within 11.25 KB, at 10,989, and the theme script within
-1 KB of its own, at 757.
+package as npm ships it, with one median. The release measured whole left less room than a function
+of the usual size under each budget of the controls, so each is set again: the controls within 26.75
+KB as a bundler sends every function, at 26,533 bytes with a median function of 670, the module
+imported bare within 2.75 KB, at 2,047 bytes, `attachTable` alone within 4 KB, at 3,290, and
+`attachForm` alone within 11.5 KB, at 10,989. The sheets stay within 13.25 KB, at 13,253 bytes with
+a median piece of 179, and the theme script within 1 KB of its own, at 757.
 
 - **Upgrading.** A page's own `fieldset` of settings that holds checkbox fields, each a
   `.dk-field` holding its box's `label.dk-choice` itself, now has each box refused as its own
@@ -46,7 +47,8 @@ within 3.5 KB, at 3,290, `attachForm` alone within 11.25 KB, at 10,989, and the 
   page draws it, which may sit inside a following widget or frame, where focus went past them to
   the page after the widget. A focus request that a widget in a closed shadow root asks with its
   own control as `from` now lands, so a page that moved focus itself to work around its drop can
-  leave that to the request. What `./react` exports is unchanged.
+  leave that to the request. `./react` gains `CheckboxField` and its props type, and exports
+  nothing less.
 - **Sheets.** At 48rem wide or less a table's cells keep a step closer to each other, so a table
   of a word and four short figures fits a 320px phone at the usual text size. A `.dk-field`
   holding a `label.dk-choice` itself is a checkbox field. Its label hugs its words, its hint
@@ -114,7 +116,7 @@ within 3.5 KB, at 3,290, `attachForm` alone within 11.25 KB, at 10,989, and the 
   gathers, so a site's bundler no longer puts every hook and every component's markup in a chunk
   all its pages load. A page that keeps a status line, a skip link and the theme switch beside
   screens that refuse a form, move through a group of cells and draw a stepper, a toast and a
-  checkbox field sends none of their code. What `./react` exports is unchanged.
+  checkbox field sends none of their code. What `./react` exported before is unchanged.
   `useFocusAfterDraw` reads where focus was through its target where that is an element,
   `useFormRefusal` through the form a refusal is for, the newest for the page's own and each form
   for its own failed submit, and `useArrivalFocus` through its heading once it is drawn, so inside
