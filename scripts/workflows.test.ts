@@ -22,9 +22,9 @@ import { repositoryFiles } from './repository.mjs';
 /*
  * What the workflows promise that only reading them can hold: a browser installed without the
  * system packages the runner already has, and within a time of its own, dependencies installed
- * without their install scripts, and the token that can publish or deploy held by the deploy job
- * alone in CI, and the required Browser tests kept as a gate that passes only where every browser
- * job it waits on passed.
+ * without their install scripts, the token that can publish or deploy held by no job in CI and by
+ * the deploy workflow's deploy job alone, and the required Browser tests kept as a gate that passes
+ * only where every browser job it waits on passed.
  */
 
 const workflows = repositoryFiles(import.meta.url, (path) =>
