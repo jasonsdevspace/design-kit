@@ -815,6 +815,83 @@ window.ready = true;`,
     });
 }
 
+test("focuses a heading in a frame of the page's origin before the page's heading after the frame, where one press brings both", async ({
+    page,
+}) => {
+    await servePage(page, {
+        title: 'Focus',
+        body:
+            '<button type="button" id="bring">Bring both</button>' +
+            '<iframe title="Notes" srcdoc="<h2 id=frame-heading tabindex=-1>The notes</h2>"></iframe>' +
+            '<h2 id="page-heading" tabindex="-1">The round</h2>',
+        script: `import { focusOnArrival } from './controls.js';
+const frame = document.querySelector('iframe');
+if (frame.contentDocument?.readyState !== 'complete' || !frame.contentDocument.querySelector('h2'))
+    await new Promise((loaded) => frame.addEventListener('load', loaded, { once: true }));
+document.querySelector('#bring').addEventListener('click', () => {
+    // The page's view is asked first, so only the order the page draws them puts the frame's first.
+    focusOnArrival(document.querySelector('#page-heading'), {});
+    focusOnArrival(frame.contentDocument.querySelector('#frame-heading'), {});
+});
+window.ready = true;`,
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    await page.locator('#bring').click();
+    await expect(page.frameLocator('iframe').locator('#frame-heading')).toBeFocused();
+    await expect(page.locator('#page-heading')).not.toBeFocused();
+});
+
+test("reads focus in a frame of the page's origin inside one of another origin as that frame while the browser's window has no focus", async ({
+    page,
+    context,
+    browserName,
+}) => {
+    test.skip(
+        browserName !== 'chromium',
+        'Only Chromium lets a test turn off its focus emulation.'
+    );
+    await servePage(page, {
+        title: 'Focus',
+        body: '<h1>Round 3</h1><iframe title="Embed"></iframe>',
+        script: await bundle('deep-active-page.ts'),
+    });
+    await page.route('https://other.test/holder', (route) =>
+        route.fulfill({
+            body: '<!doctype html><title>Holder</title><iframe name="inner" title="Inner" src="https://kit.test/inner"></iframe>',
+            contentType: 'text/html',
+        })
+    );
+    await page.route('https://kit.test/inner', (route) =>
+        route.fulfill({
+            body: '<!doctype html><title>Inner</title><button type="button" id="card">Card</button>',
+            contentType: 'text/html',
+        })
+    );
+    await page.waitForFunction(() => 'ready' in window);
+    // The embed loads once the routes that serve it are in place.
+    await page.evaluate(() => {
+        document.querySelector('iframe')?.setAttribute('src', 'https://other.test/holder');
+    });
+    await expect.poll(() => page.frame({ name: 'inner' })?.url()).toBe('https://kit.test/inner');
+    await page.frame({ name: 'inner' })?.locator('#card').focus();
+    const read = () =>
+        page.evaluate(() => (window as unknown as { readFocus: () => string | null }).readFocus());
+    await expect.poll(read).toBe('card@kit.test');
+    // Without the emulation the page reads the window's real focus, which minimizing it takes away.
+    const session = await context.newCDPSession(page);
+    await session.send('Emulation.setFocusEmulationEnabled', { enabled: false });
+    const { windowId } = await session.send('Browser.getWindowForTarget');
+    await session.send('Browser.setWindowBounds', {
+        windowId,
+        bounds: { windowState: 'minimized' },
+    });
+    await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(false);
+    await expect.poll(read).toBe('iframe@kit.test');
+    await session.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
+    await page.bringToFront();
+    await expect.poll(read).toBe('card@kit.test');
+});
+
 /** A page with a target of its own and a frame whose control has focus, with an id the page shares. */
 const openWithFrame = async (page: Page) => {
     await servePage(page, {

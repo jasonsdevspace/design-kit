@@ -254,6 +254,16 @@ test("refuses each checkbox field in a page's own section as its own field, neve
     await expect(page.locator('#skip')).toBeFocused();
     await expect(page.locator('.dk-field-error')).toHaveCount(1);
     await expect(page.locator('#skip-error')).toHaveText('Error: Check the box to go on.');
+    // Above the unchecked box, in its own field, right before its label.
+    expect(
+        await page
+            .locator('#skip-error')
+            .evaluate(
+                (error) =>
+                    error.nextElementSibling?.matches('label.dk-choice') === true &&
+                    error.parentElement?.querySelector('#skip') !== null
+            )
+    ).toBe(true);
     await expect(page.locator('#skip')).toHaveAttribute('aria-invalid', 'true');
     await expect(page.locator('#double')).not.toHaveAttribute('aria-invalid', 'true');
     await expect(page.locator('fieldset')).not.toHaveAttribute('aria-invalid', 'true');

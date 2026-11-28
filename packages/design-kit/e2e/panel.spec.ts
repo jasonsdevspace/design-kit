@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
+import { STOPS } from '../src/panel.js';
 import { ORIGIN, servePage, tabKey } from './page.js';
 
 /*
@@ -1231,7 +1232,7 @@ test.describe('where focus goes', () => {
         await open(page);
         // Every element the walk for what follows the panel reads, counted from here on by its
         // check of whether the element takes focus.
-        await page.evaluate(() => {
+        await page.evaluate((stops) => {
             const counted = window as unknown as { searches: number };
             counted.searches = 0;
             const proto = Element.prototype as unknown as {
@@ -1239,10 +1240,10 @@ test.describe('where focus goes', () => {
             };
             const matches = proto.matches;
             proto.matches = function (this: Element, selectors: string) {
-                if (selectors.includes('iframe, embed')) counted.searches += 1;
+                if (selectors === stops) counted.searches += 1;
                 return matches.call(this, selectors);
             };
-        });
+        }, STOPS);
         const searches = () =>
             page.evaluate(() => (window as unknown as { searches: number }).searches);
         await button(page).click();
@@ -1258,6 +1259,10 @@ test.describe('where focus goes', () => {
         await page.evaluate(() => {
             for (const id of ['#tips-button', '#tips-again'])
                 document.querySelector(id)?.setAttribute('aria-disabled', 'true');
+            // Many elements after the stop, which a walk that went on past it would read.
+            document
+                .querySelector('#after-panels')
+                ?.after(...Array.from({ length: 200 }, () => document.createElement('span')));
         });
         await page.evaluate(() => {
             (window as unknown as Kit).setTips(true);
@@ -1268,11 +1273,15 @@ test.describe('where focus goes', () => {
         });
         await expect(panel(page)).toBeHidden();
         await expect(page.getByRole('link', { name: 'After the panels' })).toBeFocused();
-        // The walk stops at the first stop that takes focus, so it reads only part of the page.
+        // The walk stops at the first stop that takes focus, so it reads the elements from the
+        // panel to that stop and none of the many after it.
+        const before = await page.evaluate(() => {
+            const all = [...document.querySelectorAll('*')];
+            const from = all.indexOf(document.querySelector('#round-tips') as Element);
+            return all.indexOf(document.querySelector('#after-panels') as Element) - from;
+        });
         expect(await searches()).toBeGreaterThan(0);
-        expect(await searches()).toBeLessThan(
-            await page.evaluate(() => document.querySelectorAll('*').length)
-        );
+        expect(await searches()).toBeLessThanOrEqual(before + 2);
     });
 
     test('moves focus to what follows the panel where no button that names it is left', async ({

@@ -105,7 +105,7 @@ const drawnIn = (element: Element): readonly [Element, readonly Element[]] | und
  * links, media with controls and editable regions. A scroll container some browsers stop at is left
  * out, since only its layout says whether it scrolls.
  */
-const STOPS = `${FOCUSABLE}, iframe, embed, object, area[href], audio[controls], video[controls], [contenteditable]:not([contenteditable="false"])`;
+export const STOPS = `${FOCUSABLE}, iframe, embed, object, area[href], audio[controls], video[controls], [contenteditable]:not([contenteditable="false"])`;
 
 /** Whether nothing inside an element is drawn for Tab to reach, read from its attributes alone. */
 const passedOver = (element: Element): boolean =>

@@ -4551,17 +4551,19 @@ panel opens and closes there, though focus goes to the main content rather than 
 closes, as [Where focus can be](#where-focus-can-be) has it. A button's panel is looked for by the
 id its `aria-controls` names, in the button's own root and then in each root around it, out through
 the hosts to the document, as a focus request finds an id, so a widget's panel beside its button
-inside a shadow root opens there, and a page's panel opens from a button inside a widget. Each
-panel's state is kept by the root that holds it, so a widget's panel and the page's with the same id
-stay apart, and an element of one root that shares a panel's id in another closes nothing. Keep a
-panel in the same root as its button. A button that names a panel in a root around it still opens
-it, but a screen reader hears only its expanded state, and an accessibility check reports the id as
-missing while it is open. A panel's id must be the only one in its root, so a page that shows markup
-its visitors wrote prefixes or strips the ids in it. A panel whose button the page attaches inside a
-frame of its own origin that it drives, other than one held inside a frame of another origin, as
-[Where focus can be](#where-focus-can-be) has it, works in that frame's document as it does on the
-page, and the button stays in the document it was attached in, so a page that moves it into another
-takes it down and attaches it again.
+inside a shadow root opens there, and a page's panel opens from a button inside a widget. The root
+is looked for as the button is attached and kept, so a panel the page draws later in another root is
+never found, and a page attaches the button once its panel is drawn. Each panel's state is kept by
+the root that holds it, so a widget's panel and the page's with the same id stay apart, and an
+element of one root that shares a panel's id in another closes nothing. Keep a panel in the same
+root as its button. A button that names a panel in a root around it still opens it, but a screen
+reader hears only its expanded state, and an accessibility check reports the id as missing while it
+is open. A panel's id must be the only one in its root, so a page that shows markup its visitors
+wrote prefixes or strips the ids in it. A panel whose button the page attaches inside a frame of its
+own origin that it drives, other than one held inside a frame of another origin, as [Where focus can
+be](#where-focus-can-be) has it, works in that frame's document as it does on the page, and the
+button stays in the document it was attached in, so a page that moves it into another takes it down
+and attaches it again.
 
 `attachPanel(button, { signal })` takes the button down when `signal` aborts, as `detach` does and
 as [Taking a control down](#taking-a-control-down) has it, and a signal already aborted attaches

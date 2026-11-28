@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { CheckboxField } from '../src/react.js';
+import { CheckboxField, InputField } from '../src/react.js';
 import { bundle } from './bundle.js';
 import { box, forceColors, hearing, servePage, sideways, style } from './page.js';
 import { cutOff, SPACED } from './spacing.js';
@@ -156,6 +156,35 @@ test('makes the label a target the field is tall on a wide screen and a thumb is
         const field = await box(page.locator('#double').locator('xpath=../..'));
         expect(drawn.width, `${String(width)} wide`).toBeLessThan(field.width);
     }
+});
+
+test('takes a line of its own in a row of fields', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await servePage(page, {
+        title: 'Round 3',
+        body: `<main class="dk-page"><h1>Round 3</h1>${renderToStaticMarkup(
+            <div className="dk-fields">
+                <InputField id="player" label="Player" />
+                <InputField id="seat" label="Seat" />
+                <CheckboxField id="double" name="double" label="Score the last round double" />
+            </div>
+        )}</main>`,
+        script: 'window.ready = true;',
+    });
+    await page.waitForFunction(() => 'ready' in window);
+    const row = await box(page.locator('.dk-fields'));
+    const fields = page.locator('.dk-fields > .dk-field');
+    await expect(fields).toHaveCount(3);
+    const player = await box(fields.nth(0));
+    const seat = await box(fields.nth(1));
+    const checkbox = await box(fields.nth(2));
+    // The two short fields share a line, and the checkbox field starts below them across the row.
+    expect(Math.abs(player.y - seat.y)).toBeLessThanOrEqual(1);
+    expect(seat.x).toBeGreaterThan(player.x);
+    expect(checkbox.y).toBeGreaterThanOrEqual(
+        Math.max(player.y + player.height, seat.y + seat.height)
+    );
+    expect(Math.abs(checkbox.width - row.width)).toBeLessThanOrEqual(1);
 });
 
 test('starts the hint under the words, and toggles the box by its words and never by its hint', async ({

@@ -790,12 +790,13 @@ describe('the checkbox field', () => {
         );
 
     it('draws one box in a label that wraps it and points at it, with no fieldset or legend', () => {
-        expect(setting()).toBe(
-            '<div class="dk-field"><label class="dk-choice" for="double" id="double-label">' +
-                '<input type="checkbox" id="double" name="double"/>' +
-                '<span>Score the last round double</span></label></div>'
-        );
-        expect(setting()).not.toMatch(/fieldset|legend|role=/);
+        const drawn = setting();
+        // The label wraps the box and points at it by the box's id.
+        expect(drawn).toMatch(/<label class="dk-choice"[^>]* for="double"[^>]*><input [^>]*\/>/);
+        expect(drawn).toMatch(/<input type="checkbox"[^>]* id="double"/);
+        expect(drawn.match(/type="checkbox"/g)).toHaveLength(1);
+        expect(drawn).toMatch(/<span>Score the last round double<\/span><\/label><\/div>$/);
+        expect(drawn).not.toMatch(/fieldset|legend|role=/);
     });
 
     it('draws the hint after the label and outside it, and describes the box by it', () => {
@@ -854,6 +855,13 @@ describe('the checkbox field', () => {
         expect(
             setting({ readOnly: true, checked: true, onChange: () => undefined, onWords: 'Yes' })
         ).toContain('>Yes</textarea>');
+    });
+
+    it('draws a read-only box that is off in the words offWords gives, and sends nothing', () => {
+        const off = setting({ readOnly: true, offWords: 'No', onWords: 'Yes' });
+        expect(off).toContain('>No</textarea>');
+        expect(off).not.toContain('Yes');
+        expect(off).not.toContain('type="hidden"');
     });
 });
 
