@@ -1,7 +1,7 @@
 # @jasonsdevspace/design-kit
 
 [![npm version](https://img.shields.io/npm/v/@jasonsdevspace/design-kit)](https://www.npmjs.com/package/@jasonsdevspace/design-kit)
-[![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/ci.yml)
+[![CI](https://github.com/jasonsdevspace/design-kit/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/jasonsdevspace/design-kit/actions/workflows/deploy.yml)
 [![MIT license](https://img.shields.io/npm/l/@jasonsdevspace/design-kit)](https://github.com/jasonsdevspace/design-kit/blob/main/LICENSE)
 
 A design system for a web page or a small app, with React or without it. It gives you colors, type,

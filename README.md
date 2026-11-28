@@ -513,10 +513,12 @@ Chromium in jobs that split them, and in WebKit, on a Mac, and in Firefox in mor
 as each job's matrix lists. The site's tests run again over each commit's own packed kit in a job of
 their own, so a change that would break the site fails before it is released. A gate named Browser
 tests, the check the ruleset requires, passes only where the Chromium jobs and that run all passed.
-The Lighthouse audit runs in a job of its own. Once every job passes on main, a job with read access
-alone builds the site, and a job that runs only GitHub's Pages actions deploys it. Each job runs on
-a named image, Ubuntu but for the WebKit jobs, within a time limit, which a test holds, and each
-check writes what it found to its run's page on GitHub, from `scripts/summary.mjs`.
+The Lighthouse audit runs in a job of its own. A push to main runs the same checks from a deploy
+workflow of its own, and once every job passes, a job with read access alone builds the site, and a
+job that runs only GitHub's Pages actions deploys it, so a release that runs CI grants its checks
+read access alone. Each job runs on a named image, Ubuntu but for the WebKit jobs, within a time
+limit, which a test holds, and each check writes what it found to its run's page on GitHub, from
+`scripts/summary.mjs`.
 
 </details>
 
@@ -581,8 +583,8 @@ npm run bench:pages
 - `.github/` holds the contributing guide in `CONTRIBUTING.md`, the security policy in
   `SECURITY.md`, the issue templates for a piece of work, a parent issue and a bug in
   `ISSUE_TEMPLATE/`, the pull request template in `pull_request_template.md`, the README's mark and
-  picture in `readme/`, the monthly dependency and action updates in `dependabot.yml`, and CI and
-  deploy, release, the site's records, the dependency cache and the pull request check in
+  picture in `readme/`, the monthly dependency and action updates in `dependabot.yml`, and CI, the
+  deploy, the release, the site's records, the dependency cache and the pull request check in
   `workflows/`.
 
 </details>
