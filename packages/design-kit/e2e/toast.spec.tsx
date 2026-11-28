@@ -30,10 +30,12 @@ import { textSize } from './text-size.js';
  * leaving it be, a host that delegates focus taken as handed back, the scroll left where it was as
  * focus goes back to a control in view, a control that has focus as a message shows kept clear of
  * the toast, inside a tall frame of the page's own origin too, past the frame's border and padding,
- * in a frame drawn smaller, wider or, outside WebKit, by zoom, and where the toast covers it by
- * less than the rise it enters on, and left where it is where the toast leaves it alone, where the
- * frame has scrolled it out of sight or behind its scrollbar, where WebKit lays a zoomed frame's
- * document out past what the frame shows, where it is taller than the room above the toast, or
+ * in a frame drawn smaller, wider or by zoom, where WebKit lays a zoomed frame's document out
+ * either at the size it draws it or larger, past what the frame shows, on a given load, and where
+ * the toast covers it by less than the rise it enters on, and left where it is where the toast
+ * leaves it alone, where the frame has scrolled it out of sight or behind its scrollbar, where the
+ * zoomed frame's larger layout puts it past what the frame shows, where it is taller than the room
+ * above the toast, or
  * where it sits beside a narrow toast, focus sent on to the control inside a frame of the page's
  * own origin that had focus as the message came and left on the frame where that control is marked
  * off, gone or on a page since loaded, left in the frame where a page's listener moves it there in
@@ -1915,16 +1917,20 @@ const low = (page: Page): Locator => page.frameLocator('iframe').locator('#low')
  * WebKit holds back in a frame that sits off screen, as this one starts.
  */
 const settledTop = async (control: Locator): Promise<number> => {
-    let last = Number.NaN;
-    await expect
-        .poll(async () => {
-            const top = await control.evaluate((element) => element.getBoundingClientRect().top);
-            const same = top === last;
-            last = top;
-            return same;
-        })
-        .toBe(true);
-    return last;
+    const reads: number[] = [];
+    try {
+        await expect
+            .poll(async () => {
+                reads.push(
+                    await control.evaluate((element) => element.getBoundingClientRect().top)
+                );
+                return reads.length > 1 && reads.at(-1) === reads.at(-2);
+            })
+            .toBe(true);
+    } catch {
+        throw new Error(`the control never held still in its frame, read at ${reads.join(', ')}`);
+    }
+    return reads.at(-1) ?? Number.NaN;
 };
 
 /** Where the foot of the screen is, or of the body of the page's app frame. */
@@ -2096,18 +2102,26 @@ test('keeps a control inside a frame scaled by zoom clear of the toast, as each 
         body: PAGE.replace('</button>', `</button>${padded(1200, 1100, 'zoom: 0.6')}`),
     });
     await expect(low(page)).toBeAttached();
+    await settledTop(low(page));
+    const { y: top } = await resting(page);
+    await scrollEnd(page, low(page), top + 6);
+    await focusStill(low(page));
     // WebKit 27.2 lays the document of a frame scaled by zoom out on some loads larger than it
     // draws it, which puts the button at its depth over the zoom, past what the frame shows, and on
     // others at the size it draws, as Chromium and Firefox always do, which puts it at its depth.
-    // CI met the second in WebKit once, so the layout is read once it holds still, and the toast is
-    // held to what that layout shows.
+    // CI met the second in WebKit once. WebKit can hold a relayout of a frame off screen until it
+    // scrolls into view, so the layout is read here, once the frame is in view and holds still,
+    // and the toast is held to what that layout shows.
     const inFrame = await settledTop(low(page));
     const past = inFrame > 1100 / 0.6 - 2;
     if (!past) expect(inFrame).toBeCloseTo(1100, -1);
     if (browserName !== 'webkit') expect(past).toBe(false);
-    const { y: top } = await resting(page);
-    await scrollEnd(page, low(page), top + 6);
-    await focusStill(low(page));
+    // Named in the report, so a WebKit that only ever takes one layout shows the other going
+    // untested.
+    test.info().annotations.push({
+        type: 'layout',
+        description: past ? 'larger than the frame draws it' : 'at the size the frame draws it',
+    });
     // A button past what the frame shows is under no toast, so the toast leaves the page and the
     // frame be.
     if (past) await showStill(page);
