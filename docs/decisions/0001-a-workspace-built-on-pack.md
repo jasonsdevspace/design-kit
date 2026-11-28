@@ -1,6 +1,7 @@
 # 1. The kit is a workspace, built on pack and installed from npm
 
-**Status:** accepted
+**Status:** accepted, amended in 0.9.5, when the repository's installs moved to npm's own
+settings, so the kit is built by name before it is packed
 
 ## Context
 
@@ -15,8 +16,8 @@ what a demo is meant to install.
 
 **A. A workspace, built on pack.** The root is a private workspace that holds the tools. The package
 sits in `packages/design-kit` with a manifest of its own, which names only `dist` in its files, a
-`prepack` that builds it, and Vite as an optional peer. A demo installs from npm what `npm pack`
-produces, already built.
+`build` script that runs before it is packed, and Vite as an optional peer. A demo installs from
+npm what `npm pack` produces, already built.
 
 **B. A single root package.** The package's manifest is the repository's, so it carries the
 repository's scripts, its development tools, its staged-file rules and the `prepare` that sets up
@@ -34,12 +35,14 @@ builds `dist` when npm installs it. Rejected on what it measured:
 
 ## Decision
 
-Option A. The kit is the workspace `packages/design-kit`, built by its `prepack`, and it reaches a
-demo from npm as it was packed, with no script of the kit's to run.
+Option A. The kit is the workspace `packages/design-kit`, built by name before every pack, and it
+reaches a demo from npm as it was packed, with no script of the kit's to run. It is built by name
+rather than by a `prepack`, since the repository's `.npmrc` turns npm's install scripts off and npm
+skips a `prepack` with them.
 
 ## Consequences
 
-- A clone has no `dist` until `npm run build` or a pack. The kit's unit and browser tests read the
+- A clone has no `dist` until `npm run build`. The kit's unit and browser tests read the
   sources, so only the packed install, and the site's tests over this commit's packed kit, exercise
   this commit's `dist`. The site draws the `dist` of the version it pins.
 - npm packs a package's license from the package's own folder, so `packages/design-kit` keeps a
@@ -48,23 +51,26 @@ demo from npm as it was packed, with no script of the kit's to run.
   its homepage points at that folder rather than at the root.
 - A demo can install the kit with install scripts off and lose nothing, since the kit has no
   install script.
-- CI installs the repository's own dependencies with install scripts off too. None needs one on
-  Linux, and a script added to a dependency later would otherwise run in the job that packs the
-  published package, before the checksum that vouches for the tarball is taken, and in the job that
-  builds the deployed site.
+- The repository's own dependencies install with install scripts off too, in CI and on a laptop,
+  through the `.npmrc` the repo check holds. None needs one, and a script added to a dependency
+  later would otherwise run in the job that packs the published package, before the checksum that
+  vouches for the tarball is taken, and in the job that builds the deployed site.
 
 ## How it is tested
 
-- The oldest Node job in CI packs the package, which builds it, checks the manifest with publint,
+- The oldest Node job in CI builds the package by name and packs it, fails if the tarball holds no
+  `dist`, checks the manifest with publint,
   installs the tarball into an empty project with `--ignore-scripts` on the lowest Node the package
   admits, finds each sheet where its export resolves, imports the tokens' resolver document as a
   JSON module, and imports `./theme`, `./vite` and `./react` by the names a demo uses, with Vite not
   installed and React installed, as a page that draws the components has it. `smoke/package.test.ts`
   holds the list of what it loads to the package's exports.
 - `scripts/license.test.ts` holds each package's `LICENSE` to the one at the root.
-- `scripts/workflows.test.ts` holds every command in the workflows that installs or runs install
-  scripts, `npm rebuild` and `npm update` among them, to `--ignore-scripts`, the last flag that
-  names it deciding as it does for npm. It reads each command in any of npm's spellings, wherever it
-  sits in what a step runs, as shelflens's test does. It holds `npx`, `npm exec` and `npm create` to
-  the packages and tools the lockfile installs, and to the repository, where npx finds them, so
-  nothing is fetched and run with its scripts on, and holds the kit's manifest to no install script.
+- `check-installs` from `@jasonsdevspace/repo-check` holds the root `.npmrc` to
+  `ignore-scripts=true`, `allow-git=none` and `allow-remote=none`, and refuses any tracked file that
+  turns install scripts back on.
+- `scripts/workflows.test.ts` holds every workflow line that installs with npm, `npm rebuild`,
+  `npm update` and `npm audit fix` among them, to `--ignore-scripts`, wherever it runs, the last
+  flag that names it deciding. It holds every `npx`, `npm exec` and `npm x` to `--no-install` and
+  refuses `npm init` with an initializer and `npm create`, so nothing is fetched and run, and holds
+  the kit's manifest to no install script.

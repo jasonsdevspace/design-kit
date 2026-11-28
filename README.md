@@ -471,17 +471,20 @@ picks it.
 git clone https://github.com/jasonsdevspace/design-kit.git
 cd design-kit
 npm ci
+npm run prepare
 npm run verify
 ```
 
-`npm run verify` runs the type-check, lint, the format, prose and Node checks, and the unit tests.
+`npm run verify` runs the type-check, lint, the format, prose, Node and install checks, and the unit
+tests.
 `npm run e2e` runs the browser tests in Chromium, and the specs `packages/design-kit/e2e/engines.ts`
 names, each with the reason it runs there, in WebKit and Firefox too. `npm run lighthouse` builds
 the site and audits every page against the gates CI holds it to. Nothing needs building first, since
 the kit's tests read the sources and the site's tests build and serve the site themselves.
 `npm run build` compiles the theme module, the controls, the plugin and the components into the
-package's `dist`, beside a copy of each sheet, and builds the site. Installing also sets up the
-hooks, which lint and format what is staged and check each commit message.
+package's `dist`, beside a copy of each sheet, and builds the site. `npm run prepare` sets up the
+hooks, which lint and format what is staged and check each commit message. It runs by name, since
+the `.npmrc` turns npm's install scripts off and npm skips `prepare` with them.
 
 ```bash
 npx playwright install chromium webkit firefox
