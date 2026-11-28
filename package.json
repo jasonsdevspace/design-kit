@@ -19,6 +19,7 @@
         "format:check": "prettier --check .",
         "prose": "check-prose",
         "node-check": "node scripts/check-node.mjs",
+        "installs": "check-installs",
         "test": "vitest",
         "test:run": "vitest run",
         "e2e": "playwright test",
@@ -27,13 +28,14 @@
         "bench:package": "node scripts/record.mjs && prettier --write docs/benchmarks",
         "bench:pages": "node packages/site/bench/lighthouse.ts --record && prettier --write docs/benchmarks",
         "examples": "vitest run packages/design-kit/examples --update",
-        "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run test:run",
+        "verify": "npm run type-check && npm run lint && npm run format:check && npm run prose && npm run node-check && npm run installs && npm run test:run",
         "prepare": "husky || true"
     },
     "devDependencies": {
         "@axe-core/playwright": "^4.14.0",
         "@jasonsdevspace/config": "0.1.0",
         "@jasonsdevspace/prose-check": "0.3.0",
+        "@jasonsdevspace/repo-check": "0.1.0",
         "@playwright/test": "^1.65.0",
         "@types/node": "^24.19.2",
         "@types/react": "^19.3.0",
@@ -60,9 +62,6 @@
         "*.{json,md,yml,yaml,css,html}": [
             "prettier --write"
         ]
-    },
-    "allowScripts": {
-        "fsevents": true
     },
     "prettier": "@jasonsdevspace/config/prettier"
 }
