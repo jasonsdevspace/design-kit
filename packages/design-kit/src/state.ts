@@ -84,10 +84,13 @@ export let sightChanges = 0;
  */
 export const press: { at: number | null; on: Element | null } = { at: null, on: null };
 export let inputs = 0;
-/** Notes a press made now on the event's first target as this listener sees it, or clears it. */
-const pressFor = (event: Event): void => {
+/**
+ * Notes a press made now on the event's first target as this listener sees it, or clears it, given
+ * whether the event presses.
+ */
+const pressFor = (event: Event, pressed: boolean): void => {
     const [target] = event.composedPath();
-    if (presses(event) && isElement(target)) {
+    if (pressed && isElement(target)) {
         press.at = performance.now();
         press.on = target;
     } else press.at = press.on = null;
@@ -98,20 +101,23 @@ const heard = (event: Event) => {
         return;
     }
     if (event.type !== 'submit') hearOpen(event);
-    if (event.type === 'keydown') {
-        // A keydown with no key, as autofill sends, is no input of the visitor's, and a key that
-        // neither presses, types nor moves leaves the press as it is.
-        const { key } = event as Partial<KeyboardEvent>;
-        if (typeof key !== 'string') return;
-        if (!presses(event) && key.length !== 1 && !MOVES.includes(key)) return;
-    }
-    pressFor(event);
-    counted.add(event);
+    // A keydown with no key, as autofill sends, is no input of the visitor's.
+    const { key } = event as Partial<KeyboardEvent>;
+    if (event.type === 'keydown' && typeof key !== 'string') return;
+    const pressed = presses(event);
+    // A key that neither presses, types nor moves leaves the press as it is.
+    if (typeof key === 'string' && !pressed && key.length !== 1 && !MOVES.includes(key)) return;
+    pressFor(event, pressed);
+    // Kept only once a closed root is heard, since only a root's listener asks.
+    if (closedHeard.any) counted.add(event);
     inputs += 1;
 };
 
 /** The inputs already counted, so one heard on the page and again inside a root counts once. */
 const counted = new WeakSet<Event>();
+
+/** Whether the kit hears any closed shadow root yet, set by the focus module as it hears one. */
+export const closedHeard = { any: false };
 
 /**
  * Hears an input inside a shadow root the kit hears, after the kit's listener on the document. In a
@@ -121,11 +127,11 @@ const counted = new WeakSet<Event>();
  * Enter, which is no input on a closed root's host, or a submit. Anything else was heard on the
  * page already, and an input aimed at the host itself never reaches the root.
  */
-const heardInRoot = (event: Event) => {
+export const heardInRoot = (event: Event): void => {
     // An open root inside this one is heard from here, since the page never sees into this root.
     if (event.type !== 'submit') hearOpen(event);
     if (!presses(event)) return;
-    pressFor(event);
+    pressFor(event, true);
     if (counted.has(event)) return;
     counted.add(event);
     inputs += 1;
@@ -144,33 +150,10 @@ const clear = () => {
  * strips of its listeners, a shadow root keeps them as long as it lives, so a set of the roots
  * heard stays true, and a root that is dropped goes with its host.
  */
-const heardHosts = new WeakSet<Element>();
-
-/**
- * Hears the shadow roots around a node the kit reads focus through. A closed root's presses and
- * keys, which the kit's listeners on the document hear only as made on the root's host, are heard
- * on the root itself, with focus entering an open root inside it and the keys and clicks passing
- * through one, so that open root's submits are heard too. An open root's submits are heard, which
- * never leave it. Only a closed root the kit has read focus through a node in is heard, as only such
- * a root is read into, so a press inside a widget the kit has never read focus in still reaches the
- * page as one on its host.
- */
-export const hearClosed = (near: Node | null | undefined): void => {
-    for (const root of closedAround(near)) {
-        if (root.mode === 'open') {
-            hearOpenRoot(root);
-            continue;
-        }
-        if (heardHosts.has(root.host)) continue;
-        heardHosts.add(root.host);
-        for (const type of ['keydown', 'click', 'submit'])
-            root.addEventListener(type, heardInRoot, true);
-        root.addEventListener('focusin', hearOpen, true);
-    }
-};
+export const heardHosts = new WeakSet<Element>();
 
 /** Hears a submit inside an open shadow root, once for each root. */
-const hearOpenRoot = (node: EventTarget | null | undefined) => {
+export const hearOpenRoot = (node: EventTarget | null | undefined): void => {
     const root = node as Partial<ShadowRoot> | null | undefined;
     if ((root as Partial<Node> | null | undefined)?.nodeType !== 11) return;
     if (!root?.host || root.mode !== 'open' || heardHosts.has(root.host)) return;
@@ -185,7 +168,7 @@ const hearOpenRoot = (node: EventTarget | null | undefined) => {
  * a field a phone fills and that sends its own form among them. Only a form a script submits inside
  * a root focus never entered is not heard.
  */
-const hearOpen = (event: Event) => {
+export const hearOpen = (event: Event): void => {
     for (const node of event.composedPath()) hearOpenRoot(node);
 };
 
@@ -213,53 +196,17 @@ export const docIn = (win: Window | null | undefined): Document | null => {
 };
 
 /**
- * The shadow roots around a node, out to its document, a plain fragment ending the walk since it has
- * no host.
- */
-const closedAround = (near: Node | null | undefined): ShadowRoot[] => {
-    const roots: ShadowRoot[] = [];
-    for (
-        let root = near?.getRootNode();
-        root?.nodeType === 11 && (root as Partial<ShadowRoot>).host;
-        root = (root as ShadowRoot).host.getRootNode()
-    )
-        roots.push(root as ShadowRoot);
-    return roots;
-};
-
-/**
- * An element as the reader given the node sees it: lifted out of each closed shadow root that is not
- * around that node, to the root's host, as the page sees it, so a place kept by one reading and
- * focus read by another compare in the same view.
- */
-export const liftedFor = (element: Element | null, near?: Node | null): Element | null => {
-    if (!element) return null;
-    const open = new Set(closedAround(near));
-    let lifted = element;
-    for (const root of closedAround(element))
-        if (root.mode === 'closed' && !open.has(root)) lifted = root.host;
-    return lifted;
-};
-
-/**
  * What has focus, read from the page down: followed into each shadow root that holds it, and into
  * each frame of the page's own origin that has it, an object showing a document among them, to the
  * control focused inside the frame or to the frame's body where nothing is. A frame of another
  * origin shows nothing inside, so focus there reads as the frame, and a closed shadow root as its
- * host. A frame's own record is read only while focus is in the frame, so a control it last focused
- * is never taken for focus once a visitor has moved on. Kept as it is wherever the kit stores where
- * focus was, and compared and judged only through `seen`. It sits here, beside the presses, so the
- * module that hears them reads focus by the one reader without the rest of the focus module.
- *
- * Given a node a piece holds, the reader also follows focus into each closed shadow root around
- * that node, which the piece reaches through the node though the page cannot, so a piece drawn
- * inside a closed root reads focus there as it does in an open one.
+ * host, unless it is among the closed roots given, by their hosts, which the focus module passes
+ * for a piece drawn inside one. A frame's own record is read only while focus is in the frame, so
+ * a control it last focused is never taken for focus once a visitor has moved on. It sits here,
+ * beside the presses, so the module that hears them reads focus by the one reader without the rest
+ * of the focus module.
  */
-export const deepActive = (near?: Node | null): Element | null => {
-    // A root a piece reads through is heard from here on, so the next press inside it counts.
-    hearClosed(near);
-    const closed = new Map<Element, ShadowRoot>();
-    for (const root of closedAround(near)) closed.set(root.host, root);
+export const deepActive = (closed?: ReadonlyMap<Element, ShadowRoot>): Element | null => {
     let active = document.activeElement;
     for (let next; (next = beneath(active, closed));) active = next;
     return active;
@@ -272,9 +219,9 @@ export const deepActive = (near?: Node | null): Element | null => {
  */
 const beneath = (
     active: Element | null,
-    closed: ReadonlyMap<Element, ShadowRoot>
+    closed?: ReadonlyMap<Element, ShadowRoot>
 ): Element | null | undefined => {
-    const root = active?.shadowRoot ?? (active ? closed.get(active) : undefined);
+    const root = active?.shadowRoot ?? (active ? closed?.get(active) : undefined);
     if (root?.activeElement) return root.activeElement;
     const win = (active as Partial<HTMLIFrameElement> | null)?.contentWindow;
     if (!win) return undefined;

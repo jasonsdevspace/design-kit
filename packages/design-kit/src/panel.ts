@@ -46,38 +46,24 @@ const closedRootOf = (node: Node): ShadowRoot | null => {
         : null;
 };
 
-/** The root each attached button's panel was last found in, kept for a button that leaves it. */
+/** The root each attached button's panel is kept in, settled as the button is attached. */
 const settled = new WeakMap<Element, Scope>();
 
 /**
- * The root that holds the panel a button names: where its id is found from the button's own root
- * out through each host to the document, as a focus request finds an id, so a panel drawn beside
- * its button inside a shadow root is found there, and one of the page from a button inside a
- * widget. Where no element has the id yet, the button's own root, where a panel drawn later is
- * looked for. A button that has left the page keeps the root it was last read in, so its takedown
- * clears the state there, and where the root changes, as it does for a panel the page draws after
- * its button, the panel's state moves with it, so it is never kept in two roots.
+ * The root that holds the panel a button names, settled the first time it is asked for, as the
+ * button is attached, and kept from then on: where its id is found from the button's own root out
+ * through each host to the document, as a focus request finds an id, so a panel drawn beside its
+ * button inside a shadow root is found there, and one of the page from a button inside a widget.
+ * Where no element has the id yet, the button's own root, where a panel drawn later is looked for.
+ * A panel the page draws later in another root is out of reach, as record 19 has it.
  */
 const scopeOf = (button: Element): Scope => {
-    const held = settled.get(button);
-    if (held && !button.isConnected) return held;
-    const id = panelIdOf(button);
-    const scope = scopeOfNode(byIdOutward(button, id) ?? button);
-    if (held && held !== scope) {
-        // Only what this button holds moves: the panel it opened, and the mark that the panel has
-        // started where no other attached button still names it there, so a page's own panel
-        // with the same id keeps its state as a widget draws its own.
-        const opener = lastIn(held).get(id);
-        if (opener === button) {
-            if (!lastIn(scope).has(id)) lastIn(scope).set(id, opener);
-            lastIn(held).delete(id);
-        }
-        const namedThere = [...openers.keys()].some(
-            (other) => other !== button && panelIdOf(other) === id && settled.get(other) === held
+    let scope = settled.get(button);
+    if (!scope)
+        settled.set(
+            button,
+            (scope = scopeOfNode(byIdOutward(button, panelIdOf(button)) ?? button))
         );
-        if (!namedThere && startedIn(held).delete(id)) startedIn(scope).add(id);
-    }
-    settled.set(button, scope);
     return scope;
 };
 
@@ -346,7 +332,6 @@ const onPanelPress = (event: Event): void => {
     if (!panel || !id) return;
     const scope = scopeOfNode(panel);
     if (scope.getElementById(id) !== panel) return;
-    // Read before the root's state, so state a button kept in another root has moved here.
     const named = openersOf(id, scope);
     const last = lastIn(scope);
     if (last.has(id) || named.length) showPanel(scope, id, false, last.get(id));
@@ -397,9 +382,6 @@ const openPanelAt = (
         return lastIn(scope).has(id) ? { scope, id } : null;
     }
     const scope = scopeOfNode(place);
-    // The buttons that name it are read first, so a panel's state its button kept in another root,
-    // as one the page drew after its button, has moved here.
-    if (place.id) openersOf(place.id, scope);
     return lastIn(scope).has(place.id) && scope.getElementById(place.id) === place
         ? { scope, id: place.id }
         : null;
@@ -500,8 +482,9 @@ const listen = (target: Scope, on: boolean): void => {
  * the panel follows. However the panel closes, by its button, its Close, Escape or `set`, focus
  * goes to the button that opened it where focus is in the panel, inside a shadow tree within it
  * too, or where nothing has focus and the visitor's last place was in it, as record 19 has it. The
- * panel is found at each press by its id, from the button's own root out through each host to the
- * document, so one drawn again keeps working and one beside its button inside an open shadow root
+ * panel is found by its id in the root settled as the button is attached, the first where the id
+ * is found from the button's own root out through each host to the document, else the button's
+ * own, so one drawn again there keeps working and one beside its button inside an open shadow root
  * opens there, and a button drawn again works once it is attached. Listeners on the document the
  * button sits in as it is attached, a frame's where the page attaches it inside one, hear the
  * presses, the focus and the Escape of every panel in it, inside its open shadow roots too, and

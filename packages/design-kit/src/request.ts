@@ -5,14 +5,15 @@ import {
     type FocusTarget,
     homeOf,
     isBlank,
+    liftedFor,
     type MoveFocusOptions,
     seen,
     seenNow,
 } from './focus.js';
-import { handed, inputs, liftedFor, press, restoring, sightChanges } from './state.js';
+import { handed, inputs, press, restoring, sightChanges } from './state.js';
 import { teardown } from './teardown.js';
 
-export { hearClosed } from './state.js';
+export { hearClosed } from './focus.js';
 
 /*
  * A page's requests to move focus once a change is drawn, `moveFocus` and `focusOnArrival`, which
