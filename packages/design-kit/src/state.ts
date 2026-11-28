@@ -147,14 +147,21 @@ const clear = () => {
 const heardHosts = new WeakSet<Element>();
 
 /**
- * Hears the presses and keys made inside each closed shadow root around a node the kit reads focus
- * through, which the kit's listeners on the document hear only as made on the root's host. Only a
- * root the kit has read focus through a node in is heard, as only such a root is read into, so a
- * press inside a widget the kit has never read focus in still reaches the page as one on its host.
+ * Hears the shadow roots around a node the kit reads focus through. A closed root's presses and
+ * keys, which the kit's listeners on the document hear only as made on the root's host, are heard
+ * on the root itself, with focus entering an open root inside it and the keys and clicks passing
+ * through one, so that open root's submits are heard too. An open root's submits are heard, which
+ * never leave it. Only a closed root the kit has read focus through a node in is heard, as only such
+ * a root is read into, so a press inside a widget the kit has never read focus in still reaches the
+ * page as one on its host.
  */
 export const hearClosed = (near: Node | null | undefined): void => {
     for (const root of closedAround(near)) {
-        if (root.mode !== 'closed' || heardHosts.has(root.host)) continue;
+        if (root.mode === 'open') {
+            hearOpenRoot(root);
+            continue;
+        }
+        if (heardHosts.has(root.host)) continue;
         heardHosts.add(root.host);
         for (const type of ['keydown', 'click', 'submit'])
             root.addEventListener(type, heardInRoot, true);
@@ -182,10 +189,18 @@ const hearOpen = (event: Event) => {
     for (const node of event.composedPath()) hearOpenRoot(node);
 };
 
-/** Hears each open shadow root around what has focus as the module loads. */
+/**
+ * Hears each open shadow root around what has focus as the module loads, followed into each frame
+ * of the page's own origin that holds it, as `beneath` follows it, since focus that entered a root
+ * before the kit loaded sent no event the kit could hear.
+ */
 const hearOpenFocused = () => {
-    for (let at = document.activeElement; at?.shadowRoot; at = at.shadowRoot.activeElement)
-        hearOpenRoot(at.shadowRoot);
+    for (let at = document.activeElement; at;) {
+        if (at.shadowRoot) {
+            hearOpenRoot(at.shadowRoot);
+            at = at.shadowRoot.activeElement;
+        } else at = docIn((at as Partial<HTMLIFrameElement>).contentWindow)?.activeElement ?? null;
+    }
 };
 
 /** The document a window shows, where it is of the page's own origin, read in a try. */
@@ -417,8 +432,10 @@ const next = (event: Event) => {
 // The one thing the module does as it loads, in a page, so the press that brings a page's first
 // view is heard and a request made before the page went out of sight is known. It notes inputs,
 // frames loading, focus entering a frame and a frame's page going, on the page and in each frame of
-// its own origin, the open shadow roots focus is in, and each time the page goes out of sight or
-// comes back, and nothing else.
+// its own origin, focus entering an open shadow root, by a listener for focus coming in, so the
+// root's submits are heard, the open shadow roots focus was already in as the module loaded, by a
+// walk out from what has focus into each such root and frame, and each time the page goes out of
+// sight or comes back, and nothing else.
 if (typeof document !== 'undefined') {
     sweep(window);
     hearOpenFocused();

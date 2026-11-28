@@ -1081,9 +1081,18 @@ const openClosedHooks = async (page: Page, more = ''): Promise<Error[]> => {
 /**
  * The shadow roots of the page of hooks: the closed widget the kit hears, a closed one it was never
  * handed, an open one, an open one inside the closed widget, and, where the page asks for them, the
- * open one whose field takes focus as it draws and the open one the page wrote.
+ * open one whose field takes focus as it draws, the open one the page wrote, the open one whose
+ * heading the kit reads focus through, and the open one in a frame the page wrote.
  */
-type HookRoot = 'closedRoot' | 'freshRoot' | 'openRoot' | 'nestedRoot' | 'autoRoot' | 'earlyRoot';
+type HookRoot =
+    | 'closedRoot'
+    | 'freshRoot'
+    | 'openRoot'
+    | 'nestedRoot'
+    | 'autoRoot'
+    | 'earlyRoot'
+    | 'readRoot'
+    | 'frameRoot';
 
 /**
  * Focuses the control with the id given inside the root named, presses the key given on it, Enter
@@ -1217,7 +1226,7 @@ test('focuses the view a form in an open shadow root inside a closed one brings 
 });
 
 for (const key of ['Enter', 'Space'])
-    test(`focuses the view a form in an open shadow root brings by ${key} on its submit button`, async ({
+    test(`focuses the view a form in an open shadow root brings once focus is on its submit button and ${key} sends it`, async ({
         page,
     }) => {
         test.setTimeout(120_000);
@@ -1280,11 +1289,12 @@ test('focuses the view a form in an open shadow root brings where its field had 
     expect(errors).toEqual([]);
 });
 
-test('takes no focus for the view a script submits a form in an open shadow root for before any input or focus there', async ({
+test('takes no focus for a view a script submits a form for in an open shadow root focus never entered, then takes it once a click there came before', async ({
     page,
 }) => {
     test.setTimeout(120_000);
     const errors = await openClosedHooks(page);
+    // The limit: nothing told the page the root was there before its submit.
     await submitInRoot(page, 'openRoot');
     await expect
         .poll(() =>
@@ -1298,6 +1308,56 @@ test('takes no focus for the view a script submits a form in an open shadow root
         .toBe(true);
     await frames(page, 10);
     expect(await focusedInRoot(page, 'openRoot')).not.toBe('view-heading');
+    // A click in the root tells the page, so the next submit's view takes focus.
+    await page.locator('#open #open-note').click();
+    await submitInRoot(page, 'openRoot');
+    await expect.poll(() => focusedInRoot(page, 'openRoot')).toBe('view-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a script submits a form for in an open shadow root around a heading the kit reads, with no focus, key or click there', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    const errors = await openClosedHooks(page, '<div id="read"></div>');
+    await expect
+        .poll(() =>
+            page.evaluate(
+                () =>
+                    !!(window as unknown as { readRoot: ShadowRoot }).readRoot.getElementById(
+                        'read-heading'
+                    )
+            )
+        )
+        .toBe(true);
+    await submitInRoot(page, 'readRoot');
+    await expect.poll(() => focusedInRoot(page, 'readRoot')).toBe('second-heading');
+    expect(errors).toEqual([]);
+});
+
+test('focuses the view a form in an open shadow root brings in a frame whose field had focus before the kit loaded', async ({
+    page,
+}) => {
+    test.setTimeout(120_000);
+    // The page writes the frame and focuses its root's field before the kit's module runs.
+    const script = `<script>
+        const frame = document.createElement('iframe');
+        frame.id = 'frame-early';
+        document.querySelector('main').append(frame);
+        const doc = frame.contentDocument;
+        doc.open();
+        doc.write('<!doctype html><body><div id="h"></div></body>');
+        doc.close();
+        const root = doc.getElementById('h').attachShadow({ mode: 'open' });
+        root.innerHTML =
+            '<form><input id="frame-code" aria-label="Code"></form><div id="frame-holder"></div>';
+        frame.contentWindow.focus();
+        root.getElementById('frame-code').focus();
+    </script>`;
+    const errors = await openClosedHooks(page, script);
+    expect(await focusedInRoot(page, 'frameRoot')).toBe('frame-code');
+    await submitInRoot(page, 'frameRoot');
+    await expect.poll(() => focusedInRoot(page, 'frameRoot')).toBe('view-heading');
     expect(errors).toEqual([]);
 });
 

@@ -17,7 +17,9 @@ import { useArrivalFocus, useFocusAfterDraw, useFormRefusal } from '../src/react
  * submit inside an open root, which never leaves it, can be seen to count as a press, and the closed
  * widget holds the same form in an open root of its own. Where the page asks for them, a fourth
  * widget's field takes focus as it draws and sends its form itself once a code is filled in, as a
- * phone fills one, and a root the page wrote has a field focused before the kit loaded.
+ * phone fills one, a root the page wrote has a field focused before the kit loaded, a frame the page
+ * wrote has one too, and a fifth widget's heading, which the kit reads focus through, sits beside a
+ * form a script submits.
  */
 
 const Ask = () => {
@@ -231,16 +233,16 @@ const Rows = () => {
     );
 };
 
-/** A form whose submit brings the view, drawn for the first time. */
+/** A form whose every submit brings the view, drawn afresh. */
 const SubmitOpener = () => {
-    const [shown, setShown] = useState(false);
+    const [sent, setSent] = useState(0);
     return (
         <>
             <p id="open-note">Search the games.</p>
             <form
                 onSubmit={(event) => {
                     event.preventDefault();
-                    setShown(true);
+                    setSent((count) => count + 1);
                 }}
             >
                 <input id="search" aria-label="Search" />
@@ -248,7 +250,44 @@ const SubmitOpener = () => {
                     Search
                 </button>
             </form>
-            {shown ? <View kind="only" other={null} /> : null}
+            {sent > 0 ? <View key={sent} kind="only" other={null} /> : null}
+        </>
+    );
+};
+
+/** A second view, with a heading of its own, drawn for the first time. */
+const Second = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('second');
+    return (
+        <section aria-label="Second view">
+            <h2 id="second-heading" ref={heading}>
+                The second view
+            </h2>
+        </section>
+    );
+};
+
+/**
+ * A heading drawn as the page loads, which the kit reads focus through, and a form a script
+ * submits to bring a second view, with no focus, key or click in the root.
+ */
+const ReadOpener = () => {
+    const heading = useArrivalFocus<HTMLHeadingElement>('read');
+    const [shown, setShown] = useState(false);
+    return (
+        <>
+            <h2 id="read-heading" ref={heading}>
+                Results
+            </h2>
+            <form
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    setShown(true);
+                }}
+            >
+                <input id="read-search" aria-label="Search" />
+            </form>
+            {shown ? <Second /> : null}
         </>
     );
 };
@@ -317,6 +356,21 @@ const open = drawOpen(document.querySelector('#open') as HTMLElement, <SubmitOpe
 // The widget whose field takes focus as it draws, where the page asks for it.
 const autoHost = document.querySelector('#auto');
 const auto = autoHost ? drawOpen(autoHost, <CodeOpener />) : null;
+// The widget whose heading the kit reads focus through, where the page asks for it.
+const readHost = document.querySelector('#read');
+const read = readHost ? drawOpen(readHost, <ReadOpener />) : null;
+// A frame the page wrote, whose open root's field had focus before the kit loaded.
+const frameRoot =
+    document.querySelector<HTMLIFrameElement>('#frame-early')?.contentDocument?.getElementById('h')
+        ?.shadowRoot ?? null;
+const frameHolder = frameRoot?.getElementById('frame-holder');
+if (frameRoot && frameHolder) {
+    const view = createRoot(frameHolder);
+    frameRoot.querySelector('form')?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        view.render(<View kind="only" other={null} />);
+    });
+}
 // A root the page wrote, whose field had focus before the kit loaded, and whose form brings the view.
 const early = document.querySelector('#early')?.shadowRoot ?? null;
 const earlyHolder = early?.getElementById('early-holder');
@@ -334,5 +388,7 @@ Object.assign(window, {
     nestedRoot: nested,
     autoRoot: auto,
     earlyRoot: early,
+    readRoot: read,
+    frameRoot,
     ready: true,
 });
