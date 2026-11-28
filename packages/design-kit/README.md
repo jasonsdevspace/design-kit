@@ -13,7 +13,7 @@ plain JavaScript functions or React hooks make them work. The demos on
 <img src="https://jasonsdevspace.com/design-kit/light-and-dark.png" alt="The kit's controls in the light theme on the left and the dark theme on the right: four buttons, one of them pressed and one off, an email field showing an error, a sort select, and a success callout and an error callout" width="720">
 
 **[See the pieces live, in both themes, with their code](https://jasonsdevspace.com/design-kit/)** ·
-[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md) ·
+[Reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md) ·
 [Changelog](https://github.com/jasonsdevspace/design-kit/blob/main/packages/design-kit/CHANGELOG.md) ·
 [Source](https://github.com/jasonsdevspace/design-kit)
 
@@ -44,15 +44,15 @@ More on [what it is built for](https://jasonsdevspace.com/design-kit/#built-for)
 - **Pages.** A site header, a footer and a "How it works" page, on [the page chrome
   page](https://jasonsdevspace.com/design-kit/page-chrome/) and [the explainer pieces page](https://jasonsdevspace.com/design-kit/explainer-pieces/),
   and a content page, bands and a hero, on [the layouts page](https://jasonsdevspace.com/design-kit/layouts/).
-- **Lists and layout.** Rows, tiles and panels, under [Rows](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#rows) and
-  [Panels](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#panels) in the reference, and for a content page a hero, stacks, split rows and
-  numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#content-pages).
+- **Lists and layout.** Rows, tiles and panels, under [Rows](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#rows) and
+  [Panels](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#panels) in the reference, and for a content page a hero, stacks, split rows and
+  numerals, under [Content pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#content-pages).
 - **Waits and behavior.** A refused form, a busy button, the arrow keys through a grid, focus moved
   after a change, and a loading line and a failure with Try again, each working with what it says on
   the status line, on [the behavior page](https://jasonsdevspace.com/design-kit/behavior/). Progress
   is on [the controls page](https://jasonsdevspace.com/design-kit/controls/#loading-and-progress),
   and the rules behind them under [Status, focus, waits and
-  progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress)
+  progress](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#status-focus-waits-and-progress)
   in the reference.
 
 The portfolio strip and the demo footer link to the author's portfolio and are meant for its demos.
@@ -198,7 +198,7 @@ page](https://jasonsdevspace.com/design-kit/controls/).
 
 Import each entry by the package name and the entry's own, such as
 `@jasonsdevspace/design-kit/controls`. [What the package
-exports](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#what-the-package-exports) in the reference names every function, hook, component and
+exports](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#what-the-package-exports) in the reference names every function, hook, component and
 type each entry holds.
 
 ## Foundations
@@ -239,25 +239,25 @@ one taken from the page's address or a visitor's input, since that could send a 
 
 - [A page's own palette](https://jasonsdevspace.com/design-kit/own-palette/) shows a page with its
   own palette, column and layers. [Layers and
-  palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#layers-and-palettes)
+  palettes](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#layers-and-palettes)
   and [Properties a page
-  sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#properties-a-page-sets)
+  sets](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#properties-a-page-sets)
   give the rules and what each property must hold.
-- [The theme contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#the-theme-contract), for what the theme script sets for each saved value.
-- [React components](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#react-components), for each component's props.
+- [The theme contract](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#the-theme-contract), for what the theme script sets for each saved value.
+- [React components](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#react-components), for each component's props.
 - [A refused form](https://jasonsdevspace.com/design-kit/behavior/#a-refused-form) works on the
   site, and [its
-  reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#a-refused-form)
+  reference](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#a-refused-form)
   gives the words for each failure.
-- [App frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#app-frame), [Page chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#page-chrome) and [Explainer
-  pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/packages/design-kit/REFERENCE.md#explainer-pages), for each piece's markup and rules.
+- [App frame](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#app-frame), [Page chrome](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#page-chrome) and [Explainer
+  pages](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/packages/design-kit/REFERENCE.md#explainer-pages), for each piece's markup and rules.
 
 ## Browser support
 
 The colors are written with `light-dark()`, which sets the floor: Chrome and Edge 123, Firefox 120
 and Safari 17.5. What falls short at the floor, such as the missing pointer over a checkbox's label
 in Firefox 120, is listed under [known
-limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.4/docs/ACCESSIBILITY.md#known-limitations).
+limitations](https://github.com/jasonsdevspace/design-kit/blob/design-kit-v0.9.5/docs/ACCESSIBILITY.md#known-limitations).
 With `browserFloor()` as the build target, each `light-dark()` color stays as written, and the
 target rises when the kit raises its floor. A lower target rewrites each one into custom properties
 set once on the root, so a part of the page set to the other scheme keeps the page's colors.

@@ -144,12 +144,6 @@ is its CSS transformer, as the package README shows.
   and Firefox are documented to announce once focus is on the action. Nothing elsewhere on the page
   says the key exists, and a sighted keyboard or magnifier user gets no hint of it from the kit, so
   a page that wants the key known says so itself.
-- A focus request that a widget in a closed shadow root asks with its own control as `from` is
-  dropped while focus is still on that control, since focus there reads as the widget's host, so
-  focus stays where it was and a screen reader user hears nothing of the move. Views one press
-  brings, one inside a shadow root and one outside it, take focus in an order each engine chooses,
-  so the first in the page may not be the one focused. The reference says how a widget in a closed
-  root asks.
 - A dialog the page opens inside a frame of its own origin makes only that frame inert, so Tab past
   its last control and a screen reader's reading keys reach the page around it. A page that needs
   the whole view held opens the dialog on the page.
@@ -159,6 +153,11 @@ is its CSS transformer, as the package README shows.
   origin, or inside a frame in a closed shadow root, brings no focus to the view it opens, so the
   visitor stays where they were. The reference's Focus on arrival gives the frames the kit hears and
   those it cannot.
+- The kit hears the presses inside a closed shadow root only once it has read focus there, so the
+  first press in a widget whose closed root it has not read brings no focus to the view it opens,
+  and the next press does. A form a script submits inside an open shadow root that focus has not
+  entered, that no key or click has passed through and that holds no node the kit reads focus
+  through counts as no press either, so the view it brings takes no focus.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.
