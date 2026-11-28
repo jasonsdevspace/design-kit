@@ -1,6 +1,6 @@
 {
     "name": "@jasonsdevspace/design-kit",
-    "version": "0.9.4",
+    "version": "0.9.5",
     "description": "Design tokens, light and dark themes, and CSS components, with plain JavaScript functions or React hooks that make them work. Built to work by keyboard, screen reader and forced colors, with no flash of the wrong theme.",
     "keywords": [
         "design-tokens",

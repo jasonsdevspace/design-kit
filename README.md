@@ -318,10 +318,10 @@ the controls without their comments.
 | ------------------------------------------------------- | -------- |
 | The three sheets                                        | 13.25 KB |
 | The theme script, inline in the page's head             | 1 KB     |
-| Every function of the controls, as a bundler sends them | 26 KB    |
-| The controls' entry imported with no names              | 2.25 KB  |
-| `attachTable` alone                                     | 3.5 KB   |
-| `attachForm` alone                                      | 10.5 KB  |
+| Every function of the controls, as a bundler sends them | 26.75 KB |
+| The controls' entry imported with no names              | 2.75 KB  |
+| `attachTable` alone                                     | 4 KB     |
+| `attachForm` alone                                      | 11.5 KB  |
 
 A page that attaches a control loads the controls as well, and they ship in parts, so a bundler
 sends a page only what it imports. The package npm publishes is 165 KB packed, the sheets and
