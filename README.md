@@ -567,7 +567,8 @@ npm run bench:pages
     - `e2e/` holds the browser tests.
     - `smoke/` installs the packed package as a page would install it.
 - `packages/site/` holds the site at jasonsdevspace.com/design-kit/, its browser tests and audit.
-- `scripts/` holds the Node and commit checks, the run summaries and the benchmark writer.
+- `scripts/` holds the Node check, the site's kit check, the run summaries, the benchmark writer
+  and the tests that read the whole repository.
 - `docs/` holds the accessibility statement in `ACCESSIBILITY.md`, the benchmarks in `benchmarks/`,
   which say what the package weighs and how the site's pages score, and the decision records in
   `decisions/`.
