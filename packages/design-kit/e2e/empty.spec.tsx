@@ -12,6 +12,7 @@ import {
     lengthOf,
     servePage,
     sideways,
+    stillClock,
     style,
     writePage,
 } from './page.js';
@@ -151,20 +152,40 @@ test.describe('the saved games', () => {
     const heard = (page: Page) =>
         page.evaluate(() => (window as unknown as { heard: string[] }).heard);
 
+    /** How long the search's words wait for typing to stop, as the example says them. */
+    const SETTLE = 700;
+    /** Past the moment a status line takes to put words in once they are said. */
+    const SAID_AFTER = SETTLE + 100;
+
+    /**
+     * Types into the search on a stopped clock, so the keys land in one moment however slowly the
+     * browser takes them, and a pause between keys under load never reads as typing that stopped.
+     */
+    const typeSearch = async (page: Page, words: string) => {
+        await page.getByLabel('Search the games').pressSequentially(words);
+    };
+
     test('waits for typing to stop, then says the search matches nothing and names it', async ({
         page,
     }) => {
+        await stillClock(page.clock);
         await open(page);
-        await page.getByLabel('Search the games').pressSequentially('Chss', { delay: 50 });
+        await typeSearch(page, 'Chss');
         await expect(page.getByRole('list')).toHaveCount(0);
         await expect(page.locator('.dk-empty > p')).toHaveText('No games match “Chss”.');
+        // Nothing is said while the search has stood for less than its wait.
+        await page.clock.runFor(SETTLE - 1);
+        expect(await heard(page)).toEqual([]);
+        await page.clock.runFor(SAID_AFTER);
         await expect.poll(() => heard(page)).toEqual(['No games match “Chss”.']);
     });
 
     test('says how many games match a search that finds some', async ({ page }) => {
+        await stillClock(page.clock);
         await open(page);
-        await page.getByLabel('Search the games').pressSequentially('sky', { delay: 50 });
+        await typeSearch(page, 'sky');
         await expect(page.getByRole('listitem')).toHaveCount(1);
+        await page.clock.runFor(SAID_AFTER);
         await expect.poll(() => heard(page)).toEqual(['1 game matches.']);
     });
 
