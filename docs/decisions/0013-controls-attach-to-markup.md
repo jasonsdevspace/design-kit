@@ -225,12 +225,13 @@ own functions, with the medians the package record gave at each.
 | 0.9.5   | What follows a panel walked in the order the page draws it, with too little room left    | 25,728 bytes   | 653 bytes       | 26 KB      |
 | 0.9.5   | The release measured whole, with too little room left                                    | 26,533 bytes   | 670 bytes       | 26.75 KB   |
 
-Every 0.9.4 row of these tables is measured at the commit on main that set its budget, the controls
-from the package laid out as npm ships it, each with one median, the upper of the middle two costs
-where their count is even. Measured so, a busy button's dots took the sheets past 12.25 KB and a
-dated field's limit in words took the controls past 20 KB, rather than only leaving too little room,
-and a toast's mark on its frame, with room for a function of the usual size, came to 21,765 bytes,
-five past the 21.25 KB it set, so the rule asked 21.5 KB there, which the next row set.
+Every 0.9.4 and 0.9.5 row of these tables is measured at the commit on main that set its budget, the
+rows for the release measured whole at the release commit, the controls from the package laid out as
+npm ships it, each with one median, the upper of the middle two costs where their count is even.
+Measured so, a busy button's dots took the sheets past 12.25 KB and a dated field's limit in words
+took the controls past 20 KB, rather than only leaving too little room, and a toast's mark on its
+frame, with room for a function of the usual size, came to 21,765 bytes, five past the 21.25 KB it
+set, so the rule asked 21.5 KB there, which the next row set.
 
 Between the last raises of 0.9.3, a cleanup of the status line brought the controls from 18,269
 bytes to 18,117, which record 23's holders took to 18,553. Record 22's helper took them from 17,331

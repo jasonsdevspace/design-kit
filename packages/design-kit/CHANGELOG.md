@@ -34,21 +34,27 @@ imported bare within 2.75 KB, at 2,047 bytes, `attachTable` alone within 4 KB, a
 `attachForm` alone within 11.5 KB, at 10,989. The sheets stay within 13.25 KB, at 13,253 bytes with
 a median piece of 179, and the theme script within 1 KB of its own, at 757.
 
-- **Upgrading.** A page's own `fieldset` of settings that holds checkbox fields, each a
-  `.dk-field` holding its box's `label.dk-choice` itself, now has each box refused as its own
-  field, so a test that found one error above the whole section finds it above the unchecked box,
-  with that box alone marked and named. A box that stands alone in a `.dk-field`, with no group
-  around it, now hugs its words, starts its hint under them and takes a line of its own in a
-  `dk-fields` row. A dialog whose opener is gone, or that opened with nothing focused, hands focus
-  to the app frame's body or the main content, so the main content must take focus, as the skip
-  link's markup lets it, and a test that found focus on the page's body there finds it on the main
-  content. A dialog whose answer removes what opened it gives `returnTo` a nearer place. A panel
-  whose buttons take no focus as it closes hands focus to the first stop after it in the order the
-  page draws it, which may sit inside a following widget or frame, where focus went past them to
-  the page after the widget. A focus request that a widget in a closed shadow root asks with its
-  own control as `from` now lands, so a page that moved focus itself to work around its drop can
-  leave that to the request. `./react` gains `CheckboxField` and its props type, and exports
-  nothing less.
+- **Upgrading.** A page's own `fieldset` of settings that holds checkbox fields, each a `.dk-field`
+  holding its box's `label.dk-choice` itself, now has each box refused as its own field, so a test
+  that found one error above the whole section finds it above the unchecked box, with that box alone
+  marked and named. A checkbox field now hugs its words, starts its hint under them and takes a line
+  of its own in a `dk-fields` row. At 48rem wide or less a table's cells keep a step closer to each
+  other, so a picture a test takes of a table there changes. A dialog whose opener is gone, or that
+  opened with nothing focused, hands focus to the frame the opener sat in while that frame is still
+  on the page, and otherwise to the app frame's body or the main content, so the main content must
+  take focus, as the skip link's markup lets it, and a test that found focus on the page's body
+  there finds it on the frame or the main content. A dialog whose answer removes what opened it
+  gives `returnTo` a nearer place. A panel whose buttons take no focus as it closes hands focus to
+  the first stop after it in the order the page draws it, which may sit inside a following widget or
+  frame, where focus passed over them to the next control in the page's own markup. A piece or a
+  hook drawn inside a closed shadow root now keeps and hands focus back there, where it went to the
+  main content or the page's body, and a view brought for the first time by a press inside a closed
+  shadow root the kit has read focus in, or by a submit inside an open shadow root, now focuses its
+  heading, where focus stayed where it was, so a test that read focus on the main content, the body
+  or the pressed control there finds it inside the root or on the heading. A focus request that a
+  widget in a closed shadow root asks with its own control as `from` now lands, so a page that moved
+  focus itself to work around its drop can leave that to the request. `./react` gains
+  `CheckboxField` and its props type, and exports nothing less.
 - **Sheets.** At 48rem wide or less a table's cells keep a step closer to each other, so a table
   of a word and four short figures fits a 320px phone at the usual text size. A `.dk-field`
   holding a `label.dk-choice` itself is a checkbox field. Its label hugs its words, its hint
@@ -125,132 +131,134 @@ a median piece of 179, and the theme script within 1 KB of its own, at 757.
   draws, before its heading is there, so its heading takes focus, a visitor who moves on to
   another control in the root first is left there, and a field the view focuses as it draws keeps
   its focus. The first press in a widget the kit has not read focus in yet still brings no focus.
-- **Docs.** The reference's sections on an id inside a shadow root, focus on arrival and where
-  focus can be, and record 19, say what a piece inside a closed root reads. The reference's "Where
-  focus can be" and record 19 say what each piece reads on the page, in shadow roots open and
-  closed and in frames of the page's origin and of another, and where a page reads focus short of
-  where it is. The reference says how narrow a table fits a 320px phone. The reference gains a
-  section on the checkbox field, a `CheckboxField` props table, and a pointer from the choice
-  fields and from the words a refusal uses for a box that stands alone. Record 20 says each hook,
-  or the few of one kind, lives in a module of its own, that the markup components import no
-  effect and no hook's module, and how the React entry is tested. The reference's section on where
-  focus can be says focus in such a frame is read where it is. The reference and record 19 say a
-  panel's state is kept by the root that holds it, that a screen reader follows `aria-controls`
-  within one root only, so a panel belongs in its button's root, and that focus goes on past a
-  widget as its panel closes. The reference's dialog section and its section on where focus can be
-  say so. The reference's dialog section says where focus goes once nothing nearer takes it, that
-  the main content must take focus, as the skip link's markup lets it, and that a dialog whose
+- **Docs.** The reference's sections on an id inside a shadow root, focus on arrival and where focus
+  can be, and record 19, say what a piece inside a closed root reads. The reference's "Where focus
+  can be" and record 19 say what each piece reads on the page, in shadow roots open and closed and
+  in frames of the page's origin and of another, and where a page reads focus short of where it is.
+  The reference says how narrow a table fits a 320px phone. The reference gains a section on the
+  checkbox field, a `CheckboxField` props table, and a pointer from the choice fields and from the
+  words a refusal uses for a box that stands alone. Record 20 says each hook, or the few of one
+  kind, lives in a module of its own, that the markup components import no effect and no hook's
+  module, and how the React entry is tested. The reference's section on where focus can be says
+  focus in a frame of the page's origin held by a frame of another origin is read where it is. The
+  reference and record 19 say a panel's state is kept by the root that holds it, that a screen
+  reader follows `aria-controls` within one root only, so a panel belongs in its button's root, and
+  that focus goes on past a widget as its panel closes. The reference's dialog section and its
+  section on where focus can be say a dialog whose opener has gone hands focus to the frame the
+  opener sat in. The reference's dialog section says where focus goes once nothing nearer takes it,
+  that the main content must take focus, as the skip link's markup lets it, and that a dialog whose
   answer removes what opened it gives `returnTo` a nearer place. Its section on where focus can be
-  says what a dialog and a toast do where the page takes a frame away or removes a dialog's
-  opener. The reference's panel section says what follows a panel is read in the order the page
-  draws it, and record 19 says the walk for it runs only where every button is off. The
-  reference's section on handing focus back says where that last place is looked for. The
-  reference's section on where focus can be says what each hook reads where focus was through
-  inside a closed root, that a move into another closed root or a target given as an id or a
-  function is read as no move. Its section on an id inside a shadow root says `useFocusAfterDraw`
-  given an element target there finds its fallbacks' ids inside the root. Record 19 says so and
-  names what was turned down, and the reference says so in its sections on where focus can be and
-  focus on arrival. Record 19 says the read on a blur goes through a frame of another origin to
-  the inner frame of the page's origin that has focus, so a press there stands before the outer
-  frame's load. The reference says such a frame is heard as focus comes into it from the page. The
-  package README and the reference link the accessibility statement at its new path. Record 19
-  says so and names the cases it leaves, and the reference says so in its section on focus on
-  arrival. The description in the package's manifest drops where the kit came from, which the
-  README says, so npm shows it whole rather than cutting it mid-word. The reference's saved games
-  example names its search's wait for typing to stop, which its tests read. The accessibility
-  notes drop the limits of a focus request from a closed shadow root and of views in different
-  trees, which this release lifts, and name the first press in a closed root the kit has not read
-  focus in and a form a script submits in an open root that focus never entered. The package
-  README's links point at the `design-kit-v0.9.5` tag.
+  says what a dialog and a toast do where the page takes a frame away or removes a dialog's opener.
+  The reference's panel section says what follows a panel is read in the order the page draws it,
+  and record 19 says the walk for it runs only where every button is off. The reference's section on
+  handing focus back says where that last place is looked for. The reference's section on where
+  focus can be says what each hook reads where focus was through inside a closed root, that a move
+  into another closed root or a target given as an id or a function is read as no move. Its section
+  on an id inside a shadow root says `useFocusAfterDraw` given an element target there finds its
+  fallbacks' ids inside the root. Record 19 says the kit hears presses inside a closed shadow root
+  once it has read focus there and names what was turned down, and the reference says so in its
+  sections on where focus can be and focus on arrival. Record 19 says the read on a blur goes
+  through a frame of another origin to the inner frame of the page's origin that has focus, so a
+  press there stands before the outer frame's load. The reference says such a frame is heard as
+  focus comes into it from the page. The package README and the reference link the accessibility
+  statement at its new path. Record 19 says a form submitted inside an open shadow root counts as a
+  press and names the cases it leaves, and the reference says so in its section on focus on arrival.
+  The description in the package's manifest drops where the kit came from, which the README says, so
+  npm shows it whole rather than cutting it mid-word. The reference's saved games example names its
+  search's wait for typing to stop, which its tests read. The accessibility notes drop the limits of
+  a focus request from a closed shadow root and of views in different trees, which this release
+  lifts, name the first press in a closed root the kit has not read focus in and a form a script
+  submits in an open root that focus never entered, and say a screen reader hears only the expanded
+  state of a button whose panel sits in a root around its own. The package README's links, and the
+  reference's link to the accessibility statement, point at the `design-kit-v0.9.5` tag.
 - **Tests.** The focus grid's squares for a closed shadow root pass for every piece drawn there.
   Browser tests land a request a widget's button in a closed root asks with itself as `from`, and
   one a dialog's own button there asks as it closes the dialog, move focus off a dialog's corner
-  Close to its first field there, land a page's request after a panel there hands focus back,
-  focus the page's heading before a widget's and a slotted title before a widget's own heading
-  brought by the same press, open a theme switch in a closed root by a press with focus on the
-  chosen choice, and raise no error for a request whose where focus was sits in a fragment, in
-  Chromium, Firefox and WebKit. A browser test in Chromium, WebKit and Firefox runs each place
-  focus can be against each piece that reads it and names each square that fails with its cause
-  and the answer it gives. A browser test draws a record table of a word and four short figures at
-  320px wide, on a content page and in an app's frame, and finds its frame does not scroll. A
-  refused submit in a page's own section of two required boxes draws one error, above the
-  unchecked box. Browser tests in Chromium, Firefox and WebKit find the box named by its label and
-  described by its hint, the error above the box with focus on it, in a form written by hand and
-  in one React draws, the label a target of the field's height and a thumb's on a phone, the hint
-  starting under the words and never toggling the box, no audit failure in any state, and a long
-  label wrapping at 320 wide and twice the text size. In forced colors an invalid box has a dashed
-  line and one that is off is drawn in `GrayText`. A build test bundles a site of two pages from
-  the package as npm ships it and holds a page that keeps a status line to none of the form's, the
-  group's, the stepper's, the toast's, the checkbox field's or a plain field's code. It also holds
-  a page alone that keeps a status line or a busy button to none of the other pieces, and a page
-  that loads the toast and the stepper later through `import()` to keeping them out of its first
-  chunk. The test that the React modules reach the kit only through the entry reads every module
-  and holds the modules of markup components to importing no hook's module, and the lint that
-  keeps effects out of the markup covers every module of components, a new one included. A browser
-  test hands focus back to a panel's button in a closed shadow root that holds such a frame. The
-  focus grid's squares for a frame of the page's origin inside one of another origin pass for
-  every piece in Chromium, Firefox and WebKit, and none is listed as failing. The focus grid's
-  panel squares for an open shadow root and an open shadow root inside a frame pass, and the
-  closed shadow root's panel now opens and closes, its focus going to the main content as it
-  closes, as the closed root's own reading of focus has it. Browser tests close a widget's panel
-  by its Close and by Escape apart from the page's panel with its id, hand focus on past the
-  widget, open a widget's panel as its button's markup says once the button before it left, close
-  by Escape a page's panel opened from a widget's button before the page drew it, keep the page's
-  open panel its own as a widget draws a panel with its id, and open and close a panel inside a
-  closed shadow root. The focus grid's dialog square for a frame that has loaded its next page
-  finds focus on the frame in Chromium, Firefox and WebKit. The focus grid gains a row for a frame
-  the page takes away while a piece is open and a column for a dialog whose opener the page
-  removes, and the dialog's squares there find focus on the main content, or on the frame the
-  opener sat in while that frame is still on the page. Browser tests find focus on the main
-  content without the page scrolling where a long page removed a dialog's opener, on the app
-  frame's body where a dialog opened with nothing focused, and on the page's main content where a
-  dialog inside a frame was opened from a control of the page the page removed, in Chromium,
-  Firefox and WebKit. Browser tests close a panel inside a widget with its button off and find
-  focus on a page's button slotted after the panel, on the first control inside a following
-  widget's open shadow root, on a following frame and on a following custom element whose closed
-  shadow root takes focus, and past a panel slotted through two widgets, never to a control before
-  it, in Chromium, Firefox and WebKit. A browser test closes a panel inside a widget in an app
-  drawn by a component, with nothing nearer to take focus, and finds focus on the app frame's body
-  in Chromium, Firefox and WebKit, written into the app, slotted into it, or past a widget's own
-  main content that takes no focus. The engine lists name, for each spec run in WebKit or Firefox,
-  the whole spec, the tests its reason covers, or every test but those it leaves out, and a check
-  holds each list to the tests Playwright runs in that engine, failing on a name no spec holds.
-  The grid waits for the outer frame's load as well as the inner frame's page before a square
-  runs, since the kit hears the inner frame at the outer frame's load, so a press there is no
-  longer made before it is heard. A browser test brings a view by a press in such a frame while
-  the outer frame's load is held, and finds the view's heading focused in Chromium, Firefox and
-  WebKit. The test goes back only once the page it went to has its document parsed, by which time
-  Chromium has attached that page, rather than at the commit, where a goBack could fail with no
-  active page. Browser tests land a `useFocusAfterDraw` request inside a closed shadow root, focus
-  a `useArrivalFocus` heading there as its key changes and a `useFormRefusal` form's first field
-  in error, and find focus left where it moved inside the root before any of them lands, still
-  there some frames later, and a row that removes itself there finds the next, in Chromium,
-  Firefox and WebKit. Browser tests bring a view by a press inside a closed shadow root in
-  Chromium, Firefox and WebKit: its heading takes focus, a visitor who moves first is left there,
-  a field the view focuses above or below its heading keeps focus, a Tab or a click on nothing
-  after the press leaves focus where it is, and a widget the kit was never handed a node of takes
-  no focus for its first press and takes it from the next. Browser tests submit a form inside an
-  open shadow root in Chromium, Firefox and WebKit, by Enter in its field, by Enter or Space once
-  focus is on its submit button, by a pointer on that button, by a script after a click in the
-  root or after focus entered an open root inside a closed one, by its own field once a code is
-  filled in, by a script where its field had focus before the kit loaded, on the page and in a
-  frame, and by a script beside a heading the kit reads focus through, and find the view the
-  submit draws for the first time taking focus. A form a script submits in a root focus never
-  entered brings its view with no focus, and the next submit after a click there brings focus. The
-  test reads where the button sits inside the frame once two reads in a row agree, and holds the
-  toast to that layout, since WebKit lays the document of a frame scaled by zoom out larger than
-  it draws it on some loads and at the size it draws it on others, where the test took the first
-  for granted and failed when CI met the second. A test holds each published package's description
-  under npm's cut. The browser tests name each key read through an index signature in brackets, as
-  the stricter check on index signatures asks: data attributes, the record of controls a page
-  draws by name and of the form errors it shows, and computed style properties outside
-  TypeScript's own list. The package's install smoke test stays outside the lint, and so outside
-  the rule that a disable comment says why, since it imports the package's build, which does not
-  exist yet when the lint runs. The tests that type a search into the saved games type on a
+  Close to its first field there, land a page's request after a panel there hands focus back, focus
+  the page's heading before a widget's and a slotted title before a widget's own heading brought by
+  the same press, open a theme switch in a closed root by a press with focus on the chosen choice,
+  and raise no error for a request whose where focus was sits in a fragment, in Chromium, Firefox
+  and WebKit. A browser test in Chromium, WebKit and Firefox runs each place focus can be against
+  each piece that reads it and names each square that fails with its cause and the answer it gives.
+  A browser test draws a record table of a word and four short figures at 320px wide, on a content
+  page and in an app's frame, and finds its frame does not scroll. A refused submit in a page's own
+  section of two required boxes draws one error, above the unchecked box. Browser tests in Chromium,
+  Firefox and WebKit find the box named by its label and described by its hint, the error above the
+  box with focus on it, in a form written by hand and in one React draws, the label a target of the
+  field's height and a thumb's on a phone, the hint starting under the words and never toggling the
+  box, no audit failure in any state, and a long label wrapping at 320 wide and twice the text size.
+  In forced colors an invalid box has a dashed line and one that is off is drawn in `GrayText`. A
+  build test bundles a site of two pages from the package as npm ships it and holds a page that
+  keeps a status line to none of the form's, the group's, the stepper's, the toast's, the checkbox
+  field's or a plain field's code. It also holds a page alone that keeps a status line or a busy
+  button to none of the other pieces, and a page that loads the toast and the stepper later through
+  `import()` to keeping them out of its first chunk. The test that the React modules reach the kit
+  only through the entry reads every module and holds the modules of markup components to importing
+  no hook's module, and the lint that keeps effects out of the markup covers every module of
+  components, a new one included. A browser test hands focus back to a panel's button in a closed
+  shadow root that holds a frame of the page's origin inside one of another origin. The focus grid's
+  squares for a frame of the page's origin inside one of another origin pass for every piece in
+  Chromium, Firefox and WebKit, and none is listed as failing. The focus grid's panel squares for an
+  open shadow root and an open shadow root inside a frame pass, and the closed shadow root's panel
+  now opens, closes and hands focus back to its button. Browser tests close a widget's panel by its
+  Close and by Escape apart from the page's panel with its id, hand focus on past the widget, open a
+  widget's panel as its button's markup says once the button before it left, close by Escape a
+  page's panel opened from a widget's button before the page drew it, keep the page's open panel its
+  own as a widget draws a panel with its id, and open and close a panel inside a closed shadow root.
+  The focus grid's dialog square for a frame that has loaded its next page finds focus on the frame
+  in Chromium, Firefox and WebKit. The focus grid gains a row for a frame the page takes away while
+  a piece is open and a column for a dialog whose opener the page removes, and the dialog's squares
+  there find focus on the main content, or on the frame the opener sat in while that frame is still
+  on the page. Browser tests find focus on the main content without the page scrolling where a long
+  page removed a dialog's opener, on the app frame's body where a dialog opened with nothing
+  focused, and on the page's main content where a dialog inside a frame was opened from a control of
+  the page the page removed, in Chromium, Firefox and WebKit. Browser tests close a panel inside a
+  widget with its button off and find focus on a page's button slotted after the panel, on the first
+  control inside a following widget's open shadow root, on a following frame and on a following
+  custom element whose closed shadow root takes focus, and past a panel slotted through two widgets,
+  never to a control before it, in Chromium, Firefox and WebKit. A browser test closes a panel
+  inside a widget in an app drawn by a component, with nothing nearer to take focus, and finds focus
+  on the app frame's body in Chromium, Firefox and WebKit, written into the app, slotted into it, or
+  past a widget's own main content that takes no focus. The engine lists name, for each spec run in
+  WebKit or Firefox, the whole spec, the tests its reason covers, or every test but those it leaves
+  out, and a check holds each list to the tests Playwright runs in that engine, failing on a name no
+  spec holds. For a frame of the page's origin inside one of another origin, the focus grid waits
+  for the outer frame's load as well as the inner frame's page before a square runs, since the kit
+  hears the inner frame at the outer frame's load, so a press there is no longer made before it is
+  heard. A browser test brings a view by a press in such a frame while the outer frame's load is
+  held, and finds the view's heading focused in Chromium, Firefox and WebKit. The focus spec's test
+  of a page left and gone back to goes back only once the page it went to has its document parsed,
+  by which time Chromium has attached that page, rather than at the commit, where a goBack could
+  fail with no active page. Browser tests land a `useFocusAfterDraw` request inside a closed shadow
+  root, focus a `useArrivalFocus` heading there as its key changes and a `useFormRefusal` form's
+  first field in error, and find focus left where it moved inside the root before any of them lands,
+  still there some frames later, and a row that removes itself there finds the next, in Chromium,
+  Firefox and WebKit. Browser tests bring a view by a press inside a closed shadow root in Chromium,
+  Firefox and WebKit: its heading takes focus, a visitor who moves first is left there, a field the
+  view focuses above or below its heading keeps focus, a Tab or a click on nothing after the press
+  leaves focus where it is, and a widget the kit was never handed a node of takes no focus for its
+  first press and takes it from the next. Browser tests submit a form inside an open shadow root in
+  Chromium, Firefox and WebKit, by Enter in its field, by Enter or Space once focus is on its submit
+  button, by a pointer on that button, by a script after a click in the root or after focus entered
+  an open root inside a closed one, by its own field once a code is filled in, by a script where its
+  field had focus before the kit loaded, on the page and in a frame, and by a script beside a
+  heading the kit reads focus through, and find the view the submit draws for the first time taking
+  focus. A form a script submits in a root focus never entered brings its view with no focus, and
+  the next submit after a click there brings focus. The browser test of a control inside a frame
+  scaled by zoom beside the toast reads where the button sits inside the frame once two reads in a
+  row agree, and holds the toast to that layout, since WebKit lays the document of a frame scaled by
+  zoom out larger than it draws it on some loads and at the size it draws it on others, where the
+  test took the first for granted and failed when CI met the second. A test holds each published
+  package's description under npm's cut. The browser tests name each key read through an index
+  signature in brackets, as the stricter check on index signatures asks: data attributes, the record
+  of controls a page draws by name and of the form errors it shows, and computed style properties
+  outside TypeScript's own list. The package's install smoke test stays outside the lint, and so
+  outside the rule that a disable comment says why, since it imports the package's build, which does
+  not exist yet when the lint runs. The tests that type a search into the saved games type on a
   stopped clock and run it on purpose, so a pause between keys on a loaded machine never reads as
-  typing that stopped. The test of a search that matches nothing finds a pause shorter than the
-  wait saying nothing, since each key starts the wait again, and finds the line still empty a
-  moment before the words are due after the last key.
+  typing that stopped. The test of a search that matches nothing finds a pause shorter than the wait
+  saying nothing, since each key starts the wait again, and finds the line still empty a moment
+  before the words are due after the last key.
 
 ## 0.9.4
 

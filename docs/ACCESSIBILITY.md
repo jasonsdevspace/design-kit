@@ -163,6 +163,9 @@ is its CSS transformer, as the package README shows.
   around its button's, rather than in the same root, still opens, but a screen reader hears only the
   button's expanded state, and an accessibility check reports the id as missing while it is open.
   The reference asks for each panel in its button's root.
+- A toast on the page hands focus back to a closed shadow root's host, which takes none, so a
+  visitor whose focus was inside a widget's closed root as the toast took it goes on to the main
+  content.
 - Safari keeps no scroll position by what is on screen, so in an app's frame on a screen too short
   for it, a phone on its side at a large text size, showing or hiding a toast moves the dock by the
   toast's height there.
