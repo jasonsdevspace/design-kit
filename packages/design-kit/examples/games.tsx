@@ -11,6 +11,9 @@ const matching = (search: string) =>
 /** What the empty state and the status line say when the search matches nothing. */
 const noMatch = (search: string) => `No games match “${search.trim()}”.`;
 
+/** How long the search's words wait, in milliseconds, for a visitor to stop typing. */
+export const SEARCH_SETTLE = 700;
+
 /** What the status line says once a visitor stops typing. */
 const counted = (search: string) => {
     const found = matching(search).length;
@@ -44,7 +47,7 @@ export const Games = () => {
                 value={search}
                 onChange={(event) => {
                     setSearch(event.target.value);
-                    say(counted(event.target.value), { settle: 700 });
+                    say(counted(event.target.value), { settle: SEARCH_SETTLE });
                 }}
             />
             {shown.length > 0 ? (
